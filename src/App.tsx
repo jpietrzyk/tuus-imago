@@ -1,9 +1,12 @@
+import bgImage from "@/assets/bg_v1.jpg";
+
 export function App() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="font-medium">Hello World</div>
-    </div>
-  )
+    <div
+      className="min-h-screen bg-cover bg-center"
+      style={{ backgroundImage: `url(${bgImage})` }}
+    />
+  );
 }
 
-export default App
+export default App;
