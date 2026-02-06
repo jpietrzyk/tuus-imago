@@ -26,4 +26,11 @@ describe("App", () => {
       ),
     ).toBeDefined();
   });
+
+  it("displays Legal Information trigger button", () => {
+    render(<App />);
+    expect(
+      screen.getByText("Legal Information & Privacy Policy"),
+    ).toBeDefined();
+  });
 });
