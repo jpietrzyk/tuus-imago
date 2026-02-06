@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { App } from "./App";
 
 describe("App", () => {
@@ -8,13 +8,22 @@ describe("App", () => {
     expect(container).toBeDefined();
   });
 
-  it("displays background image", () => {
-    const { container } = render(<App />);
-    const bgDiv = container.firstChild as HTMLElement;
+  it("displays app title", () => {
+    render(<App />);
+    expect(screen.getByText("Tuus Imago")).toBeDefined();
+  });
 
-    expect(bgDiv).toHaveClass("min-h-screen");
-    expect(bgDiv).toHaveClass("bg-cover");
-    expect(bgDiv).toHaveClass("bg-center");
-    expect(bgDiv.style.backgroundImage).toBeTruthy();
+  it("displays upload widget button", () => {
+    render(<App />);
+    expect(screen.getByText("Upload Your Photo")).toBeDefined();
+  });
+
+  it("displays description text", () => {
+    render(<App />);
+    expect(
+      screen.getByText(
+        "Upload your photo for AI enhancement and canvas printing",
+      ),
+    ).toBeDefined();
   });
 });
