@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ContentDrawer } from "./ContentDrawer";
+import { ContentDrawer } from "./content-drawer";
 import { Button } from "@/components/ui/button";
 
 describe("ContentDrawer", () => {

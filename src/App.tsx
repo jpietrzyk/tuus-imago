@@ -3,7 +3,7 @@ import bgImage from "@/assets/bg_v1.jpg";
 import {
   CloudinaryUploadWidget,
   type UploadResult,
-} from "@/components/CloudinaryUploadWidget";
+} from "@/components/cloudinary-upload-widget";
 import {
   Card,
   CardContent,
@@ -17,8 +17,8 @@ import {
   Image as ImageIcon,
   FileText,
 } from "lucide-react";
-import { ContentDrawer } from "@/components/ContentDrawer";
-import { LegalContent } from "@/components/content/LegalContent";
+import { ContentDrawer } from "@/components/content-drawer";
+import { LegalContent } from "@/components/content/legal-content";
 import { Button } from "@/components/ui/button";
 
 export function App() {
