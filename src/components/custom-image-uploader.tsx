@@ -508,6 +508,7 @@ export function CustomImageUploader({
           </>
         ) : (
           <>
+            {/* Action Buttons Row */}
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -518,7 +519,33 @@ export function CustomImageUploader({
                 <Crop className="mr-2 h-4 w-4" />
                 Back to Crop
               </Button>
-              <div className="flex-1" />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                className="flex-1"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleUpload}
+                disabled={isUploading}
+                className="flex-1"
+              >
+                {isUploading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Upload Photo
+                  </>
+                )}
+              </Button>
             </div>
 
             <Separator />
@@ -792,39 +819,6 @@ export function CustomImageUploader({
                   Reset All Adjustments
                 </Button>
               )}
-            </div>
-
-            <Separator />
-
-            {/* Upload Buttons */}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                className="flex-1"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleUpload}
-                disabled={isUploading}
-                className="flex-1"
-              >
-                {isUploading ? (
-                  <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Upload Photo
-                  </>
-                )}
-              </Button>
             </div>
           </>
         )}
