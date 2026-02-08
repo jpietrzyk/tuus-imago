@@ -14,6 +14,7 @@ import { CheckCircle2, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { Footer } from "@/components/footer";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
+import { CheckoutPage } from "./pages/checkout";
 
 // Home Page Component
 function HomePage() {
@@ -170,6 +171,7 @@ export function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/legal" element={<LegalPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
       </Routes>
       <Footer />
     </div>

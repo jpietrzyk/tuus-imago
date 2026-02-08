@@ -91,6 +91,9 @@ export function CustomImageUploader({
     width: 0,
     height: 0,
   });
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(
+    null,
+  );
   const [collapsedSections, setCollapsedSections] = useState({
     rotation: true,
     flip: true,
@@ -100,6 +103,7 @@ export function CustomImageUploader({
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,10 +330,6 @@ export function CustomImageUploader({
     }
   }, []);
 
-  const handleCropConfirm = useCallback(() => {
-    setStep("adjust");
-  }, []);
-
   const handleRotate = useCallback((angle: number) => {
     setTransformations((prev) => ({
       ...prev,
@@ -353,6 +353,54 @@ export function CustomImageUploader({
 
   const handleReset = useCallback(() => {
     setTransformations(DEFAULT_TRANSFORMATIONS);
+  }, []);
+
+  const generateCroppedPreview = useCallback(() => {
+    if (!previewUrl) return;
+
+    const canvas = cropCanvasRef.current;
+    if (!canvas) return;
+
+    const img = imageRef.current;
+    if (!img) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Calculate scale factors based on crop area
+    const scaleX = img.naturalWidth / imageDimensions.width;
+    const scaleY = img.naturalHeight / imageDimensions.height;
+
+    // Set canvas size to crop area size
+    canvas.width = cropArea.width * scaleX;
+    canvas.height = cropArea.height * scaleY;
+
+    // Clear and draw only the cropped portion
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      img,
+      cropArea.x * scaleX,
+      cropArea.y * scaleY,
+      cropArea.width * scaleX,
+      cropArea.height * scaleY,
+    );
+
+    // Export as data URL
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          setCroppedPreviewUrl(url);
+        }
+      },
+      "image/jpeg",
+      0.95,
+    );
+  }, [previewUrl, imageDimensions, cropArea]);
+
+  const handleCropConfirm = useCallback(() => {
+    generateCroppedPreview();
+    setStep("adjust");
   }, []);
 
   const toggleSection = useCallback(
@@ -459,12 +507,13 @@ export function CustomImageUploader({
             {/* Crop Overlay */}
             {cropArea.width > 0 && cropArea.height > 0 && (
               <div
-                className="absolute border-4 border-white border-opacity-90 shadow-2xl cursor-move bg-black bg-opacity-30"
+                className="absolute border-4 border-white border-opacity-90 shadow-2xl cursor-move"
                 style={{
                   left: cropArea.x + 16,
                   top: cropArea.y + 16,
                   width: cropArea.width,
                   height: cropArea.height,
+                  backgroundColor: "rgba(0, 0, 0, 0.3)",
                 }}
                 onMouseDown={handleCropMouseDown}
                 onMouseMove={handleCropMouseMove}
@@ -479,15 +528,42 @@ export function CustomImageUploader({
           </div>
         ) : (
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="max-w-full max-h-96 object-contain rounded-lg"
-              style={{
-                transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
-                filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
-              }}
-            />
+            {cropArea.width > 0 && cropArea.height > 0 ? (
+              <div className="relative max-w-full max-h-96">
+                <img
+                  ref={imageRef}
+                  src={croppedPreviewUrl || previewUrl}
+                  alt="Preview"
+                  className="max-w-full max-h-96 object-contain rounded-lg"
+                  style={{
+                    transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
+                    filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
+                  }}
+                />
+                {/* Crop area mask - show only cropped portion */}
+                <div
+                  className="absolute inset-0 bg-black"
+                  style={{
+                    clipPath: `polygon(
+                      ${cropArea.x + 16}px ${cropArea.y + 16}px,
+                      ${cropArea.x + 16 + cropArea.width}px ${cropArea.y + 16}px,
+                      ${cropArea.x + cropArea.width}px ${cropArea.y + 16 + cropArea.height}px,
+                      ${cropArea.x}px ${cropArea.y + 16 + cropArea.height}px
+                    )`,
+                  }}
+                />
+              </div>
+            ) : (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="max-w-full max-h-96 object-contain rounded-lg"
+                style={{
+                  transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
+                  filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
+                }}
+              />
+            )}
           </div>
         )}
 
