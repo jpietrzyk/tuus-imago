@@ -85,8 +85,6 @@ export function CustomImageUploader({
     width: 0,
     height: 0,
   });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imageDimensions, setImageDimensions] = useState({
     width: 0,
     height: 0,
@@ -104,6 +102,12 @@ export function CustomImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
+  const dragStateRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    containerRect: null as DOMRect | null,
+  });
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,20 +157,26 @@ export function CustomImageUploader({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    setIsDragging(true);
-    setDragStart({ x, y });
+    dragStateRef.current = {
+      isDragging: true,
+      startX: x,
+      startY: y,
+      containerRect: (e.currentTarget as HTMLElement).getBoundingClientRect(),
+    };
   }, []);
 
-  const handleCropMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      if (!isDragging) return;
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragStateRef.current.isDragging) return;
 
-      const rect = e.currentTarget.getBoundingClientRect();
+      const rect = dragStateRef.current.containerRect;
+      if (!rect) return;
+
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const dx = x - dragStart.x;
-      const dy = y - dragStart.y;
+      const dx = x - dragStateRef.current.startX;
+      const dy = y - dragStateRef.current.startY;
 
       setCropArea((prev) => {
         let newX = prev.x + dx;
@@ -179,16 +189,28 @@ export function CustomImageUploader({
           Math.min(newY, imageDimensions.height - prev.height),
         );
 
-        setDragStart({ x, y });
+        // Update drag start position for next move
+        dragStateRef.current.startX = x;
+        dragStateRef.current.startY = y;
+
         return { ...prev, x: newX, y: newY };
       });
-    },
-    [isDragging, dragStart, imageDimensions],
-  );
+    };
 
-  const handleCropMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
+    const handleMouseUp = () => {
+      dragStateRef.current.isDragging = false;
+      dragStateRef.current.containerRect = null;
+    };
+
+    if (step === "crop") {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [imageDimensions, step]);
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
@@ -472,11 +494,7 @@ export function CustomImageUploader({
       <CardContent className="space-y-6">
         {/* Image Preview */}
         {step === "crop" ? (
-          <div
-            className="flex justify-center bg-muted/50 rounded-lg p-4 relative select-none"
-            onMouseUp={handleCropMouseUp}
-            onMouseLeave={handleCropMouseUp}
-          >
+          <div className="flex justify-center bg-muted/50 rounded-lg p-4 relative select-none">
             <img
               ref={imageRef}
               src={previewUrl}
@@ -514,9 +532,9 @@ export function CustomImageUploader({
                   width: cropArea.width,
                   height: cropArea.height,
                   backgroundColor: "rgba(0, 0, 0, 0.3)",
+                  willChange: "transform",
                 }}
                 onMouseDown={handleCropMouseDown}
-                onMouseMove={handleCropMouseMove}
               >
                 {/* Corner Handles */}
                 <div className="absolute -top-1 -left-1 w-4 h-4 bg-white border-2 border-gray-400"></div>
@@ -528,31 +546,16 @@ export function CustomImageUploader({
           </div>
         ) : (
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
-            {cropArea.width > 0 && cropArea.height > 0 ? (
-              <div className="relative max-w-full max-h-96">
-                <img
-                  ref={imageRef}
-                  src={croppedPreviewUrl || previewUrl}
-                  alt="Preview"
-                  className="max-w-full max-h-96 object-contain rounded-lg"
-                  style={{
-                    transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
-                    filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
-                  }}
-                />
-                {/* Crop area mask - show only cropped portion */}
-                <div
-                  className="absolute inset-0 bg-black"
-                  style={{
-                    clipPath: `polygon(
-                      ${cropArea.x + 16}px ${cropArea.y + 16}px,
-                      ${cropArea.x + 16 + cropArea.width}px ${cropArea.y + 16}px,
-                      ${cropArea.x + cropArea.width}px ${cropArea.y + 16 + cropArea.height}px,
-                      ${cropArea.x}px ${cropArea.y + 16 + cropArea.height}px
-                    )`,
-                  }}
-                />
-              </div>
+            {croppedPreviewUrl ? (
+              <img
+                src={croppedPreviewUrl}
+                alt="Cropped Preview"
+                className="max-w-full max-h-96 object-contain rounded-lg"
+                style={{
+                  transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
+                  filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
+                }}
+              />
             ) : (
               <img
                 src={previewUrl}
