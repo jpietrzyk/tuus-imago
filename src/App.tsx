@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import bgImage from "@/assets/bg_v1.jpg";
-import {
-  CloudinaryUploadWidget,
-  type UploadResult,
-} from "@/components/cloudinary-upload-widget";
+import { type UploadResult } from "@/components/cloudinary-upload-widget";
+import { CustomImageUploader } from "@/components/custom-image-uploader";
 import {
   Card,
   CardContent,
@@ -23,8 +21,46 @@ function HomePage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleUploadSuccess = (result: UploadResult) => {
-    setUploadedImage(result);
+  const handleUploadSuccess = (
+    result:
+      | UploadResult
+      | {
+          public_id: string;
+          secure_url: string;
+          width: number;
+          height: number;
+          bytes: number;
+          format: string;
+          url: string;
+        },
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    transformations?: {
+      rotation: number;
+      flipHorizontal: boolean;
+      flipVertical: boolean;
+      brightness: number;
+      contrast: number;
+    },
+  ) => {
+    // Handle both formats (from CloudinaryUploadWidget and CustomImageUploader)
+    const uploadResult: UploadResult =
+      "event" in result
+        ? result
+        : {
+            event: "success",
+            info: {
+              public_id: result.public_id,
+              secure_url: result.secure_url,
+              url: result.url,
+              bytes: result.bytes,
+              width: result.width,
+              height: result.height,
+              format: result.format,
+              resource_type: "image",
+              created_at: new Date().toISOString(),
+            },
+          };
+    setUploadedImage(uploadResult);
     setUploadError(null);
     setIsSuccess(true);
     // Auto-hide success message after 3 seconds
@@ -74,7 +110,7 @@ function HomePage() {
 
             {/* Upload Widget */}
             <div className="flex flex-col items-center gap-4">
-              <CloudinaryUploadWidget
+              <CustomImageUploader
                 onUploadSuccess={handleUploadSuccess}
                 onUploadError={handleUploadError}
                 buttonText="Upload Your Photo"
