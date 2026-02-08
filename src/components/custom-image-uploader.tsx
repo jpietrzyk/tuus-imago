@@ -401,7 +401,7 @@ export function CustomImageUploader({
   const handleCropConfirm = useCallback(() => {
     generateCroppedPreview();
     setStep("adjust");
-  }, []);
+  }, [generateCroppedPreview]);
 
   const toggleSection = useCallback(
     (section: keyof typeof collapsedSections) => {
