@@ -89,9 +89,6 @@ export function CustomImageUploader({
     width: 0,
     height: 0,
   });
-  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(
-    null,
-  );
   const [collapsedSections, setCollapsedSections] = useState({
     rotation: true,
     flip: true,
@@ -101,7 +98,6 @@ export function CustomImageUploader({
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const dragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -501,66 +497,18 @@ export function CustomImageUploader({
     setTransformations(DEFAULT_TRANSFORMATIONS);
   }, []);
 
-  const generateCroppedPreview = useCallback(
-    (area?: CropArea) => {
-      if (!previewUrl) return;
-
-      const canvas = cropCanvasRef.current;
-      if (!canvas) return;
-
-      const img = imageRef.current;
-      if (!img) return;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const activeCrop = area ?? cropArea;
-      if (activeCrop.width <= 0 || activeCrop.height <= 0) return;
-
-      // Calculate scale factors based on crop area
-      const scaleX = img.naturalWidth / imageDimensions.width;
-      const scaleY = img.naturalHeight / imageDimensions.height;
-
-      // Set canvas size to crop area size
-      canvas.width = activeCrop.width * scaleX;
-      canvas.height = activeCrop.height * scaleY;
-
-      // Clear and draw only the cropped portion
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(
-        img,
-        activeCrop.x * scaleX,
-        activeCrop.y * scaleY,
-        activeCrop.width * scaleX,
-        activeCrop.height * scaleY,
-      );
-
-      // Export as data URL
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            setCroppedPreviewUrl(url);
-          }
-        },
-        "image/jpeg",
-        0.95,
-      );
-    },
-    [previewUrl, imageDimensions, cropArea],
-  );
-
   const handleCropConfirm = useCallback(() => {
-    generateCroppedPreview();
     setStep("adjust");
-  }, [generateCroppedPreview]);
+  }, []);
 
-  // Generate cropped preview in real-time while dragging
+  // Cleanup blob URLs to prevent memory leaks
   useEffect(() => {
-    if (step === "crop" && cropArea.width > 0 && cropArea.height > 0) {
-      generateCroppedPreview();
-    }
-  }, [cropArea, step, generateCroppedPreview]);
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const toggleSection = useCallback(
     (section: keyof typeof collapsedSections) => {
@@ -657,7 +605,6 @@ export function CustomImageUploader({
                       height: minDim * 0.8,
                     };
                     setCropArea(initialCrop);
-                    generateCroppedPreview(initialCrop);
                   }
                 }}
               />
