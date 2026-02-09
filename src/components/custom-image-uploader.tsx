@@ -104,6 +104,8 @@ export function CustomImageUploader({
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const dragStateRef = useRef({
     isDragging: false,
+    isResizing: false,
+    resizeHandle: null as "nw" | "ne" | "se" | "sw" | null,
     startX: 0,
     startY: 0,
     containerRect: null as DOMRect | null,
@@ -159,46 +161,168 @@ export function CustomImageUploader({
 
     dragStateRef.current = {
       isDragging: true,
+      isResizing: false,
+      resizeHandle: null,
       startX: x,
       startY: y,
       containerRect: (e.currentTarget as HTMLElement).getBoundingClientRect(),
     };
   }, []);
 
+  const handleResizeMouseDown = useCallback(
+    (handle: "nw" | "ne" | "se" | "sw") => {
+      return (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = (
+          e.currentTarget.parentElement as HTMLElement
+        ).getBoundingClientRect();
+
+        dragStateRef.current = {
+          isDragging: false,
+          isResizing: true,
+          resizeHandle: handle,
+          startX: e.clientX - rect.left,
+          startY: e.clientY - rect.top,
+          containerRect: rect,
+        };
+      };
+    },
+    [],
+  );
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!dragStateRef.current.isDragging) return;
+      const state = dragStateRef.current;
 
-      const rect = dragStateRef.current.containerRect;
+      if (!state.isDragging && !state.isResizing) return;
+
+      const rect = state.containerRect;
       if (!rect) return;
 
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const dx = x - dragStateRef.current.startX;
-      const dy = y - dragStateRef.current.startY;
+      if (state.isDragging) {
+        const dx = x - state.startX;
+        const dy = y - state.startY;
 
-      setCropArea((prev) => {
-        let newX = prev.x + dx;
-        let newY = prev.y + dy;
+        setCropArea((prev) => {
+          let newX = prev.x + dx;
+          let newY = prev.y + dy;
 
-        // Clamp to image bounds
-        newX = Math.max(0, Math.min(newX, imageDimensions.width - prev.width));
-        newY = Math.max(
-          0,
-          Math.min(newY, imageDimensions.height - prev.height),
-        );
+          // Clamp to image bounds
+          newX = Math.max(
+            0,
+            Math.min(newX, imageDimensions.width - prev.width),
+          );
+          newY = Math.max(
+            0,
+            Math.min(newY, imageDimensions.height - prev.height),
+          );
 
-        // Update drag start position for next move
-        dragStateRef.current.startX = x;
-        dragStateRef.current.startY = y;
+          // Update drag start position for next move
+          dragStateRef.current.startX = x;
+          dragStateRef.current.startY = y;
 
-        return { ...prev, x: newX, y: newY };
-      });
+          return { ...prev, x: newX, y: newY };
+        });
+      } else if (state.isResizing && state.resizeHandle) {
+        const handle = state.resizeHandle;
+        const dx = x - state.startX;
+        const dy = y - state.startY;
+
+        setCropArea((prev) => {
+          let newX = prev.x;
+          let newY = prev.y;
+          let newWidth = prev.width;
+          let newHeight = prev.height;
+
+          // Calculate new size based on resize handle
+          // We maintain aspect ratio (1:1)
+          let deltaSize = 0;
+
+          switch (handle) {
+            case "se": // Bottom-right
+              deltaSize = Math.max(dx, dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth; // Maintain 1:1 aspect ratio
+              // Clamp to image bounds
+              newWidth = Math.min(newWidth, imageDimensions.width - prev.x);
+              newHeight = Math.min(newHeight, imageDimensions.height - prev.y);
+              break;
+            case "sw": // Bottom-left
+              deltaSize = Math.max(-dx, dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth;
+              newX = prev.x - (newWidth - prev.width);
+              // Clamp
+              if (newX < 0) {
+                newWidth = prev.width + prev.x;
+                newX = 0;
+                newHeight = newWidth;
+              }
+              newHeight = Math.min(newHeight, imageDimensions.height - prev.y);
+              newWidth = newHeight;
+              newX = prev.x - (newWidth - prev.width);
+              break;
+            case "ne": // Top-right
+              deltaSize = Math.max(dx, -dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth;
+              newY = prev.y - (newHeight - prev.height);
+              // Clamp
+              if (newY < 0) {
+                newHeight = prev.height + prev.y;
+                newY = 0;
+                newWidth = newHeight;
+              }
+              newWidth = Math.min(newWidth, imageDimensions.width - prev.x);
+              newHeight = newWidth;
+              newY = prev.y - (newHeight - prev.height);
+              break;
+            case "nw": // Top-left
+              deltaSize = Math.max(-dx, -dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth;
+              newX = prev.x - (newWidth - prev.width);
+              newY = prev.y - (newHeight - prev.height);
+              // Clamp
+              if (newX < 0) {
+                newWidth = prev.width + prev.x;
+                newX = 0;
+                newHeight = newWidth;
+              }
+              if (newY < 0) {
+                newHeight = newWidth;
+                newY = prev.y - (newHeight - prev.height);
+                newHeight = prev.height + prev.y;
+                newY = 0;
+                newWidth = newHeight;
+                newX = prev.x - (newWidth - prev.width);
+              }
+              break;
+          }
+
+          // Update drag start position for next move
+          dragStateRef.current.startX = x;
+          dragStateRef.current.startY = y;
+
+          return {
+            ...prev,
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight,
+          };
+        });
+      }
     };
 
     const handleMouseUp = () => {
       dragStateRef.current.isDragging = false;
+      dragStateRef.current.isResizing = false;
+      dragStateRef.current.resizeHandle = null;
       dragStateRef.current.containerRect = null;
     };
 
@@ -377,53 +501,66 @@ export function CustomImageUploader({
     setTransformations(DEFAULT_TRANSFORMATIONS);
   }, []);
 
-  const generateCroppedPreview = useCallback(() => {
-    if (!previewUrl) return;
+  const generateCroppedPreview = useCallback(
+    (area?: CropArea) => {
+      if (!previewUrl) return;
 
-    const canvas = cropCanvasRef.current;
-    if (!canvas) return;
+      const canvas = cropCanvasRef.current;
+      if (!canvas) return;
 
-    const img = imageRef.current;
-    if (!img) return;
+      const img = imageRef.current;
+      if (!img) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-    // Calculate scale factors based on crop area
-    const scaleX = img.naturalWidth / imageDimensions.width;
-    const scaleY = img.naturalHeight / imageDimensions.height;
+      const activeCrop = area ?? cropArea;
+      if (activeCrop.width <= 0 || activeCrop.height <= 0) return;
 
-    // Set canvas size to crop area size
-    canvas.width = cropArea.width * scaleX;
-    canvas.height = cropArea.height * scaleY;
+      // Calculate scale factors based on crop area
+      const scaleX = img.naturalWidth / imageDimensions.width;
+      const scaleY = img.naturalHeight / imageDimensions.height;
 
-    // Clear and draw only the cropped portion
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(
-      img,
-      cropArea.x * scaleX,
-      cropArea.y * scaleY,
-      cropArea.width * scaleX,
-      cropArea.height * scaleY,
-    );
+      // Set canvas size to crop area size
+      canvas.width = activeCrop.width * scaleX;
+      canvas.height = activeCrop.height * scaleY;
 
-    // Export as data URL
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          setCroppedPreviewUrl(url);
-        }
-      },
-      "image/jpeg",
-      0.95,
-    );
-  }, [previewUrl, imageDimensions, cropArea]);
+      // Clear and draw only the cropped portion
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(
+        img,
+        activeCrop.x * scaleX,
+        activeCrop.y * scaleY,
+        activeCrop.width * scaleX,
+        activeCrop.height * scaleY,
+      );
+
+      // Export as data URL
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            setCroppedPreviewUrl(url);
+          }
+        },
+        "image/jpeg",
+        0.95,
+      );
+    },
+    [previewUrl, imageDimensions, cropArea],
+  );
 
   const handleCropConfirm = useCallback(() => {
     generateCroppedPreview();
     setStep("adjust");
   }, [generateCroppedPreview]);
+
+  // Generate cropped preview in real-time while dragging
+  useEffect(() => {
+    if (step === "crop" && cropArea.width > 0 && cropArea.height > 0) {
+      generateCroppedPreview();
+    }
+  }, [cropArea, step, generateCroppedPreview]);
 
   const toggleSection = useCallback(
     (section: keyof typeof collapsedSections) => {
@@ -494,68 +631,165 @@ export function CustomImageUploader({
       <CardContent className="space-y-6">
         {/* Image Preview */}
         {step === "crop" ? (
-          <div className="flex justify-center bg-muted/50 rounded-lg p-4 relative select-none">
-            <img
-              ref={imageRef}
-              src={previewUrl}
-              alt="Preview"
-              className="max-w-full max-h-96 object-contain rounded-lg"
-              style={{
-                userSelect: "none",
-                WebkitUserSelect: "none",
-              }}
-              onLoad={() => {
-                if (imageRef.current) {
-                  const img = imageRef.current;
-                  setImageDimensions({
-                    width: img.offsetWidth,
-                    height: img.offsetHeight,
-                  });
-                  const minDim = Math.min(img.offsetWidth, img.offsetHeight);
-                  const initialCrop: CropArea = {
-                    x: (img.offsetWidth - minDim * 0.8) / 2,
-                    y: (img.offsetHeight - minDim * 0.8) / 2,
-                    width: minDim * 0.8,
-                    height: minDim * 0.8,
-                  };
-                  setCropArea(initialCrop);
-                }
-              }}
-            />
-            {/* Crop Overlay */}
-            {cropArea.width > 0 && cropArea.height > 0 && (
-              <div
-                className="absolute border-4 border-white border-opacity-90 shadow-2xl cursor-move"
-                style={{
-                  left: cropArea.x + 16,
-                  top: cropArea.y + 16,
-                  width: cropArea.width,
-                  height: cropArea.height,
-                  backgroundColor: "rgba(0, 0, 0, 0.3)",
-                  willChange: "transform",
-                }}
-                onMouseDown={handleCropMouseDown}
-              >
-                {/* Corner Handles */}
-                <div className="absolute -top-1 -left-1 w-4 h-4 bg-white border-2 border-gray-400"></div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white border-2 border-gray-400"></div>
-                <div className="absolute -bottom-1 -left-1 w-4 h-4 bg-white border-2 border-gray-400"></div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white border-2 border-gray-400"></div>
-              </div>
-            )}
-          </div>
-        ) : (
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
-            {croppedPreviewUrl ? (
+            <div className="relative inline-block">
               <img
-                src={croppedPreviewUrl}
-                alt="Cropped Preview"
+                ref={imageRef}
+                src={previewUrl}
+                alt="Preview"
                 className="max-w-full max-h-96 object-contain rounded-lg"
                 style={{
-                  transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
-                  filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                }}
+                onLoad={() => {
+                  if (imageRef.current) {
+                    const img = imageRef.current;
+                    setImageDimensions({
+                      width: img.offsetWidth,
+                      height: img.offsetHeight,
+                    });
+                    const minDim = Math.min(img.offsetWidth, img.offsetHeight);
+                    const initialCrop: CropArea = {
+                      x: (img.offsetWidth - minDim * 0.8) / 2,
+                      y: (img.offsetHeight - minDim * 0.8) / 2,
+                      width: minDim * 0.8,
+                      height: minDim * 0.8,
+                    };
+                    setCropArea(initialCrop);
+                    generateCroppedPreview(initialCrop);
+                  }
                 }}
               />
+              {/* Crop selection overlay */}
+              {cropArea.width > 0 && cropArea.height > 0 && (
+                <>
+                  {/* Top overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: 0,
+                      top: 0,
+                      width: "100%",
+                      height: cropArea.y,
+                    }}
+                  />
+                  {/* Bottom overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: 0,
+                      top: cropArea.y + cropArea.height,
+                      width: "100%",
+                      height:
+                        imageDimensions.height - cropArea.y - cropArea.height,
+                    }}
+                  />
+                  {/* Left overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: 0,
+                      top: cropArea.y,
+                      width: cropArea.x,
+                      height: cropArea.height,
+                    }}
+                  />
+                  {/* Right overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: cropArea.x + cropArea.width,
+                      top: cropArea.y,
+                      width:
+                        imageDimensions.width - cropArea.x - cropArea.width,
+                      height: cropArea.height,
+                    }}
+                  />
+                  {/* Crop selection border */}
+                  <div
+                    className="absolute border-2 border-white shadow-2xl"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y,
+                      width: cropArea.width,
+                      height: cropArea.height,
+                      cursor: "move",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  {/* Drag overlay - only interactive within crop area */}
+                  <div
+                    className="absolute"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y,
+                      width: cropArea.width,
+                      height: cropArea.height,
+                      cursor: "move",
+                    }}
+                    onMouseDown={handleCropMouseDown}
+                  />
+                  {/* Resize handles */}
+                  {/* Top-left corner */}
+                  <div
+                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -ml-2 -mt-2"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y,
+                    }}
+                    onMouseDown={handleResizeMouseDown("nw")}
+                  />
+                  {/* Top-right corner */}
+                  <div
+                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nesw-resize -mr-2 -mt-2"
+                    style={{
+                      left: cropArea.x + cropArea.width,
+                      top: cropArea.y,
+                    }}
+                    onMouseDown={handleResizeMouseDown("ne")}
+                  />
+                  {/* Bottom-right corner */}
+                  <div
+                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -mr-2 -mb-2"
+                    style={{
+                      left: cropArea.x + cropArea.width,
+                      top: cropArea.y + cropArea.height,
+                    }}
+                    onMouseDown={handleResizeMouseDown("se")}
+                  />
+                  {/* Bottom-left corner */}
+                  <div
+                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nesw-resize -ml-2 -mb-2"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y + cropArea.height,
+                    }}
+                    onMouseDown={handleResizeMouseDown("sw")}
+                  />
+                </>
+              )}
+              {imageDimensions.width === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
+                  Loading preview...
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center items-center bg-muted/50 rounded-lg p-4">
+            {croppedPreviewUrl ? (
+              <div className="w-[400px] h-[400px] flex justify-center items-center">
+                <img
+                  src={croppedPreviewUrl}
+                  alt="Cropped Preview"
+                  className="w-full h-full object-contain rounded-lg shadow-lg"
+                  style={{
+                    transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
+                    filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
+                  }}
+                />
+              </div>
             ) : (
               <img
                 src={previewUrl}
