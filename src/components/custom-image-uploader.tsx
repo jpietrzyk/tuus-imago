@@ -89,6 +89,9 @@ export function CustomImageUploader({
     width: 0,
     height: 0,
   });
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(
+    null,
+  );
   const [collapsedSections, setCollapsedSections] = useState({
     rotation: true,
     flip: true,
@@ -98,6 +101,7 @@ export function CustomImageUploader({
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const cropCanvasRef = useRef<HTMLCanvasElement>(null);
   const dragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -440,6 +444,7 @@ export function CustomImageUploader({
       // Reset
       setSelectedFile(null);
       setPreviewUrl(null);
+      setCroppedPreviewUrl(null);
       setTransformations(DEFAULT_TRANSFORMATIONS);
       setStep("crop");
       setCropArea({ x: 0, y: 0, width: 0, height: 0 });
@@ -464,6 +469,7 @@ export function CustomImageUploader({
   const handleCancel = useCallback(() => {
     setSelectedFile(null);
     setPreviewUrl(null);
+    setCroppedPreviewUrl(null);
     setTransformations(DEFAULT_TRANSFORMATIONS);
     setStep("crop");
     setCropArea({ x: 0, y: 0, width: 0, height: 0 });
@@ -497,18 +503,78 @@ export function CustomImageUploader({
     setTransformations(DEFAULT_TRANSFORMATIONS);
   }, []);
 
+  const generateCroppedPreview = useCallback(
+    (area?: CropArea) => {
+      if (!previewUrl) return;
+
+      const canvas = cropCanvasRef.current;
+      if (!canvas) return;
+
+      const img = imageRef.current;
+      if (!img) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const activeCrop = area ?? cropArea;
+      if (activeCrop.width <= 0 || activeCrop.height <= 0) return;
+
+      // Calculate scale factors based on crop area
+      const scaleX = img.naturalWidth / imageDimensions.width;
+      const scaleY = img.naturalHeight / imageDimensions.height;
+
+      // Set canvas size to crop area size
+      canvas.width = activeCrop.width * scaleX;
+      canvas.height = activeCrop.height * scaleY;
+
+      // Clear and draw only the cropped portion
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(
+        img,
+        activeCrop.x * scaleX,
+        activeCrop.y * scaleY,
+        activeCrop.width * scaleX,
+        activeCrop.height * scaleY,
+      );
+
+      // Export as data URL
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            setCroppedPreviewUrl(url);
+          }
+        },
+        "image/jpeg",
+        0.95,
+      );
+    },
+    [previewUrl, imageDimensions, cropArea],
+  );
+
   const handleCropConfirm = useCallback(() => {
+    generateCroppedPreview();
     setStep("adjust");
-  }, []);
+  }, [generateCroppedPreview]);
+
+  // Generate cropped preview in real-time while dragging
+  useEffect(() => {
+    if (step === "crop" && cropArea.width > 0 && cropArea.height > 0) {
+      generateCroppedPreview();
+    }
+  }, [cropArea, step, generateCroppedPreview]);
 
   // Cleanup blob URLs to prevent memory leaks
   useEffect(() => {
     return () => {
+      if (croppedPreviewUrl) {
+        URL.revokeObjectURL(croppedPreviewUrl);
+      }
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
     };
-  }, [previewUrl]);
+  }, [croppedPreviewUrl, previewUrl]);
 
   const toggleSection = useCallback(
     (section: keyof typeof collapsedSections) => {
@@ -727,7 +793,7 @@ export function CustomImageUploader({
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
             <div className="relative inline-block">
               <img
-                src={previewUrl}
+                src={croppedPreviewUrl || previewUrl}
                 alt="Preview"
                 className="max-w-full max-h-96 object-contain rounded-lg"
                 style={{
@@ -737,63 +803,8 @@ export function CustomImageUploader({
                   filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
                 }}
               />
-              {/* Crop selection overlay - dimmed areas */}
-              {cropArea.width > 0 && cropArea.height > 0 && (
-                <>
-                  {/* Top overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: 0,
-                      top: 0,
-                      width: "100%",
-                      height: cropArea.y,
-                    }}
-                  />
-                  {/* Bottom overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: 0,
-                      top: cropArea.y + cropArea.height,
-                      width: "100%",
-                      height:
-                        imageDimensions.height - cropArea.y - cropArea.height,
-                    }}
-                  />
-                  {/* Left overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: 0,
-                      top: cropArea.y,
-                      width: cropArea.x,
-                      height: cropArea.height,
-                    }}
-                  />
-                  {/* Right overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: cropArea.x + cropArea.width,
-                      top: cropArea.y,
-                      width:
-                        imageDimensions.width - cropArea.x - cropArea.width,
-                      height: cropArea.height,
-                    }}
-                  />
-                  {/* Crop selection border */}
-                  <div
-                    className="absolute border-2 border-white shadow-2xl pointer-events-none"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.width,
-                      height: cropArea.height,
-                    }}
-                  />
-                </>
-              )}
+              {/* Hidden canvas for generating cropped previews */}
+              <canvas ref={cropCanvasRef} className="hidden" />
             </div>
           </div>
         )}
@@ -820,7 +831,10 @@ export function CustomImageUploader({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setStep("crop")}
+                onClick={() => {
+                  setStep("crop");
+                  setCroppedPreviewUrl(null);
+                }}
                 className="flex-1"
               >
                 <Crop className="mr-2 h-4 w-4" />
