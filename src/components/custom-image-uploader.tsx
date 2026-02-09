@@ -777,30 +777,77 @@ export function CustomImageUploader({
             </div>
           </div>
         ) : (
-          <div className="flex justify-center items-center bg-muted/50 rounded-lg p-4">
-            {croppedPreviewUrl ? (
-              <div className="w-[400px] h-[400px] flex justify-center items-center">
-                <img
-                  src={croppedPreviewUrl}
-                  alt="Cropped Preview"
-                  className="w-full h-full object-contain rounded-lg shadow-lg"
-                  style={{
-                    transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
-                    filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
-                  }}
-                />
-              </div>
-            ) : (
+          <div className="flex justify-center bg-muted/50 rounded-lg p-4">
+            <div className="relative inline-block">
               <img
                 src={previewUrl}
                 alt="Preview"
                 className="max-w-full max-h-96 object-contain rounded-lg"
                 style={{
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
                   transform: `rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
                   filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
                 }}
               />
-            )}
+              {/* Crop selection overlay - dimmed areas */}
+              {cropArea.width > 0 && cropArea.height > 0 && (
+                <>
+                  {/* Top overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: 0,
+                      top: 0,
+                      width: "100%",
+                      height: cropArea.y,
+                    }}
+                  />
+                  {/* Bottom overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: 0,
+                      top: cropArea.y + cropArea.height,
+                      width: "100%",
+                      height:
+                        imageDimensions.height - cropArea.y - cropArea.height,
+                    }}
+                  />
+                  {/* Left overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: 0,
+                      top: cropArea.y,
+                      width: cropArea.x,
+                      height: cropArea.height,
+                    }}
+                  />
+                  {/* Right overlay */}
+                  <div
+                    className="absolute pointer-events-none bg-black/50"
+                    style={{
+                      left: cropArea.x + cropArea.width,
+                      top: cropArea.y,
+                      width:
+                        imageDimensions.width - cropArea.x - cropArea.width,
+                      height: cropArea.height,
+                    }}
+                  />
+                  {/* Crop selection border */}
+                  <div
+                    className="absolute border-2 border-white shadow-2xl pointer-events-none"
+                    style={{
+                      left: cropArea.x,
+                      top: cropArea.y,
+                      width: cropArea.width,
+                      height: cropArea.height,
+                    }}
+                  />
+                </>
+              )}
+            </div>
           </div>
         )}
 
