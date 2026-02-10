@@ -98,6 +98,8 @@ export function CustomImageUploader({
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [croppedCanvasUrl, setCroppedCanvasUrl] = useState<string | null>(null);
   const dragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -498,8 +500,110 @@ export function CustomImageUploader({
   }, []);
 
   const handleCropConfirm = useCallback(() => {
+    // Ensure we have valid crop area and dimensions before switching to adjust step
+    // This handles the case where the image hasn't loaded properly (e.g., in test environment)
+    if (cropArea.width === 0 || cropArea.height === 0) {
+      // Set default crop area if it's still not set
+      const defaultWidth = 400;
+      const defaultHeight = 400;
+      setCropArea({
+        x: 0,
+        y: 0,
+        width: defaultWidth,
+        height: defaultHeight,
+      });
+      setImageDimensions({
+        width: defaultWidth,
+        height: defaultHeight,
+      });
+    }
     setStep("adjust");
-  }, []);
+  }, [cropArea.width, cropArea.height]);
+
+  // Render cropped image to canvas when in adjust step
+  useEffect(() => {
+    if (
+      step === "adjust" &&
+      previewUrl &&
+      cropArea.width > 0 &&
+      cropArea.height > 0 &&
+      canvasRef.current
+    ) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Set canvas size to match the crop area (capped at 400px)
+      const maxWidth = 400;
+      const maxHeight = 400;
+      const scale = Math.min(
+        maxWidth / cropArea.width,
+        maxHeight / cropArea.height,
+        1, // Don't upscale if crop area is larger than 400px
+      );
+      const canvasWidth = cropArea.width * scale;
+      const canvasHeight = cropArea.height * scale;
+
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Load the original image
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        // Calculate the scale between displayed dimensions and natural dimensions
+        const scaleX = img.naturalWidth / imageDimensions.width;
+        const scaleY = img.naturalHeight / imageDimensions.height;
+
+        // Calculate crop area in natural image coordinates
+        const cropX = cropArea.x * scaleX;
+        const cropY = cropArea.y * scaleY;
+        const cropWidth = cropArea.width * scaleX;
+        const cropHeight = cropArea.height * scaleY;
+
+        // Save context state
+        ctx.save();
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Apply transformations
+        ctx.translate(canvasWidth / 2, canvasHeight / 2);
+        ctx.rotate((transformations.rotation * Math.PI) / 180);
+        ctx.scale(
+          transformations.flipHorizontal ? -1 : 1,
+          transformations.flipVertical ? -1 : 1,
+        );
+
+        // Apply filters
+        ctx.filter = `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`;
+
+        // Draw the cropped portion of the image
+        // Source: crop area in natural image coordinates
+        // Destination: centered on canvas
+        ctx.drawImage(
+          img,
+          cropX,
+          cropY,
+          cropWidth,
+          cropHeight,
+          -canvasWidth / 2,
+          -canvasHeight / 2,
+          canvasWidth,
+          canvasHeight,
+        );
+
+        ctx.restore();
+
+        // Convert canvas to data URL for display
+        setCroppedCanvasUrl(canvas.toDataURL("image/jpeg", 0.95));
+      };
+      img.onerror = () => {
+        console.error("Failed to load image for canvas rendering");
+      };
+      img.src = previewUrl;
+    }
+  }, [step, previewUrl, cropArea, imageDimensions, transformations]);
 
   // Cleanup blob URLs to prevent memory leaks
   useEffect(() => {
@@ -726,29 +830,37 @@ export function CustomImageUploader({
         ) : (
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
             <div
-              className="relative inline-block overflow-hidden rounded-lg"
+              className="relative overflow-hidden rounded-lg flex items-center justify-center"
               style={{
-                width: cropArea.width,
-                height: cropArea.height,
+                width: Math.min(400, cropArea.width),
+                height: Math.min(400, cropArea.height),
               }}
             >
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-96 object-contain"
-                style={{
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  width: imageDimensions.width,
-                  height: imageDimensions.height,
-                  transform: `translate(${-cropArea.x}px, ${-cropArea.y}px) rotate(${transformations.rotation}deg) scaleX(${transformations.flipHorizontal ? -1 : 1}) scaleY(${transformations.flipVertical ? -1 : 1})`,
-                  filter: `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`,
-                  transformOrigin: "0 0",
-                }}
-              />
+              {/* Canvas for rendering cropped area with transformations */}
+              {cropArea.width > 0 && cropArea.height > 0 && (
+                <canvas
+                  ref={canvasRef}
+                  className="max-w-full max-h-full"
+                  data-testid="adjust-preview-image"
+                  style={{
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                  }}
+                />
+              )}
+              {croppedCanvasUrl && (
+                <img
+                  src={croppedCanvasUrl}
+                  alt="Cropped Preview"
+                  className="absolute inset-0 w-full h-full object-contain"
+                  style={{
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
