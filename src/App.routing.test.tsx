@@ -1,22 +1,27 @@
+/// <reference types="@testing-library/jest-dom" />
+
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "./App";
 
 describe("App Component Routing", () => {
-  it("should render home page when route is /", () => {
+  it("should render landing page when route is /", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    // Check for main home page elements
+    // Check for main landing page elements
     expect(
       screen.getByRole("button", { name: /upload your photo/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/supports jpg, png, and webp/i),
+      screen.getByRole("heading", { name: /tuus imago/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/transform your photos with ai/i),
     ).toBeInTheDocument();
   });
 
@@ -96,14 +101,30 @@ describe("App Component Routing", () => {
     expect(legalLink).toHaveAttribute("href", "/legal");
   });
 
-  it("should render upload button on home page only", () => {
+  it("should render upload page when route is /upload", () => {
+    render(
+      <MemoryRouter initialEntries={["/upload"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    // Check for upload page elements
+    expect(
+      screen.getByRole("button", { name: /upload your photo/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/supports jpg, png, and webp/i),
+    ).toBeInTheDocument();
+  });
+
+  it("should render upload button on landing page", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    // Upload button should be on home page
+    // Upload button should be on landing page
     expect(
       screen.getByRole("button", { name: /upload your photo/i }),
     ).toBeInTheDocument();
