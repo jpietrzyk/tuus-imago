@@ -18,10 +18,17 @@ describe("App Component Routing", () => {
       screen.getByRole("button", { name: /upload your photo/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /tuus imago/i }),
+      screen.getByRole("heading", { name: /paint your photo/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/transform your photos with ai/i),
+      screen.getByText(
+        /we print your ai-enhanced images on professional canvas/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /real looking paintings crafted with museum-quality materials/i,
+      ),
     ).toBeInTheDocument();
   });
 

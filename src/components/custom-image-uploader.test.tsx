@@ -371,9 +371,18 @@ describe("CustomImageUploader", () => {
         }
 
         expect(previewContainer).toBeDefined();
-        // Should have width and height styles set
-        expect(previewContainer?.style.width).toBeTruthy();
-        expect(previewContainer?.style.height).toBeTruthy();
+        // Should have responsive width classes (w-full, min-w-[200px], max-w-[500px])
+        expect(previewContainer?.classList.contains("w-full")).toBe(true);
+        expect(previewContainer?.classList.contains("min-w-[200px]")).toBe(
+          true,
+        );
+        expect(previewContainer?.classList.contains("max-w-[500px]")).toBe(
+          true,
+        );
+        // Should have aspect-square class to maintain 1:1 aspect ratio
+        expect(previewContainer?.classList.contains("aspect-square")).toBe(
+          true,
+        );
       });
     }
   });
