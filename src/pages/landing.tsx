@@ -5,15 +5,20 @@ import { Button } from "@/components/ui/button";
 export function LandingPage() {
   return (
     <div
-      className="flex-1 bg-cover bg-center flex items-center justify-center p-4"
+      className="flex-1 bg-cover bg-center flex items-center justify-center px-2 py-4"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="text-center space-y-8">
+      <div className="text-center space-y-8 bg-black/30 backdrop-blur-sm rounded-xl p-8 md:p-12 w-full">
         <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg">
-          Tuus Imago
+          Paint your photo
         </h1>
-        <p className="text-xl md:text-2xl text-white/90 drop-shadow-md">
-          Transform your photos with AI and print them on canvas
+        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-2xl mx-auto">
+          We print your AI-enhanced images on professional canvas with a
+          beautiful beveled edge
+        </p>
+        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-2xl mx-auto">
+          Real looking paintings crafted with museum-quality materials for
+          lasting beauty
         </p>
         <Link to="/upload">
           <Button
