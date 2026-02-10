@@ -533,13 +533,13 @@ export function CustomImageUploader({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Set canvas size to match the crop area (capped at 400px)
-      const maxWidth = 400;
-      const maxHeight = 400;
+      // Set canvas size to match the crop area (capped at 600px for better quality on larger displays)
+      const maxWidth = 600;
+      const maxHeight = 600;
       const scale = Math.min(
         maxWidth / cropArea.width,
         maxHeight / cropArea.height,
-        1, // Don't upscale if crop area is larger than 400px
+        1, // Don't upscale if crop area is larger than 600px
       );
       const canvasWidth = cropArea.width * scale;
       const canvasHeight = cropArea.height * scale;
@@ -829,24 +829,16 @@ export function CustomImageUploader({
           </div>
         ) : (
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
-            <div
-              className="relative overflow-hidden rounded-lg flex items-center justify-center"
-              style={{
-                width: Math.min(400, cropArea.width),
-                height: Math.min(400, cropArea.height),
-              }}
-            >
+            <div className="relative w-full min-w-[200px] max-w-[500px] aspect-square overflow-hidden rounded-lg flex items-center justify-center">
               {/* Canvas for rendering cropped area with transformations */}
               {cropArea.width > 0 && cropArea.height > 0 && (
                 <canvas
                   ref={canvasRef}
-                  className="max-w-full max-h-full"
+                  className="w-full h-full object-contain"
                   data-testid="adjust-preview-image"
                   style={{
                     userSelect: "none",
                     WebkitUserSelect: "none",
-                    maxWidth: "100%",
-                    maxHeight: "100%",
                   }}
                 />
               )}
