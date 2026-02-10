@@ -829,7 +829,7 @@ export function CustomImageUploader({
           </div>
         ) : (
           <div className="flex justify-center bg-muted/50 rounded-lg p-4">
-            <div className="relative w-full min-w-[200px] max-w-[500px] aspect-square overflow-hidden rounded-lg flex items-center justify-center">
+            <div className="relative w-full min-w-50 max-w-125 aspect-square overflow-hidden rounded-lg flex items-center justify-center">
               {/* Canvas for rendering cropped area with transformations */}
               {cropArea.width > 0 && cropArea.height > 0 && (
                 <canvas
