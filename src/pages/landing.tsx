@@ -8,11 +8,11 @@ export function LandingPage() {
       className="flex-1 bg-cover bg-center flex items-center justify-center px-2 py-4"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="text-center space-y-8 bg-black/30 backdrop-blur-sm rounded-xl p-8 md:p-12 w-full">
+      <div className="text-center space-y-8 bg-black/30 backdrop-blur-sm rounded-xl p-8 md:p-12 w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto">
         <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg">
           Paint your photo
         </h1>
-        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-8 md:mt-12 mb-0">
+        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-12 md:mt-20 mb-0">
           We print your AI-enhanced images on professional canvas with a
           beautiful beveled edge
         </p>
@@ -20,10 +20,10 @@ export function LandingPage() {
           Real looking paintings crafted with museum-quality materials for
           lasting beauty
         </p>
-        <Link to="/upload" className="mt-12 md:mt-16">
+        <Link to="/upload" className="mt-40 md:mt-48">
           <Button
             size="lg"
-            className="bg-white/95 text-gray-900 hover:bg-white text-lg px-8 py-6 font-semibold shadow-xl backdrop-blur-sm"
+            className="bg-white/95 text-gray-900 hover:bg-white text-2xl px-16 py-8 font-semibold shadow-2xl backdrop-blur-sm"
           >
             Upload Your Photo
           </Button>
