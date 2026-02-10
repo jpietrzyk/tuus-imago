@@ -12,15 +12,15 @@ export function LandingPage() {
         <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg">
           Paint your photo
         </h1>
-        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-2xl mx-auto">
+        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-8 md:mt-12 mb-0">
           We print your AI-enhanced images on professional canvas with a
           beautiful beveled edge
         </p>
-        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-2xl mx-auto">
+        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-2">
           Real looking paintings crafted with museum-quality materials for
           lasting beauty
         </p>
-        <Link to="/upload">
+        <Link to="/upload" className="mt-12 md:mt-16">
           <Button
             size="lg"
             className="bg-white/95 text-gray-900 hover:bg-white text-lg px-8 py-6 font-semibold shadow-xl backdrop-blur-sm"
