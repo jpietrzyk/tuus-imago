@@ -6,7 +6,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   CheckCircle2,
@@ -87,11 +86,8 @@ export function UploadPage() {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
-        <Card className="bg-white/95 backdrop-blur-sm shadow-2xl">
+        <Card className="bg-black/10 backdrop-blur-md shadow-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-gray-900">
-              Tuus Imago
-            </CardTitle>
             <CardDescription className="text-lg text-gray-600">
               Upload your photo for AI enhancement and canvas printing
             </CardDescription>
