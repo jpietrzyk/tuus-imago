@@ -308,13 +308,13 @@ describe("CustomImageUploader", () => {
     }
   });
 
-  it("applies custom className when provided", () => {
-    render(<CustomImageUploader className="custom-class" />);
+  it("applies default button styling", () => {
+    render(<CustomImageUploader />);
     const uploadButton = screen.getByText(/Upload Photo/i);
     expect(uploadButton).toBeDefined();
-    // Button should have the custom className
+    // Button should have default dark styling
     const buttonElement = uploadButton.closest("button");
-    expect(buttonElement?.classList.contains("custom-class")).toBe(true);
+    expect(buttonElement?.classList.contains("bg-primary")).toBe(true);
   });
 
   it("shows upload icon on upload button", () => {

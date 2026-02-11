@@ -646,7 +646,6 @@ export function CustomImageUploader({
         <Button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className={className}
         >
           {isUploading ? (
             <>
