@@ -57,7 +57,7 @@ export function ProcessTimeline() {
                   <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-gray-100">
                     {step.title}
                   </h3>
-                  <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 max-w-[180px]">
+                  <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 max-w-45">
                     {step.description}
                   </p>
                 </div>

@@ -194,8 +194,13 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    // App should be wrapped in a div with min-h-screen and flex-col
+    // App should be wrapped in a div with h-screen and flex flex-col
     const appWrapper = container.firstChild as HTMLElement;
-    expect(appWrapper).toHaveClass("min-h-screen", "flex-col");
+    expect(appWrapper).toHaveClass(
+      "h-screen",
+      "flex",
+      "flex-col",
+      "overflow-hidden",
+    );
   });
 });
