@@ -10,7 +10,7 @@ export function LandingPage() {
       style={{ backgroundImage: `url(${bgImage})` }}
     >
       {/* First container: Hero section + CTA button */}
-      <div className="text-center space-y-8 md:space-y-10 bg-black/5 rounded-xl p-6 md:p-8 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto mb-4 md:mb-6">
+      <div className="text-center space-y-8 md:space-y-10 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto mb-4 md:mb-6">
         <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
           Paint your photo
         </h1>
