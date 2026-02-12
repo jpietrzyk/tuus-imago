@@ -39,7 +39,7 @@ export function ProcessTimeline() {
 
         <div className="relative">
           {/* Timeline line (desktop only) */}
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 -translate-y-1/2 rounded-full" />
+          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-linear-to-r from-primary/20 via-primary to-primary/20 -translate-y-1/2 rounded-full" />
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-4 relative">
             {steps.map((step, index) => (
@@ -48,7 +48,7 @@ export function ProcessTimeline() {
                 className="relative flex flex-col items-center text-center space-y-3"
               >
                 {/* Icon circle */}
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-linear-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
                   {step.icon}
                 </div>
 
