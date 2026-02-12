@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Upload } from "lucide-react";
 import bgImage from "@/assets/bg_v1.jpg";
 import { Button } from "@/components/ui/button";
 import { ProcessTimeline } from "@/components/process-timeline";
@@ -16,11 +17,8 @@ export function LandingPage() {
         </h1>
         <p className="text-base md:text-lg text-white/80 drop-shadow-md max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
           We print your AI-enhanced images on professional canvas with a
-          beautiful beveled edge
-        </p>
-        <p className="text-base md:text-lg text-white/80 drop-shadow-md max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-          Real looking paintings crafted with museum-quality materials for
-          lasting beauty
+          beautiful beveled edge. Real looking paintings crafted with
+          museum-quality materials for lasting beauty.
         </p>
       </div>
 
@@ -31,6 +29,7 @@ export function LandingPage() {
             size="lg"
             className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
           >
+            <Upload className="w-6 h-6 mr-3" />
             Upload Your Photo
           </Button>
         </Link>

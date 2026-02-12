@@ -64,10 +64,10 @@ describe("ProcessTimeline Component", () => {
     expect(innerContainer).toBeInTheDocument();
   });
 
-  it("should have white color with drop shadow on heading", () => {
+  it("should have dark color on heading", () => {
     const { container } = render(<ProcessTimeline />);
     const heading = container.querySelector("h2");
-    expect(heading).toHaveClass("text-white", "drop-shadow-lg");
+    expect(heading).toHaveClass("text-gray-900", "dark:text-gray-100");
   });
 
   it("should have gradient background on timeline line (desktop)", () => {
