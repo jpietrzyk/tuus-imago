@@ -1,34 +1,42 @@
 import { Link } from "react-router-dom";
+import { Upload } from "lucide-react";
 import bgImage from "@/assets/bg_v1.jpg";
 import { Button } from "@/components/ui/button";
+import { ProcessTimeline } from "@/components/process-timeline";
 
 export function LandingPage() {
   return (
     <div
-      className="flex-1 bg-cover bg-center flex items-center justify-center px-2 py-4"
+      className="flex-1 bg-cover bg-center px-2 pt-12 md:pt-16 pb-2 flex flex-col items-center justify-between overflow-hidden"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      <div className="text-center space-y-8 bg-black/10 backdrop-blur-md rounded-xl p-8 md:p-12 w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto">
-        <h1 className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg">
+      {/* First section: Hero section */}
+      <div className="text-center space-y-8 md:space-y-10 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+        <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
           Paint your photo
         </h1>
-        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-12 md:mt-20 mb-0">
+        <p className="text-base md:text-lg text-white/80 drop-shadow-md max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
           We print your AI-enhanced images on professional canvas with a
-          beautiful beveled edge
+          beautiful beveled edge. Real looking paintings crafted with
+          museum-quality materials for lasting beauty.
         </p>
-        <p className="text-lg md:text-xl text-white/80 drop-shadow-md max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto mt-2">
-          Real looking paintings crafted with museum-quality materials for
-          lasting beauty
-        </p>
-        <Link to="/upload" className="mt-40 md:mt-48">
+      </div>
+
+      {/* Second section: CTA button */}
+      <div className="text-center w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+        <Link to="/upload">
           <Button
             size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-8 font-semibold shadow-2xl"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
           >
+            <Upload className="w-6 h-6 mr-3" />
             Upload Your Photo
           </Button>
         </Link>
       </div>
+
+      {/* Third section: Timeline */}
+      <ProcessTimeline />
     </div>
   );
 }

@@ -70,7 +70,6 @@ export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
   buttonText = "Upload Photo",
-  className,
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

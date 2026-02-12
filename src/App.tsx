@@ -9,7 +9,7 @@ import { CheckoutPage } from "./pages/checkout";
 // Main App Component with Routes
 export function App() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/upload" element={<UploadPage />} />
