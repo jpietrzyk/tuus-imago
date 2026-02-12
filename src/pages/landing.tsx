@@ -5,34 +5,56 @@ import { ProcessTimeline } from "@/components/process-timeline";
 
 export function LandingPage() {
   return (
-    <div className="flex-1 px-2 pt-12 md:pt-16 pb-2 flex flex-col items-center justify-between overflow-hidden">
-      {/* First section: Hero section */}
-      <div className="text-center space-y-8 md:space-y-10 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-        <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
-          Paint your photo
-        </h1>
-        <p className="text-base md:text-lg text-white/80 drop-shadow-md max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-          We print your AI-enhanced images on professional canvas with a
-          beautiful beveled edge. Real looking paintings crafted with
-          museum-quality materials for lasting beauty.
-        </p>
-      </div>
-
-      {/* Second section: CTA button */}
-      <div className="text-center w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-        <Link to="/upload">
-          <Button
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
+    <>
+      <div className="flex-1 px-2 pb-2">
+        {/* Header - Top section */}
+        <div className="flex-shrink-0 px-2 pt-12 md:pt-16">
+          <Link
+            to="/"
+            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
           >
-            <Upload className="w-6 h-6 mr-3" />
-            Upload Your Photo
-          </Button>
-        </Link>
+            ← Back to Home
+          </Link>
+        </div>
+
+        {/* Main content area - takes up remaining space */}
+        <div className="flex-1 min-h-0">
+          {/* Hero section */}
+          <div className="pt-16 text-center space-y-8 md:space-y-10 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
+              Paint your photo
+            </h1>
+            <p className="text-base md:text-lg text-white/80 drop-shadow-md max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+              We print your AI-enhanced images on professional canvas with a
+              beautiful beveled edge. Real looking paintings crafted with
+              museum-quality materials for lasting beauty.
+            </p>
+          </div>
+
+          {/* CTA button section */}
+          <div className="py-12 text-center w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+            <Link to="/upload">
+              <Button
+                size="lg"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
+              >
+                <Upload className="w-6 h-6 mr-3" />
+                Upload Your Photo
+              </Button>
+            </Link>
+          </div>
+
+          {/* Timeline section */}
+          <div className="py-12 mb-8 text-center w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+            <ProcessTimeline />
+          </div>
+        </div>
       </div>
 
-      {/* Third section: Timeline */}
-      <ProcessTimeline />
-    </div>
+      {/* Footer - Fixed at bottom */}
+      <div className="flex-shrink-0">
+        {/* Spacer to push footer to bottom */}
+      </div>
+    </>
   );
 }
