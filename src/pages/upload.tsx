@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import { CustomImageUploader } from "@/components/custom-image-uploader";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   CheckCircle2,
   AlertCircle,
@@ -87,11 +82,6 @@ export function UploadPage() {
     >
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
         <Card className="bg-black/10 backdrop-blur-md shadow-2xl">
-          <CardHeader className="text-center">
-            <CardDescription className="text-lg text-gray-600">
-              Upload your photo for AI enhancement and canvas printing
-            </CardDescription>
-          </CardHeader>
           <CardContent className="space-y-6">
             {/* Status Messages */}
             {isSuccess && (
