@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import {
   Upload,
+  Camera,
   RotateCw,
   FlipHorizontal,
   FlipVertical,
@@ -52,7 +53,6 @@ interface CustomImageUploaderProps {
     transformations: ImageTransformations,
   ) => void;
   onUploadError?: (error: string) => void;
-  buttonText?: string;
   className?: string;
 }
 
@@ -69,9 +69,9 @@ const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
 export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
-  buttonText = "Upload Photo",
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [transformations, setTransformations] = useState<ImageTransformations>(
     DEFAULT_TRANSFORMATIONS,
@@ -96,6 +96,7 @@ export function CustomImageUploader({
     contrast: true,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [croppedCanvasUrl, setCroppedCanvasUrl] = useState<string | null>(null);
@@ -111,6 +112,43 @@ export function CustomImageUploader({
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
+      if (
+        file &&
+        (file.type === "image/jpeg" ||
+          file.type === "image/png" ||
+          file.type === "image/webp")
+      ) {
+        if (file.size > 10 * 1024 * 1024) {
+          onUploadError?.("File size exceeds 10MB limit");
+          return;
+        }
+        setSelectedFile(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        setTransformations(DEFAULT_TRANSFORMATIONS);
+        setStep("crop");
+        setCropArea({ x: 0, y: 0, width: 0, height: 0 });
+      }
+    },
+    [onUploadError],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+
+      const file = e.dataTransfer.files?.[0];
       if (
         file &&
         (file.type === "image/jpeg" ||
@@ -447,6 +485,9 @@ export function CustomImageUploader({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = "";
+      }
     } catch (error) {
       onUploadError?.(error instanceof Error ? error.message : "Upload failed");
     } finally {
@@ -470,6 +511,9 @@ export function CustomImageUploader({
     setCropArea({ x: 0, y: 0, width: 0, height: 0 });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
     }
   }, []);
 
@@ -634,7 +678,21 @@ export function CustomImageUploader({
   // If no file is selected, show the upload button
   if (!selectedFile || !previewUrl) {
     return (
-      <div>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
+        className={`
+          border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
+          w-full min-h-96 flex items-center justify-center cursor-pointer relative
+          ${
+            isDragOver
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25 hover:border-muted-foreground/50 bg-muted/20"
+          }
+        `}
+      >
         <input
           ref={fileInputRef}
           type="file"
@@ -642,21 +700,40 @@ export function CustomImageUploader({
           onChange={handleFileSelect}
           className="hidden"
         />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <div className="space-y-4 flex flex-col items-center justify-center h-full">
+          <div
+            className={`
+              w-16 h-16 rounded-full mx-auto flex items-center justify-center
+              ${isDragOver ? "bg-primary text-primary-foreground" : "bg-muted"}
+            `}
+          >
+            <Upload className="h-8 w-8" />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {isDragOver
+              ? "Drop your file here"
+              : "Click to upload or drag and drop your image here"}
+          </p>
+        </div>
         <Button
-          onClick={() => fileInputRef.current?.click()}
+          onClick={(e) => {
+            e.stopPropagation();
+            cameraInputRef.current?.click();
+          }}
           disabled={isUploading}
+          variant="outline"
+          size="icon"
+          className="absolute bottom-4 right-4 w-12 h-12"
         >
-          {isUploading ? (
-            <>
-              <span className="animate-spin mr-2">⏳</span>
-              Processing...
-            </>
-          ) : (
-            <>
-              <Upload className="mr-2 h-4 w-4" />
-              {buttonText}
-            </>
-          )}
+          <Camera className="h-6 w-6" />
         </Button>
       </div>
     );

@@ -40,7 +40,7 @@ describe("ProcessTimeline Component", () => {
   it("should render 4 icon circles", () => {
     const { container } = render(<ProcessTimeline />);
     const iconCircles = container.querySelectorAll(
-      '[class*="bg-gradient-to-br from-primary to-primary/80"]',
+      '[class*="bg-linear-to-br from-primary to-primary/80"]',
     );
     expect(iconCircles).toHaveLength(4);
   });
@@ -72,7 +72,7 @@ describe("ProcessTimeline Component", () => {
 
   it("should have gradient background on timeline line (desktop)", () => {
     const { container } = render(<ProcessTimeline />);
-    const timelineLine = container.querySelector(".bg-gradient-to-r");
+    const timelineLine = container.querySelector(".bg-linear-to-r");
     expect(timelineLine).toBeInTheDocument();
   });
 
