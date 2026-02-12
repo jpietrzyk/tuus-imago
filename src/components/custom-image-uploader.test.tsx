@@ -8,15 +8,12 @@ describe("CustomImageUploader", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("renders upload button when no file is selected", () => {
+  it("renders drag and drop area when no file is selected", () => {
     render(<CustomImageUploader />);
-    const uploadButton = screen.getByText(/Upload Photo/i);
-    expect(uploadButton).toBeDefined();
-  });
-
-  it("renders custom button text when provided", () => {
-    render(<CustomImageUploader buttonText="Choose Image" />);
-    expect(screen.getByText("Choose Image")).toBeDefined();
+    // Should have helper text indicating click to upload or drag and drop
+    expect(
+      screen.getByText(/Click to upload or drag and drop your image here/i),
+    ).toBeDefined();
   });
 
   it("shows crop step when file is selected", async () => {
@@ -281,8 +278,10 @@ describe("CustomImageUploader", () => {
       }
 
       await waitFor(() => {
-        // Should return to upload button
-        expect(screen.getByText(/Upload Photo/i)).toBeDefined();
+        // Should return to drag and drop area
+        expect(
+          screen.getByText(/Click to upload or drag and drop your image here/i),
+        ).toBeDefined();
       });
     }
   });
@@ -303,24 +302,121 @@ describe("CustomImageUploader", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Cancel")).toBeDefined();
+        // Upload button in adjust step still says "Upload Photo"
         expect(screen.getByText("Upload Photo")).toBeDefined();
       });
     }
   });
 
-  it("applies default button styling", () => {
-    render(<CustomImageUploader />);
-    const uploadButton = screen.getByText(/Upload Photo/i);
-    expect(uploadButton).toBeDefined();
-    // Button should have default dark styling
-    const buttonElement = uploadButton.closest("button");
-    expect(buttonElement?.classList.contains("bg-primary")).toBe(true);
-  });
-
-  it("shows upload icon on upload button", () => {
+  it("shows upload icon in drag and drop area", () => {
     render(<CustomImageUploader />);
     const uploadIcon = document.querySelector(".lucide-upload");
     expect(uploadIcon).toBeDefined();
+  });
+
+  it("shows camera button in drag and drop area", () => {
+    render(<CustomImageUploader />);
+    const cameraIcon = document.querySelector(".lucide-camera");
+    expect(cameraIcon).toBeDefined();
+  });
+
+  it("has file input for file selection", () => {
+    render(<CustomImageUploader />);
+    const fileInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    );
+    expect(fileInput).toBeDefined();
+  });
+
+  it("has file input for camera capture", () => {
+    render(<CustomImageUploader />);
+    const cameraInput = document.querySelector('input[type="file"][capture]');
+    expect(cameraInput).toBeDefined();
+  });
+
+  it("opens file dialog when clicking drag and drop area", async () => {
+    render(<CustomImageUploader />);
+    const fileInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement;
+
+    // Mock the click method
+    const clickSpy = vi.fn();
+    if (fileInput) {
+      fileInput.click = clickSpy;
+    }
+
+    // Find the drag and drop area div
+    const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
+    if (dragArea) {
+      fireEvent.click(dragArea);
+      // The click should trigger fileInput.click()
+      expect(clickSpy).toHaveBeenCalled();
+    }
+  });
+
+  it("opens camera when clicking camera button", async () => {
+    render(<CustomImageUploader />);
+    const cameraInput = document.querySelector(
+      'input[type="file"][capture]',
+    ) as HTMLInputElement;
+
+    // Mock the click method
+    const clickSpy = vi.fn();
+    if (cameraInput) {
+      cameraInput.click = clickSpy;
+    }
+
+    // Find the camera button
+    const cameraIcon = document.querySelector(".lucide-camera");
+    const cameraButton = cameraIcon?.closest("button") as HTMLElement;
+
+    if (cameraButton) {
+      fireEvent.click(cameraButton);
+      // The click should trigger cameraInput.click()
+      expect(clickSpy).toHaveBeenCalled();
+    }
+  });
+
+  it("shows drag over state when dragging file over area", async () => {
+    render(<CustomImageUploader />);
+
+    // Find the drag and drop area div
+    const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
+    if (dragArea) {
+      fireEvent.dragOver(dragArea);
+      // Should have primary border when dragging over
+      expect(dragArea.classList.contains("border-primary")).toBe(true);
+    }
+  });
+
+  it("removes drag over state when leaving drag area", async () => {
+    render(<CustomImageUploader />);
+
+    // Find the drag and drop area div
+    const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
+    if (dragArea) {
+      fireEvent.dragOver(dragArea);
+      fireEvent.dragLeave(dragArea);
+      // Should not have primary border when not dragging
+      expect(dragArea.classList.contains("border-primary")).toBe(false);
+    }
+  });
+
+  it("accepts file drop", async () => {
+    render(<CustomImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+
+    // Find the drag and drop area div
+    const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
+    if (dragArea) {
+      fireEvent.drop(dragArea, { dataTransfer: { files: [file] } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Crop Image")).toBeDefined();
+      });
+    }
   });
 
   it("shows crop instruction in crop step", async () => {

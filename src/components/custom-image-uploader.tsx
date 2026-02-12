@@ -685,7 +685,7 @@ export function CustomImageUploader({
         onClick={() => !isUploading && fileInputRef.current?.click()}
         className={`
           border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-          w-full min-h-96 flex items-center justify-center cursor-pointer
+          w-full min-h-96 flex items-center justify-center cursor-pointer relative
           ${
             isDragOver
               ? "border-primary bg-primary/5"
@@ -708,7 +708,7 @@ export function CustomImageUploader({
           onChange={handleFileSelect}
           className="hidden"
         />
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col items-center justify-center h-full">
           <div
             className={`
               w-16 h-16 rounded-full mx-auto flex items-center justify-center
@@ -717,26 +717,24 @@ export function CustomImageUploader({
           >
             <Upload className="h-8 w-8" />
           </div>
-          <div className="space-y-3">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                cameraInputRef.current?.click();
-              }}
-              disabled={isUploading}
-              variant="outline"
-              className="w-full"
-            >
-              <Camera className="mr-2 h-4 w-4" />
-              Camera
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              {isDragOver
-                ? "Drop your file here"
-                : "Click to upload or drag and drop your image here"}
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            {isDragOver
+              ? "Drop your file here"
+              : "Click to upload or drag and drop your image here"}
+          </p>
         </div>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            cameraInputRef.current?.click();
+          }}
+          disabled={isUploading}
+          variant="outline"
+          size="icon"
+          className="absolute bottom-4 right-4 w-12 h-12"
+        >
+          <Camera className="h-6 w-6" />
+        </Button>
       </div>
     );
   }

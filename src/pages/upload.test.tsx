@@ -6,7 +6,7 @@ import type { ImageTransformations } from "./upload";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
 
 describe("UploadPage Component", () => {
-  it("should render the page description", () => {
+  it("should render drag and drop area", () => {
     render(
       <MemoryRouter>
         <UploadPage />
@@ -14,22 +14,22 @@ describe("UploadPage Component", () => {
     );
 
     expect(
-      screen.getByText(
-        /Upload your photo for AI enhancement and canvas printing/i,
-      ),
+      screen.getByText(/Click to upload or drag and drop your image here/i),
     ).toBeInTheDocument();
   });
 
-  it("should render the upload button", () => {
+  it("should render camera button", () => {
     render(
       <MemoryRouter>
         <UploadPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("button", { name: /Upload Your Photo/i }),
-    ).toBeInTheDocument();
+    // Check for camera icon button using the icon class
+    const cameraButton = document
+      .querySelector(".lucide-camera")
+      ?.closest("button");
+    expect(cameraButton).toBeInTheDocument();
   });
 
   it("should render supported formats text", () => {
@@ -117,7 +117,7 @@ describe("UploadPage Component", () => {
   // Integration-style tests for transformations feature
   describe("UploadPage Transformations Feature", () => {
     it("should handle transformations in handleUploadSuccess callback", () => {
-      // This verifies that the function signature accepts transformations
+      // This verifies that function signature accepts transformations
       const mockUploadResult: UploadResult = {
         event: "success",
         info: {
@@ -143,14 +143,14 @@ describe("UploadPage Component", () => {
         blur: 2,
       };
 
-      // Verify the types are compatible
+      // Verify types are compatible
       expect(mockUploadResult).toBeDefined();
       expect(mockTransformations).toBeDefined();
       expect(mockTransformations.rotation).toBe(45);
     });
 
     it("should display all transformation properties in UI", () => {
-      // This test ensures that all transformation properties are accounted for in the UI
+      // This test ensures that all transformation properties are accounted for in UI
       const transformations: ImageTransformations = {
         rotation: 0,
         flipHorizontal: false,

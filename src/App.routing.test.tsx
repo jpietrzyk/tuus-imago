@@ -117,7 +117,7 @@ describe("App Component Routing", () => {
 
     // Check for upload page elements
     expect(
-      screen.getByRole("button", { name: /upload your photo/i }),
+      screen.getByText(/Click to upload or drag and drop your image here/i),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/supports jpg, png, and webp/i),
