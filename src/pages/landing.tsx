@@ -1,15 +1,11 @@
 import { Link } from "react-router-dom";
 import { Upload } from "lucide-react";
-import bgImage from "@/assets/bg_v1.jpg";
 import { Button } from "@/components/ui/button";
 import { ProcessTimeline } from "@/components/process-timeline";
 
 export function LandingPage() {
   return (
-    <div
-      className="flex-1 bg-cover bg-center px-2 pt-12 md:pt-16 pb-2 flex flex-col items-center justify-between overflow-hidden"
-      style={{ backgroundImage: `url(${bgImage})` }}
-    >
+    <div className="flex-1 px-2 pt-12 md:pt-16 pb-2 flex flex-col items-center justify-between overflow-hidden">
       {/* First section: Hero section */}
       <div className="text-center space-y-8 md:space-y-10 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
         <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">

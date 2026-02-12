@@ -8,7 +8,6 @@ import {
   Image as ImageIcon,
   Sliders,
 } from "lucide-react";
-import bgImage from "@/assets/bg_v1.jpg";
 
 export interface ImageTransformations {
   rotation: number;
@@ -76,10 +75,7 @@ export function UploadPage() {
   };
 
   return (
-    <div
-      className="flex-1 bg-cover bg-center flex items-center justify-center p-4 transition-all duration-500 ease-in-out"
-      style={{ backgroundImage: `url(${bgImage})` }}
-    >
+    <div className="flex-1 flex items-center justify-center p-4 transition-all duration-500 ease-in-out">
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
         <Card className="bg-black/10 backdrop-blur-md shadow-2xl">
           <CardContent className="space-y-6">

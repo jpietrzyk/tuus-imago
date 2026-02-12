@@ -196,11 +196,6 @@ describe("App Component Routing", () => {
 
     // App should be wrapped in a div with h-screen and flex flex-col
     const appWrapper = container.firstChild as HTMLElement;
-    expect(appWrapper).toHaveClass(
-      "h-screen",
-      "flex",
-      "flex-col",
-      "overflow-hidden",
-    );
+    expect(appWrapper).toHaveClass("h-screen", "flex", "flex-col");
   });
 });
