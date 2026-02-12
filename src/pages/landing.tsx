@@ -8,7 +8,7 @@ export function LandingPage() {
     <>
       <div className="flex-1 px-2 pb-2">
         {/* Header - Top section */}
-        <div className="flex-shrink-0 px-2 pt-12 md:pt-16">
+        <div className="shrink-0 px-2 pt-12 md:pt-16">
           <Link
             to="/"
             className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
@@ -50,11 +50,8 @@ export function LandingPage() {
           </div>
         </div>
       </div>
-
-      {/* Footer - Fixed at bottom */}
-      <div className="flex-shrink-0">
-        {/* Spacer to push footer to bottom */}
-      </div>
+      S{/* Footer - Fixed at bottom */}
+      <div className="shrink-0">{/* Spacer to push footer to bottom */}</div>
     </>
   );
 }
