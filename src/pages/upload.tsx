@@ -105,7 +105,6 @@ export function UploadPage() {
               <CustomImageUploader
                 onUploadSuccess={handleUploadSuccess}
                 onUploadError={handleUploadError}
-                buttonText="Upload Your Photo"
                 className="w-full max-w-sm py-6 text-lg font-semibold"
               />
 

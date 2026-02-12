@@ -6,6 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import {
   Upload,
+  Camera,
   RotateCw,
   FlipHorizontal,
   FlipVertical,
@@ -52,7 +53,6 @@ interface CustomImageUploaderProps {
     transformations: ImageTransformations,
   ) => void;
   onUploadError?: (error: string) => void;
-  buttonText?: string;
   className?: string;
 }
 
@@ -69,7 +69,6 @@ const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
 export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
-  buttonText = "Upload Photo",
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -97,6 +96,7 @@ export function CustomImageUploader({
     contrast: true,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [croppedCanvasUrl, setCroppedCanvasUrl] = useState<string | null>(null);
@@ -485,6 +485,9 @@ export function CustomImageUploader({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = "";
+      }
     } catch (error) {
       onUploadError?.(error instanceof Error ? error.message : "Upload failed");
     } finally {
@@ -508,6 +511,9 @@ export function CustomImageUploader({
     setCropArea({ x: 0, y: 0, width: 0, height: 0 });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
     }
   }, []);
 
@@ -676,9 +682,10 @@ export function CustomImageUploader({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
         className={`
           border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-          w-full min-h-96 flex items-center justify-center
+          w-full min-h-96 flex items-center justify-center cursor-pointer
           ${
             isDragOver
               ? "border-primary bg-primary/5"
@@ -693,6 +700,14 @@ export function CustomImageUploader({
           onChange={handleFileSelect}
           className="hidden"
         />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
         <div className="space-y-4">
           <div
             className={`
@@ -702,28 +717,23 @@ export function CustomImageUploader({
           >
             <Upload className="h-8 w-8" />
           </div>
-          <div>
+          <div className="space-y-3">
             <Button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(e) => {
+                e.stopPropagation();
+                cameraInputRef.current?.click();
+              }}
               disabled={isUploading}
-              className="mb-3"
+              variant="outline"
+              className="w-full"
             >
-              {isUploading ? (
-                <>
-                  <span className="animate-spin mr-2">⏳</span>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {buttonText}
-                </>
-              )}
+              <Camera className="mr-2 h-4 w-4" />
+              Camera
             </Button>
             <p className="text-sm text-muted-foreground">
               {isDragOver
                 ? "Drop your file here"
-                : "or drag and drop your image here"}
+                : "Click to upload or drag and drop your image here"}
             </p>
           </div>
         </div>
