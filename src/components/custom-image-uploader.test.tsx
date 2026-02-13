@@ -103,6 +103,17 @@ describe("CustomImageUploader", () => {
         fireEvent.click(confirmButton);
       });
 
+      // Click the "Image Adjustments" collapsible trigger to expand it
+      await waitFor(() => {
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        expect(adjustmentsButton).toBeDefined();
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
+      });
+
       await waitFor(() => {
         expect(screen.getByText("Rotation")).toBeDefined();
       });
@@ -121,6 +132,17 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const confirmButton = screen.getByText("Confirm Crop");
         fireEvent.click(confirmButton);
+      });
+
+      // Click the "Image Adjustments" collapsible trigger to expand it
+      await waitFor(() => {
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        expect(adjustmentsButton).toBeDefined();
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
       });
 
       await waitFor(() => {
@@ -143,8 +165,20 @@ describe("CustomImageUploader", () => {
         fireEvent.click(confirmButton);
       });
 
+      // Click the "Image Adjustments" collapsible trigger to expand it
       await waitFor(() => {
-        expect(screen.getByText("Filters")).toBeDefined();
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        expect(adjustmentsButton).toBeDefined();
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
+      });
+
+      // Look for Black & White text (instead of "Filters" which was the header)
+      await waitFor(() => {
+        expect(screen.getByText("Black & White")).toBeDefined();
       });
     }
   });
@@ -161,6 +195,17 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const confirmButton = screen.getByText("Confirm Crop");
         fireEvent.click(confirmButton);
+      });
+
+      // Click the "Image Adjustments" collapsible trigger to expand it
+      await waitFor(() => {
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        expect(adjustmentsButton).toBeDefined();
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
       });
 
       await waitFor(() => {
@@ -183,6 +228,17 @@ describe("CustomImageUploader", () => {
         fireEvent.click(confirmButton);
       });
 
+      // Click the "Image Adjustments" collapsible trigger to expand it
+      await waitFor(() => {
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        expect(adjustmentsButton).toBeDefined();
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
+      });
+
       await waitFor(() => {
         expect(screen.getByText("Contrast")).toBeDefined();
       });
@@ -203,21 +259,22 @@ describe("CustomImageUploader", () => {
         fireEvent.click(confirmButton);
       });
 
+      // Find "Image Adjustments" button (the collapsible trigger)
       await waitFor(() => {
-        // Find rotation section button
-        const rotationSection = Array.from(
+        const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Rotation"));
-        expect(rotationSection).toBeDefined();
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        expect(adjustmentsButton).toBeDefined();
 
         // Click to expand
-        if (rotationSection) {
-          fireEvent.click(rotationSection);
-
-          // Check that chevron direction changes (should now be up)
-          const chevronUp = document.querySelector(".lucide-chevron-up");
-          expect(chevronUp).toBeDefined();
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
         }
+      });
+
+      // After clicking, the Rotation content should be visible
+      await waitFor(() => {
+        expect(screen.getByText("Rotation")).toBeDefined();
       });
     }
   });
@@ -626,14 +683,14 @@ describe("CustomImageUploader", () => {
         fireEvent.click(confirmButton);
       });
 
-      // Expand rotation section and apply rotation
+      // Expand the Image Adjustments collapsible first
       await waitFor(() => {
-        const rotationSection = Array.from(
+        const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Rotation"));
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
 
-        if (rotationSection) {
-          fireEvent.click(rotationSection);
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
 
           // Find and click the rotate button
           const rotateButtons = Array.from(document.querySelectorAll("button"));
@@ -678,6 +735,16 @@ describe("CustomImageUploader", () => {
       });
 
       // Just verify we reach the adjust step without errors
+      // First expand the collapsible to check content
+      await waitFor(() => {
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
+      });
+
       await waitFor(() => {
         expect(screen.getByText("Rotation")).toBeDefined();
       });
@@ -745,6 +812,16 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const confirmButton = screen.getByText("Confirm Crop");
         fireEvent.click(confirmButton);
+      });
+
+      // Click the "Image Adjustments" collapsible trigger to expand it
+      await waitFor(() => {
+        const adjustmentsButton = Array.from(
+          document.querySelectorAll("button"),
+        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        if (adjustmentsButton) {
+          fireEvent.click(adjustmentsButton);
+        }
       });
 
       // Verify adjust step is displayed with filter controls
