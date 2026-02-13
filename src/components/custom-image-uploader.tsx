@@ -5,6 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Upload,
   Camera,
   RotateCw,
@@ -18,7 +23,6 @@ import {
   Droplets,
   Zap,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { cloudinaryConfig } from "@/lib/cloudinary";
 
@@ -88,13 +92,7 @@ export function CustomImageUploader({
     width: 0,
     height: 0,
   });
-  const [collapsedSections, setCollapsedSections] = useState({
-    rotation: true,
-    flip: true,
-    filters: true,
-    brightness: true,
-    contrast: true,
-  });
+  const [isAdjustmentsOpen, setIsAdjustmentsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -657,16 +655,6 @@ export function CustomImageUploader({
     };
   }, [previewUrl]);
 
-  const toggleSection = useCallback(
-    (section: keyof typeof collapsedSections) => {
-      setCollapsedSections((prev) => ({
-        ...prev,
-        [section]: !prev[section],
-      }));
-    },
-    [],
-  );
-
   const hasTransformations = Object.values(transformations).some(
     (val) =>
       val !==
@@ -994,195 +982,159 @@ export function CustomImageUploader({
             <Separator />
 
             {/* Transformation Controls */}
-            <div className="space-y-3">
-              {/* Rotation Controls */}
-              <div className="border rounded-lg overflow-hidden">
+            <Collapsible
+              open={isAdjustmentsOpen}
+              onOpenChange={setIsAdjustmentsOpen}
+            >
+              <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  onClick={() => toggleSection("rotation")}
-                  className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
+                  className="w-full px-4 py-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
                 >
                   <Label className="flex items-center gap-2 cursor-pointer">
-                    <RotateCw className="h-4 w-4" />
-                    <span>Rotation</span>
+                    <Sliders className="h-4 w-4" />
+                    <span>Image Adjustments</span>
+                  </Label>
+                  <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-4">
+                {/* Rotation Controls */}
+                <div className="space-y-3">
+                  <Label className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <RotateCw className="h-4 w-4" />
+                      Rotation
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       {transformations.rotation}°
                     </span>
                   </Label>
-                  {collapsedSections.rotation ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!collapsedSections.rotation && (
-                  <div className="p-4 space-y-3 bg-background">
-                    <div className="flex items-center gap-4">
-                      <Slider
-                        min={0}
-                        max={360}
-                        value={transformations.rotation}
-                        onChange={(value) =>
-                          setTransformations((prev) => ({
-                            ...prev,
-                            rotation: value,
-                          }))
-                        }
-                        className="flex-1"
-                      />
-                      <div className="flex gap-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleRotate(-90)}
-                          title="Rotate -90°"
-                        >
-                          <RotateCw
-                            className="h-4 w-4"
-                            style={{ transform: "scaleX(-1)" }}
-                          />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleRotate(90)}
-                          title="Rotate +90°"
-                        >
-                          <RotateCw className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Flip Controls */}
-              <div className="border rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => toggleSection("flip")}
-                  className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                >
-                  <Label className="cursor-pointer">Flip</Label>
-                  {collapsedSections.flip ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!collapsedSections.flip && (
-                  <div className="p-4 space-y-3 bg-background">
-                    <div className="flex gap-2">
+                  <div className="flex items-center gap-4">
+                    <Slider
+                      min={0}
+                      max={360}
+                      value={transformations.rotation}
+                      onChange={(value) =>
+                        setTransformations((prev) => ({
+                          ...prev,
+                          rotation: value,
+                        }))
+                      }
+                      className="flex-1"
+                    />
+                    <div className="flex gap-1">
                       <Button
                         type="button"
-                        variant={
-                          transformations.flipHorizontal ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={handleFlipHorizontal}
-                        className="flex-1"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleRotate(-90)}
+                        title="Rotate -90°"
                       >
-                        <FlipHorizontal className="mr-2 h-4 w-4" />
-                        Horizontal
+                        <RotateCw
+                          className="h-4 w-4"
+                          style={{ transform: "scaleX(-1)" }}
+                        />
                       </Button>
                       <Button
                         type="button"
-                        variant={
-                          transformations.flipVertical ? "default" : "outline"
-                        }
-                        size="sm"
-                        onClick={handleFlipVertical}
-                        className="flex-1"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleRotate(90)}
+                        title="Rotate +90°"
                       >
-                        <FlipVertical className="mr-2 h-4 w-4" />
-                        Vertical
+                        <RotateCw className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Filters */}
-              <div className="border rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => toggleSection("filters")}
-                  className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                >
-                  <Label className="flex items-center gap-2 cursor-pointer">
-                    <Sliders className="h-4 w-4" />
-                    <span>Filters</span>
-                  </Label>
-                  {collapsedSections.filters ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!collapsedSections.filters && (
-                  <div className="p-4 space-y-3 bg-background">
-                    {/* Grayscale (Black and White) */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Zap className="h-4 w-4" />
-                          Black & White
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {transformations.grayscale}%
-                        </span>
-                      </Label>
-                      <Slider
-                        min={0}
-                        max={100}
-                        value={transformations.grayscale}
-                        onChange={(value) =>
-                          setTransformations((prev) => ({
-                            ...prev,
-                            grayscale: value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    {/* Blur */}
-                    <div className="space-y-2">
-                      <Label className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <Droplets className="h-4 w-4" />
-                          Blur
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {transformations.blur}px
-                        </span>
-                      </Label>
-                      <Slider
-                        min={0}
-                        max={10}
-                        step={0.5}
-                        value={transformations.blur}
-                        onChange={(value) =>
-                          setTransformations((prev) => ({
-                            ...prev,
-                            blur: value,
-                          }))
-                        }
-                      />
-                    </div>
+                {/* Flip Controls */}
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2">Flip</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={
+                        transformations.flipHorizontal ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={handleFlipHorizontal}
+                      className="flex-1"
+                    >
+                      <FlipHorizontal className="mr-2 h-4 w-4" />
+                      Horizontal
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={
+                        transformations.flipVertical ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={handleFlipVertical}
+                      className="flex-1"
+                    >
+                      <FlipVertical className="mr-2 h-4 w-4" />
+                      Vertical
+                    </Button>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Brightness Control */}
-              <div className="border rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => toggleSection("brightness")}
-                  className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                >
-                  <Label className="flex items-center justify-between cursor-pointer w-full">
+                {/* Filters */}
+                <div className="space-y-4">
+                  {/* Grayscale (Black and White) */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Zap className="h-4 w-4" />
+                        Black & White
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {transformations.grayscale}%
+                      </span>
+                    </Label>
+                    <Slider
+                      min={0}
+                      max={100}
+                      value={transformations.grayscale}
+                      onChange={(value) =>
+                        setTransformations((prev) => ({
+                          ...prev,
+                          grayscale: value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  {/* Blur */}
+                  <div className="space-y-2">
+                    <Label className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Droplets className="h-4 w-4" />
+                        Blur
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {transformations.blur}px
+                      </span>
+                    </Label>
+                    <Slider
+                      min={0}
+                      max={10}
+                      step={0.5}
+                      value={transformations.blur}
+                      onChange={(value) =>
+                        setTransformations((prev) => ({
+                          ...prev,
+                          blur: value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Brightness Control */}
+                <div className="space-y-3">
+                  <Label className="flex items-center justify-between">
                     <span>Brightness</span>
                     <span className="text-sm text-muted-foreground">
                       {transformations.brightness > 0
@@ -1190,37 +1142,22 @@ export function CustomImageUploader({
                         : transformations.brightness}
                     </span>
                   </Label>
-                  {collapsedSections.brightness ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!collapsedSections.brightness && (
-                  <div className="p-4 space-y-3 bg-background">
-                    <Slider
-                      min={-100}
-                      max={100}
-                      value={transformations.brightness}
-                      onChange={(value) =>
-                        setTransformations((prev) => ({
-                          ...prev,
-                          brightness: value,
-                        }))
-                      }
-                    />
-                  </div>
-                )}
-              </div>
+                  <Slider
+                    min={-100}
+                    max={100}
+                    value={transformations.brightness}
+                    onChange={(value) =>
+                      setTransformations((prev) => ({
+                        ...prev,
+                        brightness: value,
+                      }))
+                    }
+                  />
+                </div>
 
-              {/* Contrast Control */}
-              <div className="border rounded-lg overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => toggleSection("contrast")}
-                  className="w-full px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                >
-                  <Label className="flex items-center justify-between cursor-pointer w-full">
+                {/* Contrast Control */}
+                <div className="space-y-3">
+                  <Label className="flex items-center justify-between">
                     <span>Contrast</span>
                     <span className="text-sm text-muted-foreground">
                       {transformations.contrast > 0
@@ -1228,41 +1165,32 @@ export function CustomImageUploader({
                         : transformations.contrast}
                     </span>
                   </Label>
-                  {collapsedSections.contrast ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronUp className="h-4 w-4" />
-                  )}
-                </button>
-                {!collapsedSections.contrast && (
-                  <div className="p-4 space-y-3 bg-background">
-                    <Slider
-                      min={-100}
-                      max={100}
-                      value={transformations.contrast}
-                      onChange={(value) =>
-                        setTransformations((prev) => ({
-                          ...prev,
-                          contrast: value,
-                        }))
-                      }
-                    />
-                  </div>
-                )}
-              </div>
+                  <Slider
+                    min={-100}
+                    max={100}
+                    value={transformations.contrast}
+                    onChange={(value) =>
+                      setTransformations((prev) => ({
+                        ...prev,
+                        contrast: value,
+                      }))
+                    }
+                  />
+                </div>
 
-              {hasTransformations && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleReset}
-                  className="w-full"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Reset All Adjustments
-                </Button>
-              )}
-            </div>
+                {hasTransformations && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleReset}
+                    className="w-full"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Reset All Adjustments
+                  </Button>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
           </>
         )}
       </CardContent>
