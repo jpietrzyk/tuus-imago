@@ -11,9 +11,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/© \d{4} Tuus Imago. All rights reserved./i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/© \d{4} Tuus Imago/i)).toBeInTheDocument();
   });
 
   it("should render About Us link with correct href", () => {
@@ -23,7 +21,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const aboutLink = screen.getByRole("link", { name: /about us/i });
+    const aboutLink = screen.getByRole("link", { name: /o nas/i });
     expect(aboutLink).toBeInTheDocument();
     expect(aboutLink).toHaveAttribute("href", "/about");
   });
@@ -35,7 +33,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const legalLink = screen.getByRole("link", { name: /legal & privacy/i });
+    const legalLink = screen.getByRole("link", { name: /prywatność/i });
     expect(legalLink).toBeInTheDocument();
     expect(legalLink).toHaveAttribute("href", "/legal");
   });
@@ -47,7 +45,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const aboutLink = screen.getByRole("link", { name: /about us/i });
+    const aboutLink = screen.getByRole("link", { name: /o nas/i });
     const icon = aboutLink.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
@@ -59,7 +57,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const legalLink = screen.getByRole("link", { name: /legal & privacy/i });
+    const legalLink = screen.getByRole("link", { name: /prywatność/i });
     const icon = legalLink.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });

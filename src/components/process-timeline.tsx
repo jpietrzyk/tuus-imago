@@ -1,4 +1,5 @@
 import { Upload, Sliders, ShoppingCart, Image } from "lucide-react";
+import { t } from "@/locales/i18n";
 
 interface Step {
   icon: React.ReactNode;
@@ -9,23 +10,23 @@ interface Step {
 const steps: Step[] = [
   {
     icon: <Upload className="w-6 h-6 md:w-8 md:h-8" />,
-    title: "Upload photo",
-    description: "Upload your favorite photo to get started",
+    title: "processTimeline.steps.upload.title",
+    description: "processTimeline.steps.upload.description",
   },
   {
     icon: <Sliders className="w-6 h-6 md:w-8 md:h-8" />,
-    title: "Adjust photo",
-    description: "Fine-tune your image with AI enhancement",
+    title: "processTimeline.steps.adjust.title",
+    description: "processTimeline.steps.adjust.description",
   },
   {
     icon: <ShoppingCart className="w-6 h-6 md:w-8 md:h-8" />,
-    title: "Place an order",
-    description: "Select your canvas size and place your order",
+    title: "processTimeline.steps.order.title",
+    description: "processTimeline.steps.order.description",
   },
   {
     icon: <Image className="w-6 h-6 md:w-8 md:h-8" />,
-    title: "Get your painting",
-    description: "Receive your museum-quality painting at your door",
+    title: "processTimeline.steps.result.title",
+    description: "processTimeline.steps.result.description",
   },
 ];
 
@@ -34,7 +35,7 @@ export function ProcessTimeline() {
     <div className="w-full py-6 md:py-8">
       <div className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 text-gray-900 dark:text-gray-100">
-          How it works
+          {t("processTimeline.title")}
         </h2>
 
         <div className="relative">
@@ -55,10 +56,10 @@ export function ProcessTimeline() {
                 {/* Step content */}
                 <div className="space-y-1">
                   <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-gray-100">
-                    {step.title}
+                    {t(step.title)}
                   </h3>
                   <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 max-w-45">
-                    {step.description}
+                    {t(step.description)}
                   </p>
                 </div>
 

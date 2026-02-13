@@ -1,0 +1,215 @@
+{
+  "common": {
+    "backToHome": "← Back to Home",
+    "copyright": "© {year} Tuus Imago. All rights reserved.",
+    "aboutUs": "About Us",
+    "legalAndPrivacy": "Legal & Privacy",
+    "loading": "Loading...",
+    "processing": "Processing..."
+  },
+  "landing": {
+    "hero": {
+      "title": "Paint your photo",
+      "description": "We print your AI-enhanced images on professional canvas with a beautiful beveled edge. Real looking paintings crafted with museum-quality materials for lasting beauty."
+    },
+    "cta": {
+      "button": "Upload Your Photo"
+    }
+  },
+  "processTimeline": {
+    "title": "How it works",
+    "steps": {
+      "upload": {
+        "title": "Upload photo",
+        "description": "Upload your favorite photo to get started"
+      },
+      "adjust": {
+        "title": "Adjust photo",
+        "description": "Fine-tune your image with AI enhancement"
+      },
+      "order": {
+        "title": "Place an order",
+        "description": "Select your canvas size and place your order"
+      },
+      "result": {
+        "title": "Get your painting",
+        "description": "Receive your museum-quality painting at your door"
+      }
+    }
+  },
+  "about": {
+    "title": "About Us",
+    "subtitle": "Learn more about Tuus Imago and our mission",
+    "mission": {
+      "title": "Our Mission",
+      "description": "At Tuus Imago, we believe that every photo tells a unique story. Our mission is to help you preserve and enhance your most precious memories through cutting-edge AI technology and premium canvas printing services."
+    },
+    "story": {
+      "title": "Our Story",
+      "description": "Founded in 2024, Tuus Imago was born from a passion for photography and a vision to make professional photo enhancement accessible to everyone. We combine years of experience in digital imaging with state-of-the-art artificial intelligence to deliver stunning results."
+    },
+    "whatWeDo": {
+      "title": "What We Do",
+      "aiEnhancement": {
+        "label": "AI Enhancement:",
+        "description": "We use advanced artificial intelligence to automatically enhance your photos, improving colors, sharpness, and overall quality."
+      },
+      "canvasPrinting": {
+        "label": "Canvas Printing:",
+        "description": "Your enhanced photos are printed on premium canvas using archival-quality inks that ensure vibrant colors for generations to come."
+      },
+      "customFraming": {
+        "label": "Custom Framing:",
+        "description": "Choose from a variety of frame options to perfectly complement your artwork and home décor."
+      }
+    },
+    "values": {
+      "title": "Our Values",
+      "qualityFirst": {
+        "label": "Quality First:",
+        "description": "We never compromise on quality, from the enhancement algorithms to the printing process and final delivery."
+      },
+      "customerSatisfaction": {
+        "label": "Customer Satisfaction:",
+        "description": "Your happiness is our priority. We work tirelessly to ensure you love every photo you receive."
+      },
+      "innovation": {
+        "label": "Innovation:",
+        "description": "We continuously invest in the latest AI and imaging technologies to bring you the best results possible."
+      },
+      "sustainability": {
+        "label": "Sustainability:",
+        "description": "We are committed to environmentally responsible practices, from eco-friendly inks to sustainable packaging materials."
+      }
+    },
+    "contact": {
+      "title": "Get in Touch",
+      "description": "Have questions or want to learn more? We'd love to hear from you!",
+      "email": "Email:",
+      "phone": "Phone:",
+      "address": "Address:"
+    },
+    "lastUpdated": "Last updated: February 2025"
+  },
+  "legal": {
+    "title": "Legal Information",
+    "subtitle": "Privacy Policy and Terms of Service",
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "description": "At Tuus Imago, we take your privacy seriously. All uploaded photos are processed securely and are used solely for the purpose of AI enhancement and canvas printing services.",
+      "dataCollection": {
+        "label": "Data Collection:",
+        "description": "We only collect the photos you upload and any necessary contact information for service delivery."
+      },
+      "dataStorage": {
+        "label": "Data Storage:",
+        "description": "Your photos are stored securely on encrypted cloud servers."
+      },
+      "dataUsage": {
+        "label": "Data Usage:",
+        "description": "Photos are used exclusively for processing and delivering your orders. We never share your images with third parties without explicit consent."
+      },
+      "dataRetention": {
+        "label": "Data Retention:",
+        "description": "Your data is retained only as long as necessary to complete your order and provide customer support."
+      }
+    },
+    "termsOfService": {
+      "title": "Terms of Service",
+      "description": "By using our services, you agree to the following terms and conditions.",
+      "serviceUse": {
+        "label": "Service Use:",
+        "description": "You agree to use our AI enhancement and printing services only for lawful purposes and in accordance with these Terms."
+      },
+      "contentOwnership": {
+        "label": "Content Ownership:",
+        "description": "You retain full ownership of all photos you upload. Tuus Imago obtains a limited license to process and deliver your photos."
+      },
+      "refundPolicy": {
+        "label": "Refund Policy:",
+        "description": "Refunds are available within 30 days of delivery if the product quality does not meet our standards."
+      },
+      "limitationOfLiability": {
+        "label": "Limitation of Liability:",
+        "description": "We are not liable for any damages arising from the use of our services beyond the purchase price of your order."
+      }
+    },
+    "contact": {
+      "title": "Contact & Support",
+      "description": "For any questions regarding our privacy policy or terms of service, please contact us:",
+      "email": "Email:",
+      "phone": "Phone:",
+      "address": "Address:"
+    },
+    "lastUpdated": "Last updated: February 2025"
+  },
+  "upload": {
+    "success": "Photo uploaded successfully!",
+    "error": "File size exceeds 10MB limit",
+    "uploadFailed": "Upload failed",
+    "dropFile": "Drop your file here",
+    "clickToUpload": "Click to upload or drag and drop your image here",
+    "fileSupport": "Supports JPG, PNG, and WebP files up to 10MB",
+    "uploadedPhoto": "Uploaded Photo",
+    "dimensions": "Dimensions:",
+    "size": "Size:",
+    "noAdjustments": "No adjustments applied",
+    "appliedAdjustments": "Applied Image Adjustments",
+    "rotation": "Rotation:",
+    "flipHorizontal": "Flip Horizontal",
+    "flipVertical": "Flip Vertical",
+    "brightness": "Brightness:",
+    "contrast": "Contrast:",
+    "grayscale": "Grayscale:",
+    "blur": "Blur:",
+    "loadingPreview": "Loading preview..."
+  },
+  "uploader": {
+    "cropImage": "Crop Image",
+    "adjustImage": "Adjust Image",
+    "dragCropArea": "Drag the crop area to select the region to keep",
+    "confirmCrop": "Confirm Crop",
+    "backToCrop": "Back to Crop",
+    "cancel": "Cancel",
+    "uploadPhoto": "Upload Photo",
+    "uploading": "Uploading...",
+    "imageAdjustments": "Image Adjustments",
+    "rotation": "Rotation",
+    "rotateMinus90": "Rotate -90°",
+    "rotatePlus90": "Rotate +90°",
+    "flip": "Flip",
+    "horizontal": "Horizontal",
+    "vertical": "Vertical",
+    "blackAndWhite": "Black & White",
+    "resetAllAdjustments": "Reset All Adjustments"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "subtitle": "Complete your order details",
+    "orderSuccessful": "Order Successful!",
+    "orderSuccessMessage": "Your order has been placed successfully. You will receive an email confirmation shortly.",
+    "redirecting": "Redirecting to home page...",
+    "shippingInformation": "Shipping Information",
+    "personalInformation": "Personal Information",
+    "fullName": "Full Name *",
+    "fullNamePlaceholder": "Enter your full name",
+    "addressInformation": "Address Information",
+    "streetAddress": "Street Address *",
+    "streetAddressPlaceholder": "Enter your street address",
+    "city": "City",
+    "cityPlaceholder": "Enter your city",
+    "postalCode": "Postal Code",
+    "postalCodePlaceholder": "Enter your postal code",
+    "country": "Country",
+    "countryPlaceholder": "Enter your country",
+    "orderSummary": "Order Summary",
+    "enhancedPhoto": "Enhanced Photo",
+    "canvasPrint": "Canvas Print",
+    "total": "Total",
+    "placeOrder": "Place Order",
+    "requiredFields": "* Required fields. Your information will be used for shipping purposes only.",
+    "errorName": "Please enter your name",
+    "errorAddress": "Please enter your address",
+    "errorGeneric": "Something went wrong. Please try again."
+  }
+}

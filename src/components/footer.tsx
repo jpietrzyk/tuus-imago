@@ -1,5 +1,6 @@
 import { FileText, Info } from "lucide-react";
 import { Link } from "react-router-dom";
+import { t } from "@/locales/i18n";
 
 export function Footer() {
   return (
@@ -8,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Copyright */}
           <div className="text-sm text-gray-600">
-            © {new Date().getFullYear()} Tuus Imago. All rights reserved.
+            {t("common.copyright", { year: new Date().getFullYear() })}
           </div>
 
           {/* Legal Links */}
@@ -18,14 +19,14 @@ export function Footer() {
               className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
             >
               <Info className="h-4 w-4 mr-2" />
-              About Us
+              {t("common.aboutUs")}
             </Link>
             <Link
               to="/legal"
               className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors"
             >
               <FileText className="h-4 w-4 mr-2" />
-              Legal & Privacy
+              {t("common.legalAndPrivacy")}
             </Link>
           </div>
         </div>

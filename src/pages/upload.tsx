@@ -8,6 +8,7 @@ import {
   Image as ImageIcon,
   Sliders,
 } from "lucide-react";
+import { t } from "@/locales/i18n";
 
 export interface ImageTransformations {
   rotation: number;
@@ -83,9 +84,7 @@ export function UploadPage() {
             {isSuccess && (
               <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
                 <CheckCircle2 className="h-5 w-5" />
-                <span className="font-medium">
-                  Photo uploaded successfully!
-                </span>
+                <span className="font-medium">{t("upload.success")}</span>
               </div>
             )}
 
@@ -105,7 +104,7 @@ export function UploadPage() {
               />
 
               <p className="text-sm text-gray-500 text-center">
-                Supports JPG, PNG, and WebP files up to 10MB
+                {t("upload.fileSupport")}
               </p>
             </div>
 
@@ -114,7 +113,7 @@ export function UploadPage() {
               <div className="space-y-3 pt-4 border-t border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                   <ImageIcon className="h-5 w-5" />
-                  Uploaded Photo
+                  {t("upload.uploadedPhoto")}
                 </h3>
                 <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   <img
@@ -126,7 +125,7 @@ export function UploadPage() {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="p-2 bg-gray-50 rounded">
                     <span className="font-medium text-gray-700">
-                      Dimensions:
+                      {t("upload.dimensions")}
                     </span>
                     <span className="ml-2 text-gray-600">
                       {uploadedImage.info.width} × {uploadedImage.info.height}
@@ -134,7 +133,9 @@ export function UploadPage() {
                     </span>
                   </div>
                   <div className="p-2 bg-gray-50 rounded">
-                    <span className="font-medium text-gray-700">Size:</span>
+                    <span className="font-medium text-gray-700">
+                      {t("upload.size")}
+                    </span>
                     <span className="ml-2 text-gray-600">
                       {(uploadedImage.info.bytes / 1024).toFixed(2)} KB
                     </span>
@@ -146,7 +147,7 @@ export function UploadPage() {
                   <div className="pt-4 border-t border-gray-200">
                     <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
                       <Sliders className="h-4 w-4" />
-                      Applied Image Adjustments
+                      {t("upload.appliedAdjustments")}
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       {(transformations.rotation !== 0 ||
@@ -160,7 +161,7 @@ export function UploadPage() {
                           {transformations.rotation !== 0 && (
                             <div className="p-2 bg-blue-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Rotation:
+                                {t("upload.rotation")}
                               </span>
                               <span className="ml-2 text-gray-600">
                                 {transformations.rotation}°
@@ -170,21 +171,21 @@ export function UploadPage() {
                           {transformations.flipHorizontal && (
                             <div className="p-2 bg-blue-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Flip Horizontal
+                                {t("upload.flipHorizontal")}
                               </span>
                             </div>
                           )}
                           {transformations.flipVertical && (
                             <div className="p-2 bg-blue-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Flip Vertical
+                                {t("upload.flipVertical")}
                               </span>
                             </div>
                           )}
                           {transformations.brightness !== 0 && (
                             <div className="p-2 bg-amber-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Brightness:
+                                {t("upload.brightness")}
                               </span>
                               <span className="ml-2 text-gray-600">
                                 {transformations.brightness > 0 ? "+" : ""}
@@ -195,7 +196,7 @@ export function UploadPage() {
                           {transformations.contrast !== 0 && (
                             <div className="p-2 bg-amber-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Contrast:
+                                {t("upload.contrast")}
                               </span>
                               <span className="ml-2 text-gray-600">
                                 {transformations.contrast > 0 ? "+" : ""}
@@ -206,7 +207,7 @@ export function UploadPage() {
                           {transformations.grayscale !== 0 && (
                             <div className="p-2 bg-purple-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Grayscale:
+                                {t("upload.grayscale")}
                               </span>
                               <span className="ml-2 text-gray-600">
                                 {transformations.grayscale}%
@@ -216,7 +217,7 @@ export function UploadPage() {
                           {transformations.blur !== 0 && (
                             <div className="p-2 bg-purple-50 rounded">
                               <span className="font-medium text-gray-700">
-                                Blur:
+                                {t("upload.blur")}
                               </span>
                               <span className="ml-2 text-gray-600">
                                 {transformations.blur}px
@@ -233,7 +234,7 @@ export function UploadPage() {
                         transformations.grayscale === 0 &&
                         transformations.blur === 0 && (
                           <div className="col-span-2 p-2 bg-gray-50 rounded text-center text-gray-500">
-                            No adjustments applied
+                            {t("upload.noAdjustments")}
                           </div>
                         )}
                     </div>
