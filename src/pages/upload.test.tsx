@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
 import type { ImageTransformations } from "./upload";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
+import { tr } from "@/test/i18n-test";
 
 describe("UploadPage Component", () => {
   it("should render drag and drop area", () => {
@@ -13,9 +14,7 @@ describe("UploadPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Click to upload or drag and drop your image here/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.clickToUpload"))).toBeInTheDocument();
   });
 
   it("should render camera button", () => {
@@ -39,9 +38,7 @@ describe("UploadPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Supports JPG, PNG, and WebP files up to 10MB/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
   });
 
   it("should display success message when upload succeeds", () => {

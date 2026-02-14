@@ -1,6 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { CustomImageUploader } from "./custom-image-uploader";
+import { tr } from "@/test/i18n-test";
+
+const ui = {
+  clickToUpload: tr("upload.clickToUpload"),
+  cropImage: tr("uploader.cropImage"),
+  confirmCrop: tr("uploader.confirmCrop"),
+  adjustImage: tr("uploader.adjustImage"),
+  backToCrop: tr("uploader.backToCrop"),
+  cancel: tr("uploader.cancel"),
+  uploadPhoto: tr("uploader.uploadPhoto"),
+  imageAdjustments: tr("uploader.imageAdjustments"),
+  rotation: tr("uploader.rotation"),
+  flip: tr("uploader.flip"),
+  blackAndWhite: tr("uploader.blackAndWhite"),
+  brightness: tr("upload.brightness"),
+  contrast: tr("upload.contrast"),
+  dragCropArea: tr("uploader.dragCropArea"),
+  error: tr("upload.error"),
+};
 
 describe("CustomImageUploader", () => {
   beforeEach(() => {
@@ -11,9 +30,7 @@ describe("CustomImageUploader", () => {
   it("renders drag and drop area when no file is selected", () => {
     render(<CustomImageUploader />);
     // Should have helper text indicating click to upload or drag and drop
-    expect(
-      screen.getByText(/Click to upload or drag and drop your image here/i),
-    ).toBeDefined();
+    expect(screen.getByText(ui.clickToUpload)).toBeDefined();
   });
 
   it("shows crop step when file is selected", async () => {
@@ -29,7 +46,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByText("Crop Image")).toBeDefined();
+        expect(screen.getByText(ui.cropImage)).toBeDefined();
       });
     }
   });
@@ -44,7 +61,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByText("Confirm Crop")).toBeDefined();
+        expect(screen.getByText(ui.confirmCrop)).toBeDefined();
       });
     }
   });
@@ -59,12 +76,12 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Adjust Image")).toBeDefined();
+        expect(screen.getByText(ui.adjustImage)).toBeDefined();
       });
     }
   });
@@ -79,12 +96,12 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Back to Crop")).toBeDefined();
+        expect(screen.getByText(ui.backToCrop)).toBeDefined();
       });
     }
   });
@@ -99,7 +116,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -107,7 +124,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         expect(adjustmentsButton).toBeDefined();
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
@@ -115,7 +132,7 @@ describe("CustomImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Rotation")).toBeDefined();
+        expect(screen.getByText(ui.rotation)).toBeDefined();
       });
     }
   });
@@ -130,7 +147,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -138,7 +155,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         expect(adjustmentsButton).toBeDefined();
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
@@ -146,7 +163,7 @@ describe("CustomImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Flip")).toBeDefined();
+        expect(screen.getByText(ui.flip)).toBeDefined();
       });
     }
   });
@@ -161,7 +178,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -169,7 +186,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         expect(adjustmentsButton).toBeDefined();
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
@@ -178,7 +195,7 @@ describe("CustomImageUploader", () => {
 
       // Look for Black & White text (instead of "Filters" which was the header)
       await waitFor(() => {
-        expect(screen.getByText("Black & White")).toBeDefined();
+        expect(screen.getByText(ui.blackAndWhite)).toBeDefined();
       });
     }
   });
@@ -193,7 +210,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -201,7 +218,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         expect(adjustmentsButton).toBeDefined();
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
@@ -209,7 +226,7 @@ describe("CustomImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Brightness")).toBeDefined();
+        expect(screen.getByText(ui.brightness)).toBeDefined();
       });
     }
   });
@@ -224,7 +241,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -232,7 +249,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         expect(adjustmentsButton).toBeDefined();
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
@@ -240,7 +257,7 @@ describe("CustomImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Contrast")).toBeDefined();
+        expect(screen.getByText(ui.contrast)).toBeDefined();
       });
     }
   });
@@ -255,7 +272,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -263,7 +280,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         expect(adjustmentsButton).toBeDefined();
 
         // Click to expand
@@ -274,7 +291,7 @@ describe("CustomImageUploader", () => {
 
       // After clicking, the Rotation content should be visible
       await waitFor(() => {
-        expect(screen.getByText("Rotation")).toBeDefined();
+        expect(screen.getByText(ui.rotation)).toBeDefined();
       });
     }
   });
@@ -291,7 +308,7 @@ describe("CustomImageUploader", () => {
 
       // Should not show crop step for invalid file type
       await waitFor(() => {
-        expect(screen.queryByText("Crop Image")).toBeNull();
+        expect(screen.queryByText(ui.cropImage)).toBeNull();
       });
     }
   });
@@ -309,7 +326,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(onError).toHaveBeenCalledWith("File size exceeds 10MB limit");
+        expect(onError).toHaveBeenCalledWith(ui.error);
       });
     }
   });
@@ -324,7 +341,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByText("Crop Image")).toBeDefined();
+        expect(screen.getByText(ui.cropImage)).toBeDefined();
       });
 
       const cancelButton = document
@@ -336,9 +353,7 @@ describe("CustomImageUploader", () => {
 
       await waitFor(() => {
         // Should return to drag and drop area
-        expect(
-          screen.getByText(/Click to upload or drag and drop your image here/i),
-        ).toBeDefined();
+        expect(screen.getByText(ui.clickToUpload)).toBeDefined();
       });
     }
   });
@@ -353,14 +368,14 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Cancel")).toBeDefined();
+        expect(screen.getByText(ui.cancel)).toBeDefined();
         // Upload button in adjust step still says "Upload Photo"
-        expect(screen.getByText("Upload Photo")).toBeDefined();
+        expect(screen.getByText(ui.uploadPhoto)).toBeDefined();
       });
     }
   });
@@ -471,7 +486,7 @@ describe("CustomImageUploader", () => {
       fireEvent.drop(dragArea, { dataTransfer: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByText("Crop Image")).toBeDefined();
+        expect(screen.getByText(ui.cropImage)).toBeDefined();
       });
     }
   });
@@ -486,9 +501,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Drag the crop area to select the region to keep/i),
-        ).toBeDefined();
+        expect(screen.getByText(ui.dragCropArea)).toBeDefined();
       });
     }
   });
@@ -503,7 +516,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -546,7 +559,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -587,7 +600,7 @@ describe("CustomImageUploader", () => {
 
       // Wait for crop step to be ready
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         expect(confirmButton).toBeDefined();
       });
 
@@ -602,7 +615,7 @@ describe("CustomImageUploader", () => {
 
       // Wait a bit for state to update
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -632,19 +645,19 @@ describe("CustomImageUploader", () => {
 
       // Go to adjust step
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
       // Go back to crop step
       await waitFor(() => {
-        const backButton = screen.getByText("Back to Crop");
+        const backButton = screen.getByText(ui.backToCrop);
         fireEvent.click(backButton);
       });
 
       // Should be back at crop step with crop area still visible
       await waitFor(() => {
-        expect(screen.getByText("Confirm Crop")).toBeDefined();
+        expect(screen.getByText(ui.confirmCrop)).toBeDefined();
         // The crop overlay should still be visible
         const cropArea = document.querySelector(
           'div[style*="border-2 border-white"]',
@@ -665,7 +678,7 @@ describe("CustomImageUploader", () => {
 
       // Wait for crop step to be ready
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         expect(confirmButton).toBeDefined();
       });
 
@@ -679,7 +692,7 @@ describe("CustomImageUploader", () => {
       }
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -687,7 +700,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
 
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
@@ -730,7 +743,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -739,14 +752,14 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
         }
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Rotation")).toBeDefined();
+        expect(screen.getByText(ui.rotation)).toBeDefined();
       });
     }
   });
@@ -762,7 +775,7 @@ describe("CustomImageUploader", () => {
 
       // Wait for crop step
       await waitFor(() => {
-        expect(screen.getByText("Confirm Crop")).toBeDefined();
+        expect(screen.getByText(ui.confirmCrop)).toBeDefined();
       });
 
       // Resize handles should be present
@@ -785,7 +798,7 @@ describe("CustomImageUploader", () => {
 
       // Move to adjust step
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -810,7 +823,7 @@ describe("CustomImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
@@ -818,7 +831,7 @@ describe("CustomImageUploader", () => {
       await waitFor(() => {
         const adjustmentsButton = Array.from(
           document.querySelectorAll("button"),
-        ).find((btn) => btn.textContent?.includes("Image Adjustments"));
+        ).find((btn) => btn.textContent?.includes(ui.imageAdjustments));
         if (adjustmentsButton) {
           fireEvent.click(adjustmentsButton);
         }
@@ -826,8 +839,8 @@ describe("CustomImageUploader", () => {
 
       // Verify adjust step is displayed with filter controls
       await waitFor(() => {
-        expect(screen.getByText("Rotation")).toBeDefined();
-        expect(screen.getByText("Back to Crop")).toBeDefined();
+        expect(screen.getByText(ui.rotation)).toBeDefined();
+        expect(screen.getByText(ui.backToCrop)).toBeDefined();
       });
     }
   });
@@ -843,7 +856,7 @@ describe("CustomImageUploader", () => {
 
       // Wait for crop step to be ready
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         expect(confirmButton).toBeDefined();
       });
 
@@ -857,7 +870,7 @@ describe("CustomImageUploader", () => {
       }
 
       await waitFor(() => {
-        const confirmButton = screen.getByText("Confirm Crop");
+        const confirmButton = screen.getByText(ui.confirmCrop);
         fireEvent.click(confirmButton);
       });
 
