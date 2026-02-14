@@ -24,8 +24,11 @@ import {
   Zap,
   ChevronDown,
 } from "lucide-react";
-import { cloudinaryConfig } from "@/lib/cloudinary";
 import { t } from "@/locales/i18n";
+import {
+  cloudinaryConfig,
+  getCloudinaryUploadConfigError,
+} from "@/lib/cloudinary";
 
 export interface ImageTransformations {
   rotation: number;
@@ -372,6 +375,14 @@ export function CustomImageUploader({
 
   const handleUpload = useCallback(async () => {
     if (!selectedFile) return;
+
+    const configError = getCloudinaryUploadConfigError();
+    if (configError) {
+      onUploadError?.(
+        `${configError}. Configure Cloudinary env vars and create an unsigned upload preset in Cloudinary Dashboard.`,
+      );
+      return;
+    }
 
     setIsUploading(true);
 
