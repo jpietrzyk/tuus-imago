@@ -19,7 +19,10 @@ import {
   Check,
   X,
 } from "lucide-react";
-import { cloudinaryConfig } from "@/lib/cloudinary";
+import {
+  cloudinaryConfig,
+  getCloudinaryUploadConfigError,
+} from "@/lib/cloudinary";
 
 declare global {
   interface Window {
@@ -103,6 +106,14 @@ export function CloudinaryUploadWidget({
   }, []);
 
   const openWidget = useCallback(() => {
+    const configError = getCloudinaryUploadConfigError();
+    if (configError) {
+      onUploadError?.(
+        `${configError}. Configure Cloudinary env vars and create an unsigned upload preset in Cloudinary Dashboard.`,
+      );
+      return;
+    }
+
     if (!isWidgetLoaded || !window.cloudinary) {
       onUploadError?.("Widget not loaded yet");
       return;

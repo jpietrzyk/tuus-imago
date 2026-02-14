@@ -1,9 +1,20 @@
 export const cloudinaryConfig = {
   cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || '',
   apiKey: import.meta.env.VITE_CLOUDINARY_API_KEY || '',
-  apiSecret: import.meta.env.VITE_CLOUDINARY_API_SECRET || '',
-  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'unsigned_preset',
+  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '',
 };
+
+export function getCloudinaryUploadConfigError(): string | null {
+  if (!cloudinaryConfig.cloudName) {
+    return "Missing VITE_CLOUDINARY_CLOUD_NAME";
+  }
+
+  if (!cloudinaryConfig.uploadPreset) {
+    return "Missing VITE_CLOUDINARY_UPLOAD_PRESET";
+  }
+
+  return null;
+}
 
 export const getCloudinaryUrl = (publicId: string, options?: Record<string, string | number>): string => {
   const transformationOptions = options || {};

@@ -3,6 +3,10 @@ import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import { CustomImageUploader } from "@/components/custom-image-uploader";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  cloudinaryConfig,
+  getCloudinaryUploadConfigError,
+} from "@/lib/cloudinary";
+import {
   CheckCircle2,
   AlertCircle,
   Image as ImageIcon,
@@ -26,6 +30,8 @@ export function UploadPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [transformations, setTransformations] =
     useState<ImageTransformations | null>(null);
+  const cloudinaryConfigError = getCloudinaryUploadConfigError();
+  const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
 
   const handleUploadSuccess = (
     result:
@@ -92,6 +98,17 @@ export function UploadPage() {
               <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
                 <AlertCircle className="h-5 w-5" />
                 <span className="font-medium">{uploadError}</span>
+              </div>
+            )}
+
+            {showDebugPanel && (
+              <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm space-y-1">
+                <p className="font-semibold">Cloudinary debug</p>
+                <p>Cloud name: {cloudinaryConfig.cloudName || "(missing)"}</p>
+                <p>
+                  Upload preset: {cloudinaryConfig.uploadPreset || "(missing)"}
+                </p>
+                <p>Config status: {cloudinaryConfigError ?? "OK"}</p>
               </div>
             )}
 
