@@ -2,9 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AboutPage } from "./about";
+import { tr } from "@/test/i18n-test";
 
 describe("AboutPage Component", () => {
-  it("should render the About Us page title", () => {
+  it("should render the about page title", () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -12,7 +13,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "About Us",
+      tr("about.title"),
     );
   });
 
@@ -23,24 +24,24 @@ describe("AboutPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Learn more about Tuus Imago and our mission/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(tr("about.subtitle"))).toBeInTheDocument();
   });
 
-  it("should render the Back to Home link", () => {
+  it("should render the home navigation link", () => {
     render(
       <MemoryRouter>
         <AboutPage />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", { name: /back to home/i });
+    const backLink = screen.getByRole("link", {
+      name: tr("common.backToHome"),
+    });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the Our Mission section", () => {
+  it("should render the mission section", () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -48,11 +49,11 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /our mission/i }),
+      screen.getByRole("heading", { name: tr("about.mission.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render the Our Story section", () => {
+  it("should render the story section", () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -60,11 +61,11 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /our story/i }),
+      screen.getByRole("heading", { name: tr("about.story.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render the What We Do section", () => {
+  it("should render the what-we-do section", () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -72,11 +73,11 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /what we do/i }),
+      screen.getByRole("heading", { name: tr("about.whatWeDo.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render the Our Values section", () => {
+  it("should render the values section", () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -84,11 +85,11 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /our values/i }),
+      screen.getByRole("heading", { name: tr("about.values.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render the Get in Touch section", () => {
+  it("should render the contact section", () => {
     render(
       <MemoryRouter>
         <AboutPage />
@@ -96,7 +97,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /get in touch/i }),
+      screen.getByRole("heading", { name: tr("about.contact.title") }),
     ).toBeInTheDocument();
   });
 
@@ -143,12 +144,20 @@ describe("AboutPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/quality first/i)).toBeInTheDocument();
-    expect(screen.getByText(/customer satisfaction/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /innovation/i }),
+      screen.getByText(tr("about.values.qualityFirst.label")),
     ).toBeInTheDocument();
-    expect(screen.getByText(/sustainability/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("about.values.customerSatisfaction.label")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: tr("about.values.innovation.label"),
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("about.values.sustainability.label")),
+    ).toBeInTheDocument();
   });
 
   it("should render all service cards", () => {
@@ -159,13 +168,19 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /ai enhancement/i }),
+      screen.getByRole("heading", {
+        name: tr("about.whatWeDo.aiEnhancement.label"),
+      }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /canvas printing/i }),
+      screen.getByRole("heading", {
+        name: tr("about.whatWeDo.canvasPrinting.label"),
+      }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /custom framing/i }),
+      screen.getByRole("heading", {
+        name: tr("about.whatWeDo.customFraming.label"),
+      }),
     ).toBeInTheDocument();
   });
 });

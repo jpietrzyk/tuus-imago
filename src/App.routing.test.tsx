@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "./App";
+import { tr } from "@/test/i18n-test";
 
 describe("App Component Routing", () => {
   it("should render landing page when route is /", () => {
@@ -15,24 +16,17 @@ describe("App Component Routing", () => {
 
     // Check for main landing page elements
     expect(
-      screen.getByRole("button", { name: /upload your photo/i }),
+      screen.getByRole("button", { name: tr("landing.cta.button") }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /paint your photo/i }),
+      screen.getByRole("heading", { name: tr("landing.hero.title") }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /we print your ai-enhanced images on professional canvas/i,
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /real looking paintings crafted with museum-quality materials/i,
-      ),
+      screen.getByText(tr("landing.hero.description")),
     ).toBeInTheDocument();
   });
 
-  it("should render About page when route is /about", () => {
+  it("should render about page when route is /about", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>
         <App />
@@ -41,11 +35,11 @@ describe("App Component Routing", () => {
 
     // Check for about page elements
     expect(
-      screen.getByRole("heading", { name: /about us/i }),
+      screen.getByRole("heading", { name: tr("about.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render Legal page when route is /legal", () => {
+  it("should render legal page when route is /legal", () => {
     render(
       <MemoryRouter initialEntries={["/legal"]}>
         <App />
@@ -54,7 +48,7 @@ describe("App Component Routing", () => {
 
     // Check for legal page elements
     expect(
-      screen.getByRole("heading", { name: /legal information/i }),
+      screen.getByRole("heading", { name: tr("legal.title") }),
     ).toBeInTheDocument();
   });
 
@@ -67,7 +61,9 @@ describe("App Component Routing", () => {
 
     // Footer should be on home page
     expect(
-      screen.getByText(/tuus imago. all rights reserved/i),
+      screen.getByText(
+        tr("common.copyright", { year: new Date().getFullYear() }),
+      ),
     ).toBeInTheDocument();
 
     // Footer should also be on /about route
@@ -77,7 +73,9 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(/tuus imago. all rights reserved/i),
+      screen.getByText(
+        tr("common.copyright", { year: new Date().getFullYear() }),
+      ),
     ).toBeInTheDocument();
 
     // Footer should also be on /legal route
@@ -87,11 +85,13 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(/tuus imago. all rights reserved/i),
+      screen.getByText(
+        tr("common.copyright", { year: new Date().getFullYear() }),
+      ),
     ).toBeInTheDocument();
   });
 
-  it("should render Footer links on all pages", () => {
+  it("should render footer links on all pages", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -99,8 +99,10 @@ describe("App Component Routing", () => {
     );
 
     // Check for about and legal links in footer
-    const aboutLink = screen.getByRole("link", { name: /about us/i });
-    const legalLink = screen.getByRole("link", { name: /legal & privacy/i });
+    const aboutLink = screen.getByRole("link", { name: tr("common.aboutUs") });
+    const legalLink = screen.getByRole("link", {
+      name: tr("common.legalAndPrivacy"),
+    });
 
     expect(aboutLink).toBeInTheDocument();
     expect(aboutLink).toHaveAttribute("href", "/about");
@@ -116,12 +118,8 @@ describe("App Component Routing", () => {
     );
 
     // Check for upload page elements
-    expect(
-      screen.getByText(/Click to upload or drag and drop your image here/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/supports jpg, png, and webp/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.clickToUpload"))).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
   });
 
   it("should render upload button on landing page", () => {
@@ -133,11 +131,11 @@ describe("App Component Routing", () => {
 
     // Upload button should be on landing page
     expect(
-      screen.getByRole("button", { name: /upload your photo/i }),
+      screen.getByRole("button", { name: tr("landing.cta.button") }),
     ).toBeInTheDocument();
   });
 
-  it("should not render upload button on About page", () => {
+  it("should not render upload button on about page", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>
         <App />
@@ -146,11 +144,11 @@ describe("App Component Routing", () => {
 
     // Upload button should NOT be on about page
     expect(
-      screen.queryByRole("button", { name: /upload your photo/i }),
+      screen.queryByRole("button", { name: tr("landing.cta.button") }),
     ).not.toBeInTheDocument();
   });
 
-  it("should not render upload button on Legal page", () => {
+  it("should not render upload button on legal page", () => {
     render(
       <MemoryRouter initialEntries={["/legal"]}>
         <App />
@@ -159,30 +157,34 @@ describe("App Component Routing", () => {
 
     // Upload button should NOT be on legal page
     expect(
-      screen.queryByRole("button", { name: /upload your photo/i }),
+      screen.queryByRole("button", { name: tr("landing.cta.button") }),
     ).not.toBeInTheDocument();
   });
 
-  it("should render Back to Home link on About page", () => {
+  it("should render home navigation link on about page", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", { name: /back to home/i });
+    const backLink = screen.getByRole("link", {
+      name: tr("common.backToHome"),
+    });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render Back to Home link on Legal page", () => {
+  it("should render home navigation link on legal page", () => {
     render(
       <MemoryRouter initialEntries={["/legal"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", { name: /back to home/i });
+    const backLink = screen.getByRole("link", {
+      name: tr("common.backToHome"),
+    });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });

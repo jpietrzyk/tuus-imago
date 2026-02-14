@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { ProcessTimeline } from "./process-timeline";
+import { tr } from "@/test/i18n-test";
 
 describe("ProcessTimeline Component", () => {
   it("should render the component", () => {
@@ -8,32 +9,40 @@ describe("ProcessTimeline Component", () => {
     expect(container).toBeInTheDocument();
   });
 
-  it("should render 'How it works' heading", () => {
+  it("should render the process timeline heading", () => {
     render(<ProcessTimeline />);
-    expect(screen.getByText(/how it works/i)).toBeInTheDocument();
+    expect(screen.getByText(tr("processTimeline.title"))).toBeInTheDocument();
   });
 
   it("should render all 4 step titles", () => {
     render(<ProcessTimeline />);
-    expect(screen.getByText("Upload photo")).toBeInTheDocument();
-    expect(screen.getByText("Adjust photo")).toBeInTheDocument();
-    expect(screen.getByText("Place an order")).toBeInTheDocument();
-    expect(screen.getByText("Get your painting")).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("processTimeline.steps.upload.title")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("processTimeline.steps.adjust.title")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("processTimeline.steps.order.title")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("processTimeline.steps.result.title")),
+    ).toBeInTheDocument();
   });
 
   it("should render all 4 step descriptions", () => {
     render(<ProcessTimeline />);
     expect(
-      screen.getByText("Upload your favorite photo to get started"),
+      screen.getByText(tr("processTimeline.steps.upload.description")),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Fine-tune your image with AI enhancement"),
+      screen.getByText(tr("processTimeline.steps.adjust.description")),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Select your canvas size and place your order"),
+      screen.getByText(tr("processTimeline.steps.order.description")),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Receive your museum-quality painting at your door"),
+      screen.getByText(tr("processTimeline.steps.result.description")),
     ).toBeInTheDocument();
   });
 

@@ -2,9 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { LegalPage } from "./legal";
+import { tr } from "@/test/i18n-test";
 
 describe("LegalPage Component", () => {
-  it("should render the Legal Information page title", () => {
+  it("should render the legal page title", () => {
     render(
       <MemoryRouter>
         <LegalPage />
@@ -12,7 +13,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Legal Information",
+      tr("legal.title"),
     );
   });
 
@@ -23,24 +24,24 @@ describe("LegalPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/Privacy Policy and Terms of Service/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(tr("legal.subtitle"))).toBeInTheDocument();
   });
 
-  it("should render the Back to Home link", () => {
+  it("should render the home navigation link", () => {
     render(
       <MemoryRouter>
         <LegalPage />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", { name: /back to home/i });
+    const backLink = screen.getByRole("link", {
+      name: tr("common.backToHome"),
+    });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the Privacy Policy section", () => {
+  it("should render the privacy policy section", () => {
     render(
       <MemoryRouter>
         <LegalPage />
@@ -48,11 +49,11 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /privacy policy/i }),
+      screen.getByRole("heading", { name: tr("legal.privacyPolicy.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render the Terms of Service section", () => {
+  it("should render the terms of service section", () => {
     render(
       <MemoryRouter>
         <LegalPage />
@@ -60,11 +61,11 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /terms of service/i }),
+      screen.getByRole("heading", { name: tr("legal.termsOfService.title") }),
     ).toBeInTheDocument();
   });
 
-  it("should render the Contact & Support section", () => {
+  it("should render the contact and support section", () => {
     render(
       <MemoryRouter>
         <LegalPage />
@@ -72,7 +73,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /contact & support/i }),
+      screen.getByRole("heading", { name: tr("legal.contact.title") }),
     ).toBeInTheDocument();
   });
 
@@ -83,10 +84,18 @@ describe("LegalPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/data collection/i)).toBeInTheDocument();
-    expect(screen.getByText(/data storage/i)).toBeInTheDocument();
-    expect(screen.getByText(/data usage/i)).toBeInTheDocument();
-    expect(screen.getByText(/data retention/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("legal.privacyPolicy.dataCollection.label")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(tr("legal.privacyPolicy.dataStorage.label")),
+    ).toHaveLength(2);
+    expect(
+      screen.getByText(tr("legal.privacyPolicy.dataUsage.label")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("legal.privacyPolicy.dataRetention.description")),
+    ).toBeInTheDocument();
   });
 
   it("should render all terms of service subsections", () => {
@@ -96,10 +105,18 @@ describe("LegalPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/service use/i)).toBeInTheDocument();
-    expect(screen.getByText(/content ownership/i)).toBeInTheDocument();
-    expect(screen.getByText(/refund policy/i)).toBeInTheDocument();
-    expect(screen.getByText(/limitation of liability/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("legal.termsOfService.serviceUse.label")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("legal.termsOfService.contentOwnership.label")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("legal.termsOfService.refundPolicy.label")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("legal.termsOfService.limitationOfLiability.label")),
+    ).toBeInTheDocument();
   });
 
   it("should render the support email", () => {
@@ -145,7 +162,7 @@ describe("LegalPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Last updated: February 2025/)).toBeInTheDocument();
+    expect(screen.getByText(tr("legal.lastUpdated"))).toBeInTheDocument();
   });
 
   it("should render privacy policy description", () => {
@@ -156,7 +173,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByText(/At Tuus Imago, we take your privacy seriously/i),
+      screen.getByText(tr("legal.privacyPolicy.description")),
     ).toBeInTheDocument();
   });
 
@@ -168,9 +185,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByText(
-        /By using our services, you agree to the following terms and conditions/i,
-      ),
+      screen.getByText(tr("legal.termsOfService.description")),
     ).toBeInTheDocument();
   });
 });

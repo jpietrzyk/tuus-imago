@@ -13,6 +13,7 @@ import {
   User,
   CreditCard,
 } from "lucide-react";
+import { t } from "@/locales/i18n";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -38,11 +39,11 @@ export function CheckoutPage() {
 
     // Basic validation
     if (!formData.name.trim()) {
-      setError("Please enter your name");
+      setError(t("checkout.errorName"));
       return;
     }
     if (!formData.address.trim()) {
-      setError("Please enter your address");
+      setError(t("checkout.errorAddress"));
       return;
     }
 
@@ -57,7 +58,7 @@ export function CheckoutPage() {
         navigate("/");
       }, 2000);
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("checkout.errorGeneric"));
     } finally {
       setIsSubmitting(false);
     }
@@ -73,35 +74,34 @@ export function CheckoutPage() {
           to="/"
           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
         >
-          ← Back to Home
+          {t("common.backToHome")}
         </Link>
 
         {/* Page Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
             <ShoppingBag className="h-10 w-10 text-blue-600" />
-            Checkout
+            {t("checkout.title")}
           </h1>
-          <p className="text-lg text-gray-600">Complete your order details</p>
+          <p className="text-lg text-gray-600">{t("checkout.subtitle")}</p>
         </div>
 
         <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle>Shipping Information</CardTitle>
+            <CardTitle>{t("checkout.shippingInformation")}</CardTitle>
           </CardHeader>
           <CardContent>
             {isSuccess ? (
               <div className="py-12 text-center">
                 <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Order Successful!
+                  {t("checkout.orderSuccessful")}
                 </h2>
                 <p className="text-gray-600">
-                  Your order has been placed successfully. You will receive an
-                  email confirmation shortly.
+                  {t("checkout.orderSuccessMessage")}
                 </p>
                 <p className="text-sm text-gray-500 mt-4">
-                  Redirecting to home page...
+                  {t("checkout.redirecting")}
                 </p>
               </div>
             ) : (
@@ -118,17 +118,17 @@ export function CheckoutPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <User className="h-5 w-5 text-blue-600" />
-                    Personal Information
+                    {t("checkout.personalInformation")}
                   </h3>
 
                   {/* Name Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
+                    <Label htmlFor="name">{t("checkout.fullName")}</Label>
                     <Input
                       id="name"
                       name="name"
                       type="text"
-                      placeholder="Enter your full name"
+                      placeholder={t("checkout.fullNamePlaceholder")}
                       value={formData.name}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -144,17 +144,19 @@ export function CheckoutPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-blue-600" />
-                    Address Information
+                    {t("checkout.addressInformation")}
                   </h3>
 
                   {/* Address Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="address">Street Address *</Label>
+                    <Label htmlFor="address">
+                      {t("checkout.streetAddress")}
+                    </Label>
                     <Input
                       id="address"
                       name="address"
                       type="text"
-                      placeholder="Enter your street address"
+                      placeholder={t("checkout.streetAddressPlaceholder")}
                       value={formData.address}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -165,12 +167,12 @@ export function CheckoutPage() {
 
                   {/* City Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">{t("checkout.city")}</Label>
                     <Input
                       id="city"
                       name="city"
                       type="text"
-                      placeholder="Enter your city"
+                      placeholder={t("checkout.cityPlaceholder")}
                       value={formData.city}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -180,12 +182,14 @@ export function CheckoutPage() {
 
                   {/* Postal Code Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="postalCode">Postal Code</Label>
+                    <Label htmlFor="postalCode">
+                      {t("checkout.postalCode")}
+                    </Label>
                     <Input
                       id="postalCode"
                       name="postalCode"
                       type="text"
-                      placeholder="Enter your postal code"
+                      placeholder={t("checkout.postalCodePlaceholder")}
                       value={formData.postalCode}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -195,12 +199,12 @@ export function CheckoutPage() {
 
                   {/* Country Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
+                    <Label htmlFor="country">{t("checkout.country")}</Label>
                     <Input
                       id="country"
                       name="country"
                       type="text"
-                      placeholder="Enter your country"
+                      placeholder={t("checkout.countryPlaceholder")}
                       value={formData.country}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
@@ -215,19 +219,25 @@ export function CheckoutPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-blue-600" />
-                    Order Summary
+                    {t("checkout.orderSummary")}
                   </h3>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-700">Enhanced Photo</span>
+                      <span className="text-gray-700">
+                        {t("checkout.enhancedPhoto")}
+                      </span>
                       <span className="font-semibold text-gray-900">1x</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-700">Canvas Print</span>
+                      <span className="text-gray-700">
+                        {t("checkout.canvasPrint")}
+                      </span>
                       <span className="font-semibold text-gray-900">1x</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
-                      <span className="text-gray-900">Total</span>
+                      <span className="text-gray-900">
+                        {t("checkout.total")}
+                      </span>
                       <span className="text-blue-600">€29.99</span>
                     </div>
                   </div>
@@ -242,20 +252,19 @@ export function CheckoutPage() {
                   {isSubmitting ? (
                     <>
                       <span className="animate-spin mr-2">⏳</span>
-                      Processing...
+                      {t("common.processing")}
                     </>
                   ) : (
                     <>
                       <ShoppingBag className="mr-2 h-5 w-5" />
-                      Place Order
+                      {t("checkout.placeOrder")}
                     </>
                   )}
                 </Button>
 
                 {/* Help Text */}
                 <p className="text-xs text-gray-500 text-center">
-                  * Required fields. Your information will be used for shipping
-                  purposes only.
+                  {t("checkout.requiredFields")}
                 </p>
               </form>
             )}

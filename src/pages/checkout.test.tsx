@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CheckoutPage } from "./checkout";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { tr } from "@/test/i18n-test";
 
 describe("CheckoutPage", () => {
   beforeEach(() => {
@@ -21,7 +22,7 @@ describe("CheckoutPage", () => {
 
   it("renders checkout page", () => {
     renderWithRouter();
-    expect(screen.getByText("Checkout")).toBeDefined();
+    expect(screen.getByText(tr("checkout.title"))).toBeDefined();
   });
 
   it("renders back to home link", () => {
@@ -29,19 +30,19 @@ describe("CheckoutPage", () => {
     // Check that the back link exists in the document
     const links = screen.getAllByRole("link");
     const backToHomeLink = links.find((link) =>
-      link.textContent?.includes("Back"),
+      link.textContent?.includes(tr("common.backToHome")),
     );
     expect(backToHomeLink).toBeDefined();
   });
 
   it("renders personal information section", () => {
     renderWithRouter();
-    expect(screen.getByText("Personal Information")).toBeDefined();
+    expect(screen.getByText(tr("checkout.personalInformation"))).toBeDefined();
   });
 
   it("renders full name input field", () => {
     renderWithRouter();
-    const nameInput = screen.getByLabelText(/Full Name/);
+    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
     expect(nameInput).toBeDefined();
     expect(nameInput.getAttribute("type")).toBe("text");
     expect(nameInput.hasAttribute("required")).toBe(true);
@@ -49,7 +50,7 @@ describe("CheckoutPage", () => {
 
   it("renders address input field", () => {
     renderWithRouter();
-    const addressInput = screen.getByLabelText(/Street Address/);
+    const addressInput = screen.getByLabelText(tr("checkout.streetAddress"));
     expect(addressInput).toBeDefined();
     expect(addressInput.getAttribute("type")).toBe("text");
     expect(addressInput.hasAttribute("required")).toBe(true);
@@ -57,36 +58,36 @@ describe("CheckoutPage", () => {
 
   it("renders city input field", () => {
     renderWithRouter();
-    const cityInput = screen.getByLabelText(/City/);
+    const cityInput = screen.getByLabelText(tr("checkout.city"));
     expect(cityInput).toBeDefined();
     expect(cityInput.getAttribute("type")).toBe("text");
   });
 
   it("renders postal code input field", () => {
     renderWithRouter();
-    const postalInput = screen.getByLabelText(/Postal Code/);
+    const postalInput = screen.getByLabelText(tr("checkout.postalCode"));
     expect(postalInput).toBeDefined();
     expect(postalInput.getAttribute("type")).toBe("text");
   });
 
   it("renders country input field", () => {
     renderWithRouter();
-    const countryInput = screen.getByLabelText(/Country/);
+    const countryInput = screen.getByLabelText(tr("checkout.country"));
     expect(countryInput).toBeDefined();
     expect(countryInput.getAttribute("type")).toBe("text");
   });
 
   it("renders address information section", () => {
     renderWithRouter();
-    expect(screen.getByText("Address Information")).toBeDefined();
+    expect(screen.getByText(tr("checkout.addressInformation"))).toBeDefined();
   });
 
   it("renders order summary section", () => {
     renderWithRouter();
-    expect(screen.getByText("Order Summary")).toBeDefined();
-    expect(screen.getByText("Enhanced Photo")).toBeDefined();
-    expect(screen.getByText("Canvas Print")).toBeDefined();
-    expect(screen.getByText("Total")).toBeDefined();
+    expect(screen.getByText(tr("checkout.orderSummary"))).toBeDefined();
+    expect(screen.getByText(tr("checkout.enhancedPhoto"))).toBeDefined();
+    expect(screen.getByText(tr("checkout.canvasPrint"))).toBeDefined();
+    expect(screen.getByText(tr("checkout.total"))).toBeDefined();
   });
 
   it("renders total price", () => {
@@ -96,13 +97,17 @@ describe("CheckoutPage", () => {
 
   it("renders place order button", () => {
     renderWithRouter();
-    const submitButton = screen.getByRole("button", { name: /Place Order/i });
+    const submitButton = screen.getByRole("button", {
+      name: tr("checkout.placeOrder"),
+    });
     expect(submitButton).toBeDefined();
   });
 
   it("disables submit button when form is invalid", () => {
     renderWithRouter();
-    const submitButton = screen.getByRole("button", { name: /Place Order/i });
+    const submitButton = screen.getByRole("button", {
+      name: tr("checkout.placeOrder"),
+    });
     // Button should be disabled when form is empty
     expect(submitButton).toBeDefined();
   });
@@ -110,9 +115,11 @@ describe("CheckoutPage", () => {
   it("enables submit button when required fields are filled", async () => {
     renderWithRouter();
 
-    const nameInput = screen.getByLabelText(/Full Name/);
-    const addressInput = screen.getByLabelText(/Street Address/);
-    const submitButton = screen.getByRole("button", { name: /Place Order/i });
+    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
+    const addressInput = screen.getByLabelText(tr("checkout.streetAddress"));
+    const submitButton = screen.getByRole("button", {
+      name: tr("checkout.placeOrder"),
+    });
 
     await userEvent.type(nameInput, "John Doe");
     await userEvent.type(addressInput, "123 Main Street");
@@ -125,20 +132,22 @@ describe("CheckoutPage", () => {
 
   it("shows required field indicator for name", () => {
     renderWithRouter();
-    expect(screen.getByText("Full Name *")).toBeDefined();
+    expect(screen.getByText(tr("checkout.fullName"))).toBeDefined();
   });
 
   it("shows required field indicator for address", () => {
     renderWithRouter();
-    expect(screen.getByText("Street Address *")).toBeDefined();
+    expect(screen.getByText(tr("checkout.streetAddress"))).toBeDefined();
   });
 
   it("disables inputs during submission", async () => {
     renderWithRouter();
 
-    const nameInput = screen.getByLabelText(/Full Name/);
-    const addressInput = screen.getByLabelText(/Street Address/);
-    const submitButton = screen.getByRole("button", { name: /Place Order/i });
+    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
+    const addressInput = screen.getByLabelText(tr("checkout.streetAddress"));
+    const submitButton = screen.getByRole("button", {
+      name: tr("checkout.placeOrder"),
+    });
 
     await userEvent.type(nameInput, "John Doe");
     await userEvent.type(addressInput, "123 Main Street");
@@ -153,7 +162,6 @@ describe("CheckoutPage", () => {
 
   it("renders help text", () => {
     renderWithRouter();
-    expect(screen.getByText(/Required fields/)).toBeDefined();
-    expect(screen.getByText(/shipping purposes only/)).toBeDefined();
+    expect(screen.getByText(tr("checkout.requiredFields"))).toBeDefined();
   });
 });

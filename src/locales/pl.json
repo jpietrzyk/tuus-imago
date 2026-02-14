@@ -1,0 +1,215 @@
+{
+  "common": {
+    "backToHome": "← Powrót do strony głównej",
+    "copyright": "© {year} Tuus Imago. Wszelkie prawa zastrzeżone.",
+    "aboutUs": "O nas",
+    "legalAndPrivacy": "Prawne i Prywatność",
+    "loading": "Ładowanie...",
+    "processing": "Przetwarzanie..."
+  },
+  "landing": {
+    "hero": {
+      "title": "Ozdób swoje zdjęcie",
+      "description": "Drukujemy Twoje ulepszone zdjęcia AI na profesjonalnym płótnie z piękną fazowaną krawędzią. Prawdziwe obrazy wykonane z materiałów muzealnej jakości dla trwałego piękna."
+    },
+    "cta": {
+      "button": "Prześlij swoje zdjęcie"
+    }
+  },
+  "processTimeline": {
+    "title": "Jak to działa",
+    "steps": {
+      "upload": {
+        "title": "Prześlij zdjęcie",
+        "description": "Prześlij swoje ulubione zdjęcie, aby rozpocząć"
+      },
+      "adjust": {
+        "title": "Dostosuj zdjęcie",
+        "description": "Dostosuj swój obraz z ulepszeniem AI"
+      },
+      "order": {
+        "title": "Złóż zamówienie",
+        "description": "Wybierz rozmiar płótna i złóż zamówienie"
+      },
+      "result": {
+        "title": "Odbierz obraz",
+        "description": "Odbierz swój obraz muzealnej jakości pod drzwiami"
+      }
+    }
+  },
+  "about": {
+    "title": "O nas",
+    "subtitle": "Dowiedz się więcej o Tuus Imago i naszej misji",
+    "mission": {
+      "title": "Nasza misja",
+      "description": "W Tuus Imago wierzymy, że każde zdjęcie opowiada unikalną historię. Naszą misją jest pomaganie Ci w zachowaniu i ulepszeniu Twoich najcenniejszych wspomnień dzięki najnowocześniejszej technologii AI i premiumowym usługom drukowania na płótnie."
+    },
+    "story": {
+      "title": "Nasza historia",
+      "description": "Założona w 2024 roku, Tuus Imago powstała z pasji do fotografii i wizji udostępnienia profesjonalnego ulepszania zdjęć wszystkim. Łączymy lata doświadczeń w cyfrowym obrazowaniu z najnowocześniejszą sztuczną inteligencją, aby dostarczać oszałamiające wyniki."
+    },
+    "whatWeDo": {
+      "title": "Co robimy",
+      "aiEnhancement": {
+        "label": "Ulepszanie AI:",
+        "description": "Używamy zaawansowanej sztucznej inteligencji, aby automatycznie ulepszyć Twoje zdjęcia, poprawiając kolory, ostrość i ogólną jakość."
+      },
+      "canvasPrinting": {
+        "label": "Drukowanie na płótnie:",
+        "description": "Twoje ulepszone zdjęcia są drukowane na premiumowym płótnie przy użyciu tuszów muzealnej jakości, które zapewniają żywe kolory na pokolenia."
+      },
+      "customFraming": {
+        "label": "Niestandardowe ramy:",
+        "description": "Wybierz spośród różnych opcji ramek, aby idealnie uzupełnić swoje dzieło sztuki i wystrój domu."
+      }
+    },
+    "values": {
+      "title": "Nasze wartości",
+      "qualityFirst": {
+        "label": "Jakość w pierwszej kolejności:",
+        "description": "Nigdy nie kompromitujemy jakości, od algorytmów ulepszania po proces drukowania i końcową dostawę."
+      },
+      "customerSatisfaction": {
+        "label": "Satysfakcja klienta:",
+        "description": "Twoje szczęście jest naszym priorytetem. Ciężko pracujemy, aby upewnić się, że pokochasz każde zdjęcie, które otrzymasz."
+      },
+      "innovation": {
+        "label": "Innowacja:",
+        "description": "Ciągle inwestujemy w najnowsze technologie AI i obrazowania, aby przynieść Ci najlepsze możliwe wyniki."
+      },
+      "sustainability": {
+        "label": "Zrównoważony rozwój:",
+        "description": "Jesteśmy zaangażowani w środowiskowo odpowiedzialne praktyki, od ekologicznych tuszów do zrównoważonych materiałów opakowaniowych."
+      }
+    },
+    "contact": {
+      "title": "Skontaktuj się z nami",
+      "description": "Masz pytania lub chcesz się dowiedzieć więcej? Chętnie usłyszymy od Ciebie!",
+      "email": "E-mail:",
+      "phone": "Telefon:",
+      "address": "Adres:"
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "legal": {
+    "title": "Informacje prawne",
+    "subtitle": "Polityka prywatności i warunki korzystania z usług",
+    "privacyPolicy": {
+      "title": "Polityka prywatności",
+      "description": "W Tuus Imago traktujemy Twoją prywatność poważnie. Wszystkie przesłane zdjęcia są przetwarzane bezpiecznie i są używane wyłącznie do celów ulepszania AI i usług drukowania na płótnie.",
+      "dataCollection": {
+        "label": "Zbieranie danych:",
+        "description": "Zbieramy tylko zdjęcia, które przesyłasz, oraz wszelkie niezbędne informacje kontaktowe do dostarczania usług."
+      },
+      "dataStorage": {
+        "label": "Przechowywanie danych:",
+        "description": "Twoje zdjęcia są bezpiecznie przechowywane na zaszyfrowanych serwerach chmurowych."
+      },
+      "dataUsage": {
+        "label": "Wykorzystanie danych:",
+        "description": "Zdjęcia są używane wyłącznie do przetwarzania i dostarczania zamówień. Nigdy nie udostępniamy Twoich obrazów stronom trzecim bez wyraźnej zgody."
+      },
+      "dataRetention": {
+        "label": "Przechowywanie danych:",
+        "description": "Twoje dane są przechowywane tylko tak długo, jak to konieczne do zrealizowania zamówienia i świadczenia obsługi klienta."
+      }
+    },
+    "termsOfService": {
+      "title": "Warunki korzystania z usług",
+      "description": "Korzystając z naszych usług, zgadzasz się na następujące warunki.",
+      "serviceUse": {
+        "label": "Korzystanie z usług:",
+        "description": "Zgadzasz się używać naszych usług ulepszania AI i drukowania tylko do legalnych celów i zgodnie z niniejszymi Warunkami."
+      },
+      "contentOwnership": {
+        "label": "Własność treści:",
+        "description": "Zachowujesz pełną własność wszystkich przesłanych zdjęć. Tuus Imago otrzymuje ograniczoną licencję do przetwarzania i dostarczania Twoich zdjęć."
+      },
+      "refundPolicy": {
+        "label": "Polityka zwrotów:",
+        "description": "Zwroty są dostępne w ciągu 30 dni od dostawy, jeśli jakość produktu nie spełnia naszych standardów."
+      },
+      "limitationOfLiability": {
+        "label": "Ograniczenie odpowiedzialności:",
+        "description": "Nie ponosimy odpowiedzialności za żadne szkody wynikające z korzystania z naszych usług poza ceną zakupu Twojego zamówienia."
+      }
+    },
+    "contact": {
+      "title": "Kontakt i wsparcie",
+      "description": "W razie jakichkolwiek pytań dotyczących naszej polityki prywatności lub warunków korzystania z usług, prosimy o kontakt:",
+      "email": "E-mail:",
+      "phone": "Telefon:",
+      "address": "Adres:"
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "upload": {
+    "success": "Zdjęcie przesłane pomyślnie!",
+    "error": "Rozmiar pliku przekracza limit 10 MB",
+    "uploadFailed": "Przesyłanie nie powiodło się",
+    "dropFile": "Upuść swój plik tutaj",
+    "clickToUpload": "Kliknij, aby przesłać lub przeciągnij i upuść swoje zdjęcie tutaj",
+    "fileSupport": "Obsługuje pliki JPG, PNG i WebP do 10 MB",
+    "uploadedPhoto": "Przesłane zdjęcie",
+    "dimensions": "Wymiary:",
+    "size": "Rozmiar:",
+    "noAdjustments": "Brak zastosowanych korekt",
+    "appliedAdjustments": "Zastosowane korekty obrazu",
+    "rotation": "Obrót:",
+    "flipHorizontal": "Odwróć poziomo",
+    "flipVertical": "Odwróć pionowo",
+    "brightness": "Jasność:",
+    "contrast": "Kontrast:",
+    "grayscale": "Skala szarości:",
+    "blur": "Rozmycie:",
+    "loadingPreview": "Ładowanie podglądu..."
+  },
+  "uploader": {
+    "cropImage": "Przytnij obraz",
+    "adjustImage": "Dostosuj obraz",
+    "dragCropArea": "Przeciągnij obszar kadrowania, aby wybrać obszar do zachowania",
+    "confirmCrop": "Potwierdź kadrowanie",
+    "backToCrop": "Powrót do kadrowania",
+    "cancel": "Anuluj",
+    "uploadPhoto": "Prześlij zdjęcie",
+    "uploading": "Przesyłanie...",
+    "imageAdjustments": "Korekty obrazu",
+    "rotation": "Obrót",
+    "rotateMinus90": "Obróć -90°",
+    "rotatePlus90": "Obróć +90°",
+    "flip": "Odwróć",
+    "horizontal": "Poziomo",
+    "vertical": "Pionowo",
+    "blackAndWhite": "Czarno-białe",
+    "resetAllAdjustments": "Resetuj wszystkie korekty"
+  },
+  "checkout": {
+    "title": "Zamówienie",
+    "subtitle": "Uzupełnij szczegóły zamówienia",
+    "orderSuccessful": "Zamówienie zakończone pomyślnie!",
+    "orderSuccessMessage": "Twoje zamówienie zostało złożone pomyślnie. Wkrótce otrzymasz potwierdzenie e-mail.",
+    "redirecting": "Przekierowywanie do strony głównej...",
+    "shippingInformation": "Informacje o wysyłce",
+    "personalInformation": "Informacje osobowe",
+    "fullName": "Imię i nazwisko *",
+    "fullNamePlaceholder": "Wprowadź swoje imię i nazwisko",
+    "addressInformation": "Informacje adresowe",
+    "streetAddress": "Adres ulicy *",
+    "streetAddressPlaceholder": "Wprowadź swój adres ulicy",
+    "city": "Miasto",
+    "cityPlaceholder": "Wprowadź swoje miasto",
+    "postalCode": "Kod pocztowy",
+    "postalCodePlaceholder": "Wprowadź swój kod pocztowy",
+    "country": "Kraj",
+    "countryPlaceholder": "Wprowadź swój kraj",
+    "orderSummary": "Podsumowanie zamówienia",
+    "enhancedPhoto": "Ulepszone zdjęcie",
+    "canvasPrint": "Druk na płótnie",
+    "total": "Suma",
+    "placeOrder": "Złóż zamówienie",
+    "requiredFields": "* Pola wymagane. Twoje informacje będą używane tylko do celów wysyłki.",
+    "errorName": "Proszę wprowadzić swoje imię",
+    "errorAddress": "Proszę wprowadzić swój adres",
+    "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie."
+  }
+}

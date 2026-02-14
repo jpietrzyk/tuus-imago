@@ -25,6 +25,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cloudinaryConfig } from "@/lib/cloudinary";
+import { t } from "@/locales/i18n";
 
 export interface ImageTransformations {
   rotation: number;
@@ -117,7 +118,7 @@ export function CustomImageUploader({
           file.type === "image/webp")
       ) {
         if (file.size > 10 * 1024 * 1024) {
-          onUploadError?.("File size exceeds 10MB limit");
+          onUploadError?.(t("upload.error"));
           return;
         }
         setSelectedFile(file);
@@ -154,7 +155,7 @@ export function CustomImageUploader({
           file.type === "image/webp")
       ) {
         if (file.size > 10 * 1024 * 1024) {
-          onUploadError?.("File size exceeds 10MB limit");
+          onUploadError?.(t("upload.error"));
           return;
         }
         setSelectedFile(file);
@@ -487,7 +488,9 @@ export function CustomImageUploader({
         cameraInputRef.current.value = "";
       }
     } catch (error) {
-      onUploadError?.(error instanceof Error ? error.message : "Upload failed");
+      onUploadError?.(
+        error instanceof Error ? error.message : t("upload.uploadFailed"),
+      );
     } finally {
       setIsUploading(false);
     }
@@ -706,9 +709,7 @@ export function CustomImageUploader({
             <Upload className="h-8 w-8" />
           </div>
           <p className="text-sm text-muted-foreground">
-            {isDragOver
-              ? "Drop your file here"
-              : "Click to upload or drag and drop your image here"}
+            {isDragOver ? t("upload.dropFile") : t("upload.clickToUpload")}
           </p>
         </div>
         <Button
@@ -732,7 +733,11 @@ export function CustomImageUploader({
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>{step === "crop" ? "Crop Image" : "Adjust Image"}</span>
+          <span>
+            {step === "crop"
+              ? t("uploader.cropImage")
+              : t("uploader.adjustImage")}
+          </span>
           <Button
             variant="ghost"
             size="sm"
@@ -885,7 +890,7 @@ export function CustomImageUploader({
               )}
               {imageDimensions.width === 0 && (
                 <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
-                  Loading preview...
+                  {t("upload.loadingPreview")}
                 </div>
               )}
             </div>
@@ -924,7 +929,7 @@ export function CustomImageUploader({
           <>
             <div className="text-center text-sm text-muted-foreground">
               <Crop className="h-4 w-4 inline mr-2" />
-              Drag the crop area to select the region to keep
+              {t("uploader.dragCropArea")}
             </div>
             <Button
               type="button"
@@ -932,7 +937,7 @@ export function CustomImageUploader({
               className="w-full"
             >
               <Check className="mr-2 h-4 w-4" />
-              Confirm Crop
+              {t("uploader.confirmCrop")}
             </Button>
           </>
         ) : (
@@ -948,7 +953,7 @@ export function CustomImageUploader({
                 className="flex-1"
               >
                 <Crop className="mr-2 h-4 w-4" />
-                Back to Crop
+                {t("uploader.backToCrop")}
               </Button>
               <Button
                 type="button"
@@ -957,7 +962,7 @@ export function CustomImageUploader({
                 className="flex-1"
               >
                 <X className="mr-2 h-4 w-4" />
-                Cancel
+                {t("uploader.cancel")}
               </Button>
               <Button
                 type="button"
@@ -968,12 +973,12 @@ export function CustomImageUploader({
                 {isUploading ? (
                   <>
                     <span className="animate-spin mr-2">⏳</span>
-                    Uploading...
+                    {t("uploader.uploading")}
                   </>
                 ) : (
                   <>
                     <Check className="mr-2 h-4 w-4" />
-                    Upload Photo
+                    {t("uploader.uploadPhoto")}
                   </>
                 )}
               </Button>
@@ -993,7 +998,7 @@ export function CustomImageUploader({
                 >
                   <Label className="flex items-center gap-2 cursor-pointer">
                     <Sliders className="h-4 w-4" />
-                    <span>Image Adjustments</span>
+                    <span>{t("uploader.imageAdjustments")}</span>
                   </Label>
                   <ChevronDown className="h-4 w-4 transition-transform duration-200" />
                 </button>
@@ -1004,7 +1009,7 @@ export function CustomImageUploader({
                   <Label className="flex items-center justify-between">
                     <span className="flex items-center gap-2">
                       <RotateCw className="h-4 w-4" />
-                      Rotation
+                      {t("uploader.rotation")}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       {transformations.rotation}°
@@ -1029,7 +1034,7 @@ export function CustomImageUploader({
                         variant="outline"
                         size="icon"
                         onClick={() => handleRotate(-90)}
-                        title="Rotate -90°"
+                        title={t("uploader.rotateMinus90")}
                       >
                         <RotateCw
                           className="h-4 w-4"
@@ -1041,7 +1046,7 @@ export function CustomImageUploader({
                         variant="outline"
                         size="icon"
                         onClick={() => handleRotate(90)}
-                        title="Rotate +90°"
+                        title={t("uploader.rotatePlus90")}
                       >
                         <RotateCw className="h-4 w-4" />
                       </Button>
@@ -1051,7 +1056,9 @@ export function CustomImageUploader({
 
                 {/* Flip Controls */}
                 <div className="space-y-3">
-                  <Label className="flex items-center gap-2">Flip</Label>
+                  <Label className="flex items-center gap-2">
+                    {t("uploader.flip")}
+                  </Label>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -1063,7 +1070,7 @@ export function CustomImageUploader({
                       className="flex-1"
                     >
                       <FlipHorizontal className="mr-2 h-4 w-4" />
-                      Horizontal
+                      {t("uploader.horizontal")}
                     </Button>
                     <Button
                       type="button"
@@ -1075,7 +1082,7 @@ export function CustomImageUploader({
                       className="flex-1"
                     >
                       <FlipVertical className="mr-2 h-4 w-4" />
-                      Vertical
+                      {t("uploader.vertical")}
                     </Button>
                   </div>
                 </div>
@@ -1087,7 +1094,7 @@ export function CustomImageUploader({
                     <Label className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Zap className="h-4 w-4" />
-                        Black & White
+                        {t("uploader.blackAndWhite")}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {transformations.grayscale}%
@@ -1111,7 +1118,7 @@ export function CustomImageUploader({
                     <Label className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <Droplets className="h-4 w-4" />
-                        Blur
+                        {t("upload.blur")}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {transformations.blur}px
@@ -1135,7 +1142,7 @@ export function CustomImageUploader({
                 {/* Brightness Control */}
                 <div className="space-y-3">
                   <Label className="flex items-center justify-between">
-                    <span>Brightness</span>
+                    <span>{t("upload.brightness")}</span>
                     <span className="text-sm text-muted-foreground">
                       {transformations.brightness > 0
                         ? `+${transformations.brightness}`
@@ -1158,7 +1165,7 @@ export function CustomImageUploader({
                 {/* Contrast Control */}
                 <div className="space-y-3">
                   <Label className="flex items-center justify-between">
-                    <span>Contrast</span>
+                    <span>{t("upload.contrast")}</span>
                     <span className="text-sm text-muted-foreground">
                       {transformations.contrast > 0
                         ? `+${transformations.contrast}`
@@ -1186,7 +1193,7 @@ export function CustomImageUploader({
                     className="w-full"
                   >
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    Reset All Adjustments
+                    {t("uploader.resetAllAdjustments")}
                   </Button>
                 )}
               </CollapsibleContent>
