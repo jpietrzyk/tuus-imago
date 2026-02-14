@@ -24,7 +24,6 @@ import {
   Zap,
   ChevronDown,
 } from "lucide-react";
-import { cloudinaryConfig } from "@/lib/cloudinary";
 import { t } from "@/locales/i18n";
 import {
   cloudinaryConfig,
