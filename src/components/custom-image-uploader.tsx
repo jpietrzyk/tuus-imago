@@ -1042,25 +1042,22 @@ export function CustomImageUploader({
                     {t("uploader.uploadingProgress", {
                       percent: uploadProgress,
                     })}
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-right">
+                        {uploadProgress}%
+                      </p>
+                    </div>
                   </>
                 ) : (
                   <>
                     <Check className="mr-2 h-4 w-4" />
                     {t("uploader.uploadPhoto")}
-
-                    {isUploading && (
-                      <div className="space-y-1">
-                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
-                            style={{ width: `${uploadProgress}%` }}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground text-right">
-                          {uploadProgress}%
-                        </p>
-                      </div>
-                    )}
                   </>
                 )}
               </Button>
