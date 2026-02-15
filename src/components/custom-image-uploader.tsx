@@ -89,6 +89,9 @@ const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
   blur: 0,
 };
 
+// Upload timeout in milliseconds (2 minutes)
+const UPLOAD_TIMEOUT_MS = 120000;
+
 export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
@@ -478,6 +481,9 @@ export function CustomImageUploader({
             `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
           );
 
+          // Configure timeout for the upload request
+          xhr.timeout = UPLOAD_TIMEOUT_MS;
+
           xhr.upload.onprogress = (event) => {
             if (!event.lengthComputable) return;
 
@@ -513,6 +519,14 @@ export function CustomImageUploader({
 
           xhr.onerror = () => {
             reject(new Error("Upload failed"));
+          };
+
+          xhr.ontimeout = () => {
+            reject(
+              new Error(
+                "Upload timed out. Please check your connection and try again.",
+              ),
+            );
           };
 
           xhr.send(formData);
