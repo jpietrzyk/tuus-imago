@@ -519,10 +519,6 @@ export function CustomImageUploader({
         },
       );
 
-      if (data.error) {
-        throw new Error(data.error.message || "Upload failed");
-      }
-
       setUploadProgress(100);
 
       onUploadSuccess?.(
