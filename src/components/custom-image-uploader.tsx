@@ -478,6 +478,9 @@ export function CustomImageUploader({
             `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
           );
 
+          // Set timeout to 120 seconds for large file uploads
+          xhr.timeout = 120000;
+
           xhr.upload.onprogress = (event) => {
             if (!event.lengthComputable) return;
 
@@ -513,6 +516,14 @@ export function CustomImageUploader({
 
           xhr.onerror = () => {
             reject(new Error("Upload failed"));
+          };
+
+          xhr.ontimeout = () => {
+            reject(
+              new Error(
+                "Upload timed out. Please check your connection and try again.",
+              ),
+            );
           };
 
           xhr.send(formData);
