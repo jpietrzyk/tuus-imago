@@ -148,6 +148,59 @@ describe("UploadPage Component", () => {
       );
     });
 
+    it("should compose transformed Cloudinary preview URL with multiple AI effects", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformations: ImageTransformations = {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
+        blur: 0,
+      };
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        transformations,
+        undefined,
+        {
+          enhance: true,
+          removeBackground: true,
+          upscale: true,
+          restore: false,
+        },
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/e_enhance/e_background_removal/e_upscale/v123/sample.jpg",
+      );
+    });
+
+    it("should include configured AI template in transformed URL", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        null,
+        undefined,
+        {
+          enhance: true,
+          removeBackground: false,
+          upscale: false,
+          restore: false,
+        },
+        "portrait_ai",
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/t_portrait_ai/e_enhance/v123/sample.jpg",
+      );
+    });
+
     it("should handle transformations in handleUploadSuccess callback", () => {
       // This verifies that function signature accepts transformations
       const mockUploadResult: UploadResult = {

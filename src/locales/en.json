@@ -162,7 +162,18 @@
     "contrast": "Contrast:",
     "grayscale": "Grayscale:",
     "blur": "Blur:",
-    "loadingPreview": "Loading preview..."
+    "loadingPreview": "Loading preview...",
+    "aiAdjustmentsTitle": "Cloudinary AI Adjustments",
+    "aiAdjustmentsHint": "Select one or more AI effects and switch between original and AI preview.",
+    "aiTemplateLabel": "AI template:",
+    "aiEnhance": "Enhance",
+    "aiRemoveBackground": "Remove Background",
+    "aiUpscale": "Upscale",
+    "aiRestore": "Restore",
+    "previewAi": "Preview AI version",
+    "previewOriginal": "Preview original",
+    "previewAiActive": "AI preview active ({count} effect(s) selected)",
+    "previewOriginalActive": "Original preview active"
   },
   "uploader": {
     "cropImage": "Crop Image",

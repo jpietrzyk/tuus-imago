@@ -162,7 +162,18 @@
     "contrast": "Kontrast:",
     "grayscale": "Skala szarości:",
     "blur": "Rozmycie:",
-    "loadingPreview": "Ładowanie podglądu..."
+    "loadingPreview": "Ładowanie podglądu...",
+    "aiAdjustmentsTitle": "Korekty AI Cloudinary",
+    "aiAdjustmentsHint": "Wybierz jedną lub więcej korekt AI i przełączaj podgląd między oryginałem i wersją AI.",
+    "aiTemplateLabel": "Szablon AI:",
+    "aiEnhance": "Ulepsz",
+    "aiRemoveBackground": "Usuń tło",
+    "aiUpscale": "Powiększ",
+    "aiRestore": "Przywróć detale",
+    "previewAi": "Podgląd wersji AI",
+    "previewOriginal": "Podgląd oryginału",
+    "previewAiActive": "Podgląd AI aktywny (wybrano efektów: {count})",
+    "previewOriginalActive": "Podgląd oryginału aktywny"
   },
   "uploader": {
     "cropImage": "Przytnij obraz",

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import { CustomImageUploader } from "@/components/custom-image-uploader";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   cloudinaryConfig,
@@ -24,12 +25,61 @@ export interface ImageTransformations {
   blur: number;
 }
 
+export interface AiAdjustments {
+  enhance: boolean;
+  removeBackground: boolean;
+  upscale: boolean;
+  restore: boolean;
+}
+
+const DEFAULT_AI_ADJUSTMENTS: AiAdjustments = {
+  enhance: true,
+  removeBackground: false,
+  upscale: false,
+  restore: false,
+};
+
+const AI_ADJUSTMENT_OPTIONS: Array<{
+  key: keyof AiAdjustments;
+  transformation: string;
+  labelKey: string;
+}> = [
+  {
+    key: "enhance",
+    transformation: "e_enhance",
+    labelKey: "upload.aiEnhance",
+  },
+  {
+    key: "removeBackground",
+    transformation: "e_background_removal",
+    labelKey: "upload.aiRemoveBackground",
+  },
+  {
+    key: "upscale",
+    transformation: "e_upscale",
+    labelKey: "upload.aiUpscale",
+  },
+  {
+    key: "restore",
+    transformation: "e_gen_restore",
+    labelKey: "upload.aiRestore",
+  },
+];
+
+function hasActiveAiAdjustments(aiAdjustments: AiAdjustments | null): boolean {
+  return aiAdjustments ? Object.values(aiAdjustments).some(Boolean) : false;
+}
+
 export function getTransformedPreviewUrl(
   secureUrl: string,
   trans: ImageTransformations | null,
   customCoordinates?: string,
+  aiAdjustments?: AiAdjustments | null,
+  aiTemplate?: string,
 ): string {
-  if (!trans) {
+  const hasAiAdjustments = hasActiveAiAdjustments(aiAdjustments || null);
+
+  if (!trans && !hasAiAdjustments) {
     return secureUrl;
   }
 
@@ -46,32 +96,46 @@ export function getTransformedPreviewUrl(
     }
   }
 
-  if (trans.rotation !== 0) {
-    transformationParts.push(`a_${trans.rotation}`);
+  if (trans) {
+    if (trans.rotation !== 0) {
+      transformationParts.push(`a_${trans.rotation}`);
+    }
+
+    if (trans.flipHorizontal) {
+      transformationParts.push("a_hflip");
+    }
+
+    if (trans.flipVertical) {
+      transformationParts.push("a_vflip");
+    }
+
+    if (trans.brightness !== 0) {
+      transformationParts.push(`e_brightness:${trans.brightness}`);
+    }
+
+    if (trans.contrast !== 0) {
+      transformationParts.push(`e_contrast:${trans.contrast}`);
+    }
+
+    if (trans.grayscale !== 0) {
+      transformationParts.push(`e_grayscale:${trans.grayscale}`);
+    }
+
+    if (trans.blur !== 0) {
+      transformationParts.push(`e_blur:${trans.blur}`);
+    }
   }
 
-  if (trans.flipHorizontal) {
-    transformationParts.push("a_hflip");
-  }
+  if (hasAiAdjustments && aiAdjustments) {
+    if (aiTemplate) {
+      transformationParts.push(`t_${aiTemplate}`);
+    }
 
-  if (trans.flipVertical) {
-    transformationParts.push("a_vflip");
-  }
-
-  if (trans.brightness !== 0) {
-    transformationParts.push(`e_brightness:${trans.brightness}`);
-  }
-
-  if (trans.contrast !== 0) {
-    transformationParts.push(`e_contrast:${trans.contrast}`);
-  }
-
-  if (trans.grayscale !== 0) {
-    transformationParts.push(`e_grayscale:${trans.grayscale}`);
-  }
-
-  if (trans.blur !== 0) {
-    transformationParts.push(`e_blur:${trans.blur}`);
+    AI_ADJUSTMENT_OPTIONS.forEach((option) => {
+      if (aiAdjustments[option.key]) {
+        transformationParts.push(option.transformation);
+      }
+    });
   }
 
   if (transformationParts.length === 0) {
@@ -92,8 +156,16 @@ export function UploadPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [transformations, setTransformations] =
     useState<ImageTransformations | null>(null);
+  const [aiAdjustments, setAiAdjustments] = useState<AiAdjustments>(
+    DEFAULT_AI_ADJUSTMENTS,
+  );
+  const [useAiPreview, setUseAiPreview] = useState(true);
   const cloudinaryConfigError = getCloudinaryUploadConfigError();
   const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
+  const aiTemplateName =
+    (
+      import.meta.env.VITE_CLOUDINARY_AI_TEMPLATE as string | undefined
+    )?.trim() || undefined;
 
   const handleUploadSuccess = (
     result:
@@ -133,6 +205,8 @@ export function UploadPage() {
           };
     setUploadedImage(uploadResult);
     setTransformations(transformationsParam);
+    setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
+    setUseAiPreview(true);
     setUploadError(null);
     setIsSuccess(true);
     // Auto-hide success message after 3 seconds
@@ -147,7 +221,7 @@ export function UploadPage() {
     setTimeout(() => setUploadError(null), 5000);
   };
 
-  const transformedPreviewUrl = uploadedImage
+  const basePreviewUrl = uploadedImage
     ? getTransformedPreviewUrl(
         uploadedImage.info.secure_url,
         transformations,
@@ -156,6 +230,32 @@ export function UploadPage() {
           : undefined,
       )
     : null;
+
+  const aiPreviewUrl = uploadedImage
+    ? getTransformedPreviewUrl(
+        uploadedImage.info.secure_url,
+        transformations,
+        typeof uploadedImage.info.custom_coordinates === "string"
+          ? uploadedImage.info.custom_coordinates
+          : undefined,
+        aiAdjustments,
+        aiTemplateName,
+      )
+    : null;
+
+  const transformedPreviewUrl = useAiPreview
+    ? aiPreviewUrl || basePreviewUrl
+    : basePreviewUrl;
+
+  const activeAiAdjustmentsCount =
+    Object.values(aiAdjustments).filter(Boolean).length;
+
+  const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
+    setAiAdjustments((prev) => ({
+      ...prev,
+      [adjustment]: !prev[adjustment],
+    }));
+  };
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
@@ -217,6 +317,62 @@ export function UploadPage() {
                     className="w-full h-auto"
                   />
                 </div>
+
+                <div className="pt-4 border-t border-gray-200 space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900">
+                    {t("upload.aiAdjustmentsTitle")}
+                  </h4>
+                  <p className="text-xs text-gray-500">
+                    {t("upload.aiAdjustmentsHint")}
+                  </p>
+                  {aiTemplateName && (
+                    <p className="text-xs text-gray-500">
+                      {t("upload.aiTemplateLabel")} {aiTemplateName}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {AI_ADJUSTMENT_OPTIONS.map((option) => {
+                      const isActive = aiAdjustments[option.key];
+
+                      return (
+                        <Button
+                          key={option.key}
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleAiAdjustment(option.key)}
+                        >
+                          {t(option.labelKey)}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={useAiPreview ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUseAiPreview(true)}
+                    >
+                      {t("upload.previewAi")}
+                    </Button>
+                    <Button
+                      variant={!useAiPreview ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setUseAiPreview(false)}
+                    >
+                      {t("upload.previewOriginal")}
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    {useAiPreview
+                      ? t("upload.previewAiActive", {
+                          count: activeAiAdjustmentsCount,
+                        })
+                      : t("upload.previewOriginalActive")}
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="p-2 bg-gray-50 rounded">
                     <span className="font-medium text-gray-700">
