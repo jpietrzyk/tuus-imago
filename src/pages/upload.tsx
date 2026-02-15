@@ -7,7 +7,13 @@ import {
   cloudinaryConfig,
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
-import { CheckCircle2, AlertCircle, Sliders } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Sliders,
+  Square,
+  SquareCheck,
+} from "lucide-react";
 import { t } from "@/locales/i18n";
 import {
   type ImageTransformations,
@@ -119,13 +125,10 @@ export function UploadPage() {
   const transformedPreviewUrl = useAiPreview
     ? aiPreviewUrl || basePreviewUrl
     : basePreviewUrl;
+  const isOriginalPreview = !useAiPreview;
 
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
-
-  const activeAiTools = AI_ADJUSTMENT_OPTIONS.filter(
-    (option) => aiAdjustments[option.key],
-  );
 
   const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
     setPreviewError(null);
@@ -226,6 +229,18 @@ export function UploadPage() {
             {/* Uploaded Image Preview */}
             {uploadedImage && (
               <div className="space-y-4 pt-4 rounded-lg bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-base font-semibold text-gray-900">
+                    {t("upload.uploadedPhoto")}
+                  </p>
+                  {useAiPreview && (
+                    <span className="text-[11px] text-muted-foreground text-right">
+                      {t("upload.previewAiActive", {
+                        count: activeAiAdjustmentsCount,
+                      })}
+                    </span>
+                  )}
+                </div>
                 <div className="rounded-lg bg-muted/50 p-4">
                   <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                     <img
@@ -283,23 +298,32 @@ export function UploadPage() {
 
                 <div className="pt-4 space-y-4">
                   <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                    <div className="w-full flex items-center justify-between">
+                    <div className="w-full flex items-center justify-between gap-3">
                       <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
                         <Sliders className="h-4 w-4" />
                         {t("upload.aiAdjustmentsTitle")}
                       </span>
-                      {useAiPreview && (
-                        <span className="text-xs text-muted-foreground">
-                          {t("upload.previewAiActive", {
-                            count: activeAiAdjustmentsCount,
-                          })}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setUseAiPreview((previous) => !previous);
+                            setIsPreviewLoading(true);
+                            setPreviewLoadProgress(0);
+                            setPreviewError(null);
+                          }}
+                          aria-pressed={isOriginalPreview}
+                        >
+                          {isOriginalPreview ? (
+                            <SquareCheck className="h-4 w-4" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                          {t("upload.showOriginal")}
+                        </Button>
+                      </div>
                     </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      {t("upload.aiAdjustmentsHint")}
-                    </p>
 
                     {aiTemplateName && (
                       <p className="text-xs text-muted-foreground">
@@ -324,72 +348,6 @@ export function UploadPage() {
                         );
                       })}
                     </div>
-                  </div>
-
-                  <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-                    <p className="text-sm font-medium text-gray-900">
-                      {t("upload.previewModeTitle")}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant={useAiPreview ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setUseAiPreview(true);
-                          setIsPreviewLoading(true);
-                          setPreviewLoadProgress(0);
-                          setPreviewError(null);
-                        }}
-                      >
-                        {t("upload.previewAi")}
-                      </Button>
-                      <Button
-                        variant={!useAiPreview ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setUseAiPreview(false);
-                          setIsPreviewLoading(true);
-                          setPreviewLoadProgress(0);
-                          setPreviewError(null);
-                        }}
-                      >
-                        {t("upload.previewOriginal")}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {useAiPreview
-                        ? t("upload.previewAiActive", {
-                            count: activeAiAdjustmentsCount,
-                          })
-                        : t("upload.previewOriginalActive")}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 space-y-2">
-                    <p className="text-xs font-semibold text-gray-900">
-                      {t("upload.usedCloudinaryTools")}
-                    </p>
-                    {activeAiTools.length > 0 || aiTemplateName ? (
-                      <div className="flex flex-wrap gap-2">
-                        {activeAiTools.map((option) => (
-                          <span
-                            key={option.key}
-                            className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
-                          >
-                            {t(option.labelKey)}
-                          </span>
-                        ))}
-                        {aiTemplateName && (
-                          <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                            {t("upload.aiTemplateLabel")} {aiTemplateName}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        {t("upload.noCloudinaryTools")}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
