@@ -281,11 +281,13 @@ export function UploadPage() {
                         <Sliders className="h-4 w-4" />
                         {t("upload.aiAdjustmentsTitle")}
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {t("upload.previewAiActive", {
-                          count: activeAiAdjustmentsCount,
-                        })}
-                      </span>
+                      {useAiPreview && (
+                        <span className="text-xs text-muted-foreground">
+                          {t("upload.previewAiActive", {
+                            count: activeAiAdjustmentsCount,
+                          })}
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-xs text-muted-foreground">
