@@ -225,40 +225,46 @@ export function UploadPage() {
 
             {/* Uploaded Image Preview */}
             {uploadedImage && (
-              <div className="space-y-3 pt-4 border-t border-gray-200">
-                <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                  <img
-                    key={transformedPreviewUrl || uploadedImage.info.secure_url}
-                    src={transformedPreviewUrl || uploadedImage.info.secure_url}
-                    alt="Uploaded photo"
-                    className="w-full h-auto"
-                    onLoad={() => {
-                      setPreviewLoadProgress(100);
-                      setIsPreviewLoading(false);
-                    }}
-                    onError={() => {
-                      setIsPreviewLoading(false);
-                      setPreviewLoadProgress(0);
-                      if (useAiPreview) {
-                        setPreviewError(t("upload.aiPreviewError"));
+              <div className="space-y-4 pt-4 rounded-lg bg-white p-4 shadow-sm">
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    <img
+                      key={
+                        transformedPreviewUrl || uploadedImage.info.secure_url
                       }
-                    }}
-                  />
-                  {isPreviewLoading && (
-                    <div className="p-3 space-y-2">
-                      <p className="text-xs text-gray-500 text-center">
-                        {t("upload.loadingPreviewProgress", {
-                          percent: previewLoadProgress,
-                        })}
-                      </p>
-                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
-                          style={{ width: `${previewLoadProgress}%` }}
-                        />
+                      src={
+                        transformedPreviewUrl || uploadedImage.info.secure_url
+                      }
+                      alt="Uploaded photo"
+                      className="w-full h-auto"
+                      onLoad={() => {
+                        setPreviewLoadProgress(100);
+                        setIsPreviewLoading(false);
+                      }}
+                      onError={() => {
+                        setIsPreviewLoading(false);
+                        setPreviewLoadProgress(0);
+                        if (useAiPreview) {
+                          setPreviewError(t("upload.aiPreviewError"));
+                        }
+                      }}
+                    />
+                    {isPreviewLoading && (
+                      <div className="p-3 space-y-2">
+                        <p className="text-xs text-gray-500 text-center">
+                          {t("upload.loadingPreviewProgress", {
+                            percent: previewLoadProgress,
+                          })}
+                        </p>
+                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
+                            style={{ width: `${previewLoadProgress}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {previewError && useAiPreview && (
@@ -268,7 +274,7 @@ export function UploadPage() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-gray-200 space-y-4">
+                <div className="pt-4 space-y-4">
                   <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
                     <div className="w-full flex items-center justify-between">
                       <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
@@ -350,7 +356,7 @@ export function UploadPage() {
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-gray-200 space-y-2">
+                  <div className="pt-2 space-y-2">
                     <p className="text-xs font-semibold text-gray-900">
                       {t("upload.usedCloudinaryTools")}
                     </p>
