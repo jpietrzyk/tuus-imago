@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import { CustomImageUploader } from "@/components/custom-image-uploader";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   cloudinaryConfig,
@@ -13,78 +14,13 @@ import {
   Sliders,
 } from "lucide-react";
 import { t } from "@/locales/i18n";
-
-export interface ImageTransformations {
-  rotation: number;
-  flipHorizontal: boolean;
-  flipVertical: boolean;
-  brightness: number;
-  contrast: number;
-  grayscale: number;
-  blur: number;
-}
-
-export function getTransformedPreviewUrl(
-  secureUrl: string,
-  trans: ImageTransformations | null,
-  customCoordinates?: string,
-): string {
-  if (!trans) {
-    return secureUrl;
-  }
-
-  const transformationParts: string[] = [];
-
-  if (customCoordinates) {
-    const [x, y, width, height] = customCoordinates
-      .split(",")
-      .map((part) => part.trim())
-      .filter(Boolean);
-
-    if (x && y && width && height) {
-      transformationParts.push(`c_crop,x_${x},y_${y},w_${width},h_${height}`);
-    }
-  }
-
-  if (trans.rotation !== 0) {
-    transformationParts.push(`a_${trans.rotation}`);
-  }
-
-  if (trans.flipHorizontal) {
-    transformationParts.push("a_hflip");
-  }
-
-  if (trans.flipVertical) {
-    transformationParts.push("a_vflip");
-  }
-
-  if (trans.brightness !== 0) {
-    transformationParts.push(`e_brightness:${trans.brightness}`);
-  }
-
-  if (trans.contrast !== 0) {
-    transformationParts.push(`e_contrast:${trans.contrast}`);
-  }
-
-  if (trans.grayscale !== 0) {
-    transformationParts.push(`e_grayscale:${trans.grayscale}`);
-  }
-
-  if (trans.blur !== 0) {
-    transformationParts.push(`e_blur:${trans.blur}`);
-  }
-
-  if (transformationParts.length === 0) {
-    return secureUrl;
-  }
-
-  const urlParts = secureUrl.split("/upload/");
-  if (urlParts.length !== 2) {
-    return secureUrl;
-  }
-
-  return `${urlParts[0]}/upload/${transformationParts.join("/")}/${urlParts[1]}`;
-}
+import {
+  type ImageTransformations,
+  type AiAdjustments,
+  getTransformedPreviewUrl,
+  DEFAULT_AI_ADJUSTMENTS,
+  AI_ADJUSTMENT_OPTIONS,
+} from "@/lib/image-transformations";
 
 export function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
@@ -92,8 +28,18 @@ export function UploadPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [transformations, setTransformations] =
     useState<ImageTransformations | null>(null);
+  const [aiAdjustments, setAiAdjustments] = useState<AiAdjustments>(
+    DEFAULT_AI_ADJUSTMENTS,
+  );
+  const [useAiPreview, setUseAiPreview] = useState(true);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const cloudinaryConfigError = getCloudinaryUploadConfigError();
   const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
+  const aiTemplateName =
+    (
+      import.meta.env.VITE_CLOUDINARY_AI_TEMPLATE as string | undefined
+    )?.trim() || undefined;
 
   const handleUploadSuccess = (
     result:
@@ -133,8 +79,12 @@ export function UploadPage() {
           };
     setUploadedImage(uploadResult);
     setTransformations(transformationsParam);
+    setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
+    setUseAiPreview(true);
     setUploadError(null);
     setIsSuccess(true);
+    setIsPreviewLoading(true);
+    setPreviewError(null);
     // Auto-hide success message after 3 seconds
     setTimeout(() => setIsSuccess(false), 3000);
   };
@@ -147,7 +97,7 @@ export function UploadPage() {
     setTimeout(() => setUploadError(null), 5000);
   };
 
-  const transformedPreviewUrl = uploadedImage
+  const basePreviewUrl = uploadedImage
     ? getTransformedPreviewUrl(
         uploadedImage.info.secure_url,
         transformations,
@@ -156,6 +106,32 @@ export function UploadPage() {
           : undefined,
       )
     : null;
+
+  const aiPreviewUrl = uploadedImage
+    ? getTransformedPreviewUrl(
+        uploadedImage.info.secure_url,
+        transformations,
+        typeof uploadedImage.info.custom_coordinates === "string"
+          ? uploadedImage.info.custom_coordinates
+          : undefined,
+        aiAdjustments,
+        aiTemplateName,
+      )
+    : null;
+
+  const transformedPreviewUrl = useAiPreview
+    ? aiPreviewUrl || basePreviewUrl
+    : basePreviewUrl;
+
+  const activeAiAdjustmentsCount =
+    Object.values(aiAdjustments).filter(Boolean).length;
+
+  const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
+    setAiAdjustments((prev) => ({
+      ...prev,
+      [adjustment]: !prev[adjustment],
+    }));
+  };
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
@@ -185,6 +161,29 @@ export function UploadPage() {
                   Upload preset: {cloudinaryConfig.uploadPreset || "(missing)"}
                 </p>
                 <p>Config status: {cloudinaryConfigError ?? "OK"}</p>
+                {uploadedImage && (
+                  <>
+                    <p>Preview mode: {useAiPreview ? "AI" : "Original"}</p>
+                    <p className="break-all">
+                      Preview URL: {transformedPreviewUrl || "(missing)"}
+                    </p>
+                    {transformedPreviewUrl && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            transformedPreviewUrl,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        {t("upload.openPreviewUrl")}
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -212,11 +211,94 @@ export function UploadPage() {
                 </h3>
                 <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   <img
+                    key={transformedPreviewUrl || uploadedImage.info.secure_url}
                     src={transformedPreviewUrl || uploadedImage.info.secure_url}
                     alt="Uploaded photo"
                     className="w-full h-auto"
+                    onLoad={() => setIsPreviewLoading(false)}
+                    onError={() => {
+                      setIsPreviewLoading(false);
+                      if (useAiPreview) {
+                        setPreviewError(t("upload.aiPreviewError"));
+                      }
+                    }}
                   />
+                  {isPreviewLoading && (
+                    <p className="p-3 text-xs text-gray-500 text-center">
+                      {t("upload.loadingPreview")}
+                    </p>
+                  )}
                 </div>
+                {previewError && useAiPreview && (
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{previewError}</span>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-gray-200 space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900">
+                    {t("upload.aiAdjustmentsTitle")}
+                  </h4>
+                  <p className="text-xs text-gray-500">
+                    {t("upload.aiAdjustmentsHint")}
+                  </p>
+                  {aiTemplateName && (
+                    <p className="text-xs text-gray-500">
+                      {t("upload.aiTemplateLabel")} {aiTemplateName}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {AI_ADJUSTMENT_OPTIONS.map((option) => {
+                      const isActive = aiAdjustments[option.key];
+
+                      return (
+                        <Button
+                          key={option.key}
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleAiAdjustment(option.key)}
+                        >
+                          {t(option.labelKey)}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={useAiPreview ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setUseAiPreview(true);
+                        setIsPreviewLoading(true);
+                        setPreviewError(null);
+                      }}
+                    >
+                      {t("upload.previewAi")}
+                    </Button>
+                    <Button
+                      variant={!useAiPreview ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setUseAiPreview(false);
+                        setIsPreviewLoading(true);
+                        setPreviewError(null);
+                      }}
+                    >
+                      {t("upload.previewOriginal")}
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    {useAiPreview
+                      ? t("upload.previewAiActive", {
+                          count: activeAiAdjustmentsCount,
+                        })
+                      : t("upload.previewOriginalActive")}
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="p-2 bg-gray-50 rounded">
                     <span className="font-medium text-gray-700">

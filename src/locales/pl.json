@@ -162,7 +162,20 @@
     "contrast": "Kontrast:",
     "grayscale": "Skala szarości:",
     "blur": "Rozmycie:",
-    "loadingPreview": "Ładowanie podglądu..."
+    "loadingPreview": "Ładowanie podglądu...",
+    "aiAdjustmentsTitle": "Korekty AI Cloudinary",
+    "aiAdjustmentsHint": "Wybierz jedną lub więcej korekt AI i przełączaj podgląd między oryginałem i wersją AI.",
+    "aiTemplateLabel": "Szablon AI:",
+    "aiEnhance": "Ulepsz",
+    "aiRemoveBackground": "Usuń tło",
+    "aiUpscale": "Powiększ",
+    "aiRestore": "Przywróć detale",
+    "previewAi": "Podgląd wersji AI",
+    "previewOriginal": "Podgląd oryginału",
+    "previewAiActive": "Podgląd AI aktywny (wybrano efektów: {count})",
+    "previewOriginalActive": "Podgląd oryginału aktywny",
+    "aiPreviewError": "Nie udało się wygenerować podglądu AI. Sprawdź, czy wybrane efekty/szablon są dostępne w Twoim planie Cloudinary.",
+    "openPreviewUrl": "Otwórz URL podglądu"
   },
   "uploader": {
     "cropImage": "Przytnij obraz",

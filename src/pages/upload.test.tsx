@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
-import type { ImageTransformations } from "./upload";
-import { getTransformedPreviewUrl } from "./upload";
+import type { ImageTransformations } from "@/lib/image-transformations";
+import { getTransformedPreviewUrl } from "@/lib/image-transformations";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
 import { tr } from "@/test/i18n-test";
 
@@ -145,6 +145,59 @@ describe("UploadPage Component", () => {
 
       expect(transformedUrl).toBe(
         "https://res.cloudinary.com/demo/image/upload/c_crop,x_10,y_20,w_300,h_400/a_45/a_hflip/a_vflip/e_brightness:10/e_contrast:-20/e_grayscale:30/e_blur:5/v123/sample.jpg",
+      );
+    });
+
+    it("should compose transformed Cloudinary preview URL with multiple AI effects", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformations: ImageTransformations = {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
+        blur: 0,
+      };
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        transformations,
+        undefined,
+        {
+          enhance: true,
+          removeBackground: true,
+          upscale: true,
+          restore: false,
+        },
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/e_enhance/e_background_removal/e_upscale/v123/sample.jpg",
+      );
+    });
+
+    it("should include configured AI template in transformed URL", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        null,
+        undefined,
+        {
+          enhance: true,
+          removeBackground: false,
+          upscale: false,
+          restore: false,
+        },
+        "portrait_ai",
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/t_portrait_ai/e_enhance/v123/sample.jpg",
       );
     });
 
