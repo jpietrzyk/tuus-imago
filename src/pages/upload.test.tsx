@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
-import type { ImageTransformations } from "./upload";
-import { getTransformedPreviewUrl } from "./upload";
+import type { ImageTransformations } from "@/lib/image-transformations";
+import { getTransformedPreviewUrl } from "@/lib/image-transformations";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
 import { tr } from "@/test/i18n-test";
 
