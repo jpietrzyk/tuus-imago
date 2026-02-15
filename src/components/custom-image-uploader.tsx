@@ -532,7 +532,7 @@ export function CustomImageUploader({
 
           xhr.onabort = () => {
             uploadXhrRef.current = null;
-            reject(new Error("Upload cancelled"));
+            reject(new Error("Upload was aborted"));
           };
 
           xhr.send(formData);
