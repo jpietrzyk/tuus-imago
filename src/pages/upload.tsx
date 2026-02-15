@@ -152,7 +152,7 @@ export function UploadPage() {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isPreviewLoading, transformedPreviewUrl]);
+  }, [isPreviewLoading]);
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
