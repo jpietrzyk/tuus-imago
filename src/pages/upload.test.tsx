@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
 import type { ImageTransformations } from "./upload";
+import { getTransformedPreviewUrl } from "./upload";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
 import { tr } from "@/test/i18n-test";
 
@@ -113,6 +114,40 @@ describe("UploadPage Component", () => {
 
   // Integration-style tests for transformations feature
   describe("UploadPage Transformations Feature", () => {
+    it("should return original URL when transformations are null", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformedUrl = getTransformedPreviewUrl(originalUrl, null);
+
+      expect(transformedUrl).toBe(originalUrl);
+    });
+
+    it("should compose transformed Cloudinary preview URL with crop and effects", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformations: ImageTransformations = {
+        rotation: 45,
+        flipHorizontal: true,
+        flipVertical: true,
+        brightness: 10,
+        contrast: -20,
+        grayscale: 30,
+        blur: 5,
+      };
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        transformations,
+        "10,20,300,400",
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/c_crop,x_10,y_20,w_300,h_400/a_45/a_hflip/a_vflip/e_brightness:10/e_contrast:-20/e_grayscale:30/e_blur:5/v123/sample.jpg",
+      );
+    });
+
     it("should handle transformations in handleUploadSuccess callback", () => {
       // This verifies that function signature accepts transformations
       const mockUploadResult: UploadResult = {

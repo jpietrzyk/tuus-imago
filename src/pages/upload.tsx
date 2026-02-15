@@ -24,6 +24,68 @@ export interface ImageTransformations {
   blur: number;
 }
 
+export function getTransformedPreviewUrl(
+  secureUrl: string,
+  trans: ImageTransformations | null,
+  customCoordinates?: string,
+): string {
+  if (!trans) {
+    return secureUrl;
+  }
+
+  const transformationParts: string[] = [];
+
+  if (customCoordinates) {
+    const [x, y, width, height] = customCoordinates
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (x && y && width && height) {
+      transformationParts.push(`c_crop,x_${x},y_${y},w_${width},h_${height}`);
+    }
+  }
+
+  if (trans.rotation !== 0) {
+    transformationParts.push(`a_${trans.rotation}`);
+  }
+
+  if (trans.flipHorizontal) {
+    transformationParts.push("a_hflip");
+  }
+
+  if (trans.flipVertical) {
+    transformationParts.push("a_vflip");
+  }
+
+  if (trans.brightness !== 0) {
+    transformationParts.push(`e_brightness:${trans.brightness}`);
+  }
+
+  if (trans.contrast !== 0) {
+    transformationParts.push(`e_contrast:${trans.contrast}`);
+  }
+
+  if (trans.grayscale !== 0) {
+    transformationParts.push(`e_grayscale:${trans.grayscale}`);
+  }
+
+  if (trans.blur !== 0) {
+    transformationParts.push(`e_blur:${trans.blur}`);
+  }
+
+  if (transformationParts.length === 0) {
+    return secureUrl;
+  }
+
+  const urlParts = secureUrl.split("/upload/");
+  if (urlParts.length !== 2) {
+    return secureUrl;
+  }
+
+  return `${urlParts[0]}/upload/${transformationParts.join("/")}/${urlParts[1]}`;
+}
+
 export function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -44,6 +106,8 @@ export function UploadPage() {
           bytes: number;
           format: string;
           url: string;
+          custom_coordinates?: string;
+          context?: string;
         },
     transformationsParam: ImageTransformations,
   ) => {
@@ -61,6 +125,8 @@ export function UploadPage() {
               width: result.width,
               height: result.height,
               format: result.format,
+              custom_coordinates: result.custom_coordinates,
+              context: result.context,
               resource_type: "image",
               created_at: new Date().toISOString(),
             },
@@ -80,6 +146,16 @@ export function UploadPage() {
     // Auto-hide error message after 5 seconds
     setTimeout(() => setUploadError(null), 5000);
   };
+
+  const transformedPreviewUrl = uploadedImage
+    ? getTransformedPreviewUrl(
+        uploadedImage.info.secure_url,
+        transformations,
+        typeof uploadedImage.info.custom_coordinates === "string"
+          ? uploadedImage.info.custom_coordinates
+          : undefined,
+      )
+    : null;
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
@@ -113,17 +189,19 @@ export function UploadPage() {
             )}
 
             {/* Upload Widget */}
-            <div className="flex flex-col items-center gap-4">
-              <CustomImageUploader
-                onUploadSuccess={handleUploadSuccess}
-                onUploadError={handleUploadError}
-                className="w-full max-w-sm py-6 text-lg font-semibold"
-              />
+            {!uploadedImage && (
+              <div className="flex flex-col items-center gap-4">
+                <CustomImageUploader
+                  onUploadSuccess={handleUploadSuccess}
+                  onUploadError={handleUploadError}
+                  className="w-full max-w-sm py-6 text-lg font-semibold"
+                />
 
-              <p className="text-sm text-gray-500 text-center">
-                {t("upload.fileSupport")}
-              </p>
-            </div>
+                <p className="text-sm text-gray-500 text-center">
+                  {t("upload.fileSupport")}
+                </p>
+              </div>
+            )}
 
             {/* Uploaded Image Preview */}
             {uploadedImage && (
@@ -134,7 +212,7 @@ export function UploadPage() {
                 </h3>
                 <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                   <img
-                    src={uploadedImage.info.secure_url}
+                    src={transformedPreviewUrl || uploadedImage.info.secure_url}
                     alt="Uploaded photo"
                     className="w-full h-auto"
                   />

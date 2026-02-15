@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:netlify": "netlify dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest",
@@ -45,6 +46,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "jsdom": "^28.0.0",
+    "netlify-cli": "^23.15.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "ui\n": "link:@vitest/ui\n",
