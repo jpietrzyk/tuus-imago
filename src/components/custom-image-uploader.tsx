@@ -66,6 +66,19 @@ interface CustomImageUploaderProps {
   className?: string;
 }
 
+interface CloudinaryUploadResponse {
+  public_id: string;
+  secure_url: string;
+  width: number;
+  height: number;
+  bytes: number;
+  format: string;
+  url: string;
+  error?: {
+    message?: string;
+  };
+}
+
 const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
   rotation: 0,
   flipHorizontal: false,
@@ -87,6 +100,7 @@ export function CustomImageUploader({
     DEFAULT_TRANSFORMATIONS,
   );
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [step, setStep] = useState<"crop" | "adjust">("crop");
   const [cropArea, setCropArea] = useState<CropArea>({
     x: 0,
@@ -387,6 +401,7 @@ export function CustomImageUploader({
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       const img = new Image();
@@ -455,19 +470,60 @@ export function CustomImageUploader({
       formData.append("signature", signatureData.signature);
       formData.append("api_key", signatureData.apiKey);
 
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
+      const data = await new Promise<CloudinaryUploadResponse>(
+        (resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open(
+            "POST",
+            `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
+          );
+
+          xhr.upload.onprogress = (event) => {
+            if (!event.lengthComputable) return;
+
+            const progress = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(Math.max(0, Math.min(100, progress)));
+          };
+
+          xhr.onload = () => {
+            try {
+              const responseJson = JSON.parse(
+                xhr.responseText || "{}",
+              ) as CloudinaryUploadResponse;
+
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(responseJson);
+                return;
+              }
+
+              const errorMessage =
+                typeof responseJson.error === "object" &&
+                responseJson.error !== null &&
+                "message" in responseJson.error
+                  ? String(
+                      (responseJson.error as { message?: unknown }).message,
+                    )
+                  : "Upload failed";
+
+              reject(new Error(errorMessage));
+            } catch {
+              reject(new Error("Upload failed"));
+            }
+          };
+
+          xhr.onerror = () => {
+            reject(new Error("Upload failed"));
+          };
+
+          xhr.send(formData);
         },
       );
-
-      const data = await response.json();
 
       if (data.error) {
         throw new Error(data.error.message || "Upload failed");
       }
+
+      setUploadProgress(100);
 
       onUploadSuccess?.(
         {
@@ -502,6 +558,7 @@ export function CustomImageUploader({
       );
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   }, [
     selectedFile,
@@ -982,12 +1039,28 @@ export function CustomImageUploader({
                 {isUploading ? (
                   <>
                     <span className="animate-spin mr-2">⏳</span>
-                    {t("uploader.uploading")}
+                    {t("uploader.uploadingProgress", {
+                      percent: uploadProgress,
+                    })}
                   </>
                 ) : (
                   <>
                     <Check className="mr-2 h-4 w-4" />
                     {t("uploader.uploadPhoto")}
+
+                    {isUploading && (
+                      <div className="space-y-1">
+                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground text-right">
+                          {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
               </Button>

@@ -163,6 +163,7 @@
     "grayscale": "Skala szarości:",
     "blur": "Rozmycie:",
     "loadingPreview": "Ładowanie podglądu...",
+    "loadingPreviewProgress": "Ładowanie podglądu... {percent}%",
     "aiAdjustmentsTitle": "Korekty AI Cloudinary",
     "aiAdjustmentsHint": "Wybierz jedną lub więcej korekt AI i przełączaj podgląd między oryginałem i wersją AI.",
     "aiTemplateLabel": "Szablon AI:",
@@ -175,7 +176,9 @@
     "previewAiActive": "Podgląd AI aktywny (wybrano efektów: {count})",
     "previewOriginalActive": "Podgląd oryginału aktywny",
     "aiPreviewError": "Nie udało się wygenerować podglądu AI. Sprawdź, czy wybrane efekty/szablon są dostępne w Twoim planie Cloudinary.",
-    "openPreviewUrl": "Otwórz URL podglądu"
+    "openPreviewUrl": "Otwórz URL podglądu",
+    "usedCloudinaryTools": "Użyte narzędzia Cloudinary",
+    "noCloudinaryTools": "Nie wybrano narzędzi Cloudinary"
   },
   "uploader": {
     "cropImage": "Przytnij obraz",
@@ -186,6 +189,7 @@
     "cancel": "Anuluj",
     "uploadPhoto": "Prześlij zdjęcie",
     "uploading": "Przesyłanie...",
+    "uploadingProgress": "Przesyłanie... {percent}%",
     "imageAdjustments": "Korekty obrazu",
     "rotation": "Obrót",
     "rotateMinus90": "Obróć -90°",
