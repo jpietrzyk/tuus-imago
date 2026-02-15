@@ -229,9 +229,18 @@ export function UploadPage() {
             {/* Uploaded Image Preview */}
             {uploadedImage && (
               <div className="space-y-4 pt-4 rounded-lg bg-white p-4 shadow-sm">
-                <p className="text-base font-semibold text-gray-900">
-                  {t("upload.uploadedPhoto")}
-                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-base font-semibold text-gray-900">
+                    {t("upload.uploadedPhoto")}
+                  </p>
+                  {useAiPreview && (
+                    <span className="text-[11px] text-muted-foreground text-right">
+                      {t("upload.previewAiActive", {
+                        count: activeAiAdjustmentsCount,
+                      })}
+                    </span>
+                  )}
+                </div>
                 <div className="rounded-lg bg-muted/50 p-4">
                   <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                     <img
@@ -295,13 +304,6 @@ export function UploadPage() {
                         {t("upload.aiAdjustmentsTitle")}
                       </span>
                       <div className="flex items-center gap-2">
-                        {useAiPreview && (
-                          <span className="text-xs text-muted-foreground">
-                            {t("upload.previewAiActive", {
-                              count: activeAiAdjustmentsCount,
-                            })}
-                          </span>
-                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -322,10 +324,6 @@ export function UploadPage() {
                         </Button>
                       </div>
                     </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      {t("upload.aiAdjustmentsHint")}
-                    </p>
 
                     {aiTemplateName && (
                       <p className="text-xs text-muted-foreground">
