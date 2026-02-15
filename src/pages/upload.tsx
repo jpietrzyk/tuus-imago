@@ -127,6 +127,11 @@ export function UploadPage() {
     Object.values(aiAdjustments).filter(Boolean).length;
 
   const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
+    setPreviewError(null);
+    if (useAiPreview) {
+      setIsPreviewLoading(true);
+    }
+
     setAiAdjustments((prev) => ({
       ...prev,
       [adjustment]: !prev[adjustment],

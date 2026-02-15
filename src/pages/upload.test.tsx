@@ -123,6 +123,21 @@ describe("UploadPage Component", () => {
       expect(transformedUrl).toBe(originalUrl);
     });
 
+    it("should apply crop when only custom coordinates are provided", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        null,
+        "10,20,300,400",
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/c_crop,x_10,y_20,w_300,h_400/v123/sample.jpg",
+      );
+    });
+
     it("should compose transformed Cloudinary preview URL with crop and effects", () => {
       const originalUrl =
         "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";

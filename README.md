@@ -25,6 +25,19 @@ Set these values:
 - `VITE_CLOUDINARY_CLOUD_NAME=<your_cloud_name>`
 - `VITE_CLOUDINARY_UPLOAD_PRESET=<your_signed_preset_name>`
 
+Optional (AI preview template):
+
+- `VITE_CLOUDINARY_AI_TEMPLATE=<your_named_transformation>`
+
+`VITE_CLOUDINARY_AI_TEMPLATE` should be the **name of a Cloudinary named transformation** (without the `t_` prefix).
+When set, the app adds this template to the post-upload preview URL before selected AI effects.
+
+Example:
+
+- `VITE_CLOUDINARY_AI_TEMPLATE=portrait_ai`
+
+In Cloudinary, create this under **Settings → Transformations** (or named transformations UI), then reference that exact name in `.env`.
+
 ### 3) Configure Netlify function env vars
 
 Set server-side environment variables in Netlify:

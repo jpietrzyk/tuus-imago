@@ -15,14 +15,14 @@ export interface AiAdjustments {
   restore: boolean;
 }
 
-const DEFAULT_AI_ADJUSTMENTS: AiAdjustments = {
+export const DEFAULT_AI_ADJUSTMENTS: AiAdjustments = {
   enhance: true,
   removeBackground: false,
   upscale: false,
   restore: false,
 };
 
-const AI_ADJUSTMENT_OPTIONS: Array<{
+export const AI_ADJUSTMENT_OPTIONS: Array<{
   key: keyof AiAdjustments;
   transformation: string;
   labelKey: string;
@@ -61,8 +61,9 @@ export function getTransformedPreviewUrl(
   aiTemplate?: string,
 ): string {
   const hasAiAdjustments = hasActiveAiAdjustments(aiAdjustments || null);
+  const hasCropCoordinates = !!customCoordinates?.trim();
 
-  if (!trans && !hasAiAdjustments) {
+  if (!trans && !hasAiAdjustments && !hasCropCoordinates) {
     return secureUrl;
   }
 
@@ -132,5 +133,3 @@ export function getTransformedPreviewUrl(
 
   return `${urlParts[0]}/upload/${transformationParts.join("/")}/${urlParts[1]}`;
 }
-
-export { DEFAULT_AI_ADJUSTMENTS, AI_ADJUSTMENT_OPTIONS };
