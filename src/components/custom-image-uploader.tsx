@@ -89,6 +89,10 @@ const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
   blur: 0,
 };
 
+// Upload timeout in milliseconds (2 minutes)
+// This prevents indefinite hangs on slow connections or large file uploads
+const UPLOAD_TIMEOUT_MS = 120000;
+
 export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
@@ -478,8 +482,7 @@ export function CustomImageUploader({
             `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
           );
 
-          // Set timeout to 2 minutes for large file uploads
-          xhr.timeout = 120000;
+          xhr.timeout = UPLOAD_TIMEOUT_MS;
 
           xhr.upload.onprogress = (event) => {
             if (!event.lengthComputable) return;
