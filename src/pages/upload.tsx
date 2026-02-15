@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import { CustomImageUploader } from "@/components/custom-image-uploader";
 import { Button } from "@/components/ui/button";
@@ -160,6 +160,8 @@ export function UploadPage() {
     DEFAULT_AI_ADJUSTMENTS,
   );
   const [useAiPreview, setUseAiPreview] = useState(true);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const cloudinaryConfigError = getCloudinaryUploadConfigError();
   const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
   const aiTemplateName =
@@ -257,6 +259,21 @@ export function UploadPage() {
     }));
   };
 
+  useEffect(() => {
+    if (!uploadedImage || !transformedPreviewUrl) {
+      return;
+    }
+
+    setIsPreviewLoading(true);
+    setPreviewError(null);
+  }, [uploadedImage, transformedPreviewUrl]);
+
+  useEffect(() => {
+    if (!useAiPreview) {
+      setPreviewError(null);
+    }
+  }, [useAiPreview]);
+
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
@@ -285,6 +302,29 @@ export function UploadPage() {
                   Upload preset: {cloudinaryConfig.uploadPreset || "(missing)"}
                 </p>
                 <p>Config status: {cloudinaryConfigError ?? "OK"}</p>
+                {uploadedImage && (
+                  <>
+                    <p>Preview mode: {useAiPreview ? "AI" : "Original"}</p>
+                    <p className="break-all">
+                      Preview URL: {transformedPreviewUrl || "(missing)"}
+                    </p>
+                    {transformedPreviewUrl && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            transformedPreviewUrl,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      >
+                        {t("upload.openPreviewUrl")}
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -311,12 +351,31 @@ export function UploadPage() {
                   {t("upload.uploadedPhoto")}
                 </h3>
                 <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  {isPreviewLoading && (
+                    <p className="p-3 text-xs text-gray-500 text-center">
+                      {t("upload.loadingPreview")}
+                    </p>
+                  )}
                   <img
+                    key={transformedPreviewUrl || uploadedImage.info.secure_url}
                     src={transformedPreviewUrl || uploadedImage.info.secure_url}
                     alt="Uploaded photo"
                     className="w-full h-auto"
+                    onLoad={() => setIsPreviewLoading(false)}
+                    onError={() => {
+                      setIsPreviewLoading(false);
+                      if (useAiPreview) {
+                        setPreviewError(t("upload.aiPreviewError"));
+                      }
+                    }}
                   />
                 </div>
+                {previewError && (
+                  <div className="flex items-center gap-2 p-3 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{previewError}</span>
+                  </div>
+                )}
 
                 <div className="pt-4 border-t border-gray-200 space-y-3">
                   <h4 className="text-sm font-semibold text-gray-900">

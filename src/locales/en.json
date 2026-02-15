@@ -173,7 +173,9 @@
     "previewAi": "Preview AI version",
     "previewOriginal": "Preview original",
     "previewAiActive": "AI preview active ({count} effect(s) selected)",
-    "previewOriginalActive": "Original preview active"
+    "previewOriginalActive": "Original preview active",
+    "aiPreviewError": "AI preview could not be rendered. Check if selected effects/template are enabled in your Cloudinary plan.",
+    "openPreviewUrl": "Open preview URL"
   },
   "uploader": {
     "cropImage": "Crop Image",
