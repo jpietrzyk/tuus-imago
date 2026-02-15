@@ -57,6 +57,8 @@ interface CustomImageUploaderProps {
       bytes: number;
       format: string;
       url: string;
+      custom_coordinates?: string;
+      context?: string;
     },
     transformations: ImageTransformations,
   ) => void;
@@ -387,9 +389,6 @@ export function CustomImageUploader({
     setIsUploading(true);
 
     try {
-      // Apply crop and transformations before uploading
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
       const img = new Image();
 
       await new Promise((resolve, reject) => {
@@ -407,57 +406,54 @@ export function CustomImageUploader({
       const cropWidth = cropArea.width * scaleX;
       const cropHeight = cropArea.height * scaleY;
 
-      canvas.width = cropWidth;
-      canvas.height = cropHeight;
+      const customCoordinates = `${Math.round(cropX)},${Math.round(cropY)},${Math.round(cropWidth)},${Math.round(cropHeight)}`;
+      const context = [
+        `rotation=${transformations.rotation}`,
+        `flipHorizontal=${transformations.flipHorizontal}`,
+        `flipVertical=${transformations.flipVertical}`,
+        `brightness=${transformations.brightness}`,
+        `contrast=${transformations.contrast}`,
+        `grayscale=${transformations.grayscale}`,
+        `blur=${transformations.blur}`,
+      ].join("|");
 
-      if (!ctx) throw new Error("Failed to create canvas context");
-
-      // Apply transformations
-      ctx.save();
-
-      // Move to center for rotation
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((transformations.rotation * Math.PI) / 180);
-      ctx.scale(
-        transformations.flipHorizontal ? -1 : 1,
-        transformations.flipVertical ? -1 : 1,
-      );
-
-      // Apply filters
-      ctx.filter = `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`;
-
-      // Draw the cropped and transformed image
-      ctx.drawImage(
-        img,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
-        -canvas.width / 2,
-        -canvas.height / 2,
-        canvas.width,
-        canvas.height,
-      );
-
-      ctx.restore();
-
-      // Convert to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error("Failed to create blob"));
+      const signatureResponse = await fetch(
+        "/.netlify/functions/cloudinary-signature",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          "image/jpeg",
-          0.95,
-        );
-      });
+          body: JSON.stringify({
+            paramsToSign: {
+              upload_preset: cloudinaryConfig.uploadPreset,
+              folder: "tuus-imago",
+              custom_coordinates: customCoordinates,
+              context,
+            },
+          }),
+        },
+      );
 
-      // Upload the processed image
+      const signatureData = await signatureResponse.json();
+
+      if (!signatureResponse.ok) {
+        throw new Error(
+          signatureData.error ||
+            "Failed to generate upload signature. Make sure Netlify Function is configured.",
+        );
+      }
+
+      // Upload original image with crop/adjustment metadata
       const formData = new FormData();
-      formData.append("file", blob);
+      formData.append("file", selectedFile);
       formData.append("upload_preset", cloudinaryConfig.uploadPreset);
       formData.append("folder", "tuus-imago");
+      formData.append("custom_coordinates", customCoordinates);
+      formData.append("context", context);
+      formData.append("timestamp", String(signatureData.timestamp));
+      formData.append("signature", signatureData.signature);
+      formData.append("api_key", signatureData.apiKey);
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
@@ -482,6 +478,8 @@ export function CustomImageUploader({
           bytes: data.bytes,
           format: data.format,
           url: data.url,
+          custom_coordinates: customCoordinates,
+          context,
         },
         transformations,
       );
