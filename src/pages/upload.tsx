@@ -269,73 +269,85 @@ export function UploadPage() {
                 )}
 
                 <div className="pt-4 border-t border-gray-200 space-y-4">
-                  <div className="w-full px-4 py-3 border rounded-lg bg-muted/30 transition-colors flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
-                      <Sliders className="h-4 w-4" />
-                      {t("upload.aiAdjustmentsTitle")}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
+                  <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+                    <div className="w-full flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                        <Sliders className="h-4 w-4" />
+                        {t("upload.aiAdjustmentsTitle")}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {t("upload.previewAiActive", {
+                          count: activeAiAdjustmentsCount,
+                        })}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">
+                      {t("upload.aiAdjustmentsHint")}
+                    </p>
+
+                    {aiTemplateName && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("upload.aiTemplateLabel")} {aiTemplateName}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      {AI_ADJUSTMENT_OPTIONS.map((option) => {
+                        const isActive = aiAdjustments[option.key];
+
+                        return (
+                          <Button
+                            key={option.key}
+                            variant={isActive ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleAiAdjustment(option.key)}
+                            className="min-w-36"
+                          >
+                            {t(option.labelKey)}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                    <p className="text-sm font-medium text-gray-900">
+                      {t("upload.previewModeTitle")}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant={useAiPreview ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setUseAiPreview(true);
+                          setIsPreviewLoading(true);
+                          setPreviewLoadProgress(0);
+                          setPreviewError(null);
+                        }}
+                      >
+                        {t("upload.previewAi")}
+                      </Button>
+                      <Button
+                        variant={!useAiPreview ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setUseAiPreview(false);
+                          setIsPreviewLoading(true);
+                          setPreviewLoadProgress(0);
+                          setPreviewError(null);
+                        }}
+                      >
+                        {t("upload.previewOriginal")}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
                       {useAiPreview
                         ? t("upload.previewAiActive", {
                             count: activeAiAdjustmentsCount,
                           })
                         : t("upload.previewOriginalActive")}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground">
-                    {t("upload.aiAdjustmentsHint")}
-                  </p>
-
-                  {aiTemplateName && (
-                    <p className="text-xs text-muted-foreground">
-                      {t("upload.aiTemplateLabel")} {aiTemplateName}
                     </p>
-                  )}
-
-                  <div className="flex flex-wrap gap-2">
-                    {AI_ADJUSTMENT_OPTIONS.map((option) => {
-                      const isActive = aiAdjustments[option.key];
-
-                      return (
-                        <Button
-                          key={option.key}
-                          variant={isActive ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleAiAdjustment(option.key)}
-                          className="min-w-36"
-                        >
-                          {t(option.labelKey)}
-                        </Button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant={useAiPreview ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setUseAiPreview(true);
-                        setIsPreviewLoading(true);
-                        setPreviewLoadProgress(0);
-                        setPreviewError(null);
-                      }}
-                    >
-                      {t("upload.previewAi")}
-                    </Button>
-                    <Button
-                      variant={!useAiPreview ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => {
-                        setUseAiPreview(false);
-                        setIsPreviewLoading(true);
-                        setPreviewLoadProgress(0);
-                        setPreviewError(null);
-                      }}
-                    >
-                      {t("upload.previewOriginal")}
-                    </Button>
                   </div>
 
                   <div className="pt-2 border-t border-gray-200 space-y-2">
