@@ -260,6 +260,13 @@ export function UploadPage() {
                           <div
                             className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
                             style={{ width: `${previewLoadProgress}%` }}
+                            role="progressbar"
+                            aria-valuenow={previewLoadProgress}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label={t("upload.loadingPreviewProgress", {
+                              percent: previewLoadProgress,
+                            })}
                           />
                         </div>
                       </div>
