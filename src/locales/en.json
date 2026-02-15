@@ -163,6 +163,7 @@
     "grayscale": "Grayscale:",
     "blur": "Blur:",
     "loadingPreview": "Loading preview...",
+    "loadingPreviewProgress": "Loading preview... {percent}%",
     "aiAdjustmentsTitle": "Cloudinary AI Adjustments",
     "aiAdjustmentsHint": "Select one or more AI effects and switch between original and AI preview.",
     "aiTemplateLabel": "AI template:",
@@ -172,10 +173,13 @@
     "aiRestore": "Restore",
     "previewAi": "Preview AI version",
     "previewOriginal": "Preview original",
+    "previewModeTitle": "Preview mode",
     "previewAiActive": "AI preview active ({count} effect(s) selected)",
     "previewOriginalActive": "Original preview active",
     "aiPreviewError": "AI preview could not be rendered. Check if selected effects/template are enabled in your Cloudinary plan.",
-    "openPreviewUrl": "Open preview URL"
+    "openPreviewUrl": "Open preview URL",
+    "usedCloudinaryTools": "Used Cloudinary tools",
+    "noCloudinaryTools": "No Cloudinary tools selected"
   },
   "uploader": {
     "cropImage": "Crop Image",
@@ -186,6 +190,7 @@
     "cancel": "Cancel",
     "uploadPhoto": "Upload Photo",
     "uploading": "Uploading...",
+    "uploadingProgress": "Uploading... {percent}%",
     "imageAdjustments": "Image Adjustments",
     "rotation": "Rotation",
     "rotateMinus90": "Rotate -90°",
