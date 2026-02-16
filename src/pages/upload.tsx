@@ -610,9 +610,12 @@ export function UploadPage() {
                             return;
                           }
 
+                          // Store crop coordinates for future use
                           setAppliedManualCropCoordinates(
                             manualCustomCoordinates,
                           );
+                          // Only reload preview in AI mode - in original mode, the crop
+                          // coordinates are stored but the original image remains untransformed
                           if (useAiPreview) {
                             startPreviewReload("crop");
                           }
