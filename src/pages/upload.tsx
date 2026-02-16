@@ -644,22 +644,53 @@ export function UploadPage() {
                       onLoad={(e) => {
                         if (useAiPreview && cropMode === "manual") {
                           const imageElement = e.currentTarget;
-                          const width = imageElement.clientWidth;
-                          const height = imageElement.clientHeight;
+                          const container = imageElement.parentElement;
 
-                          setPreviewDisplayDimensions({ width, height });
+                          if (container) {
+                            const containerWidth = container.clientWidth;
+                            const containerHeight = container.clientHeight;
+                            const naturalWidth = imageElement.naturalWidth;
+                            const naturalHeight = imageElement.naturalHeight;
 
-                          if (
-                            previewCropArea.width === 0 ||
-                            previewCropArea.height === 0
-                          ) {
-                            const minDim = Math.min(width, height);
-                            setPreviewCropArea({
-                              x: (width - minDim * 0.8) / 2,
-                              y: (height - minDim * 0.8) / 2,
-                              width: minDim * 0.8,
-                              height: minDim * 0.8,
-                            });
+                            if (naturalWidth > 0 && naturalHeight > 0) {
+                              const scale = Math.min(
+                                containerWidth / naturalWidth,
+                                containerHeight / naturalHeight,
+                              );
+                              const renderedWidth = naturalWidth * scale;
+                              const renderedHeight = naturalHeight * scale;
+
+                              const offsetX = (containerWidth - renderedWidth) / 2;
+                              const offsetY = (containerHeight - renderedHeight) / 2;
+
+                              setPreviewDisplayDimensions({
+                                width: renderedWidth,
+                                height: renderedHeight,
+                              });
+
+                              if (
+                                previewCropArea.width === 0 ||
+                                previewCropArea.height === 0
+                              ) {
+                                const minDim = Math.min(
+                                  renderedWidth,
+                                  renderedHeight,
+                                );
+                                const cropWidth = minDim * 0.8;
+                                const cropHeight = minDim * 0.8;
+
+                                setPreviewCropArea({
+                                  x:
+                                    offsetX +
+                                    (renderedWidth - cropWidth) / 2,
+                                  y:
+                                    offsetY +
+                                    (renderedHeight - cropHeight) / 2,
+                                  width: cropWidth,
+                                  height: cropHeight,
+                                });
+                              }
+                            }
                           }
                         }
 
