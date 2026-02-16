@@ -200,7 +200,7 @@
     "noCloudinaryTools": "Nie wybrano narzędzi AI",
     "cropAreaLabel": "Obszar kadrowania",
     "cropAreaDescription": "Użyj strzałek do przesuwania obszaru kadrowania, shift+strzałki do zmiany rozmiaru.",
-    "cropAreaAnnouncement": "Obszar kadrowania: {x}, {y}, szerokość {width}, wysokość {height}"
+    "cropAreaAnnouncement": "Obszar kadrowania: x {x}, y {y}, szerokość {width}, wysokość {height}"
   },
   "uploader": {
     "cropImage": "Przytnij obraz",

@@ -200,7 +200,7 @@
     "noCloudinaryTools": "No AI tools selected",
     "cropAreaLabel": "Crop area",
     "cropAreaDescription": "Use arrow keys to move the crop area, shift+arrow keys to resize it.",
-    "cropAreaAnnouncement": "Crop area: {x}, {y}, width {width}, height {height}"
+    "cropAreaAnnouncement": "Crop area: x {x}, y {y}, width {width}, height {height}"
   },
   "uploader": {
     "cropImage": "Crop Image",
