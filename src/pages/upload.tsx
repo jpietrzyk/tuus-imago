@@ -202,8 +202,8 @@ export function UploadPage() {
           // Resize mode - shift+arrow keys
           // Note: The crop area must maintain a square aspect ratio (width === height)
           // to ensure consistent canvas printing results
-          let desiredWidth: number;
-          let desiredHeight: number;
+          let desiredWidth = prev.width;
+          let desiredHeight = prev.height;
 
           switch (e.key) {
             case "ArrowLeft":
@@ -281,6 +281,15 @@ export function UploadPage() {
       constrainSquareCropArea,
     ],
   );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (announceTimeoutRef.current !== null) {
+        clearTimeout(announceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleUploadSuccess = (
     result:
