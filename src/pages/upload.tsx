@@ -124,6 +124,26 @@ export function UploadPage() {
     }
   }, [t]);
 
+  const constrainSquareCropArea = useCallback(
+    (desiredWidth: number, desiredHeight: number, x: number, y: number) => {
+      // Ensure dimensions don't exceed image bounds
+      const maxWidth = previewDisplayDimensions.width - x;
+      const maxHeight = previewDisplayDimensions.height - y;
+      
+      const constrainedWidth = Math.min(desiredWidth, maxWidth);
+      const constrainedHeight = Math.min(desiredHeight, maxHeight);
+      
+      // Maintain square aspect ratio with the smaller dimension
+      const finalDimension = Math.min(constrainedWidth, constrainedHeight);
+      
+      return {
+        width: finalDimension,
+        height: finalDimension,
+      };
+    },
+    [previewDisplayDimensions],
+  );
+
   const handleCropAreaKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (
@@ -171,71 +191,60 @@ export function UploadPage() {
           }
         } else if (resizeStep > 0) {
           // Resize mode - shift+arrow keys
+          let desiredWidth: number;
+          let desiredHeight: number;
+
           switch (e.key) {
             case "ArrowLeft":
-              newArea.width = Math.max(MIN_CROP_SIZE, prev.width - resizeStep);
-              newArea.height = newArea.width;
-              // Ensure the crop area doesn't exceed bounds
-              newArea.width = Math.min(
-                newArea.width,
-                previewDisplayDimensions.width - prev.x,
+              desiredWidth = Math.max(MIN_CROP_SIZE, prev.width - resizeStep);
+              desiredHeight = desiredWidth;
+              const constrainedLeft = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
               );
-              newArea.height = Math.min(
-                newArea.height,
-                previewDisplayDimensions.height - prev.y,
-              );
-              // Maintain square aspect ratio with the smaller dimension
-              const minDimension = Math.min(newArea.width, newArea.height);
-              newArea.width = minDimension;
-              newArea.height = minDimension;
+              newArea.width = constrainedLeft.width;
+              newArea.height = constrainedLeft.height;
               handled = true;
               break;
             case "ArrowRight":
-              newArea.width = Math.min(
-                previewDisplayDimensions.width - prev.x,
-                prev.width + resizeStep,
+              desiredWidth = prev.width + resizeStep;
+              desiredHeight = desiredWidth;
+              const constrainedRight = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
               );
-              newArea.height = Math.min(
-                previewDisplayDimensions.height - prev.y,
-                newArea.width,
-              );
-              // Maintain square aspect ratio with the smaller dimension
-              const maxDimension = Math.min(newArea.width, newArea.height);
-              newArea.width = maxDimension;
-              newArea.height = maxDimension;
+              newArea.width = constrainedRight.width;
+              newArea.height = constrainedRight.height;
               handled = true;
               break;
             case "ArrowUp":
-              newArea.height = Math.max(MIN_CROP_SIZE, prev.height - resizeStep);
-              newArea.width = newArea.height;
-              // Ensure the crop area doesn't exceed bounds
-              newArea.width = Math.min(
-                newArea.width,
-                previewDisplayDimensions.width - prev.x,
+              desiredHeight = Math.max(MIN_CROP_SIZE, prev.height - resizeStep);
+              desiredWidth = desiredHeight;
+              const constrainedUp = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
               );
-              newArea.height = Math.min(
-                newArea.height,
-                previewDisplayDimensions.height - prev.y,
-              );
-              // Maintain square aspect ratio with the smaller dimension
-              const minDim = Math.min(newArea.width, newArea.height);
-              newArea.width = minDim;
-              newArea.height = minDim;
+              newArea.width = constrainedUp.width;
+              newArea.height = constrainedUp.height;
               handled = true;
               break;
             case "ArrowDown":
-              newArea.height = Math.min(
-                previewDisplayDimensions.height - prev.y,
-                prev.height + resizeStep,
+              desiredHeight = prev.height + resizeStep;
+              desiredWidth = desiredHeight;
+              const constrainedDown = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
               );
-              newArea.width = Math.min(
-                previewDisplayDimensions.width - prev.x,
-                newArea.height,
-              );
-              // Maintain square aspect ratio with the smaller dimension
-              const maxDim = Math.min(newArea.width, newArea.height);
-              newArea.width = maxDim;
-              newArea.height = maxDim;
+              newArea.width = constrainedDown.width;
+              newArea.height = constrainedDown.height;
               handled = true;
               break;
           }
@@ -258,6 +267,7 @@ export function UploadPage() {
       cropMode,
       previewDisplayDimensions,
       announceCropAreaChange,
+      constrainSquareCropArea,
     ],
   );
 
