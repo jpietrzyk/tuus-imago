@@ -4,6 +4,14 @@
     "copyright": "© {year} Tuus Imago. Wszelkie prawa zastrzeżone.",
     "aboutUs": "O nas",
     "legalAndPrivacy": "Prawne i Prywatność",
+    "consents": "Zgody",
+    "contact": "Kontakt",
+    "cookies": "Ciasteczka",
+    "privacy": "Prywatność",
+    "returns": "Zwroty",
+    "security": "Bezpieczeństwo",
+    "shipping": "Dostawa",
+    "terms": "Warunki",
     "loading": "Ładowanie...",
     "processing": "Przetwarzanie..."
   },
@@ -231,5 +239,92 @@
     "errorName": "Proszę wprowadzić swoje imię",
     "errorAddress": "Proszę wprowadzić swój adres",
     "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "consents": {
+    "title": "Zgody",
+    "subtitle": "Zgody użytkownika i uprawnienia",
+    "main": {
+      "title": "Przegląd zgód",
+      "description": "Ta strona zawiera informacje o zgodach, które wyraziłeś na korzystanie z naszych usług. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "contact": {
+    "title": "Kontakt",
+    "subtitle": "Skontaktuj się z naszym zespołem",
+    "contactInfo": {
+      "title": "Informacje kontaktowe",
+      "email": {
+        "label": "E-mail:",
+        "description": "info@tuusimago.com"
+      },
+      "phone": {
+        "label": "Telefon:",
+        "description": "+48 123 456 789"
+      },
+      "address": {
+        "label": "Adres:",
+        "description": "ul. Innowacji 123, Warszawa, Polska"
+      }
+    },
+    "businessHours": {
+      "title": "Godziny pracy",
+      "description": "Nasz zespół jest dostępny od poniedziałku do piątku, w godzinach 9:00 - 17:00 CET."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "cookies": {
+    "title": "Polityka ciasteczek",
+    "subtitle": "Jak używamy ciasteczek na naszej stronie",
+    "main": {
+      "title": "Przegląd polityki ciasteczek",
+      "description": "Ta strona zawiera informacje o tym, jak używamy ciasteczek i podobnych technologii na naszej stronie. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "privacy": {
+    "title": "Polityka prywatności",
+    "subtitle": "Jak chronimy Twoje dane osobowe",
+    "main": {
+      "title": "Przegląd polityki prywatności",
+      "description": "Ta strona zawiera szczegółowe informacje o tym, jak zbieramy, używamy i chronimy Twoje dane osobowe. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "returns": {
+    "title": "Zwroty i reklamacje",
+    "subtitle": "Nasza polityka zwrotów i reklamacji",
+    "main": {
+      "title": "Przegląd zwrotów i reklamacji",
+      "description": "Ta strona zawiera informacje o naszej polityce zwrotów i reklamacji. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "security": {
+    "title": "Bezpieczeństwo",
+    "subtitle": "Jak chronimy Twoje informacje",
+    "main": {
+      "title": "Przegląd bezpieczeństwa",
+      "description": "Ta strona zawiera informacje o środkach bezpieczeństwa, które podejmujemy w celu ochrony Twoich informacji. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "shipping": {
+    "title": "Informacje o dostawie",
+    "subtitle": "Jak dostarczamy Twoje zamówienia",
+    "main": {
+      "title": "Przegląd dostawy",
+      "description": "Ta strona zawiera informacje o naszych metodach dostawy, czasach realizacji i kosztach. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "terms": {
+    "title": "Warunki korzystania",
+    "subtitle": "Warunki użytkowania naszych usług",
+    "main": {
+      "title": "Przegląd warunków korzystania",
+      "description": "Ta strona zawiera warunki korzystania z naszych usług. Szczegółowa treść zostanie dodana wkrótce."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
   }
 }
