@@ -216,6 +216,29 @@ describe("UploadPage Component", () => {
       );
     });
 
+    it("should compose transformed URL with auto-crop mode", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/v123/sample.jpg";
+
+      const transformedUrl = getTransformedPreviewUrl(
+        originalUrl,
+        null,
+        undefined,
+        {
+          enhance: true,
+          removeBackground: false,
+          upscale: false,
+          restore: false,
+        },
+        undefined,
+        true,
+      );
+
+      expect(transformedUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,ar_1:1/e_enhance/v123/sample.jpg",
+      );
+    });
+
     it("should handle transformations in handleUploadSuccess callback", () => {
       // This verifies that function signature accepts transformations
       const mockUploadResult: UploadResult = {

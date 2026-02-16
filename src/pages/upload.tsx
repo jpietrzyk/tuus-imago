@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import { CustomImageUploader } from "@/components/custom-image-uploader";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,13 @@ import {
   AI_ADJUSTMENT_OPTIONS,
 } from "@/lib/image-transformations";
 
+interface PreviewCropArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -29,6 +36,9 @@ export function UploadPage() {
   const [useAiPreview, setUseAiPreview] = useState(true);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewLoadProgress, setPreviewLoadProgress] = useState(0);
+  const [previewLoadingReason, setPreviewLoadingReason] = useState<
+    "preview" | "crop"
+  >("preview");
   const [previewError, setPreviewError] = useState<string | null>(null);
   const cloudinaryConfigError = getCloudinaryUploadConfigError();
   const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
@@ -36,6 +46,65 @@ export function UploadPage() {
     (
       import.meta.env.VITE_CLOUDINARY_AI_TEMPLATE as string | undefined
     )?.trim() || undefined;
+  const [cropMode, setCropMode] = useState<"manual" | "auto">("manual");
+  const [previewCropArea, setPreviewCropArea] = useState<PreviewCropArea>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const [previewDisplayDimensions, setPreviewDisplayDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
+  const [appliedManualCropCoordinates, setAppliedManualCropCoordinates] =
+    useState<string | undefined>(undefined);
+  const previewDragStateRef = useRef({
+    isDragging: false,
+    isResizing: false,
+    resizeHandle: null as "nw" | "ne" | "se" | "sw" | null,
+    startX: 0,
+    startY: 0,
+    containerRect: null as DOMRect | null,
+  });
+
+  const handlePreviewCropMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    previewDragStateRef.current = {
+      isDragging: true,
+      isResizing: false,
+      resizeHandle: null,
+      startX: x,
+      startY: y,
+      containerRect: rect,
+    };
+  }, []);
+
+  const handlePreviewResizeMouseDown = useCallback(
+    (handle: "nw" | "ne" | "se" | "sw") => {
+      return (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = (
+          e.currentTarget.parentElement as HTMLElement
+        ).getBoundingClientRect();
+
+        previewDragStateRef.current = {
+          isDragging: false,
+          isResizing: true,
+          resizeHandle: handle,
+          startX: e.clientX - rect.left,
+          startY: e.clientY - rect.top,
+          containerRect: rect,
+        };
+      };
+    },
+    [],
+  );
 
   const handleUploadSuccess = (
     result:
@@ -77,6 +146,10 @@ export function UploadPage() {
     setTransformations(transformationsParam);
     setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
     setUseAiPreview(true);
+    setCropMode("manual");
+    setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
+    setPreviewDisplayDimensions({ width: 0, height: 0 });
+    setAppliedManualCropCoordinates(undefined);
     setUploadError(null);
     setIsSuccess(true);
     setIsPreviewLoading(true);
@@ -94,13 +167,32 @@ export function UploadPage() {
     setTimeout(() => setUploadError(null), 5000);
   };
 
+  const manualCustomCoordinates =
+    uploadedImage &&
+    previewDisplayDimensions.width > 0 &&
+    previewDisplayDimensions.height > 0 &&
+    previewCropArea.width > 0 &&
+    previewCropArea.height > 0
+      ? `${Math.round((previewCropArea.x / previewDisplayDimensions.width) * uploadedImage.info.width)},${Math.round((previewCropArea.y / previewDisplayDimensions.height) * uploadedImage.info.height)},${Math.round((previewCropArea.width / previewDisplayDimensions.width) * uploadedImage.info.width)},${Math.round((previewCropArea.height / previewDisplayDimensions.height) * uploadedImage.info.height)}`
+      : undefined;
+
+  const shouldUseAutoCrop = cropMode === "auto";
+
+  const customCoordinatesForPreview = shouldUseAutoCrop
+    ? undefined
+    : (appliedManualCropCoordinates ??
+      (typeof uploadedImage?.info.custom_coordinates === "string"
+        ? uploadedImage.info.custom_coordinates
+        : undefined));
+
   const basePreviewUrl = uploadedImage
     ? getTransformedPreviewUrl(
         uploadedImage.info.secure_url,
         transformations,
-        typeof uploadedImage.info.custom_coordinates === "string"
-          ? uploadedImage.info.custom_coordinates
-          : undefined,
+        customCoordinatesForPreview,
+        undefined,
+        undefined,
+        shouldUseAutoCrop,
       )
     : null;
 
@@ -108,11 +200,10 @@ export function UploadPage() {
     ? getTransformedPreviewUrl(
         uploadedImage.info.secure_url,
         transformations,
-        typeof uploadedImage.info.custom_coordinates === "string"
-          ? uploadedImage.info.custom_coordinates
-          : undefined,
+        customCoordinatesForPreview,
         aiAdjustments,
         aiTemplateName,
+        shouldUseAutoCrop,
       )
     : null;
 
@@ -124,11 +215,16 @@ export function UploadPage() {
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
 
-  const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
+  const startPreviewReload = useCallback((reason: "preview" | "crop") => {
+    setPreviewLoadingReason(reason);
+    setIsPreviewLoading(true);
+    setPreviewLoadProgress(0);
     setPreviewError(null);
+  }, []);
+
+  const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
     if (useAiPreview) {
-      setIsPreviewLoading(true);
-      setPreviewLoadProgress(0);
+      startPreviewReload("preview");
     }
 
     setAiAdjustments((prev) => ({
@@ -138,18 +234,182 @@ export function UploadPage() {
   };
 
   useEffect(() => {
+    if (
+      !uploadedImage ||
+      !useAiPreview ||
+      cropMode !== "manual" ||
+      previewDisplayDimensions.width === 0 ||
+      previewDisplayDimensions.height === 0
+    ) {
+      return;
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const state = previewDragStateRef.current;
+
+      if (!state.isDragging && !state.isResizing) return;
+
+      const rect = state.containerRect;
+      if (!rect) return;
+
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      if (state.isDragging) {
+        const dx = x - state.startX;
+        const dy = y - state.startY;
+
+        setPreviewCropArea((prev) => {
+          let newX = prev.x + dx;
+          let newY = prev.y + dy;
+
+          newX = Math.max(
+            0,
+            Math.min(newX, previewDisplayDimensions.width - prev.width),
+          );
+          newY = Math.max(
+            0,
+            Math.min(newY, previewDisplayDimensions.height - prev.height),
+          );
+
+          previewDragStateRef.current.startX = x;
+          previewDragStateRef.current.startY = y;
+
+          return { ...prev, x: newX, y: newY };
+        });
+      } else if (state.isResizing && state.resizeHandle) {
+        const handle = state.resizeHandle;
+        const dx = x - state.startX;
+        const dy = y - state.startY;
+
+        setPreviewCropArea((prev) => {
+          let newX = prev.x;
+          let newY = prev.y;
+          let newWidth = prev.width;
+          let newHeight = prev.height;
+          let deltaSize = 0;
+
+          switch (handle) {
+            case "se":
+              deltaSize = Math.max(dx, dy);
+              {
+                const maxWidth = previewDisplayDimensions.width - prev.x;
+                const maxHeight = previewDisplayDimensions.height - prev.y;
+                const maxSize = Math.min(maxWidth, maxHeight);
+                newWidth = Math.max(50, prev.width + deltaSize);
+                newWidth = Math.min(newWidth, maxSize);
+                newHeight = newWidth;
+              }
+              break;
+            case "sw":
+              deltaSize = Math.max(-dx, dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth;
+              newX = prev.x - (newWidth - prev.width);
+              if (newX < 0) {
+                newWidth = prev.width + prev.x;
+                newX = 0;
+                newHeight = newWidth;
+              }
+              newHeight = Math.min(
+                newHeight,
+                previewDisplayDimensions.height - prev.y,
+              );
+              newWidth = newHeight;
+              newX = prev.x - (newWidth - prev.width);
+              break;
+            case "ne":
+              deltaSize = Math.max(dx, -dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth;
+              newY = prev.y - (newHeight - prev.height);
+              if (newY < 0) {
+                newHeight = prev.height + prev.y;
+                newY = 0;
+                newWidth = newHeight;
+              }
+              newWidth = Math.min(
+                newWidth,
+                previewDisplayDimensions.width - prev.x,
+              );
+              newHeight = newWidth;
+              newY = prev.y - (newHeight - prev.height);
+              break;
+            case "nw":
+              deltaSize = Math.max(-dx, -dy);
+              newWidth = Math.max(50, prev.width + deltaSize);
+              newHeight = newWidth;
+              newX = prev.x - (newWidth - prev.width);
+              newY = prev.y - (newHeight - prev.height);
+              if (newX < 0) {
+                newWidth = prev.width + prev.x;
+                newX = 0;
+                newHeight = newWidth;
+              }
+              if (newY < 0) {
+                newHeight = prev.height + prev.y;
+                newY = 0;
+                newWidth = newHeight;
+                newX = prev.x - (newWidth - prev.width);
+              }
+              break;
+          }
+
+          previewDragStateRef.current.startX = x;
+          previewDragStateRef.current.startY = y;
+
+          return {
+            ...prev,
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight,
+          };
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      previewDragStateRef.current.isDragging = false;
+      previewDragStateRef.current.isResizing = false;
+      previewDragStateRef.current.resizeHandle = null;
+      previewDragStateRef.current.containerRect = null;
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [
+    uploadedImage,
+    useAiPreview,
+    cropMode,
+    previewDisplayDimensions.width,
+    previewDisplayDimensions.height,
+  ]);
+
+  useEffect(() => {
     if (!isPreviewLoading) {
       return;
     }
 
+    const progressConfig =
+      previewLoadingReason === "crop"
+        ? { step: 8, intervalMs: 90, cap: 95 }
+        : { step: 4, intervalMs: 130, cap: 90 };
+
     const intervalId = window.setInterval(() => {
-      setPreviewLoadProgress((previous) => Math.min(previous + 5, 90));
-    }, 120);
+      setPreviewLoadProgress((previous) =>
+        Math.min(previous + progressConfig.step, progressConfig.cap),
+      );
+    }, progressConfig.intervalMs);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isPreviewLoading]);
+  }, [isPreviewLoading, previewLoadingReason]);
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
@@ -211,6 +471,7 @@ export function UploadPage() {
                 <CustomImageUploader
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
+                  skipCropStep
                   className="w-full max-w-sm py-6 text-lg font-semibold"
                 />
 
@@ -256,9 +517,7 @@ export function UploadPage() {
                         }
 
                         setUseAiPreview(true);
-                        setIsPreviewLoading(true);
-                        setPreviewLoadProgress(0);
-                        setPreviewError(null);
+                        startPreviewReload("preview");
                       }}
                     >
                       {t("upload.previewYourImage")}
@@ -287,7 +546,89 @@ export function UploadPage() {
                     </button>
                   </div>
 
-                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("upload.cropModeTitle")}
+                    </span>
+                    <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+                      <button
+                        type="button"
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          cropMode === "manual"
+                            ? "bg-primary text-primary-foreground"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                        onClick={() => {
+                          if (cropMode === "manual") {
+                            return;
+                          }
+
+                          setCropMode("manual");
+                          if (useAiPreview) {
+                            startPreviewReload("crop");
+                          }
+                        }}
+                      >
+                        {t("upload.cropManual")}
+                      </button>
+                      <button
+                        type="button"
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                          cropMode === "auto"
+                            ? "bg-primary text-primary-foreground"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                        onClick={() => {
+                          if (cropMode === "auto") {
+                            return;
+                          }
+
+                          setCropMode("auto");
+                          if (useAiPreview) {
+                            startPreviewReload("crop");
+                          }
+                        }}
+                      >
+                        {t("upload.cropAuto")}
+                      </button>
+                    </div>
+                  </div>
+
+                  {useAiPreview && cropMode === "manual" && (
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        {t("upload.cropHint")}
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={!manualCustomCoordinates}
+                        onClick={() => {
+                          if (!manualCustomCoordinates) {
+                            return;
+                          }
+
+                          setAppliedManualCropCoordinates(
+                            manualCustomCoordinates,
+                          );
+                          startPreviewReload("crop");
+                        }}
+                      >
+                        {t("upload.applyCrop")}
+                      </Button>
+                    </div>
+                  )}
+
+                  <div
+                    className="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm"
+                    style={{
+                      aspectRatio:
+                        uploadedImage.info.width > 0 &&
+                        uploadedImage.info.height > 0
+                          ? `${uploadedImage.info.width} / ${uploadedImage.info.height}`
+                          : "1 / 1",
+                    }}
+                  >
                     <img
                       key={
                         transformedPreviewUrl || uploadedImage.info.secure_url
@@ -296,25 +637,190 @@ export function UploadPage() {
                         transformedPreviewUrl || uploadedImage.info.secure_url
                       }
                       alt="Uploaded photo"
-                      className="w-full h-auto"
-                      onLoad={() => {
+                      className="absolute inset-0 w-full h-full object-contain"
+                      draggable={false}
+                      onLoad={(e) => {
+                        if (useAiPreview && cropMode === "manual") {
+                          const imageElement = e.currentTarget;
+                          const container = imageElement.parentElement;
+
+                          if (container) {
+                            const containerWidth = container.clientWidth;
+                            const containerHeight = container.clientHeight;
+                            const naturalWidth = imageElement.naturalWidth;
+                            const naturalHeight = imageElement.naturalHeight;
+
+                            if (naturalWidth > 0 && naturalHeight > 0) {
+                              const scale = Math.min(
+                                containerWidth / naturalWidth,
+                                containerHeight / naturalHeight,
+                              );
+                              const renderedWidth = naturalWidth * scale;
+                              const renderedHeight = naturalHeight * scale;
+
+                              const offsetX = (containerWidth - renderedWidth) / 2;
+                              const offsetY = (containerHeight - renderedHeight) / 2;
+
+                              setPreviewDisplayDimensions({
+                                width: renderedWidth,
+                                height: renderedHeight,
+                              });
+
+                              if (
+                                previewCropArea.width === 0 ||
+                                previewCropArea.height === 0
+                              ) {
+                                const minDim = Math.min(
+                                  renderedWidth,
+                                  renderedHeight,
+                                );
+                                const cropWidth = minDim * 0.8;
+                                const cropHeight = minDim * 0.8;
+
+                                setPreviewCropArea({
+                                  x:
+                                    offsetX +
+                                    (renderedWidth - cropWidth) / 2,
+                                  y:
+                                    offsetY +
+                                    (renderedHeight - cropHeight) / 2,
+                                  width: cropWidth,
+                                  height: cropHeight,
+                                });
+                              }
+                            }
+                          }
+                        }
+
                         setPreviewLoadProgress(100);
                         setIsPreviewLoading(false);
+                        setPreviewLoadingReason("preview");
                       }}
                       onError={() => {
                         setIsPreviewLoading(false);
                         setPreviewLoadProgress(0);
+                        setPreviewLoadingReason("preview");
                         if (useAiPreview) {
                           setPreviewError(t("upload.aiPreviewError"));
                         }
                       }}
                     />
+
+                    {useAiPreview &&
+                      cropMode === "manual" &&
+                      previewCropArea.width > 0 &&
+                      previewCropArea.height > 0 &&
+                      previewDisplayDimensions.width > 0 &&
+                      previewDisplayDimensions.height > 0 && (
+                        <>
+                          <div
+                            className="absolute pointer-events-none bg-black/40"
+                            style={{
+                              left: 0,
+                              top: 0,
+                              width: "100%",
+                              height: previewCropArea.y,
+                            }}
+                          />
+                          <div
+                            className="absolute pointer-events-none bg-black/40"
+                            style={{
+                              left: 0,
+                              top: previewCropArea.y + previewCropArea.height,
+                              width: "100%",
+                              height:
+                                previewDisplayDimensions.height -
+                                previewCropArea.y -
+                                previewCropArea.height,
+                            }}
+                          />
+                          <div
+                            className="absolute pointer-events-none bg-black/40"
+                            style={{
+                              left: 0,
+                              top: previewCropArea.y,
+                              width: previewCropArea.x,
+                              height: previewCropArea.height,
+                            }}
+                          />
+                          <div
+                            className="absolute pointer-events-none bg-black/40"
+                            style={{
+                              left: previewCropArea.x + previewCropArea.width,
+                              top: previewCropArea.y,
+                              width:
+                                previewDisplayDimensions.width -
+                                previewCropArea.x -
+                                previewCropArea.width,
+                              height: previewCropArea.height,
+                            }}
+                          />
+                          <div
+                            className="absolute border-2 border-white shadow-2xl pointer-events-none"
+                            style={{
+                              left: previewCropArea.x,
+                              top: previewCropArea.y,
+                              width: previewCropArea.width,
+                              height: previewCropArea.height,
+                            }}
+                          />
+                          <div
+                            className="absolute"
+                            style={{
+                              left: previewCropArea.x,
+                              top: previewCropArea.y,
+                              width: previewCropArea.width,
+                              height: previewCropArea.height,
+                              cursor: "move",
+                            }}
+                            onMouseDown={handlePreviewCropMouseDown}
+                          />
+                          <div
+                            className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -ml-2 -mt-2"
+                            style={{
+                              left: previewCropArea.x,
+                              top: previewCropArea.y,
+                            }}
+                            onMouseDown={handlePreviewResizeMouseDown("nw")}
+                          />
+                          <div
+                            className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nesw-resize -mr-2 -mt-2"
+                            style={{
+                              left: previewCropArea.x + previewCropArea.width,
+                              top: previewCropArea.y,
+                            }}
+                            onMouseDown={handlePreviewResizeMouseDown("ne")}
+                          />
+                          <div
+                            className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -mr-2 -mb-2"
+                            style={{
+                              left: previewCropArea.x + previewCropArea.width,
+                              top: previewCropArea.y + previewCropArea.height,
+                            }}
+                            onMouseDown={handlePreviewResizeMouseDown("se")}
+                          />
+                          <div
+                            className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nesw-resize -ml-2 -mb-2"
+                            style={{
+                              left: previewCropArea.x,
+                              top: previewCropArea.y + previewCropArea.height,
+                            }}
+                            onMouseDown={handlePreviewResizeMouseDown("sw")}
+                          />
+                        </>
+                      )}
+
                     {isPreviewLoading && (
-                      <div className="p-3 space-y-2">
-                        <p className="text-xs text-gray-500 text-center">
-                          {t("upload.loadingPreviewProgress", {
-                            percent: previewLoadProgress,
-                          })}
+                      <div className="absolute inset-0 z-20 flex flex-col justify-end bg-black/25 p-3 space-y-2">
+                        <p className="text-xs text-white text-center">
+                          {t(
+                            previewLoadingReason === "crop"
+                              ? "upload.applyingCropProgress"
+                              : "upload.loadingPreviewProgress",
+                            {
+                              percent: previewLoadProgress,
+                            },
+                          )}
                         </p>
                         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                           <div
@@ -324,9 +830,14 @@ export function UploadPage() {
                             aria-valuenow={previewLoadProgress}
                             aria-valuemin={0}
                             aria-valuemax={100}
-                            aria-label={t("upload.loadingPreviewProgress", {
-                              percent: previewLoadProgress,
-                            })}
+                            aria-label={t(
+                              previewLoadingReason === "crop"
+                                ? "upload.applyingCropProgress"
+                                : "upload.loadingPreviewProgress",
+                              {
+                                percent: previewLoadProgress,
+                              },
+                            )}
                           />
                         </div>
                       </div>
