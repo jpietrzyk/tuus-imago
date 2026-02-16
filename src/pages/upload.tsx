@@ -73,7 +73,7 @@ export function UploadPage() {
   });
   const cropAreaRef = useRef<HTMLDivElement>(null);
   const srAnnouncementRef = useRef<HTMLDivElement>(null);
-  const announceTimeoutRef = useRef<number | null>(null);
+  const announceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handlePreviewCropMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -116,10 +116,10 @@ export function UploadPage() {
   const announceCropAreaChange = useCallback((area: PreviewCropArea) => {
     // Debounce announcements to avoid overwhelming screen reader users
     if (announceTimeoutRef.current !== null) {
-      window.clearTimeout(announceTimeoutRef.current);
+      clearTimeout(announceTimeoutRef.current);
     }
     
-    announceTimeoutRef.current = window.setTimeout(() => {
+    announceTimeoutRef.current = setTimeout(() => {
       if (srAnnouncementRef.current) {
         const message = t("upload.cropAreaAnnouncement", {
           x: Math.round(area.x),
@@ -165,40 +165,40 @@ export function UploadPage() {
         return;
       }
 
-      const moveStep = e.shiftKey ? 0 : CROP_MOVE_STEP;
-      const resizeStep = e.shiftKey ? CROP_RESIZE_STEP : 0;
+      const isMoving = !e.shiftKey;
+      const isResizing = e.shiftKey;
       let handled = false;
 
       setPreviewCropArea((prev) => {
         let newArea = { ...prev };
 
-        if (moveStep > 0) {
+        if (isMoving) {
           // Move mode - arrow keys
           switch (e.key) {
             case "ArrowLeft":
-              newArea.x = Math.max(0, prev.x - moveStep);
+              newArea.x = Math.max(0, prev.x - CROP_MOVE_STEP);
               handled = true;
               break;
             case "ArrowRight":
               newArea.x = Math.min(
                 previewDisplayDimensions.width - prev.width,
-                prev.x + moveStep,
+                prev.x + CROP_MOVE_STEP,
               );
               handled = true;
               break;
             case "ArrowUp":
-              newArea.y = Math.max(0, prev.y - moveStep);
+              newArea.y = Math.max(0, prev.y - CROP_MOVE_STEP);
               handled = true;
               break;
             case "ArrowDown":
               newArea.y = Math.min(
                 previewDisplayDimensions.height - prev.height,
-                prev.y + moveStep,
+                prev.y + CROP_MOVE_STEP,
               );
               handled = true;
               break;
           }
-        } else if (resizeStep > 0) {
+        } else if (isResizing) {
           // Resize mode - shift+arrow keys
           // Note: The crop area must maintain a square aspect ratio (width === height)
           // to ensure consistent canvas printing results
@@ -207,8 +207,8 @@ export function UploadPage() {
 
           switch (e.key) {
             case "ArrowLeft":
-              desiredWidth = Math.max(MIN_CROP_SIZE, prev.width - resizeStep);
-              desiredHeight = desiredWidth; // Maintain square aspect ratio
+              desiredWidth = Math.max(MIN_CROP_SIZE, prev.width - CROP_RESIZE_STEP);
+              desiredHeight = desiredWidth;
               const constrainedLeft = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -220,8 +220,8 @@ export function UploadPage() {
               handled = true;
               break;
             case "ArrowRight":
-              desiredWidth = prev.width + resizeStep;
-              desiredHeight = desiredWidth; // Maintain square aspect ratio
+              desiredWidth = prev.width + CROP_RESIZE_STEP;
+              desiredHeight = desiredWidth;
               const constrainedRight = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -233,8 +233,8 @@ export function UploadPage() {
               handled = true;
               break;
             case "ArrowUp":
-              desiredHeight = Math.max(MIN_CROP_SIZE, prev.height - resizeStep);
-              desiredWidth = desiredHeight; // Maintain square aspect ratio
+              desiredHeight = Math.max(MIN_CROP_SIZE, prev.height - CROP_RESIZE_STEP);
+              desiredWidth = desiredHeight;
               const constrainedUp = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -246,8 +246,8 @@ export function UploadPage() {
               handled = true;
               break;
             case "ArrowDown":
-              desiredHeight = prev.height + resizeStep;
-              desiredWidth = desiredHeight; // Maintain square aspect ratio
+              desiredHeight = prev.height + CROP_RESIZE_STEP;
+              desiredWidth = desiredHeight;
               const constrainedDown = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
