@@ -596,7 +596,7 @@ export function UploadPage() {
                     </div>
                   </div>
 
-                  {useAiPreview && cropMode === "manual" && (
+                  {cropMode === "manual" && (
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <p className="text-xs text-muted-foreground">
                         {t("upload.cropHint")}
@@ -613,7 +613,9 @@ export function UploadPage() {
                           setAppliedManualCropCoordinates(
                             manualCustomCoordinates,
                           );
-                          startPreviewReload("crop");
+                          if (useAiPreview) {
+                            startPreviewReload("crop");
+                          }
                         }}
                       >
                         {t("upload.applyCrop")}
@@ -642,7 +644,7 @@ export function UploadPage() {
                       className="absolute inset-0 w-full h-full object-contain"
                       draggable={false}
                       onLoad={(e) => {
-                        if (useAiPreview && cropMode === "manual") {
+                        if (cropMode === "manual") {
                           const imageElement = e.currentTarget;
                           const container = imageElement.parentElement;
 
@@ -708,8 +710,7 @@ export function UploadPage() {
                       }}
                     />
 
-                    {useAiPreview &&
-                      cropMode === "manual" &&
+                    {cropMode === "manual" &&
                       previewCropArea.width > 0 &&
                       previewCropArea.height > 0 &&
                       previewDisplayDimensions.width > 0 &&
