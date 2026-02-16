@@ -7,6 +7,33 @@ import { App } from "./App";
 import { tr } from "@/test/i18n-test";
 
 describe("App Component Routing", () => {
+  it.each([
+    ["/consents", "consents.title"],
+    ["/contact", "contact.title"],
+    ["/cookies", "cookies.title"],
+    ["/privacy", "privacy.title"],
+    ["/returns", "returns.title"],
+    ["/security", "security.title"],
+    ["/shipping", "shipping.title"],
+    ["/terms", "terms.title"],
+  ])(
+    "should render legal route %s without runtime errors",
+    (route, titleKey) => {
+      render(
+        <MemoryRouter initialEntries={[route]}>
+          <App />
+        </MemoryRouter>,
+      );
+
+      expect(
+        screen.getByRole("heading", { name: tr(titleKey) }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: tr("common.backToHome") }),
+      ).toHaveAttribute("href", "/");
+    },
+  );
+
   it("should render landing page when route is /", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
