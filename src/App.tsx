@@ -12,9 +12,15 @@ export function App() {
   return (
     <div className="h-screen flex flex-col">
       <div
-        className="flex-1 overflow-auto bg-cover bg-center"
+        className="flex-1 overflow-auto bg-cover bg-center relative"
         style={{ backgroundImage: `url(${bgImage})` }}
       >
+        <div className="fixed top-6 left-6 z-10">
+          <h1 className="text-3xl font-bold drop-shadow-lg">
+            <span className="text-white">Tuus</span>
+            <span className="text-blue-300">Imago</span>
+          </h1>
+        </div>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/upload" element={<UploadPage />} />
