@@ -59,17 +59,23 @@ export function getTransformedPreviewUrl(
   customCoordinates?: string,
   aiAdjustments?: AiAdjustments | null,
   aiTemplate?: string,
+  autoCrop?: boolean,
 ): string {
   const hasAiAdjustments = hasActiveAiAdjustments(aiAdjustments || null);
   const hasCropCoordinates = !!customCoordinates?.trim();
+  const hasAutoCrop = autoCrop === true;
 
-  if (!trans && !hasAiAdjustments && !hasCropCoordinates) {
+  if (!trans && !hasAiAdjustments && !hasCropCoordinates && !hasAutoCrop) {
     return secureUrl;
   }
 
   const transformationParts: string[] = [];
 
-  if (customCoordinates) {
+  if (hasAutoCrop) {
+    transformationParts.push("c_fill,g_auto,ar_1:1");
+  }
+
+  if (customCoordinates && !hasAutoCrop) {
     const [x, y, width, height] = customCoordinates
       .split(",")
       .map((part) => part.trim())

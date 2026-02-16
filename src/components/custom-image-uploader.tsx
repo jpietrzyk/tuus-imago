@@ -64,6 +64,7 @@ interface CustomImageUploaderProps {
   ) => void;
   onUploadError?: (error: string) => void;
   className?: string;
+  skipCropStep?: boolean;
 }
 
 interface CloudinaryUploadResponse {
@@ -95,6 +96,7 @@ const UPLOAD_TIMEOUT_MS = 120000;
 export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
+  skipCropStep = false,
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -104,7 +106,9 @@ export function CustomImageUploader({
   );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [step, setStep] = useState<"crop" | "adjust">("crop");
+  const [step, setStep] = useState<"crop" | "adjust">(
+    skipCropStep ? "adjust" : "crop",
+  );
   const [cropArea, setCropArea] = useState<CropArea>({
     x: 0,
     y: 0,
@@ -147,11 +151,11 @@ export function CustomImageUploader({
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         setTransformations(DEFAULT_TRANSFORMATIONS);
-        setStep("crop");
+        setStep(skipCropStep ? "adjust" : "crop");
         setCropArea({ x: 0, y: 0, width: 0, height: 0 });
       }
     },
-    [onUploadError],
+    [onUploadError, skipCropStep],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -184,20 +188,23 @@ export function CustomImageUploader({
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
         setTransformations(DEFAULT_TRANSFORMATIONS);
-        setStep("crop");
+        setStep(skipCropStep ? "adjust" : "crop");
         setCropArea({ x: 0, y: 0, width: 0, height: 0 });
       }
     },
-    [onUploadError],
+    [onUploadError, skipCropStep],
   );
 
   useEffect(() => {
-    if (previewUrl && step === "crop" && imageRef.current) {
+    if (!previewUrl) {
+      return;
+    }
+
+    if (step === "crop" && imageRef.current) {
       const img = imageRef.current;
       const width = img.offsetWidth;
       const height = img.offsetHeight;
       setImageDimensions({ width, height });
-      // Set initial crop area to center square
       const minDim = Math.min(width, height);
       const initialCrop: CropArea = {
         x: (width - minDim * 0.8) / 2,
@@ -206,8 +213,23 @@ export function CustomImageUploader({
         height: minDim * 0.8,
       };
       setCropArea(initialCrop);
+      return;
     }
-  }, [previewUrl, step]);
+
+    if (step === "adjust" && (cropArea.width === 0 || cropArea.height === 0)) {
+      const img = new Image();
+      img.onload = () => {
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+
+        if (width > 0 && height > 0) {
+          setImageDimensions({ width, height });
+          setCropArea({ x: 0, y: 0, width, height });
+        }
+      };
+      img.src = previewUrl;
+    }
+  }, [previewUrl, step, cropArea.width, cropArea.height]);
 
   const handleCropMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -415,14 +437,28 @@ export function CustomImageUploader({
         img.src = previewUrl!;
       });
 
-      // Calculate cropped dimensions based on the crop area
-      const scaleX = img.naturalWidth / imageDimensions.width;
-      const scaleY = img.naturalHeight / imageDimensions.height;
+      const effectiveImageDimensions =
+        imageDimensions.width > 0 && imageDimensions.height > 0
+          ? imageDimensions
+          : { width: img.naturalWidth, height: img.naturalHeight };
 
-      const cropX = cropArea.x * scaleX;
-      const cropY = cropArea.y * scaleY;
-      const cropWidth = cropArea.width * scaleX;
-      const cropHeight = cropArea.height * scaleY;
+      const effectiveCropArea =
+        cropArea.width > 0 && cropArea.height > 0
+          ? cropArea
+          : {
+              x: 0,
+              y: 0,
+              width: effectiveImageDimensions.width,
+              height: effectiveImageDimensions.height,
+            };
+
+      const scaleX = img.naturalWidth / effectiveImageDimensions.width;
+      const scaleY = img.naturalHeight / effectiveImageDimensions.height;
+
+      const cropX = effectiveCropArea.x * scaleX;
+      const cropY = effectiveCropArea.y * scaleY;
+      const cropWidth = effectiveCropArea.width * scaleX;
+      const cropHeight = effectiveCropArea.height * scaleY;
 
       const customCoordinates = `${Math.round(cropX)},${Math.round(cropY)},${Math.round(cropWidth)},${Math.round(cropHeight)}`;
       const context = [
@@ -554,7 +590,7 @@ export function CustomImageUploader({
       setSelectedFile(null);
       setPreviewUrl(null);
       setTransformations(DEFAULT_TRANSFORMATIONS);
-      setStep("crop");
+      setStep(skipCropStep ? "adjust" : "crop");
       setCropArea({ x: 0, y: 0, width: 0, height: 0 });
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -578,13 +614,14 @@ export function CustomImageUploader({
     transformations,
     onUploadSuccess,
     onUploadError,
+    skipCropStep,
   ]);
 
   const handleCancel = useCallback(() => {
     setSelectedFile(null);
     setPreviewUrl(null);
     setTransformations(DEFAULT_TRANSFORMATIONS);
-    setStep("crop");
+    setStep(skipCropStep ? "adjust" : "crop");
     setCropArea({ x: 0, y: 0, width: 0, height: 0 });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -592,7 +629,7 @@ export function CustomImageUploader({
     if (cameraInputRef.current) {
       cameraInputRef.current.value = "";
     }
-  }, []);
+  }, [skipCropStep]);
 
   const handleRotate = useCallback((angle: number) => {
     setTransformations((prev) => ({
@@ -1020,17 +1057,19 @@ export function CustomImageUploader({
           <>
             {/* Action Buttons Row */}
             <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setStep("crop");
-                }}
-                className="flex-1"
-              >
-                <Crop className="mr-2 h-4 w-4" />
-                {t("uploader.backToCrop")}
-              </Button>
+              {!skipCropStep && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStep("crop");
+                  }}
+                  className="flex-1"
+                >
+                  <Crop className="mr-2 h-4 w-4" />
+                  {t("uploader.backToCrop")}
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
