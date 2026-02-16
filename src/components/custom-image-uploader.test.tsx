@@ -732,6 +732,95 @@ describe("CustomImageUploader", () => {
     }
   });
 
+  describe("skipCropStep prop", () => {
+    it("starts in adjust step when skipCropStep is true", async () => {
+      render(<CustomImageUploader skipCropStep={true} />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector('input[type="file"]');
+
+      if (input) {
+        fireEvent.change(input, { target: { files: [file] } });
+
+        // Should skip crop step and go directly to adjust step
+        await waitFor(() => {
+          expect(screen.getByText(ui.adjustImage)).toBeDefined();
+        });
+
+        // Should NOT show crop step title
+        expect(screen.queryByText(ui.cropImage)).toBeNull();
+      }
+    });
+
+    it("hides crop step UI elements when skipCropStep is true", async () => {
+      render(<CustomImageUploader skipCropStep={true} />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector('input[type="file"]');
+
+      if (input) {
+        fireEvent.change(input, { target: { files: [file] } });
+
+        await waitFor(() => {
+          expect(screen.getByText(ui.adjustImage)).toBeDefined();
+        });
+
+        // Crop step UI elements should not be visible
+        expect(screen.queryByText(ui.confirmCrop)).toBeNull();
+        expect(screen.queryByText(ui.dragCropArea)).toBeNull();
+      }
+    });
+
+    it("hides back to crop button when skipCropStep is true", async () => {
+      render(<CustomImageUploader skipCropStep={true} />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector('input[type="file"]');
+
+      if (input) {
+        fireEvent.change(input, { target: { files: [file] } });
+
+        await waitFor(() => {
+          expect(screen.getByText(ui.adjustImage)).toBeDefined();
+        });
+
+        // "Back to Crop" button should not be visible
+        expect(screen.queryByText(ui.backToCrop)).toBeNull();
+
+        // Cancel and Upload buttons should still be visible
+        expect(screen.getByText(ui.cancel)).toBeDefined();
+        expect(screen.getByText(ui.uploadPhoto)).toBeDefined();
+      }
+    });
+
+    it("shows back to crop button when skipCropStep is false", async () => {
+      render(<CustomImageUploader skipCropStep={false} />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector('input[type="file"]');
+
+      if (input) {
+        fireEvent.change(input, { target: { files: [file] } });
+
+        // Should show crop step first
+        await waitFor(() => {
+          expect(screen.getByText(ui.cropImage)).toBeDefined();
+        });
+
+        // Confirm crop to move to adjust step
+        await waitFor(() => {
+          const confirmButton = screen.getByText(ui.confirmCrop);
+          fireEvent.click(confirmButton);
+        });
+
+        // "Back to Crop" button should be visible in adjust step
+        await waitFor(() => {
+          expect(screen.getByText(ui.backToCrop)).toBeDefined();
+        });
+      }
+    });
+  });
+
   it("removes no longer needed croppedPreviewUrl state", async () => {
     // This test verifies that we're not creating/storing unnecessary blob URLs
     render(<CustomImageUploader />);
