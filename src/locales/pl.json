@@ -200,10 +200,6 @@
     "noCloudinaryTools": "Nie wybrano narzędzi AI",
     "cropAreaLabel": "Obszar kadrowania",
     "cropAreaDescription": "Użyj strzałek do przesuwania obszaru kadrowania, shift+strzałki do zmiany rozmiaru.",
-    "cropResizeHandleNW": "Zmień rozmiar obszaru kadrowania od lewego górnego rogu",
-    "cropResizeHandleNE": "Zmień rozmiar obszaru kadrowania od prawego górnego rogu",
-    "cropResizeHandleSE": "Zmień rozmiar obszaru kadrowania od prawego dolnego rogu",
-    "cropResizeHandleSW": "Zmień rozmiar obszaru kadrowania od lewego dolnego rogu",
     "cropAreaAnnouncement": "Obszar kadrowania: {x}, {y}, szerokość {width}, wysokość {height}"
   },
   "uploader": {

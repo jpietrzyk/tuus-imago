@@ -192,10 +192,6 @@ export interface Translations {
     noCloudinaryTools: string;
     cropAreaLabel: string;
     cropAreaDescription: string;
-    cropResizeHandleNW: string;
-    cropResizeHandleNE: string;
-    cropResizeHandleSE: string;
-    cropResizeHandleSW: string;
     cropAreaAnnouncement: string;
   };
   uploader: {

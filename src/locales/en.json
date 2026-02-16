@@ -200,10 +200,6 @@
     "noCloudinaryTools": "No AI tools selected",
     "cropAreaLabel": "Crop area",
     "cropAreaDescription": "Use arrow keys to move the crop area, shift+arrow keys to resize it.",
-    "cropResizeHandleNW": "Resize crop area from top-left corner",
-    "cropResizeHandleNE": "Resize crop area from top-right corner",
-    "cropResizeHandleSE": "Resize crop area from bottom-right corner",
-    "cropResizeHandleSW": "Resize crop area from bottom-left corner",
     "cropAreaAnnouncement": "Crop area: {x}, {y}, width {width}, height {height}"
   },
   "uploader": {

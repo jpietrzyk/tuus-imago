@@ -24,6 +24,10 @@ interface PreviewCropArea {
   height: number;
 }
 
+const CROP_MOVE_STEP = 10;
+const CROP_RESIZE_STEP = 10;
+const MIN_CROP_SIZE = 50;
+
 export function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -118,7 +122,7 @@ export function UploadPage() {
       });
       srAnnouncementRef.current.textContent = message;
     }
-  }, []);
+  }, [t]);
 
   const handleCropAreaKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -132,8 +136,8 @@ export function UploadPage() {
         return;
       }
 
-      const moveStep = e.shiftKey ? 0 : 10;
-      const resizeStep = e.shiftKey ? 10 : 0;
+      const moveStep = e.shiftKey ? 0 : CROP_MOVE_STEP;
+      const resizeStep = e.shiftKey ? CROP_RESIZE_STEP : 0;
       let handled = false;
 
       setPreviewCropArea((prev) => {
@@ -167,10 +171,9 @@ export function UploadPage() {
           }
         } else if (resizeStep > 0) {
           // Resize mode - shift+arrow keys
-          const minSize = 50;
           switch (e.key) {
             case "ArrowLeft":
-              newArea.width = Math.max(minSize, prev.width - resizeStep);
+              newArea.width = Math.max(MIN_CROP_SIZE, prev.width - resizeStep);
               newArea.height = newArea.width;
               handled = true;
               break;
@@ -183,7 +186,7 @@ export function UploadPage() {
               handled = true;
               break;
             case "ArrowUp":
-              newArea.height = Math.max(minSize, prev.height - resizeStep);
+              newArea.height = Math.max(MIN_CROP_SIZE, prev.height - resizeStep);
               newArea.width = newArea.height;
               handled = true;
               break;
@@ -915,9 +918,7 @@ export function UploadPage() {
                               left: previewCropArea.x,
                               top: previewCropArea.y,
                             }}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={t("upload.cropResizeHandleNW")}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("nw")}
                           />
                           <div
@@ -926,9 +927,7 @@ export function UploadPage() {
                               left: previewCropArea.x + previewCropArea.width,
                               top: previewCropArea.y,
                             }}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={t("upload.cropResizeHandleNE")}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("ne")}
                           />
                           <div
@@ -937,9 +936,7 @@ export function UploadPage() {
                               left: previewCropArea.x + previewCropArea.width,
                               top: previewCropArea.y + previewCropArea.height,
                             }}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={t("upload.cropResizeHandleSE")}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("se")}
                           />
                           <div
@@ -948,9 +945,7 @@ export function UploadPage() {
                               left: previewCropArea.x,
                               top: previewCropArea.y + previewCropArea.height,
                             }}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={t("upload.cropResizeHandleSW")}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("sw")}
                           />
                         </>
