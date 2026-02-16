@@ -24,6 +24,10 @@ interface PreviewCropArea {
   height: number;
 }
 
+const CROP_MOVE_STEP = 10;
+const CROP_RESIZE_STEP = 10;
+const MIN_CROP_SIZE = 50;
+
 export function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -67,6 +71,9 @@ export function UploadPage() {
     startY: 0,
     containerRect: null as DOMRect | null,
   });
+  const cropAreaRef = useRef<HTMLDivElement>(null);
+  const srAnnouncementRef = useRef<HTMLDivElement>(null);
+  const announceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handlePreviewCropMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,6 +112,184 @@ export function UploadPage() {
     },
     [],
   );
+
+  const announceCropAreaChange = useCallback((area: PreviewCropArea) => {
+    // Debounce announcements to avoid overwhelming screen reader users
+    if (announceTimeoutRef.current !== null) {
+      clearTimeout(announceTimeoutRef.current);
+    }
+    
+    announceTimeoutRef.current = setTimeout(() => {
+      if (srAnnouncementRef.current) {
+        const message = t("upload.cropAreaAnnouncement", {
+          x: Math.round(area.x),
+          y: Math.round(area.y),
+          width: Math.round(area.width),
+          height: Math.round(area.height),
+        });
+        srAnnouncementRef.current.textContent = message;
+      }
+      announceTimeoutRef.current = null;
+    }, 500); // Announce 500ms after the last change
+  }, [t]);
+
+  const constrainSquareCropArea = useCallback(
+    (desiredWidth: number, desiredHeight: number, x: number, y: number) => {
+      // Ensure dimensions don't exceed image bounds
+      const maxWidth = previewDisplayDimensions.width - x;
+      const maxHeight = previewDisplayDimensions.height - y;
+      
+      const constrainedWidth = Math.min(desiredWidth, maxWidth);
+      const constrainedHeight = Math.min(desiredHeight, maxHeight);
+      
+      // Maintain square aspect ratio with the smaller dimension
+      const finalDimension = Math.min(constrainedWidth, constrainedHeight);
+      
+      return {
+        width: finalDimension,
+        height: finalDimension,
+      };
+    },
+    [previewDisplayDimensions],
+  );
+
+  const handleCropAreaKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (
+        !uploadedImage ||
+        !useAiPreview ||
+        cropMode !== "manual" ||
+        previewDisplayDimensions.width === 0 ||
+        previewDisplayDimensions.height === 0
+      ) {
+        return;
+      }
+
+      const isMoving = !e.shiftKey;
+      const isResizing = e.shiftKey;
+      let handled = false;
+
+      setPreviewCropArea((prev) => {
+        let newArea = { ...prev };
+
+        if (isMoving) {
+          // Move mode - arrow keys
+          switch (e.key) {
+            case "ArrowLeft":
+              newArea.x = Math.max(0, prev.x - CROP_MOVE_STEP);
+              handled = true;
+              break;
+            case "ArrowRight":
+              newArea.x = Math.min(
+                previewDisplayDimensions.width - prev.width,
+                prev.x + CROP_MOVE_STEP,
+              );
+              handled = true;
+              break;
+            case "ArrowUp":
+              newArea.y = Math.max(0, prev.y - CROP_MOVE_STEP);
+              handled = true;
+              break;
+            case "ArrowDown":
+              newArea.y = Math.min(
+                previewDisplayDimensions.height - prev.height,
+                prev.y + CROP_MOVE_STEP,
+              );
+              handled = true;
+              break;
+          }
+        } else if (isResizing) {
+          // Resize mode - shift+arrow keys
+          // Note: The crop area must maintain a square aspect ratio (width === height)
+          // to ensure consistent canvas printing results
+          let desiredWidth = prev.width;
+          let desiredHeight = prev.height;
+
+          switch (e.key) {
+            case "ArrowLeft":
+              desiredWidth = Math.max(MIN_CROP_SIZE, prev.width - CROP_RESIZE_STEP);
+              desiredHeight = desiredWidth;
+              const constrainedLeft = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
+              );
+              newArea.width = constrainedLeft.width;
+              newArea.height = constrainedLeft.height;
+              handled = true;
+              break;
+            case "ArrowRight":
+              desiredWidth = prev.width + CROP_RESIZE_STEP;
+              desiredHeight = desiredWidth;
+              const constrainedRight = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
+              );
+              newArea.width = constrainedRight.width;
+              newArea.height = constrainedRight.height;
+              handled = true;
+              break;
+            case "ArrowUp":
+              desiredHeight = Math.max(MIN_CROP_SIZE, prev.height - CROP_RESIZE_STEP);
+              desiredWidth = desiredHeight;
+              const constrainedUp = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
+              );
+              newArea.width = constrainedUp.width;
+              newArea.height = constrainedUp.height;
+              handled = true;
+              break;
+            case "ArrowDown":
+              desiredHeight = prev.height + CROP_RESIZE_STEP;
+              desiredWidth = desiredHeight;
+              const constrainedDown = constrainSquareCropArea(
+                desiredWidth,
+                desiredHeight,
+                prev.x,
+                prev.y,
+              );
+              newArea.width = constrainedDown.width;
+              newArea.height = constrainedDown.height;
+              handled = true;
+              break;
+          }
+        }
+
+        if (handled) {
+          announceCropAreaChange(newArea);
+        }
+
+        return newArea;
+      });
+
+      if (handled) {
+        e.preventDefault();
+      }
+    },
+    [
+      uploadedImage,
+      useAiPreview,
+      cropMode,
+      previewDisplayDimensions,
+      announceCropAreaChange,
+      constrainSquareCropArea,
+    ],
+  );
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (announceTimeoutRef.current !== null) {
+        clearTimeout(announceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleUploadSuccess = (
     result:
@@ -619,6 +804,20 @@ export function UploadPage() {
                     </div>
                   )}
 
+                  {/* Hidden description for screen readers */}
+                  <div className="sr-only" id="crop-area-description">
+                    {t("upload.cropAreaDescription")}
+                  </div>
+
+                  {/* Live region for screen reader announcements */}
+                  <div
+                    ref={srAnnouncementRef}
+                    className="sr-only"
+                    role="status"
+                    aria-live="polite"
+                    aria-atomic="true"
+                  />
+
                   <div
                     className="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm"
                     style={{
@@ -764,6 +963,7 @@ export function UploadPage() {
                             }}
                           />
                           <div
+                            ref={cropAreaRef}
                             className="absolute"
                             style={{
                               left: previewCropArea.x,
@@ -772,7 +972,12 @@ export function UploadPage() {
                               height: previewCropArea.height,
                               cursor: "move",
                             }}
+                            role="application"
+                            tabIndex={0}
+                            aria-label={t("upload.cropAreaLabel")}
+                            aria-describedby="crop-area-description"
                             onMouseDown={handlePreviewCropMouseDown}
+                            onKeyDown={handleCropAreaKeyDown}
                           />
                           <div
                             className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -ml-2 -mt-2"
@@ -780,6 +985,7 @@ export function UploadPage() {
                               left: previewCropArea.x,
                               top: previewCropArea.y,
                             }}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("nw")}
                           />
                           <div
@@ -788,6 +994,7 @@ export function UploadPage() {
                               left: previewCropArea.x + previewCropArea.width,
                               top: previewCropArea.y,
                             }}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("ne")}
                           />
                           <div
@@ -796,6 +1003,7 @@ export function UploadPage() {
                               left: previewCropArea.x + previewCropArea.width,
                               top: previewCropArea.y + previewCropArea.height,
                             }}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("se")}
                           />
                           <div
@@ -804,6 +1012,7 @@ export function UploadPage() {
                               left: previewCropArea.x,
                               top: previewCropArea.y + previewCropArea.height,
                             }}
+                            aria-hidden="true"
                             onMouseDown={handlePreviewResizeMouseDown("sw")}
                           />
                         </>

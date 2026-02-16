@@ -197,7 +197,10 @@
     "aiPreviewError": "AI preview could not be rendered. Check selected effects and try again.",
     "openPreviewUrl": "Open preview URL",
     "usedCloudinaryTools": "Used AI tools",
-    "noCloudinaryTools": "No AI tools selected"
+    "noCloudinaryTools": "No AI tools selected",
+    "cropAreaLabel": "Crop area",
+    "cropAreaDescription": "Use arrow keys to move the crop area, shift+arrow keys to resize it.",
+    "cropAreaAnnouncement": "Crop area: x {x}, y {y}, width {width}, height {height}"
   },
   "uploader": {
     "cropImage": "Crop Image",
