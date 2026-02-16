@@ -172,6 +172,7 @@
     "blur": "Rozmycie:",
     "loadingPreview": "Ładowanie podglądu...",
     "loadingPreviewProgress": "Ładowanie podglądu... {percent}%",
+    "applyingCropProgress": "Stosowanie kadru... {percent}%",
     "aiAdjustmentsTitle": "Korekty AI",
     "aiAdjustmentsHint": "Wybierz jedną lub więcej korekt AI i przełączaj podgląd między oryginałem i wersją AI.",
     "aiTemplateLabel": "Szablon AI:",

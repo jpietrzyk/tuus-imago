@@ -36,6 +36,9 @@ export function UploadPage() {
   const [useAiPreview, setUseAiPreview] = useState(true);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewLoadProgress, setPreviewLoadProgress] = useState(0);
+  const [previewLoadingReason, setPreviewLoadingReason] = useState<
+    "preview" | "crop"
+  >("preview");
   const [previewError, setPreviewError] = useState<string | null>(null);
   const cloudinaryConfigError = getCloudinaryUploadConfigError();
   const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
@@ -212,11 +215,16 @@ export function UploadPage() {
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
 
-  const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
+  const startPreviewReload = useCallback((reason: "preview" | "crop") => {
+    setPreviewLoadingReason(reason);
+    setIsPreviewLoading(true);
+    setPreviewLoadProgress(0);
     setPreviewError(null);
+  }, []);
+
+  const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
     if (useAiPreview) {
-      setIsPreviewLoading(true);
-      setPreviewLoadProgress(0);
+      startPreviewReload("preview");
     }
 
     setAiAdjustments((prev) => ({
@@ -389,14 +397,21 @@ export function UploadPage() {
       return;
     }
 
+    const progressConfig =
+      previewLoadingReason === "crop"
+        ? { step: 8, intervalMs: 90, cap: 95 }
+        : { step: 4, intervalMs: 130, cap: 90 };
+
     const intervalId = window.setInterval(() => {
-      setPreviewLoadProgress((previous) => Math.min(previous + 5, 90));
-    }, 120);
+      setPreviewLoadProgress((previous) =>
+        Math.min(previous + progressConfig.step, progressConfig.cap),
+      );
+    }, progressConfig.intervalMs);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isPreviewLoading]);
+  }, [isPreviewLoading, previewLoadingReason]);
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
@@ -504,9 +519,7 @@ export function UploadPage() {
                         }
 
                         setUseAiPreview(true);
-                        setIsPreviewLoading(true);
-                        setPreviewLoadProgress(0);
-                        setPreviewError(null);
+                        startPreviewReload("preview");
                       }}
                     >
                       {t("upload.previewYourImage")}
@@ -547,7 +560,16 @@ export function UploadPage() {
                             ? "bg-primary text-primary-foreground"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
-                        onClick={() => setCropMode("manual")}
+                        onClick={() => {
+                          if (cropMode === "manual") {
+                            return;
+                          }
+
+                          setCropMode("manual");
+                          if (useAiPreview) {
+                            startPreviewReload("crop");
+                          }
+                        }}
                       >
                         {t("upload.cropManual")}
                       </button>
@@ -558,7 +580,16 @@ export function UploadPage() {
                             ? "bg-primary text-primary-foreground"
                             : "text-gray-700 hover:bg-gray-100"
                         }`}
-                        onClick={() => setCropMode("auto")}
+                        onClick={() => {
+                          if (cropMode === "auto") {
+                            return;
+                          }
+
+                          setCropMode("auto");
+                          if (useAiPreview) {
+                            startPreviewReload("crop");
+                          }
+                        }}
                       >
                         {t("upload.cropAuto")}
                       </button>
@@ -582,9 +613,7 @@ export function UploadPage() {
                           setAppliedManualCropCoordinates(
                             manualCustomCoordinates,
                           );
-                          setIsPreviewLoading(true);
-                          setPreviewLoadProgress(0);
-                          setPreviewError(null);
+                          startPreviewReload("crop");
                         }}
                       >
                         {t("upload.applyCrop")}
@@ -592,7 +621,16 @@ export function UploadPage() {
                     </div>
                   )}
 
-                  <div className="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  <div
+                    className="relative rounded-lg overflow-hidden border border-gray-200 shadow-sm"
+                    style={{
+                      aspectRatio:
+                        uploadedImage.info.width > 0 &&
+                        uploadedImage.info.height > 0
+                          ? `${uploadedImage.info.width} / ${uploadedImage.info.height}`
+                          : "1 / 1",
+                    }}
+                  >
                     <img
                       key={
                         transformedPreviewUrl || uploadedImage.info.secure_url
@@ -601,7 +639,7 @@ export function UploadPage() {
                         transformedPreviewUrl || uploadedImage.info.secure_url
                       }
                       alt="Uploaded photo"
-                      className="w-full h-auto"
+                      className="absolute inset-0 w-full h-full object-contain"
                       draggable={false}
                       onLoad={(e) => {
                         if (useAiPreview && cropMode === "manual") {
@@ -627,10 +665,12 @@ export function UploadPage() {
 
                         setPreviewLoadProgress(100);
                         setIsPreviewLoading(false);
+                        setPreviewLoadingReason("preview");
                       }}
                       onError={() => {
                         setIsPreviewLoading(false);
                         setPreviewLoadProgress(0);
+                        setPreviewLoadingReason("preview");
                         if (useAiPreview) {
                           setPreviewError(t("upload.aiPreviewError"));
                         }
@@ -742,11 +782,16 @@ export function UploadPage() {
                       )}
 
                     {isPreviewLoading && (
-                      <div className="p-3 space-y-2">
-                        <p className="text-xs text-gray-500 text-center">
-                          {t("upload.loadingPreviewProgress", {
-                            percent: previewLoadProgress,
-                          })}
+                      <div className="absolute inset-0 z-20 flex flex-col justify-end bg-black/25 p-3 space-y-2">
+                        <p className="text-xs text-white text-center">
+                          {t(
+                            previewLoadingReason === "crop"
+                              ? "upload.applyingCropProgress"
+                              : "upload.loadingPreviewProgress",
+                            {
+                              percent: previewLoadProgress,
+                            },
+                          )}
                         </p>
                         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                           <div
@@ -756,9 +801,14 @@ export function UploadPage() {
                             aria-valuenow={previewLoadProgress}
                             aria-valuemin={0}
                             aria-valuemax={100}
-                            aria-label={t("upload.loadingPreviewProgress", {
-                              percent: previewLoadProgress,
-                            })}
+                            aria-label={t(
+                              previewLoadingReason === "crop"
+                                ? "upload.applyingCropProgress"
+                                : "upload.loadingPreviewProgress",
+                              {
+                                percent: previewLoadProgress,
+                              },
+                            )}
                           />
                         </div>
                       </div>

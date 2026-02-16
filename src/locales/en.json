@@ -172,6 +172,7 @@
     "blur": "Blur:",
     "loadingPreview": "Loading preview...",
     "loadingPreviewProgress": "Loading preview... {percent}%",
+    "applyingCropProgress": "Applying crop... {percent}%",
     "aiAdjustmentsTitle": "AI Adjustments",
     "aiAdjustmentsHint": "Select one or more AI effects and switch between original and AI preview.",
     "aiTemplateLabel": "AI template:",
