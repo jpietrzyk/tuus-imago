@@ -73,6 +73,7 @@ export function UploadPage() {
   });
   const cropAreaRef = useRef<HTMLDivElement>(null);
   const srAnnouncementRef = useRef<HTMLDivElement>(null);
+  const announceTimeoutRef = useRef<number | null>(null);
 
   const handlePreviewCropMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -113,15 +114,23 @@ export function UploadPage() {
   );
 
   const announceCropAreaChange = useCallback((area: PreviewCropArea) => {
-    if (srAnnouncementRef.current) {
-      const message = t("upload.cropAreaAnnouncement", {
-        x: Math.round(area.x),
-        y: Math.round(area.y),
-        width: Math.round(area.width),
-        height: Math.round(area.height),
-      });
-      srAnnouncementRef.current.textContent = message;
+    // Debounce announcements to avoid overwhelming screen reader users
+    if (announceTimeoutRef.current !== null) {
+      window.clearTimeout(announceTimeoutRef.current);
     }
+    
+    announceTimeoutRef.current = window.setTimeout(() => {
+      if (srAnnouncementRef.current) {
+        const message = t("upload.cropAreaAnnouncement", {
+          x: Math.round(area.x),
+          y: Math.round(area.y),
+          width: Math.round(area.width),
+          height: Math.round(area.height),
+        });
+        srAnnouncementRef.current.textContent = message;
+      }
+      announceTimeoutRef.current = null;
+    }, 500); // Announce 500ms after the last change
   }, [t]);
 
   const constrainSquareCropArea = useCallback(
@@ -191,13 +200,15 @@ export function UploadPage() {
           }
         } else if (resizeStep > 0) {
           // Resize mode - shift+arrow keys
+          // Note: The crop area must maintain a square aspect ratio (width === height)
+          // to ensure consistent canvas printing results
           let desiredWidth: number;
           let desiredHeight: number;
 
           switch (e.key) {
             case "ArrowLeft":
               desiredWidth = Math.max(MIN_CROP_SIZE, prev.width - resizeStep);
-              desiredHeight = desiredWidth;
+              desiredHeight = desiredWidth; // Maintain square aspect ratio
               const constrainedLeft = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -210,7 +221,7 @@ export function UploadPage() {
               break;
             case "ArrowRight":
               desiredWidth = prev.width + resizeStep;
-              desiredHeight = desiredWidth;
+              desiredHeight = desiredWidth; // Maintain square aspect ratio
               const constrainedRight = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -223,7 +234,7 @@ export function UploadPage() {
               break;
             case "ArrowUp":
               desiredHeight = Math.max(MIN_CROP_SIZE, prev.height - resizeStep);
-              desiredWidth = desiredHeight;
+              desiredWidth = desiredHeight; // Maintain square aspect ratio
               const constrainedUp = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -236,7 +247,7 @@ export function UploadPage() {
               break;
             case "ArrowDown":
               desiredHeight = prev.height + resizeStep;
-              desiredWidth = desiredHeight;
+              desiredWidth = desiredHeight; // Maintain square aspect ratio
               const constrainedDown = constrainSquareCropArea(
                 desiredWidth,
                 desiredHeight,
@@ -955,7 +966,7 @@ export function UploadPage() {
                               height: previewCropArea.height,
                               cursor: "move",
                             }}
-                            role="button"
+                            role="application"
                             tabIndex={0}
                             aria-label={t("upload.cropAreaLabel")}
                             aria-describedby="crop-area-description"
