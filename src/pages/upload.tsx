@@ -175,6 +175,19 @@ export function UploadPage() {
             case "ArrowLeft":
               newArea.width = Math.max(MIN_CROP_SIZE, prev.width - resizeStep);
               newArea.height = newArea.width;
+              // Ensure the crop area doesn't exceed bounds
+              newArea.width = Math.min(
+                newArea.width,
+                previewDisplayDimensions.width - prev.x,
+              );
+              newArea.height = Math.min(
+                newArea.height,
+                previewDisplayDimensions.height - prev.y,
+              );
+              // Maintain square aspect ratio with the smaller dimension
+              const minDimension = Math.min(newArea.width, newArea.height);
+              newArea.width = minDimension;
+              newArea.height = minDimension;
               handled = true;
               break;
             case "ArrowRight":
@@ -182,12 +195,32 @@ export function UploadPage() {
                 previewDisplayDimensions.width - prev.x,
                 prev.width + resizeStep,
               );
-              newArea.height = newArea.width;
+              newArea.height = Math.min(
+                previewDisplayDimensions.height - prev.y,
+                newArea.width,
+              );
+              // Maintain square aspect ratio with the smaller dimension
+              const maxDimension = Math.min(newArea.width, newArea.height);
+              newArea.width = maxDimension;
+              newArea.height = maxDimension;
               handled = true;
               break;
             case "ArrowUp":
               newArea.height = Math.max(MIN_CROP_SIZE, prev.height - resizeStep);
               newArea.width = newArea.height;
+              // Ensure the crop area doesn't exceed bounds
+              newArea.width = Math.min(
+                newArea.width,
+                previewDisplayDimensions.width - prev.x,
+              );
+              newArea.height = Math.min(
+                newArea.height,
+                previewDisplayDimensions.height - prev.y,
+              );
+              // Maintain square aspect ratio with the smaller dimension
+              const minDim = Math.min(newArea.width, newArea.height);
+              newArea.width = minDim;
+              newArea.height = minDim;
               handled = true;
               break;
             case "ArrowDown":
@@ -195,7 +228,14 @@ export function UploadPage() {
                 previewDisplayDimensions.height - prev.y,
                 prev.height + resizeStep,
               );
-              newArea.width = newArea.height;
+              newArea.width = Math.min(
+                previewDisplayDimensions.width - prev.x,
+                newArea.height,
+              );
+              // Maintain square aspect ratio with the smaller dimension
+              const maxDim = Math.min(newArea.width, newArea.height);
+              newArea.width = maxDim;
+              newArea.height = maxDim;
               handled = true;
               break;
           }
