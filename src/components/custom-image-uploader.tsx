@@ -126,6 +126,17 @@ export function CustomImageUploader({
     startY: 0,
     containerRect: null as DOMRect | null,
   });
+  const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
+
+  // Cleanup XHR on unmount to prevent memory leaks and React warnings
+  useEffect(() => {
+    return () => {
+      if (uploadXhrRef.current) {
+        uploadXhrRef.current.abort();
+        uploadXhrRef.current = null;
+      }
+    };
+  }, []);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -473,6 +484,8 @@ export function CustomImageUploader({
       const data = await new Promise<CloudinaryUploadResponse>(
         (resolve, reject) => {
           const xhr = new XMLHttpRequest();
+          uploadXhrRef.current = xhr;
+
           xhr.open(
             "POST",
             `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
@@ -486,6 +499,7 @@ export function CustomImageUploader({
           };
 
           xhr.onload = () => {
+            uploadXhrRef.current = null;
             try {
               const responseJson = JSON.parse(
                 xhr.responseText || "{}",
@@ -512,7 +526,13 @@ export function CustomImageUploader({
           };
 
           xhr.onerror = () => {
+            uploadXhrRef.current = null;
             reject(new Error("Upload failed"));
+          };
+
+          xhr.onabort = () => {
+            uploadXhrRef.current = null;
+            reject(new Error("Upload was aborted"));
           };
 
           xhr.send(formData);
