@@ -8,16 +8,6 @@ export function LandingPage() {
   return (
     <>
       <div className="flex-1 px-2 pb-2">
-        {/* Header - Top section */}
-        <div className="shrink-0 px-2 pt-12 md:pt-16">
-          <Link
-            to="/"
-            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            {t("common.backToHome")}
-          </Link>
-        </div>
-
         {/* Main content area - takes up remaining space */}
         <div className="flex-1 min-h-0">
           {/* Hero section */}
