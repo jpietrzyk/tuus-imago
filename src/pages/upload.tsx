@@ -292,16 +292,14 @@ export function UploadPage() {
           switch (handle) {
             case "se":
               deltaSize = Math.max(dx, dy);
-              newWidth = Math.max(50, prev.width + deltaSize);
-              newHeight = newWidth;
-              newWidth = Math.min(
-                newWidth,
-                previewDisplayDimensions.width - prev.x,
-              );
-              newHeight = Math.min(
-                newHeight,
-                previewDisplayDimensions.height - prev.y,
-              );
+              {
+                const maxWidth = previewDisplayDimensions.width - prev.x;
+                const maxHeight = previewDisplayDimensions.height - prev.y;
+                const maxSize = Math.min(maxWidth, maxHeight);
+                newWidth = Math.max(50, prev.width + deltaSize);
+                newWidth = Math.min(newWidth, maxSize);
+                newHeight = newWidth;
+              }
               break;
             case "sw":
               deltaSize = Math.max(-dx, dy);
