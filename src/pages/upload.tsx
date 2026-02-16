@@ -7,13 +7,7 @@ import {
   cloudinaryConfig,
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
-import {
-  CheckCircle2,
-  AlertCircle,
-  Sliders,
-  Square,
-  SquareCheck,
-} from "lucide-react";
+import { CheckCircle2, AlertCircle, Sliders } from "lucide-react";
 import { t } from "@/locales/i18n";
 import {
   type ImageTransformations,
@@ -124,7 +118,7 @@ export function UploadPage() {
 
   const transformedPreviewUrl = useAiPreview
     ? aiPreviewUrl || basePreviewUrl
-    : basePreviewUrl;
+    : (uploadedImage?.info.secure_url ?? null);
   const isOriginalPreview = !useAiPreview;
 
   const activeAiAdjustmentsCount =
@@ -242,6 +236,57 @@ export function UploadPage() {
                   )}
                 </div>
                 <div className="rounded-lg bg-muted/50 p-4">
+                  <div
+                    className="mb-3 inline-flex rounded-lg border border-gray-200 bg-white p-1"
+                    role="tablist"
+                    aria-label={t("upload.previewModeTitle")}
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={!isOriginalPreview}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        !isOriginalPreview
+                          ? "bg-primary text-primary-foreground"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                      onClick={() => {
+                        if (!isOriginalPreview) {
+                          return;
+                        }
+
+                        setUseAiPreview(true);
+                        setIsPreviewLoading(true);
+                        setPreviewLoadProgress(0);
+                        setPreviewError(null);
+                      }}
+                    >
+                      {t("upload.previewYourImage")}
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={isOriginalPreview}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        isOriginalPreview
+                          ? "bg-primary text-primary-foreground"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                      onClick={() => {
+                        if (isOriginalPreview) {
+                          return;
+                        }
+
+                        setUseAiPreview(false);
+                        setIsPreviewLoading(false);
+                        setPreviewLoadProgress(0);
+                        setPreviewError(null);
+                      }}
+                    >
+                      {t("upload.previewOriginalTab")}
+                    </button>
+                  </div>
+
                   <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
                     <img
                       key={
@@ -303,26 +348,6 @@ export function UploadPage() {
                         <Sliders className="h-4 w-4" />
                         {t("upload.aiAdjustmentsTitle")}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setUseAiPreview((previous) => !previous);
-                            setIsPreviewLoading(true);
-                            setPreviewLoadProgress(0);
-                            setPreviewError(null);
-                          }}
-                          aria-pressed={isOriginalPreview}
-                        >
-                          {isOriginalPreview ? (
-                            <SquareCheck className="h-4 w-4" />
-                          ) : (
-                            <Square className="h-4 w-4" />
-                          )}
-                          {t("upload.showOriginal")}
-                        </Button>
-                      </div>
                     </div>
 
                     {aiTemplateName && (
