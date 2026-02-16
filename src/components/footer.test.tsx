@@ -33,7 +33,9 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const legalLink = screen.getByRole("link", { name: /prywatność/i });
+    const legalLink = screen.getByRole("link", {
+      name: /prawne i prywatność/i,
+    });
     expect(legalLink).toBeInTheDocument();
     expect(legalLink).toHaveAttribute("href", "/legal");
   });
@@ -57,7 +59,9 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const legalLink = screen.getByRole("link", { name: /prywatność/i });
+    const legalLink = screen.getByRole("link", {
+      name: /prawne i prywatność/i,
+    });
     const icon = legalLink.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });

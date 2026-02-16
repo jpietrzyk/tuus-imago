@@ -5,6 +5,14 @@ import { UploadPage } from "./pages/upload";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
 import { CheckoutPage } from "./pages/checkout";
+import { ConsentsPage } from "./pages/consents";
+import { ContactPage } from "./pages/contact";
+import { CookiesPage } from "./pages/cookies";
+import { PrivacyPage } from "./pages/privacy";
+import { ReturnsPage } from "./pages/returns";
+import { SecurityPage } from "./pages/security";
+import { ShippingPage } from "./pages/shipping";
+import { TermsPage } from "./pages/terms";
 import bgImage from "@/assets/bg_v1.jpg";
 
 // Main App Component with Routes
@@ -27,6 +35,14 @@ export function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/consents" element={<ConsentsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/cookies" element={<CookiesPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/returns" element={<ReturnsPage />} />
+          <Route path="/security" element={<SecurityPage />} />
+          <Route path="/shipping" element={<ShippingPage />} />
+          <Route path="/terms" element={<TermsPage />} />
         </Routes>
       </div>
       <Footer />
