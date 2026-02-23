@@ -608,10 +608,17 @@ export function UploadPage() {
                             return;
                           }
 
+                          // Store crop coordinates for later transformation
                           setAppliedManualCropCoordinates(
                             manualCustomCoordinates,
                           );
-                          startPreviewReload("crop");
+                          // Only reload preview in AI mode. In original mode, the crop overlay
+                          // is shown for visual preview, but the image URL remains the original
+                          // untransformed version. The crop will be applied when switching to
+                          // AI preview or on final submission.
+                          if (useAiPreview) {
+                            startPreviewReload("crop");
+                          }
                         }}
                       >
                         {t("upload.applyCrop")}
