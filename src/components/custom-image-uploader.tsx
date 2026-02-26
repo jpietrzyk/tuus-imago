@@ -792,8 +792,8 @@ export function CustomImageUploader({
           w-full min-h-96 flex items-center justify-center cursor-pointer relative
           ${
             isDragOver
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50 bg-muted/20"
+              ? "border-primary"
+              : "border-muted-foreground/25 hover:border-muted-foreground/50"
           }
         `}
       >
@@ -812,31 +812,9 @@ export function CustomImageUploader({
           onChange={handleFileSelect}
           className="hidden"
         />
-        <div className="space-y-4 flex flex-col items-center justify-center h-full">
-          <div
-            className={`
-              w-16 h-16 rounded-full mx-auto flex items-center justify-center
-              ${isDragOver ? "bg-primary text-primary-foreground" : "bg-muted"}
-            `}
-          >
-            <Upload className="h-8 w-8" />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {isDragOver ? t("upload.dropFile") : t("upload.clickToUpload")}
-          </p>
+        <div className="flex items-center justify-center h-full">
+          <Upload className="h-32 w-32 text-muted-foreground" />
         </div>
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            cameraInputRef.current?.click();
-          }}
-          disabled={isUploading}
-          variant="outline"
-          size="icon"
-          className="absolute bottom-4 right-4 w-12 h-12"
-        >
-          <Camera className="h-6 w-6" />
-        </Button>
       </div>
     );
   }
