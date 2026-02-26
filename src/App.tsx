@@ -13,16 +13,12 @@ import { ReturnsPage } from "./pages/returns";
 import { SecurityPage } from "./pages/security";
 import { ShippingPage } from "./pages/shipping";
 import { TermsPage } from "./pages/terms";
-import bgImage from "@/assets/bg_v1.jpg";
 
 // Main App Component with Routes
 export function App() {
   return (
     <div className="h-screen flex flex-col">
-      <div
-        className="flex-1 overflow-auto bg-cover bg-center relative"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      >
+      <div className="flex-1 overflow-auto relative bg-slate-50">
         <div className="fixed top-6 left-6 z-10">
           <h1 className="text-3xl font-bold drop-shadow-lg">
             <span className="text-white">Tuus</span>
