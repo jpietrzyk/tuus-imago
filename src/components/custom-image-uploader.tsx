@@ -802,7 +802,7 @@ export function CustomImageUploader({
           className="hidden"
         />
         {showIcons ? (
-          <div className="flex flex-col h-full w-full gap-4">
+          <div className="flex flex-col h-full w-full py-8">
             <div
               className="flex-1 flex items-center justify-center cursor-pointer"
               onClick={(e) => {
@@ -812,6 +812,7 @@ export function CustomImageUploader({
             >
               <Upload className="h-32 w-32 text-muted-foreground" />
             </div>
+            <div className="border-b-2 border-dashed border-muted-foreground/25" />
             <div
               className="flex-1 flex items-center justify-center cursor-pointer"
               onClick={(e) => {
