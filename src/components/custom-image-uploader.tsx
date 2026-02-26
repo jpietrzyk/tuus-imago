@@ -99,7 +99,7 @@ export function CustomImageUploader({
   skipCropStep = false,
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [showIcons, setShowIcons] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [transformations, setTransformations] = useState<ImageTransformations>(
     DEFAULT_TRANSFORMATIONS,
@@ -160,18 +160,15 @@ export function CustomImageUploader({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(false);
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      setIsDragOver(false);
 
       const file = e.dataTransfer.files?.[0];
       if (
@@ -786,16 +783,8 @@ export function CustomImageUploader({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !isUploading && fileInputRef.current?.click()}
-        className={`
-          border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-          w-full min-h-96 flex items-center justify-center cursor-pointer relative
-          ${
-            isDragOver
-              ? "border-primary"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50"
-          }
-        `}
+        onClick={() => !isUploading && !showIcons && setShowIcons(true)}
+        className="border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center cursor-pointer border-muted-foreground/25 hover:border-muted-foreground/50"
       >
         <input
           ref={fileInputRef}
@@ -812,9 +801,32 @@ export function CustomImageUploader({
           onChange={handleFileSelect}
           className="hidden"
         />
-        <div className="flex items-center justify-center h-full">
-          <Upload className="h-32 w-32 text-muted-foreground" />
-        </div>
+        {showIcons ? (
+          <div className="flex flex-col h-full w-full gap-4">
+            <div
+              className="flex-1 flex items-center justify-center cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              <Upload className="h-32 w-32 text-muted-foreground" />
+            </div>
+            <div
+              className="flex-1 flex items-center justify-center cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                cameraInputRef.current?.click();
+              }}
+            >
+              <Camera className="h-32 w-32 text-muted-foreground" />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <Upload className="h-32 w-32 text-muted-foreground" />
+          </div>
+        )}
       </div>
     );
   }
