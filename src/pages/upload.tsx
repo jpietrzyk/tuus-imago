@@ -414,7 +414,7 @@ export function UploadPage() {
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
-        <Card className="bg-black/10 backdrop-blur-md shadow-2xl">
+        <Card className="!bg-transparent backdrop-blur-md shadow-2xl">
           <CardContent className="space-y-6">
             {/* Status Messages */}
             {isSuccess && (
@@ -665,8 +665,10 @@ export function UploadPage() {
                               const renderedWidth = naturalWidth * scale;
                               const renderedHeight = naturalHeight * scale;
 
-                              const offsetX = (containerWidth - renderedWidth) / 2;
-                              const offsetY = (containerHeight - renderedHeight) / 2;
+                              const offsetX =
+                                (containerWidth - renderedWidth) / 2;
+                              const offsetY =
+                                (containerHeight - renderedHeight) / 2;
 
                               setPreviewDisplayDimensions({
                                 width: renderedWidth,
@@ -685,12 +687,9 @@ export function UploadPage() {
                                 const cropHeight = minDim * 0.8;
 
                                 setPreviewCropArea({
-                                  x:
-                                    offsetX +
-                                    (renderedWidth - cropWidth) / 2,
+                                  x: offsetX + (renderedWidth - cropWidth) / 2,
                                   y:
-                                    offsetY +
-                                    (renderedHeight - cropHeight) / 2,
+                                    offsetY + (renderedHeight - cropHeight) / 2,
                                   width: cropWidth,
                                   height: cropHeight,
                                 });
