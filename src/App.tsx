@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Footer } from "@/components/footer";
 import { LandingPage } from "./pages/landing";
+import { StartPage } from "./pages/start";
 import { UploadPage } from "./pages/upload";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
@@ -27,6 +28,7 @@ export function App() {
         </div>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/start" element={<StartPage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/legal" element={<LegalPage />} />

@@ -22,7 +22,7 @@ export function LandingPage() {
 
           {/* CTA button section */}
           <div className="py-12 text-center w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-            <Link to="/upload">
+            <Link to="/start">
               <Button
                 size="lg"
                 className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"

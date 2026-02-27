@@ -414,7 +414,7 @@ export function UploadPage() {
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
-        <Card className="bg-transparent! border-0! ring-0! shadow-none!">
+        <Card className="bg-black/10 backdrop-blur-md shadow-2xl">
           <CardContent className="space-y-6">
             {/* Status Messages */}
             {isSuccess && (
@@ -472,6 +472,7 @@ export function UploadPage() {
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   skipCropStep
+                  defaultShowIcons
                   className="w-full max-w-sm py-6 text-lg font-semibold"
                 />
 

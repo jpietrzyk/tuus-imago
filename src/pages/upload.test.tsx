@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
@@ -27,13 +27,7 @@ describe("UploadPage Component", () => {
       </MemoryRouter>,
     );
 
-    // Click on the upload area to show icons
-    const uploadArea = document.querySelector(".cursor-pointer") as HTMLElement;
-    if (uploadArea) {
-      fireEvent.click(uploadArea);
-    }
-
-    // Check for camera icon after clicking
+    // Camera icon should be visible immediately in the first upload stage
     const cameraIcon = document.querySelector(".lucide-camera");
     expect(cameraIcon).toBeInTheDocument();
   });

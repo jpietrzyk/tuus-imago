@@ -65,6 +65,7 @@ interface CustomImageUploaderProps {
   onUploadError?: (error: string) => void;
   className?: string;
   skipCropStep?: boolean;
+  defaultShowIcons?: boolean;
 }
 
 interface CloudinaryUploadResponse {
@@ -97,9 +98,10 @@ export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
   skipCropStep = false,
+  defaultShowIcons = false,
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showIcons, setShowIcons] = useState(false);
+  const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [transformations, setTransformations] = useState<ImageTransformations>(
     DEFAULT_TRANSFORMATIONS,
@@ -133,6 +135,10 @@ export function CustomImageUploader({
     startY: 0,
     containerRect: null as DOMRect | null,
   });
+
+  useEffect(() => {
+    setShowIcons(defaultShowIcons);
+  }, [defaultShowIcons]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -783,8 +789,7 @@ export function CustomImageUploader({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !isUploading && !showIcons && setShowIcons(true)}
-        className="border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center cursor-pointer border-muted-foreground/25 hover:border-muted-foreground/50 bg-transparent"
+        className="text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center bg-transparent"
       >
         <input
           ref={fileInputRef}
@@ -802,7 +807,7 @@ export function CustomImageUploader({
           className="hidden"
         />
         {showIcons ? (
-          <div className="flex flex-col h-full w-full py-8 gap-12">
+          <div className="flex flex-col h-full w-full py-8 gap-12 bg-black/10 rounded-lg">
             <div
               className="flex-1 flex items-center justify-center cursor-pointer"
               onClick={(e) => {
@@ -824,9 +829,16 @@ export function CustomImageUploader({
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full">
-            <Upload className="h-32 w-32 text-muted-foreground" />
-          </div>
+          <button
+            type="button"
+            onClick={() => !isUploading && setShowIcons(true)}
+            className="border-2 border-dashed rounded-lg p-6 border-muted-foreground/25 hover:border-muted-foreground/50 transition-all duration-200 flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <Upload className="h-12 w-12 text-muted-foreground" />
+            <span className="text-muted-foreground font-medium">
+              {t("upload.clickToUpload")}
+            </span>
+          </button>
         )}
       </div>
     );
