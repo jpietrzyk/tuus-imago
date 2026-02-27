@@ -834,7 +834,7 @@ export function CustomImageUploader({
 
   // Show the upload/adjustment interface
   return (
-    <Card className="w-full max-w-2xl mx-auto !bg-transparent">
+    <Card className="w-full max-w-2xl mx-auto bg-transparent!">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>
