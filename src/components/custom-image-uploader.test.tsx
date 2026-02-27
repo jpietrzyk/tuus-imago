@@ -409,22 +409,34 @@ describe("CustomImageUploader", () => {
 
   it("opens file dialog when clicking drag and drop area", async () => {
     render(<CustomImageUploader />);
-    const fileInput = document.querySelector(
-      'input[type="file"][accept*="image/jpeg"]',
-    ) as HTMLInputElement;
-
-    // Mock the click method
-    const clickSpy = vi.fn();
-    if (fileInput) {
-      fileInput.click = clickSpy;
-    }
 
     // Find the drag and drop area div
     const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
     if (dragArea) {
+      // First click shows the icons
       fireEvent.click(dragArea);
-      // The click should trigger fileInput.click()
-      expect(clickSpy).toHaveBeenCalled();
+      // Camera icon should now be visible
+      const cameraIcon = document.querySelector(".lucide-camera");
+      expect(cameraIcon).toBeInTheDocument();
+
+      // Click on the upload icon to open file dialog
+      const uploadIcon = document.querySelector(".lucide-upload");
+      const uploadButton = uploadIcon?.closest("div") as HTMLElement;
+      if (uploadButton) {
+        const fileInput = document.querySelector(
+          'input[type="file"][accept*="image/jpeg"]',
+        ) as HTMLInputElement;
+
+        // Mock the click method
+        const clickSpy = vi.fn();
+        if (fileInput) {
+          fileInput.click = clickSpy;
+        }
+
+        fireEvent.click(uploadButton);
+        // The click should trigger fileInput.click()
+        expect(clickSpy).toHaveBeenCalled();
+      }
     }
   });
 
