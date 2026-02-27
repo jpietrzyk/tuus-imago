@@ -414,7 +414,7 @@ export function UploadPage() {
   return (
     <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
       <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
-        <Card className="!bg-transparent backdrop-blur-md shadow-2xl">
+        <Card className="!bg-transparent !border-0 !ring-0 !shadow-none">
           <CardContent className="space-y-6">
             {/* Status Messages */}
             {isSuccess && (
