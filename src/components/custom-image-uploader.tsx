@@ -99,7 +99,7 @@ export function CustomImageUploader({
   skipCropStep = false,
 }: CustomImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
+  const [showIcons, setShowIcons] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [transformations, setTransformations] = useState<ImageTransformations>(
     DEFAULT_TRANSFORMATIONS,
@@ -160,18 +160,15 @@ export function CustomImageUploader({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(true);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragOver(false);
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
-      setIsDragOver(false);
 
       const file = e.dataTransfer.files?.[0];
       if (
@@ -786,16 +783,8 @@ export function CustomImageUploader({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => !isUploading && fileInputRef.current?.click()}
-        className={`
-          border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-          w-full min-h-96 flex items-center justify-center cursor-pointer relative
-          ${
-            isDragOver
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-muted-foreground/50 bg-muted/20"
-          }
-        `}
+        onClick={() => !isUploading && !showIcons && setShowIcons(true)}
+        className="border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center cursor-pointer border-muted-foreground/25 hover:border-muted-foreground/50"
       >
         <input
           ref={fileInputRef}
@@ -812,31 +801,32 @@ export function CustomImageUploader({
           onChange={handleFileSelect}
           className="hidden"
         />
-        <div className="space-y-4 flex flex-col items-center justify-center h-full">
-          <div
-            className={`
-              w-16 h-16 rounded-full mx-auto flex items-center justify-center
-              ${isDragOver ? "bg-primary text-primary-foreground" : "bg-muted"}
-            `}
-          >
-            <Upload className="h-8 w-8" />
+        {showIcons ? (
+          <div className="flex flex-col h-full w-full gap-4">
+            <div
+              className="flex-1 flex items-center justify-center cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              <Upload className="h-32 w-32 text-muted-foreground" />
+            </div>
+            <div
+              className="flex-1 flex items-center justify-center cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                cameraInputRef.current?.click();
+              }}
+            >
+              <Camera className="h-32 w-32 text-muted-foreground" />
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {isDragOver ? t("upload.dropFile") : t("upload.clickToUpload")}
-          </p>
-        </div>
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            cameraInputRef.current?.click();
-          }}
-          disabled={isUploading}
-          variant="outline"
-          size="icon"
-          className="absolute bottom-4 right-4 w-12 h-12"
-        >
-          <Camera className="h-6 w-6" />
-        </Button>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <Upload className="h-32 w-32 text-muted-foreground" />
+          </div>
+        )}
       </div>
     );
   }
