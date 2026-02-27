@@ -145,7 +145,8 @@ describe("App Component Routing", () => {
     );
 
     // Check for upload page elements
-    expect(screen.getByText(tr("upload.clickToUpload"))).toBeInTheDocument();
+    const uploadIcon = document.querySelector(".lucide-upload");
+    expect(uploadIcon).toBeInTheDocument();
     expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
   });
 
