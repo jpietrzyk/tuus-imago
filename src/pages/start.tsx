@@ -5,15 +5,17 @@ import { t } from "@/locales/i18n";
 
 export function StartPage() {
   return (
-    <div className="flex-1 h-full flex items-center justify-center p-4 py-8">
-      <div className="w-full max-w-2xl flex justify-center">
+    <div className="flex-1 h-full flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl h-full flex items-center justify-center">
         <Link to="/upload">
           <Button
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
+            variant="ghost"
+            className="border-2 border-dashed rounded-lg p-6 border-muted-foreground/25 hover:border-muted-foreground/50 transition-all duration-200 flex items-center justify-center gap-3 cursor-pointer"
           >
-            <Upload className="w-6 h-6 mr-3" />
-            {t("landing.cta.button")}
+            <Upload className="h-12 w-12 text-muted-foreground" />
+            <span className="text-muted-foreground font-medium">
+              {t("landing.cta.button")}
+            </span>
           </Button>
         </Link>
       </div>

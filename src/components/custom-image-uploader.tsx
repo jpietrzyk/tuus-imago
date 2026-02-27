@@ -29,6 +29,7 @@ import {
   cloudinaryConfig,
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
+import { cn } from "@/lib/utils";
 
 export interface ImageTransformations {
   rotation: number;
@@ -97,6 +98,7 @@ const UPLOAD_TIMEOUT_MS = 120000;
 export function CustomImageUploader({
   onUploadSuccess,
   onUploadError,
+  className,
   skipCropStep = false,
   defaultShowIcons = false,
 }: CustomImageUploaderProps) {
@@ -789,7 +791,10 @@ export function CustomImageUploader({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center bg-transparent"
+        className={cn(
+          "text-center transition-all duration-200 w-full h-full min-h-0 flex items-center justify-center bg-transparent",
+          className,
+        )}
       >
         <input
           ref={fileInputRef}
@@ -807,25 +812,30 @@ export function CustomImageUploader({
           className="hidden"
         />
         {showIcons ? (
-          <div className="flex flex-col h-full w-full py-8 gap-12 bg-black/10 rounded-lg">
-            <div
-              className="flex-1 flex items-center justify-center cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                fileInputRef.current?.click();
-              }}
-            >
-              <Upload className="h-32 w-32 text-muted-foreground" />
-            </div>
-            <div className="border-b-2 border-dashed border-muted-foreground/25" />
-            <div
-              className="flex-1 flex items-center justify-center cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                cameraInputRef.current?.click();
-              }}
-            >
-              <Camera className="h-32 w-32 text-muted-foreground" />
+          <div className="w-full h-full">
+            <div className="h-full w-full border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 rounded-lg p-6 m-4 transition-colors">
+              <div className="flex h-full w-full flex-col gap-6">
+                <button
+                  type="button"
+                  className="flex-1 w-full flex items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <Upload className="h-28 w-28" />
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 w-full flex items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    cameraInputRef.current?.click();
+                  }}
+                >
+                  <Camera className="h-28 w-28" />
+                </button>
+              </div>
             </div>
           </div>
         ) : (

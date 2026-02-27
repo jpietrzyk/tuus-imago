@@ -412,10 +412,10 @@ export function UploadPage() {
   }, [isPreviewLoading, previewLoadingReason]);
 
   return (
-    <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
-      <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
-        <Card className="bg-black/10 backdrop-blur-md shadow-2xl">
-          <CardContent className="space-y-6">
+    <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
+      <div className="w-full max-w-2xl h-full transition-all duration-500 ease-in-out">
+        <Card className="h-full bg-black/10 backdrop-blur-md shadow-2xl">
+          <CardContent className="h-full space-y-6">
             {/* Status Messages */}
             {isSuccess && (
               <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
@@ -467,13 +467,13 @@ export function UploadPage() {
 
             {/* Upload Widget */}
             {!uploadedImage && (
-              <div className="flex flex-col items-center gap-4">
+              <div className="flex h-full min-h-0 flex-col items-center gap-4">
                 <CustomImageUploader
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   skipCropStep
                   defaultShowIcons
-                  className="w-full max-w-sm py-6 text-lg font-semibold"
+                  className="w-full max-w-sm h-full py-6 text-lg font-semibold"
                 />
 
                 <p className="text-sm text-gray-500 text-center">
