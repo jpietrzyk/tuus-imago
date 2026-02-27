@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
@@ -30,7 +30,7 @@ describe("UploadPage Component", () => {
     // Click on the upload area to show icons
     const uploadArea = document.querySelector(".cursor-pointer") as HTMLElement;
     if (uploadArea) {
-      uploadArea.click();
+      fireEvent.click(uploadArea);
     }
 
     // Check for camera icon after clicking
