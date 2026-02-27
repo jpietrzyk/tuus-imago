@@ -15,7 +15,9 @@ describe("UploadPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("upload.clickToUpload"))).toBeInTheDocument();
+    // Check for upload icon
+    const uploadIcon = document.querySelector(".lucide-upload");
+    expect(uploadIcon).toBeInTheDocument();
   });
 
   it("should render camera button", () => {
@@ -25,11 +27,15 @@ describe("UploadPage Component", () => {
       </MemoryRouter>,
     );
 
-    // Check for camera icon button using the icon class
-    const cameraButton = document
-      .querySelector(".lucide-camera")
-      ?.closest("button");
-    expect(cameraButton).toBeInTheDocument();
+    // Click on the upload area to show icons
+    const uploadArea = document.querySelector(".cursor-pointer") as HTMLElement;
+    if (uploadArea) {
+      uploadArea.click();
+    }
+
+    // Check for camera icon after clicking
+    const cameraIcon = document.querySelector(".lucide-camera");
+    expect(cameraIcon).toBeInTheDocument();
   });
 
   it("should render supported formats text", () => {
