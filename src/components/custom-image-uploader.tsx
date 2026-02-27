@@ -784,7 +784,7 @@ export function CustomImageUploader({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => !isUploading && !showIcons && setShowIcons(true)}
-        className="border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center cursor-pointer border-muted-foreground/25 hover:border-muted-foreground/50"
+        className="border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 w-full min-h-96 flex items-center justify-center cursor-pointer border-muted-foreground/25 hover:border-muted-foreground/50 bg-transparent"
       >
         <input
           ref={fileInputRef}
@@ -802,7 +802,7 @@ export function CustomImageUploader({
           className="hidden"
         />
         {showIcons ? (
-          <div className="flex flex-col h-full w-full gap-4">
+          <div className="flex flex-col h-full w-full py-8 gap-12">
             <div
               className="flex-1 flex items-center justify-center cursor-pointer"
               onClick={(e) => {
@@ -812,6 +812,7 @@ export function CustomImageUploader({
             >
               <Upload className="h-32 w-32 text-muted-foreground" />
             </div>
+            <div className="border-b-2 border-dashed border-muted-foreground/25" />
             <div
               className="flex-1 flex items-center justify-center cursor-pointer"
               onClick={(e) => {
@@ -833,7 +834,7 @@ export function CustomImageUploader({
 
   // Show the upload/adjustment interface
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto bg-transparent!">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>
@@ -854,7 +855,7 @@ export function CustomImageUploader({
       <CardContent className="space-y-6">
         {/* Image Preview */}
         {step === "crop" ? (
-          <div className="flex justify-center bg-muted/50 rounded-lg p-4">
+          <div className="flex justify-center bg-transparent rounded-lg p-4">
             <div className="relative inline-block">
               <img
                 ref={imageRef}
@@ -999,7 +1000,7 @@ export function CustomImageUploader({
             </div>
           </div>
         ) : (
-          <div className="flex justify-center bg-muted/50 rounded-lg p-4">
+          <div className="flex justify-center bg-transparent rounded-lg p-4">
             <div className="relative w-full min-w-50 max-w-125 aspect-square overflow-hidden rounded-lg flex items-center justify-center">
               {/* Canvas for rendering cropped area with transformations */}
               {cropArea.width > 0 && cropArea.height > 0 && (
