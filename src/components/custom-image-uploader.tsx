@@ -834,7 +834,7 @@ export function CustomImageUploader({
 
   // Show the upload/adjustment interface
   return (
-    <Card className="w-full max-w-2xl mx-auto bg-transparent!">
+    <Card className="w-full max-w-2xl mx-auto h-full bg-transparent! flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>
@@ -852,7 +852,7 @@ export function CustomImageUploader({
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
         {/* Image Preview */}
         {step === "crop" ? (
           <div className="flex justify-center bg-transparent rounded-lg p-4">
@@ -1003,8 +1003,12 @@ export function CustomImageUploader({
             </div>
           </div>
         ) : (
-          <div className="flex justify-center bg-transparent rounded-lg p-4">
-            <div className="relative w-full min-w-50 max-w-125 aspect-square overflow-hidden rounded-lg flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center gap-4 bg-transparent rounded-lg p-4 min-h-0">
+            {/* Left empty space */}
+            <div className="flex-1 h-full rounded-lg border-2 border-dashed border-muted-foreground/25" />
+
+            {/* Center image preview - takes more space */}
+            <div className="relative flex-[3] h-full overflow-hidden rounded-lg flex items-center justify-center">
               {/* Canvas for rendering cropped area with transformations */}
               {cropArea.width > 0 && cropArea.height > 0 && (
                 <canvas
@@ -1029,6 +1033,9 @@ export function CustomImageUploader({
                 />
               )}
             </div>
+
+            {/* Right empty space */}
+            <div className="flex-1 h-full rounded-lg border-2 border-dashed border-muted-foreground/25" />
           </div>
         )}
 
@@ -1042,6 +1049,7 @@ export function CustomImageUploader({
               type="button"
               onClick={handleCropConfirm}
               className="w-full"
+              size="sm"
             >
               <Check className="mr-2 h-4 w-4" />
               {t("uploader.confirmCrop")}
@@ -1050,7 +1058,7 @@ export function CustomImageUploader({
         ) : (
           <>
             {/* Action Buttons Row */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               {!skipCropStep && (
                 <Button
                   type="button"
@@ -1059,6 +1067,7 @@ export function CustomImageUploader({
                     setStep("crop");
                   }}
                   className="flex-1"
+                  size="sm"
                 >
                   <Crop className="mr-2 h-4 w-4" />
                   {t("uploader.backToCrop")}
@@ -1069,6 +1078,7 @@ export function CustomImageUploader({
                 variant="outline"
                 onClick={handleCancel}
                 className="flex-1"
+                size="sm"
               >
                 <X className="mr-2 h-4 w-4" />
                 {t("uploader.cancel")}
@@ -1078,6 +1088,7 @@ export function CustomImageUploader({
                 onClick={handleUpload}
                 disabled={isUploading}
                 className="flex-1"
+                size="sm"
               >
                 {isUploading ? (
                   <>
