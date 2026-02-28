@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/collapsible";
 import {
   Upload,
-  Camera,
   RotateCw,
   FlipHorizontal,
   FlipVertical,
@@ -906,7 +905,10 @@ export function CustomImageUploader({
                       top: cropArea.y + cropArea.height - 2,
                       width: "100%",
                       height:
-                        imageDimensions.height - cropArea.y - cropArea.height + 2,
+                        imageDimensions.height -
+                        cropArea.y -
+                        cropArea.height +
+                        2,
                     }}
                   />
                   {/* Left overlay */}
