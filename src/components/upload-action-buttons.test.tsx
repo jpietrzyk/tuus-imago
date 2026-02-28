@@ -18,17 +18,15 @@ describe("UploadActionButtons", () => {
     expect(document.querySelector(".lucide-camera")).toBeTruthy();
   });
 
-  it("renders default text above and below icons", () => {
+  it("renders default text below icons", () => {
     const noop = () => {};
     render(<UploadActionButtons onUploadClick={noop} onCameraClick={noop} />);
 
     // Check default upload button text
-    expect(screen.getByText("Upload")).toBeInTheDocument();
-    expect(screen.getByText("from device")).toBeInTheDocument();
+    expect(screen.getByText("Upload from device")).toBeInTheDocument();
 
     // Check default camera button text
-    expect(screen.getByText("Camera")).toBeInTheDocument();
-    expect(screen.getByText("take photo")).toBeInTheDocument();
+    expect(screen.getByText("Take photo")).toBeInTheDocument();
   });
 
   it("renders custom text props when provided", () => {
@@ -37,24 +35,20 @@ describe("UploadActionButtons", () => {
       <UploadActionButtons
         onUploadClick={noop}
         onCameraClick={noop}
-        uploadTextAbove="Select File"
-        uploadTextBelow="from gallery"
-        cameraTextAbove="Snap Photo"
-        cameraTextBelow="use camera"
+        uploadText="Select from gallery"
+        cameraText="Use camera"
       />,
     );
 
     // Check custom upload button text
-    expect(screen.getByText("Select File")).toBeInTheDocument();
-    expect(screen.getByText("from gallery")).toBeInTheDocument();
+    expect(screen.getByText("Select from gallery")).toBeInTheDocument();
 
     // Check custom camera button text
-    expect(screen.getByText("Snap Photo")).toBeInTheDocument();
-    expect(screen.getByText("use camera")).toBeInTheDocument();
+    expect(screen.getByText("Use camera")).toBeInTheDocument();
 
     // Ensure default text is not present
-    expect(screen.queryByText("Upload")).not.toBeInTheDocument();
-    expect(screen.queryByText("take photo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Upload from device")).not.toBeInTheDocument();
+    expect(screen.queryByText("Take photo")).not.toBeInTheDocument();
   });
 
   it("fires callbacks when buttons are clicked", () => {
@@ -107,13 +101,26 @@ describe("UploadActionButtons", () => {
     const noop = () => {};
     render(<UploadActionButtons onUploadClick={noop} onCameraClick={noop} />);
 
-    // Get all text elements (should be 4: 2 above icons, 2 below icons)
+    // Get all text elements (should be 2: 1 below each icon)
     const textElements = document.querySelectorAll(".text-xs");
-    expect(textElements.length).toBe(4);
+    expect(textElements.length).toBe(2);
 
     // Verify they have font-medium class
     textElements.forEach((element) => {
       expect(element.className).toMatch(/font-medium/);
+    });
+  });
+
+  it("applies margin top to text for spacing below icon", () => {
+    const noop = () => {};
+    render(<UploadActionButtons onUploadClick={noop} onCameraClick={noop} />);
+
+    // Get all text elements
+    const textElements = document.querySelectorAll(".text-xs");
+
+    // Verify they have mt-2 class for margin top
+    textElements.forEach((element) => {
+      expect(element.className).toMatch(/mt-2/);
     });
   });
 });

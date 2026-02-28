@@ -5,20 +5,16 @@ interface UploadActionButtonsProps {
   onUploadClick: () => void;
   onCameraClick: () => void;
   className?: string;
-  uploadTextAbove?: string;
-  uploadTextBelow?: string;
-  cameraTextAbove?: string;
-  cameraTextBelow?: string;
+  uploadText?: string;
+  cameraText?: string;
 }
 
 export function UploadActionButtons({
   onUploadClick,
   onCameraClick,
   className,
-  uploadTextAbove = "Upload",
-  uploadTextBelow = "from device",
-  cameraTextAbove = "Camera",
-  cameraTextBelow = "take photo",
+  uploadText = "Upload from device",
+  cameraText = "Take photo",
 }: UploadActionButtonsProps) {
   return (
     <div className={cn("w-full h-full", className)}>
@@ -33,9 +29,8 @@ export function UploadActionButtons({
               onUploadClick();
             }}
           >
-            <span className="text-xs font-medium mb-2">{uploadTextAbove}</span>
             <Upload className="h-28 w-28" />
-            <span className="text-xs font-medium mt-2">{uploadTextBelow}</span>
+            <span className="text-xs font-medium mt-2">{uploadText}</span>
           </button>
           <button
             type="button"
@@ -46,9 +41,8 @@ export function UploadActionButtons({
               onCameraClick();
             }}
           >
-            <span className="text-xs font-medium mb-2">{cameraTextAbove}</span>
             <Camera className="h-28 w-28" />
-            <span className="text-xs font-medium mt-2">{cameraTextBelow}</span>
+            <span className="text-xs font-medium mt-2">{cameraText}</span>
           </button>
         </div>
       </div>
