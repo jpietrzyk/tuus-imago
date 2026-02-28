@@ -30,6 +30,7 @@ import {
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
 import { cn } from "@/lib/utils";
+import UploadActionButtons from "@/components/upload-action-buttons";
 
 export interface ImageTransformations {
   rotation: number;
@@ -812,32 +813,10 @@ export function CustomImageUploader({
           className="hidden"
         />
         {showIcons ? (
-          <div className="w-full h-full">
-            <div className="h-full w-full border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 rounded-lg p-6 m-4 transition-colors">
-              <div className="flex h-full w-full flex-col gap-6">
-                <button
-                  type="button"
-                  className="flex-1 w-full flex items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  <Upload className="h-28 w-28" />
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 w-full flex items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    cameraInputRef.current?.click();
-                  }}
-                >
-                  <Camera className="h-28 w-28" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <UploadActionButtons
+            onUploadClick={() => fileInputRef.current?.click()}
+            onCameraClick={() => cameraInputRef.current?.click()}
+          />
         ) : (
           <button
             type="button"
@@ -924,10 +903,10 @@ export function CustomImageUploader({
                     className="absolute pointer-events-none bg-black/50"
                     style={{
                       left: 0,
-                      top: cropArea.y + cropArea.height,
+                      top: cropArea.y + cropArea.height - 2,
                       width: "100%",
                       height:
-                        imageDimensions.height - cropArea.y - cropArea.height,
+                        imageDimensions.height - cropArea.y - cropArea.height + 2,
                     }}
                   />
                   {/* Left overlay */}
@@ -944,10 +923,10 @@ export function CustomImageUploader({
                   <div
                     className="absolute pointer-events-none bg-black/50"
                     style={{
-                      left: cropArea.x + cropArea.width,
+                      left: cropArea.x + cropArea.width - 2,
                       top: cropArea.y,
                       width:
-                        imageDimensions.width - cropArea.x - cropArea.width,
+                        imageDimensions.width - cropArea.x - cropArea.width + 2,
                       height: cropArea.height,
                     }}
                   />

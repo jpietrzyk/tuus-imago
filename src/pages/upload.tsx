@@ -473,7 +473,7 @@ export function UploadPage() {
                   onUploadError={handleUploadError}
                   skipCropStep
                   defaultShowIcons
-                  className="w-full max-w-sm h-full py-6 text-lg font-semibold"
+                  className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
                 />
 
                 <p className="text-sm text-gray-500 text-center">
@@ -732,12 +732,12 @@ export function UploadPage() {
                             className="absolute pointer-events-none bg-black/40"
                             style={{
                               left: 0,
-                              top: previewCropArea.y + previewCropArea.height,
+                              top: previewCropArea.y + previewCropArea.height - 2,
                               width: "100%",
                               height:
                                 previewDisplayDimensions.height -
                                 previewCropArea.y -
-                                previewCropArea.height,
+                                previewCropArea.height + 2,
                             }}
                           />
                           <div
@@ -752,12 +752,12 @@ export function UploadPage() {
                           <div
                             className="absolute pointer-events-none bg-black/40"
                             style={{
-                              left: previewCropArea.x + previewCropArea.width,
+                              left: previewCropArea.x + previewCropArea.width - 2,
                               top: previewCropArea.y,
                               width:
                                 previewDisplayDimensions.width -
                                 previewCropArea.x -
-                                previewCropArea.width,
+                                previewCropArea.width + 2,
                               height: previewCropArea.height,
                             }}
                           />
