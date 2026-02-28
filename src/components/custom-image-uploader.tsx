@@ -1008,7 +1008,7 @@ export function CustomImageUploader({
             <div className="flex-1 h-full rounded-lg border-2 border-dashed border-muted-foreground/25" />
 
             {/* Center image preview - takes more space */}
-            <div className="relative flex-[3] h-full overflow-hidden rounded-lg flex items-center justify-center">
+            <div className="relative flex-3 h-full overflow-hidden rounded-lg flex items-center justify-center">
               {/* Canvas for rendering cropped area with transformations */}
               {cropArea.width > 0 && cropArea.height > 0 && (
                 <canvas
