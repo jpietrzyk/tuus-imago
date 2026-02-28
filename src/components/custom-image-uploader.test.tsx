@@ -410,33 +410,34 @@ describe("CustomImageUploader", () => {
   it("opens file dialog when clicking drag and drop area", async () => {
     render(<CustomImageUploader />);
 
-    // Find the drag and drop area div
-    const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
+    // Find the drag and drop area (initial big button)
+    const dragArea = document.querySelector(
+      "button.cursor-pointer.border-dashed",
+    ) as HTMLElement | null;
+
     if (dragArea) {
-      // First click shows the icons
+      // First click reveals the two action buttons
       fireEvent.click(dragArea);
-      // Camera icon should now be visible
+
+      // Ensure the camera icon is visible to confirm state
       const cameraIcon = document.querySelector(".lucide-camera");
       expect(cameraIcon).toBeInTheDocument();
 
-      // Click on the upload icon to open file dialog
-      const uploadIcon = document.querySelector(".lucide-upload");
-      const uploadButton = uploadIcon?.closest("div") as HTMLElement;
-      if (uploadButton) {
-        const fileInput = document.querySelector(
-          'input[type="file"][accept*="image/jpeg"]',
-        ) as HTMLInputElement;
-
-        // Mock the click method
-        const clickSpy = vi.fn();
-        if (fileInput) {
-          fileInput.click = clickSpy;
-        }
-
-        fireEvent.click(uploadButton);
-        // The click should trigger fileInput.click()
-        expect(clickSpy).toHaveBeenCalled();
+      // Spy on the actual file input (non-camera)
+      const fileInput = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]:not([capture])',
+      ) as HTMLInputElement | null;
+      expect(fileInput).toBeTruthy();
+      const clickSpy = vi.fn();
+      if (fileInput) {
+        fileInput.click = clickSpy;
       }
+
+      // Click the Upload button by its accessible label
+      const uploadButton = screen.getByLabelText("Upload from device");
+      fireEvent.click(uploadButton);
+
+      expect(clickSpy).toHaveBeenCalled();
     }
   });
 

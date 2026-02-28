@@ -412,10 +412,10 @@ export function UploadPage() {
   }, [isPreviewLoading, previewLoadingReason]);
 
   return (
-    <div className="flex-1 h-full flex justify-center p-4 py-8 transition-all duration-500 ease-in-out">
-      <div className="w-full max-w-2xl transition-all duration-500 ease-in-out">
-        <Card className="bg-transparent! border-0! ring-0! shadow-none!">
-          <CardContent className="space-y-6">
+    <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
+      <div className="w-full max-w-2xl h-full transition-all duration-500 ease-in-out">
+        <Card className="h-full bg-black/10 backdrop-blur-md shadow-2xl">
+          <CardContent className="h-full space-y-6">
             {/* Status Messages */}
             {isSuccess && (
               <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
@@ -467,12 +467,13 @@ export function UploadPage() {
 
             {/* Upload Widget */}
             {!uploadedImage && (
-              <div className="flex flex-col items-center gap-4">
+              <div className="flex h-full min-h-0 flex-col items-center gap-4">
                 <CustomImageUploader
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   skipCropStep
-                  className="w-full max-w-sm py-6 text-lg font-semibold"
+                  defaultShowIcons
+                  className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
                 />
 
                 <p className="text-sm text-gray-500 text-center">
@@ -731,12 +732,12 @@ export function UploadPage() {
                             className="absolute pointer-events-none bg-black/40"
                             style={{
                               left: 0,
-                              top: previewCropArea.y + previewCropArea.height,
+                              top: previewCropArea.y + previewCropArea.height - 2,
                               width: "100%",
                               height:
                                 previewDisplayDimensions.height -
                                 previewCropArea.y -
-                                previewCropArea.height,
+                                previewCropArea.height + 2,
                             }}
                           />
                           <div
@@ -751,12 +752,12 @@ export function UploadPage() {
                           <div
                             className="absolute pointer-events-none bg-black/40"
                             style={{
-                              left: previewCropArea.x + previewCropArea.width,
+                              left: previewCropArea.x + previewCropArea.width - 2,
                               top: previewCropArea.y,
                               width:
                                 previewDisplayDimensions.width -
                                 previewCropArea.x -
-                                previewCropArea.width,
+                                previewCropArea.width + 2,
                               height: previewCropArea.height,
                             }}
                           />
