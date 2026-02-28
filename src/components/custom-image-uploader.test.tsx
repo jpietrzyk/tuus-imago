@@ -412,7 +412,7 @@ describe("CustomImageUploader", () => {
 
     // Find the drag and drop area (initial big button)
     const dragArea = document.querySelector(
-      'button.cursor-pointer.border-dashed',
+      "button.cursor-pointer.border-dashed",
     ) as HTMLElement | null;
 
     if (dragArea) {
@@ -430,7 +430,6 @@ describe("CustomImageUploader", () => {
       expect(fileInput).toBeTruthy();
       const clickSpy = vi.fn();
       if (fileInput) {
-        // @ts-expect-error override for test
         fileInput.click = clickSpy;
       }
 
