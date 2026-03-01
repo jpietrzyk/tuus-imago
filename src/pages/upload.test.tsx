@@ -73,7 +73,7 @@ describe("UploadPage Component", () => {
       </MemoryRouter>,
     );
 
-    // Since we can't easily test the CustomImageUploader component's callback here,
+    // Since we can't easily test the ImageUploader component's callback here,
     // we'll just verify that initial state is correct
     expect(screen.queryByAltText(/Uploaded photo/i)).not.toBeInTheDocument();
   });

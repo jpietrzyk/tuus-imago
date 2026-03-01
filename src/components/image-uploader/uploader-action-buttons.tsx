@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Upload, Camera } from "lucide-react";
 
-interface UploadActionButtonsProps {
+interface UploaderActionButtonsProps {
   onUploadClick: () => void;
   onCameraClick: () => void;
   className?: string;
@@ -9,13 +9,13 @@ interface UploadActionButtonsProps {
   cameraText?: string;
 }
 
-export function UploadActionButtons({
+export function UploaderActionButtons({
   onUploadClick,
   onCameraClick,
   className,
   uploadText = "Upload from device",
   cameraText = "Take photo",
-}: UploadActionButtonsProps) {
+}: UploaderActionButtonsProps) {
   return (
     <div className={cn("w-full h-full", className)}>
       <div className="h-full w-full p-6 m-2">
@@ -50,4 +50,4 @@ export function UploadActionButtons({
   );
 }
 
-export default UploadActionButtons;
+export default UploaderActionButtons;

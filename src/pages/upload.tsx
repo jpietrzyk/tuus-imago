@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
-import { CustomImageUploader } from "@/components/custom-image-uploader";
+import { ImageUploader } from "@/components/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -122,7 +122,7 @@ export function UploadPage() {
         },
     transformationsParam: ImageTransformations,
   ) => {
-    // Handle both formats (from CloudinaryUploadWidget and CustomImageUploader)
+    // Handle both formats (from CloudinaryUploadWidget and ImageUploader)
     const uploadResult: UploadResult =
       "event" in result
         ? result
@@ -468,7 +468,7 @@ export function UploadPage() {
             {/* Upload Widget */}
             {!uploadedImage && (
               <div className="flex h-full min-h-0 flex-col items-center gap-4">
-                <CustomImageUploader
+                <ImageUploader
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   skipCropStep
@@ -732,12 +732,14 @@ export function UploadPage() {
                             className="absolute pointer-events-none bg-black/40"
                             style={{
                               left: 0,
-                              top: previewCropArea.y + previewCropArea.height - 2,
+                              top:
+                                previewCropArea.y + previewCropArea.height - 2,
                               width: "100%",
                               height:
                                 previewDisplayDimensions.height -
                                 previewCropArea.y -
-                                previewCropArea.height + 2,
+                                previewCropArea.height +
+                                2,
                             }}
                           />
                           <div
@@ -752,12 +754,14 @@ export function UploadPage() {
                           <div
                             className="absolute pointer-events-none bg-black/40"
                             style={{
-                              left: previewCropArea.x + previewCropArea.width - 2,
+                              left:
+                                previewCropArea.x + previewCropArea.width - 2,
                               top: previewCropArea.y,
                               width:
                                 previewDisplayDimensions.width -
                                 previewCropArea.x -
-                                previewCropArea.width + 2,
+                                previewCropArea.width +
+                                2,
                               height: previewCropArea.height,
                             }}
                           />
