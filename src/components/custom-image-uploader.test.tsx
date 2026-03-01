@@ -535,30 +535,22 @@ describe("CustomImageUploader", () => {
       });
 
       await waitFor(() => {
-        // In adjust step, there should be a container for the cropped preview
-        // Look for divs with both relative and overflow-hidden class
-        const divs = document.querySelectorAll("div");
-        let previewContainer: HTMLElement | null = null;
+        const leftSlot = document.querySelector(
+          '[data-testid="adjust-preview-left-slot"]',
+        ) as HTMLElement | null;
+        const rightSlot = document.querySelector(
+          '[data-testid="adjust-preview-right-slot"]',
+        ) as HTMLElement | null;
+        const centerCanvas = document.querySelector(
+          '[data-testid="adjust-preview-image"]',
+        ) as HTMLCanvasElement | null;
 
-        for (const div of divs) {
-          if (
-            div.classList.contains("relative") &&
-            div.classList.contains("overflow-hidden")
-          ) {
-            previewContainer = div;
-            break;
-          }
-        }
-
-        expect(previewContainer).toBeDefined();
-        // Should have responsive width classes (w-full, min-w-50, max-w-125)
-        expect(previewContainer?.classList.contains("w-full")).toBe(true);
-        expect(previewContainer?.classList.contains("min-w-50")).toBe(true);
-        expect(previewContainer?.classList.contains("max-w-125")).toBe(true);
-        // Should have aspect-square class to maintain 1:1 aspect ratio
-        expect(previewContainer?.classList.contains("aspect-square")).toBe(
-          true,
-        );
+        expect(leftSlot).toBeDefined();
+        expect(rightSlot).toBeDefined();
+        expect(centerCanvas).toBeDefined();
+        expect(leftSlot?.querySelector("canvas")).toBeNull();
+        expect(rightSlot?.querySelector("canvas")).toBeNull();
+        expect(centerCanvas?.tagName.toLowerCase()).toBe("canvas");
       });
     }
   });
