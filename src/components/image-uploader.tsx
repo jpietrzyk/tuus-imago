@@ -698,13 +698,6 @@ export function ImageUploader({
     }
   }, [skipCropStep, updateSelectedImageMetadata]);
 
-  const previewAspectRatio =
-    displayImageProportion === "horizontal"
-      ? "16 / 9"
-      : displayImageProportion === "vertical"
-        ? "3 / 4"
-        : "1 / 1";
-
   useEffect(() => {
     if (!previewUrl || !previewCanvasRef.current) {
       return;
@@ -747,14 +740,8 @@ export function ImageUploader({
         cropY = (sourceHeight - cropHeight) / 2;
       }
 
-      const maxOutputSize = 1200;
-      const outputScale = Math.min(
-        1,
-        maxOutputSize / cropWidth,
-        maxOutputSize / cropHeight,
-      );
-      const outputWidth = Math.max(1, Math.round(cropWidth * outputScale));
-      const outputHeight = Math.max(1, Math.round(cropHeight * outputScale));
+      const outputWidth = Math.max(1, Math.round(cropWidth));
+      const outputHeight = Math.max(1, Math.round(cropHeight));
 
       canvas.width = outputWidth;
       canvas.height = outputHeight;
@@ -977,7 +964,6 @@ export function ImageUploader({
         <div className="flex-1 flex justify-center bg-transparent rounded-lg p-4 min-h-0">
           <div
             className="relative w-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center"
-            style={{ aspectRatio: previewAspectRatio }}
             data-testid="selected-image-preview-frame"
           >
             <canvas
@@ -985,7 +971,7 @@ export function ImageUploader({
               role="img"
               aria-label="Preview"
               data-testid="selected-image-preview-canvas"
-              className="w-full h-full"
+              className="max-w-none max-h-none"
               style={{
                 userSelect: "none",
                 WebkitUserSelect: "none",

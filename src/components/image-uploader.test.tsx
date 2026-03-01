@@ -165,11 +165,14 @@ describe("ImageUploader", () => {
     if (input) {
       fireEvent.change(input, { target: { files: [file] } });
 
-      const previewFrame = (await screen.findByTestId(
-        "selected-image-preview-frame",
-      )) as HTMLDivElement;
+      const previewCanvas = (await screen.findByTestId(
+        "selected-image-preview-canvas",
+      )) as HTMLCanvasElement;
 
-      expect(previewFrame).toHaveStyle({ aspectRatio: "16 / 9" });
+      await waitFor(() => {
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(675);
+      });
 
       const dropdownTrigger = screen.getByTestId(
         "image-proportions-dropdown-trigger",
@@ -179,14 +182,16 @@ describe("ImageUploader", () => {
       fireEvent.click(screen.getByText("Vertical"));
 
       await waitFor(() => {
-        expect(previewFrame).toHaveStyle({ aspectRatio: "3 / 4" });
+        expect(previewCanvas.width).toBe(600);
+        expect(previewCanvas.height).toBe(800);
       });
 
       fireEvent.pointerDown(dropdownTrigger);
       fireEvent.click(screen.getByText("Square"));
 
       await waitFor(() => {
-        expect(previewFrame).toHaveStyle({ aspectRatio: "1 / 1" });
+        expect(previewCanvas.width).toBe(800);
+        expect(previewCanvas.height).toBe(800);
       });
     }
   });
