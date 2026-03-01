@@ -48,7 +48,7 @@ export interface CropArea {
   height: number;
 }
 
-interface CustomImageUploaderProps {
+interface ImageUploaderProps {
   onUploadSuccess?: (
     result: {
       public_id: string;
@@ -95,13 +95,13 @@ const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
 // Upload timeout in milliseconds (2 minutes)
 const UPLOAD_TIMEOUT_MS = 120000;
 
-export function CustomImageUploader({
+export function ImageUploader({
   onUploadSuccess,
   onUploadError,
   className,
   skipCropStep = false,
   defaultShowIcons = false,
-}: CustomImageUploaderProps) {
+}: ImageUploaderProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

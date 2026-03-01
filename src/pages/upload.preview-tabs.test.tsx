@@ -30,8 +30,8 @@ const mockTransformations: ImageTransformations = {
   blur: 0,
 };
 
-vi.mock("@/components/custom-image-uploader", () => ({
-  CustomImageUploader: ({
+vi.mock("@/components/image-uploader", () => ({
+  ImageUploader: ({
     onUploadSuccess,
   }: {
     onUploadSuccess?: (

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { CustomImageUploader } from "./custom-image-uploader";
+import { ImageUploader } from "./image-uploader";
 import { tr } from "@/test/i18n-test";
 
 const ui = {
@@ -20,21 +20,21 @@ const ui = {
   error: tr("upload.error"),
 };
 
-describe("CustomImageUploader", () => {
+describe("ImageUploader", () => {
   beforeEach(() => {
     // Reset fetch mock before each test
     vi.stubGlobal("fetch", vi.fn());
   });
 
   it("renders drag and drop area when no file is selected", () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
     // Should have upload icon
     const uploadIcon = document.querySelector(".lucide-upload");
     expect(uploadIcon).toBeDefined();
   });
 
   it("shows crop step when file is selected", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -52,7 +52,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows confirm crop button in crop step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -67,7 +67,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows adjust step after confirming crop", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -87,7 +87,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows back to crop button in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -107,7 +107,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("displays rotation section header in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -138,7 +138,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("displays flip section header in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -169,7 +169,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("displays filters section header in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -201,7 +201,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("displays brightness section header in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -232,7 +232,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("displays contrast section header in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -263,7 +263,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("toggles rotation section on click", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -298,7 +298,7 @@ describe("CustomImageUploader", () => {
 
   it("calls onUploadError for invalid file type", async () => {
     const onError = vi.fn();
-    render(<CustomImageUploader onUploadError={onError} />);
+    render(<ImageUploader onUploadError={onError} />);
 
     const file = new File(["test"], "test.pdf", { type: "application/pdf" });
     const input = document.querySelector('input[type="file"]');
@@ -315,7 +315,7 @@ describe("CustomImageUploader", () => {
 
   it("calls onUploadError for large file", async () => {
     const onError = vi.fn();
-    render(<CustomImageUploader onUploadError={onError} />);
+    render(<ImageUploader onUploadError={onError} />);
 
     // Create a large file (>10MB)
     const largeContent = new Array(11 * 1024 * 1024).fill("a").join("");
@@ -332,7 +332,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("handles cancel button click in crop step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -360,7 +360,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows cancel and upload buttons in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -382,19 +382,19 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows upload icon in drag and drop area", () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
     const uploadIcon = document.querySelector(".lucide-upload");
     expect(uploadIcon).toBeDefined();
   });
 
   it("shows camera button in drag and drop area", () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
     const cameraIcon = document.querySelector(".lucide-camera");
     expect(cameraIcon).toBeDefined();
   });
 
   it("has file input for file selection", () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
     const fileInput = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
     );
@@ -402,13 +402,13 @@ describe("CustomImageUploader", () => {
   });
 
   it("has file input for camera capture", () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
     const cameraInput = document.querySelector('input[type="file"][capture]');
     expect(cameraInput).toBeDefined();
   });
 
   it("opens file dialog when clicking drag and drop area", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     // Find the drag and drop area (initial big button)
     const dragArea = document.querySelector(
@@ -442,7 +442,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("opens camera when clicking camera button", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
     const cameraInput = document.querySelector(
       'input[type="file"][capture]',
     ) as HTMLInputElement;
@@ -465,7 +465,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows drag over state when dragging file over area", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     // Find the drag and drop area div
     const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
@@ -477,7 +477,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("removes drag over state when leaving drag area", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     // Find the drag and drop area div
     const dragArea = document.querySelector(".cursor-pointer") as HTMLElement;
@@ -490,7 +490,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("accepts file drop", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
 
@@ -506,7 +506,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("shows crop instruction in crop step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -521,7 +521,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("preserves crop area when switching to adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -556,7 +556,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("clips image to crop area in adjust step using overflow hidden", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -596,7 +596,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("applies correct image positioning with translate in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -641,7 +641,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("maintains crop area when going back to crop step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -674,7 +674,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("applies transformations to cropped area in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -740,7 +740,7 @@ describe("CustomImageUploader", () => {
 
   it("removes no longer needed croppedPreviewUrl state", async () => {
     // This test verifies that we're not creating/storing unnecessary blob URLs
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -771,7 +771,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("handles resize and maintains correct positioning", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -820,7 +820,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("displays cropped area zoomed in adjust step", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
@@ -852,7 +852,7 @@ describe("CustomImageUploader", () => {
   });
 
   it("clips image to crop area in adjust step with overflow hidden", async () => {
-    render(<CustomImageUploader />);
+    render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector('input[type="file"]');
