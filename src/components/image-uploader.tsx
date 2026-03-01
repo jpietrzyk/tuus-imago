@@ -60,6 +60,8 @@ export interface SelectedImageMetadata {
   aspectRatio: string;
 }
 
+type DisplayImageProportion = "horizontal" | "vertical" | "square";
+
 interface ImageUploaderProps {
   onUploadSuccess?: (
     result: {
@@ -118,6 +120,18 @@ const formatAspectRatio = (width: number, height: number): string => {
   return `${width / divisor}:${height / divisor}`;
 };
 
+const getTargetAspectRatio = (proportion: DisplayImageProportion): number => {
+  switch (proportion) {
+    case "vertical":
+      return 3 / 4;
+    case "square":
+      return 1;
+    case "horizontal":
+    default:
+      return 16 / 9;
+  }
+};
+
 // Upload timeout in milliseconds (2 minutes)
 const UPLOAD_TIMEOUT_MS = 120000;
 
@@ -152,11 +166,14 @@ export function ImageUploader({
   });
   const [selectedImageMetadata, setSelectedImageMetadata] =
     useState<SelectedImageMetadata | null>(null);
+  const [displayImageProportion, setDisplayImageProportion] =
+    useState<DisplayImageProportion>("horizontal");
   const [isAdjustmentsOpen, setIsAdjustmentsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const centerCanvasRef = useRef<HTMLCanvasElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const dragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -672,6 +689,7 @@ export function ImageUploader({
     setTransformations(DEFAULT_TRANSFORMATIONS);
     setStep(skipCropStep ? "adjust" : "crop");
     setCropArea({ x: 0, y: 0, width: 0, height: 0 });
+    setDisplayImageProportion("horizontal");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -679,6 +697,92 @@ export function ImageUploader({
       cameraInputRef.current.value = "";
     }
   }, [skipCropStep, updateSelectedImageMetadata]);
+
+  const previewAspectRatio =
+    displayImageProportion === "horizontal"
+      ? "16 / 9"
+      : displayImageProportion === "vertical"
+        ? "3 / 4"
+        : "1 / 1";
+
+  useEffect(() => {
+    if (!previewUrl || !previewCanvasRef.current) {
+      return;
+    }
+
+    const canvas = previewCanvasRef.current;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const image = new Image();
+    image.onload = () => {
+      const sourceWidth = image.naturalWidth || image.width;
+      const sourceHeight = image.naturalHeight || image.height;
+
+      if (sourceWidth <= 0 || sourceHeight <= 0) {
+        return;
+      }
+
+      updateSelectedImageMetadata({
+        width: sourceWidth,
+        height: sourceHeight,
+        aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
+      });
+
+      const targetAspectRatio = getTargetAspectRatio(displayImageProportion);
+      const sourceAspectRatio = sourceWidth / sourceHeight;
+
+      let cropX = 0;
+      let cropY = 0;
+      let cropWidth = sourceWidth;
+      let cropHeight = sourceHeight;
+
+      if (sourceAspectRatio > targetAspectRatio) {
+        cropWidth = sourceHeight * targetAspectRatio;
+        cropX = (sourceWidth - cropWidth) / 2;
+      } else if (sourceAspectRatio < targetAspectRatio) {
+        cropHeight = sourceWidth / targetAspectRatio;
+        cropY = (sourceHeight - cropHeight) / 2;
+      }
+
+      const maxOutputSize = 1200;
+      const outputWidth =
+        targetAspectRatio >= 1
+          ? maxOutputSize
+          : Math.round(maxOutputSize * targetAspectRatio);
+      const outputHeight =
+        targetAspectRatio >= 1
+          ? Math.round(maxOutputSize / targetAspectRatio)
+          : maxOutputSize;
+
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
+
+      if (
+        typeof HTMLImageElement !== "undefined" &&
+        !(image instanceof HTMLImageElement)
+      ) {
+        return;
+      }
+
+      context.clearRect(0, 0, outputWidth, outputHeight);
+      context.drawImage(
+        image,
+        cropX,
+        cropY,
+        cropWidth,
+        cropHeight,
+        0,
+        0,
+        outputWidth,
+        outputHeight,
+      );
+    };
+
+    image.src = previewUrl;
+  }, [previewUrl, displayImageProportion, updateSelectedImageMetadata]);
 
   const handleRotate = useCallback((angle: number) => {
     setTransformations((prev) => ({
@@ -872,27 +976,20 @@ export function ImageUploader({
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
         <div className="flex-1 flex justify-center bg-transparent rounded-lg p-4 min-h-0">
-          <div className="relative w-full h-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center">
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-full object-contain"
+          <div
+            className="relative w-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center"
+            style={{ aspectRatio: previewAspectRatio }}
+            data-testid="selected-image-preview-frame"
+          >
+            <canvas
+              ref={previewCanvasRef}
+              role="img"
+              aria-label="Preview"
+              data-testid="selected-image-preview-canvas"
+              className="w-full h-full"
               style={{
                 userSelect: "none",
                 WebkitUserSelect: "none",
-              }}
-              onLoad={(e) => {
-                const image = e.currentTarget;
-                const width = image.naturalWidth || image.width;
-                const height = image.naturalHeight || image.height;
-
-                if (width > 0 && height > 0) {
-                  updateSelectedImageMetadata({
-                    width,
-                    height,
-                    aspectRatio: formatAspectRatio(width, height),
-                  });
-                }
               }}
             />
           </div>
@@ -912,9 +1009,21 @@ export function ImageUploader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center">
-              <DropdownMenuItem>Vertical</DropdownMenuItem>
-              <DropdownMenuItem>Horizontal</DropdownMenuItem>
-              <DropdownMenuItem>Square</DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setDisplayImageProportion("vertical")}
+              >
+                Vertical
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setDisplayImageProportion("horizontal")}
+              >
+                Horizontal
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setDisplayImageProportion("square")}
+              >
+                Square
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

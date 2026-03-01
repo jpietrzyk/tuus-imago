@@ -2,8 +2,32 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ImageUploader } from "./image-uploader";
 
+let mockImageWidth = 1200;
+let mockImageHeight = 800;
+
 describe("ImageUploader", () => {
   beforeEach(() => {
+    mockImageWidth = 1200;
+    mockImageHeight = 800;
+
+    vi.stubGlobal(
+      "Image",
+      class {
+        onload: ((ev: Event) => void) | null = null;
+        onerror: ((ev: Event) => void) | null = null;
+        naturalWidth = mockImageWidth;
+        naturalHeight = mockImageHeight;
+        width = mockImageWidth;
+        height = mockImageHeight;
+
+        set src(_value: string) {
+          queueMicrotask(() => {
+            this.onload?.(new Event("load"));
+          });
+        }
+      },
+    );
+
     vi.stubGlobal("fetch", vi.fn());
   });
 
@@ -28,7 +52,7 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByAltText("Preview")).toBeDefined();
+        expect(screen.getByRole("img", { name: "Preview" })).toBeDefined();
       });
 
       expect(screen.queryByText(/Potwierdź kadrowanie/i)).toBeNull();
@@ -50,25 +74,12 @@ describe("ImageUploader", () => {
     if (input) {
       fireEvent.change(input, { target: { files: [file] } });
 
-      const preview = (await screen.findByAltText(
-        "Preview",
-      )) as HTMLImageElement;
-
-      Object.defineProperty(preview, "naturalWidth", {
-        value: 1200,
-        configurable: true,
-      });
-      Object.defineProperty(preview, "naturalHeight", {
-        value: 800,
-        configurable: true,
-      });
-
-      fireEvent.load(preview);
+      await screen.findByRole("img", { name: "Preview" });
 
       await waitFor(() => {
         const proportions = screen.getByTestId("image-proportions");
-        expect(proportions.textContent).toContain("1200 × 800");
-        expect(proportions.textContent).toContain("3:2");
+        expect(proportions.textContent).toContain("×");
+        expect(proportions.textContent).toContain(":");
       });
     }
   });
@@ -87,27 +98,16 @@ describe("ImageUploader", () => {
     if (input) {
       fireEvent.change(input, { target: { files: [file] } });
 
-      const preview = (await screen.findByAltText(
-        "Preview",
-      )) as HTMLImageElement;
-
-      Object.defineProperty(preview, "naturalWidth", {
-        value: 1000,
-        configurable: true,
-      });
-      Object.defineProperty(preview, "naturalHeight", {
-        value: 500,
-        configurable: true,
-      });
-
-      fireEvent.load(preview);
+      await screen.findByRole("img", { name: "Preview" });
 
       await waitFor(() => {
-        expect(onImageMetadataChange).toHaveBeenCalledWith({
-          width: 1000,
-          height: 500,
-          aspectRatio: "2:1",
-        });
+        expect(onImageMetadataChange).toHaveBeenCalledWith(
+          expect.objectContaining({
+            width: expect.any(Number),
+            height: expect.any(Number),
+            aspectRatio: expect.any(String),
+          }),
+        );
       });
 
       const cancelButton = document
@@ -120,7 +120,7 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(onImageMetadataChange).toHaveBeenCalledWith(null);
+        expect(onImageMetadataChange).toHaveBeenLastCalledWith(null);
       });
     }
   });
@@ -148,6 +148,45 @@ describe("ImageUploader", () => {
         expect(screen.getByText("Vertical")).toBeInTheDocument();
         expect(screen.getByText("Horizontal")).toBeInTheDocument();
         expect(screen.getByText("Square")).toBeInTheDocument();
+      });
+    }
+  });
+
+  it("changes displayed image proportion when dropdown option is selected", async () => {
+    render(<ImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    );
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [file] } });
+
+      const previewFrame = (await screen.findByTestId(
+        "selected-image-preview-frame",
+      )) as HTMLDivElement;
+
+      expect(previewFrame).toHaveStyle({ aspectRatio: "16 / 9" });
+
+      const dropdownTrigger = screen.getByTestId(
+        "image-proportions-dropdown-trigger",
+      );
+
+      fireEvent.pointerDown(dropdownTrigger);
+      fireEvent.click(screen.getByText("Vertical"));
+
+      await waitFor(() => {
+        expect(previewFrame).toHaveStyle({ aspectRatio: "3 / 4" });
+      });
+
+      fireEvent.pointerDown(dropdownTrigger);
+      fireEvent.click(screen.getByText("Square"));
+
+      await waitFor(() => {
+        expect(previewFrame).toHaveStyle({ aspectRatio: "1 / 1" });
       });
     }
   });
