@@ -127,8 +127,7 @@ export function CustomImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [croppedCanvasUrl, setCroppedCanvasUrl] = useState<string | null>(null);
+  const centerCanvasRef = useRef<HTMLCanvasElement>(null);
   const dragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -689,11 +688,11 @@ export function CustomImageUploader({
       previewUrl &&
       cropArea.width > 0 &&
       cropArea.height > 0 &&
-      canvasRef.current
+      centerCanvasRef.current
     ) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+      const centerCanvas = centerCanvasRef.current;
+      const centerCtx = centerCanvas.getContext("2d");
+      if (!centerCtx) return;
 
       // Set canvas size to match the crop area (capped at 600px for better quality on larger displays)
       const maxWidth = 600;
@@ -706,8 +705,9 @@ export function CustomImageUploader({
       const canvasWidth = cropArea.width * scale;
       const canvasHeight = cropArea.height * scale;
 
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
+      // Set center canvas dimensions
+      centerCanvas.width = canvasWidth;
+      centerCanvas.height = canvasHeight;
 
       // Load the original image
       const img = new Image();
@@ -723,27 +723,16 @@ export function CustomImageUploader({
         const cropWidth = cropArea.width * scaleX;
         const cropHeight = cropArea.height * scaleY;
 
-        // Save context state
-        ctx.save();
-
-        // Clear canvas
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-        // Apply transformations
-        ctx.translate(canvasWidth / 2, canvasHeight / 2);
-        ctx.rotate((transformations.rotation * Math.PI) / 180);
-        ctx.scale(
+        centerCtx.save();
+        centerCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+        centerCtx.translate(canvasWidth / 2, canvasHeight / 2);
+        centerCtx.rotate((transformations.rotation * Math.PI) / 180);
+        centerCtx.scale(
           transformations.flipHorizontal ? -1 : 1,
           transformations.flipVertical ? -1 : 1,
         );
-
-        // Apply filters
-        ctx.filter = `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`;
-
-        // Draw the cropped portion of the image
-        // Source: crop area in natural image coordinates
-        // Destination: centered on canvas
-        ctx.drawImage(
+        centerCtx.filter = `grayscale(${transformations.grayscale}%) blur(${transformations.blur}px) brightness(${100 + transformations.brightness}%) contrast(${100 + transformations.contrast}%)`;
+        centerCtx.drawImage(
           img,
           cropX,
           cropY,
@@ -754,11 +743,7 @@ export function CustomImageUploader({
           canvasWidth,
           canvasHeight,
         );
-
-        ctx.restore();
-
-        // Convert canvas to data URL for display
-        setCroppedCanvasUrl(canvas.toDataURL("image/jpeg", 0.95));
+        centerCtx.restore();
       };
       img.onerror = () => {
         console.error("Failed to load image for canvas rendering");
@@ -1003,16 +988,18 @@ export function CustomImageUploader({
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center gap-4 bg-transparent rounded-lg p-4 min-h-0">
-            {/* Left empty space */}
-            <div className="flex-1 h-full rounded-lg border-2 border-dashed border-muted-foreground/25" />
+          <div className="flex-1 flex items-stretch justify-center gap-4 bg-transparent rounded-lg p-4 min-h-0">
+            {/* Left image part */}
+            <div
+              className="relative w-16 shrink-0 h-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/60 bg-muted/20 flex items-center justify-center"
+              data-testid="adjust-preview-left-slot"
+            ></div>
 
-            {/* Center image preview - takes more space */}
-            <div className="relative flex-3 h-full overflow-hidden rounded-lg flex items-center justify-center">
-              {/* Canvas for rendering cropped area with transformations */}
+            {/* Center image part */}
+            <div className="relative flex-1 min-w-0 h-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center">
               {cropArea.width > 0 && cropArea.height > 0 && (
                 <canvas
-                  ref={canvasRef}
+                  ref={centerCanvasRef}
                   className="w-full h-full object-contain"
                   data-testid="adjust-preview-image"
                   style={{
@@ -1021,21 +1008,13 @@ export function CustomImageUploader({
                   }}
                 />
               )}
-              {croppedCanvasUrl && (
-                <img
-                  src={croppedCanvasUrl}
-                  alt="Cropped Preview"
-                  className="absolute inset-0 w-full h-full object-contain"
-                  style={{
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                  }}
-                />
-              )}
             </div>
 
-            {/* Right empty space */}
-            <div className="flex-1 h-full rounded-lg border-2 border-dashed border-muted-foreground/25" />
+            {/* Right image part */}
+            <div
+              className="relative w-16 shrink-0 h-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/60 bg-muted/20 flex items-center justify-center"
+              data-testid="adjust-preview-right-slot"
+            ></div>
           </div>
         )}
 
