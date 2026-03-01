@@ -1,10 +1,17 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
+import {
+  calculateAllProportions,
+  calculateMaxCenteredCrop,
+  formatAspectRatio,
+  getTargetAspectRatio,
+  type ImageDisplayProportion,
+} from "./image-proportion-calculator";
 
 export interface ImageTransformations {
   rotation: number;
@@ -21,8 +28,6 @@ export interface SelectedImageMetadata {
   height: number;
   aspectRatio: string;
 }
-
-type DisplayImageProportion = "horizontal" | "vertical" | "square";
 
 interface ImageUploaderProps {
   onUploadSuccess?: (
@@ -46,31 +51,6 @@ interface ImageUploaderProps {
   defaultShowIcons?: boolean;
 }
 
-const greatestCommonDivisor = (a: number, b: number): number => {
-  if (!b) {
-    return a;
-  }
-
-  return greatestCommonDivisor(b, a % b);
-};
-
-const formatAspectRatio = (width: number, height: number): string => {
-  const divisor = greatestCommonDivisor(width, height);
-  return `${width / divisor}:${height / divisor}`;
-};
-
-const getTargetAspectRatio = (proportion: DisplayImageProportion): number => {
-  switch (proportion) {
-    case "vertical":
-      return 3 / 4;
-    case "square":
-      return 1;
-    case "horizontal":
-    default:
-      return 16 / 9;
-  }
-};
-
 export function ImageUploader({
   onUploadError,
   onImageMetadataChange,
@@ -83,7 +63,7 @@ export function ImageUploader({
   const [selectedImageMetadata, setSelectedImageMetadata] =
     useState<SelectedImageMetadata | null>(null);
   const [displayImageProportion, setDisplayImageProportion] =
-    useState<DisplayImageProportion>("horizontal");
+    useState<ImageDisplayProportion>("horizontal");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -165,6 +145,28 @@ export function ImageUploader({
     }
   }, [updateSelectedImageMetadata]);
 
+  const coveragePercent = useMemo(() => {
+    if (!selectedImageMetadata) {
+      return undefined;
+    }
+
+    const proportions = calculateAllProportions(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+    );
+
+    return {
+      horizontal: proportions.horizontal.coveragePercent,
+      vertical: proportions.vertical.coveragePercent,
+      rectangle: proportions.square.coveragePercent,
+    };
+  }, [selectedImageMetadata]);
+
+  const previewFrameAspectRatio = useMemo(
+    () => getTargetAspectRatio(displayImageProportion),
+    [displayImageProportion],
+  );
+
   useEffect(() => {
     if (!previewUrl || !previewCanvasRef.current) {
       return;
@@ -191,27 +193,14 @@ export function ImageUploader({
         aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
       });
 
-      const targetAspectRatio = getTargetAspectRatio(displayImageProportion);
-      const sourceAspectRatio = sourceWidth / sourceHeight;
+      const crop = calculateMaxCenteredCrop({
+        sourceWidth,
+        sourceHeight,
+        proportion: displayImageProportion,
+      });
 
-      let cropX = 0;
-      let cropY = 0;
-      let cropWidth = sourceWidth;
-      let cropHeight = sourceHeight;
-
-      if (sourceAspectRatio > targetAspectRatio) {
-        cropWidth = sourceHeight * targetAspectRatio;
-        cropX = (sourceWidth - cropWidth) / 2;
-      } else if (sourceAspectRatio < targetAspectRatio) {
-        cropHeight = sourceWidth / targetAspectRatio;
-        cropY = (sourceHeight - cropHeight) / 2;
-      }
-
-      const outputWidth = Math.max(1, Math.round(cropWidth));
-      const outputHeight = Math.max(1, Math.round(cropHeight));
-
-      canvas.width = outputWidth;
-      canvas.height = outputHeight;
+      canvas.width = crop.outputWidth;
+      canvas.height = crop.outputHeight;
 
       if (
         typeof HTMLImageElement !== "undefined" &&
@@ -220,17 +209,17 @@ export function ImageUploader({
         return;
       }
 
-      context.clearRect(0, 0, outputWidth, outputHeight);
+      context.clearRect(0, 0, crop.outputWidth, crop.outputHeight);
       context.drawImage(
         image,
-        cropX,
-        cropY,
-        cropWidth,
-        cropHeight,
+        crop.cropX,
+        crop.cropY,
+        crop.cropWidth,
+        crop.cropHeight,
         0,
         0,
-        outputWidth,
-        outputHeight,
+        crop.outputWidth,
+        crop.outputHeight,
       );
     };
 
@@ -277,17 +266,18 @@ export function ImageUploader({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-        <div className="flex-1 flex justify-center bg-transparent rounded-lg p-4 min-h-0">
+        <div className="flex-1 flex justify-center items-center bg-transparent rounded-lg p-4 min-h-0">
           <div
-            className="relative w-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center"
+            className="relative w-full max-w-full max-h-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center"
             data-testid="selected-image-preview-frame"
+            style={{ aspectRatio: String(previewFrameAspectRatio) }}
           >
             <canvas
               ref={previewCanvasRef}
               role="img"
               aria-label="Preview"
               data-testid="selected-image-preview-canvas"
-              className="max-w-none max-h-none"
+              className="max-w-full max-h-full w-auto h-auto"
               style={{
                 userSelect: "none",
                 WebkitUserSelect: "none",
@@ -296,7 +286,15 @@ export function ImageUploader({
           </div>
         </div>
 
-        <UploaderTools onSelectProportion={setDisplayImageProportion} />
+        <UploaderTools
+          onSelectProportion={setDisplayImageProportion}
+          coveragePercent={coveragePercent}
+          selectedProportion={
+            displayImageProportion === "square"
+              ? "rectangle"
+              : displayImageProportion
+          }
+        />
 
         {selectedImageMetadata && (
           <div

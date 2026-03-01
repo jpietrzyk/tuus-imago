@@ -7,3 +7,14 @@ export type {
 export { UploaderDropArea } from "./uploader-drop-area";
 export { UploaderActionButtons } from "./uploader-action-buttons";
 export { UploaderTools } from "./uploader-tools";
+
+export {
+  calculateAllProportions,
+  calculateMaxCenteredCrop,
+  formatAspectRatio,
+  getTargetAspectRatio,
+} from "./image-proportion-calculator";
+export type {
+  CropCalculationResult,
+  ImageDisplayProportion,
+} from "./image-proportion-calculator";

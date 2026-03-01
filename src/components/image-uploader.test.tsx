@@ -125,7 +125,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("shows proportions dropdown with vertical, horizontal and square options", async () => {
+  it("shows proportions dropdown with vertical, horizontal and rectangle options", async () => {
     render(<ImageUploader />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
@@ -145,9 +145,15 @@ describe("ImageUploader", () => {
       fireEvent.pointerDown(dropdownTrigger);
 
       await waitFor(() => {
-        expect(screen.getByText("Vertical")).toBeInTheDocument();
-        expect(screen.getByText("Horizontal")).toBeInTheDocument();
-        expect(screen.getByText("Square")).toBeInTheDocument();
+        expect(
+          screen.getByRole("menuitem", { name: /^Vertical \(/ }),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("menuitem", { name: /^Horizontal \(/ }),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("menuitem", { name: /^Rectangle \(/ }),
+        ).toBeInTheDocument();
       });
     }
   });
@@ -178,20 +184,33 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
 
+      expect(dropdownTrigger.textContent).toMatch(/^Horizontal \(84\.38%\)/);
+      expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
+        "Showing 84.38% of original area",
+      );
+
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByText("Vertical"));
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical \(/ }));
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(600);
         expect(previewCanvas.height).toBe(800);
+        expect(dropdownTrigger.textContent).toMatch(/^Vertical \(50\.00%\)/);
+        expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
+          "Showing 50.00% of original area",
+        );
       });
 
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByText("Square"));
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle \(/ }));
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(800);
         expect(previewCanvas.height).toBe(800);
+        expect(dropdownTrigger.textContent).toMatch(/^Rectangle \(66\.67%\)/);
+        expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
+          "Showing 66.67% of original area",
+        );
       });
     }
   });
