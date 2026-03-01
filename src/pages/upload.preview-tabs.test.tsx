@@ -33,24 +33,60 @@ const mockTransformations: ImageTransformations = {
 vi.mock("@/components/image-uploader", () => ({
   ImageUploader: ({
     onUploadSuccess,
+    onImageMetadataChange,
   }: {
     onUploadSuccess?: (
       result: UploadResult,
       transformations: ImageTransformations,
     ) => void;
+    onImageMetadataChange?: (
+      metadata: {
+        width: number;
+        height: number;
+        aspectRatio: string;
+      } | null,
+    ) => void;
   }) => (
-    <button
-      type="button"
-      onClick={() => onUploadSuccess?.(mockUploadResult, mockTransformations)}
-    >
-      Mock successful upload
-    </button>
+    <div>
+      <button
+        type="button"
+        onClick={() => onUploadSuccess?.(mockUploadResult, mockTransformations)}
+      >
+        Mock successful upload
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          onImageMetadataChange?.({
+            width: 1200,
+            height: 800,
+            aspectRatio: "3:2",
+          })
+        }
+      >
+        Mock image metadata
+      </button>
+    </div>
   ),
 }));
 
 import { UploadPage } from "./upload";
 
 describe("UploadPage preview tabs", () => {
+  it("renders selected image proportions from uploader metadata callback", () => {
+    render(
+      <MemoryRouter>
+        <UploadPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /mock image metadata/i }),
+    );
+
+    expect(screen.getByText("1200 × 800 • 3:2")).toBeInTheDocument();
+  });
+
   it("shows 'Twój obraz' by default and switches to original image on 'Oryginał' tab", () => {
     render(
       <MemoryRouter>

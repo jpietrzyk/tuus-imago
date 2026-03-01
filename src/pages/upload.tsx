@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
-import { ImageUploader } from "@/components/image-uploader";
+import {
+  ImageUploader,
+  type SelectedImageMetadata,
+} from "@/components/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -57,6 +60,8 @@ export function UploadPage() {
     width: 0,
     height: 0,
   });
+  const [selectedImageMetadata, setSelectedImageMetadata] =
+    useState<SelectedImageMetadata | null>(null);
   const [appliedManualCropCoordinates, setAppliedManualCropCoordinates] =
     useState<string | undefined>(undefined);
   const previewDragStateRef = useRef({
@@ -150,6 +155,7 @@ export function UploadPage() {
     setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
     setPreviewDisplayDimensions({ width: 0, height: 0 });
     setAppliedManualCropCoordinates(undefined);
+    setSelectedImageMetadata(null);
     setUploadError(null);
     setIsSuccess(true);
     setIsPreviewLoading(true);
@@ -162,6 +168,7 @@ export function UploadPage() {
   const handleUploadError = (error: string) => {
     setUploadError(error);
     setUploadedImage(null);
+    setSelectedImageMetadata(null);
     setIsSuccess(false);
     // Auto-hide error message after 5 seconds
     setTimeout(() => setUploadError(null), 5000);
@@ -471,10 +478,19 @@ export function UploadPage() {
                 <ImageUploader
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
+                  onImageMetadataChange={setSelectedImageMetadata}
                   skipCropStep
                   defaultShowIcons
                   className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
                 />
+
+                {selectedImageMetadata && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    {selectedImageMetadata.width} ×{" "}
+                    {selectedImageMetadata.height} •{" "}
+                    {selectedImageMetadata.aspectRatio}
+                  </p>
+                )}
 
                 <p className="text-sm text-gray-500 text-center">
                   {t("upload.fileSupport")}
