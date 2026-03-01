@@ -748,14 +748,13 @@ export function ImageUploader({
       }
 
       const maxOutputSize = 1200;
-      const outputWidth =
-        targetAspectRatio >= 1
-          ? maxOutputSize
-          : Math.round(maxOutputSize * targetAspectRatio);
-      const outputHeight =
-        targetAspectRatio >= 1
-          ? Math.round(maxOutputSize / targetAspectRatio)
-          : maxOutputSize;
+      const outputScale = Math.min(
+        1,
+        maxOutputSize / cropWidth,
+        maxOutputSize / cropHeight,
+      );
+      const outputWidth = Math.max(1, Math.round(cropWidth * outputScale));
+      const outputHeight = Math.max(1, Math.round(cropHeight * outputScale));
 
       canvas.width = outputWidth;
       canvas.height = outputHeight;
