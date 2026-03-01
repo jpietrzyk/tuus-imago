@@ -48,6 +48,12 @@ export interface CropArea {
   height: number;
 }
 
+export interface SelectedImageMetadata {
+  width: number;
+  height: number;
+  aspectRatio: string;
+}
+
 interface ImageUploaderProps {
   onUploadSuccess?: (
     result: {
@@ -64,6 +70,7 @@ interface ImageUploaderProps {
     transformations: ImageTransformations,
   ) => void;
   onUploadError?: (error: string) => void;
+  onImageMetadataChange?: (metadata: SelectedImageMetadata | null) => void;
   className?: string;
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
@@ -92,12 +99,26 @@ const DEFAULT_TRANSFORMATIONS: ImageTransformations = {
   blur: 0,
 };
 
+const greatestCommonDivisor = (a: number, b: number): number => {
+  if (!b) {
+    return a;
+  }
+
+  return greatestCommonDivisor(b, a % b);
+};
+
+const formatAspectRatio = (width: number, height: number): string => {
+  const divisor = greatestCommonDivisor(width, height);
+  return `${width / divisor}:${height / divisor}`;
+};
+
 // Upload timeout in milliseconds (2 minutes)
 const UPLOAD_TIMEOUT_MS = 120000;
 
 export function ImageUploader({
   onUploadSuccess,
   onUploadError,
+  onImageMetadataChange,
   className,
   skipCropStep = false,
   defaultShowIcons = false,
@@ -123,6 +144,8 @@ export function ImageUploader({
     width: 0,
     height: 0,
   });
+  const [selectedImageMetadata, setSelectedImageMetadata] =
+    useState<SelectedImageMetadata | null>(null);
   const [isAdjustmentsOpen, setIsAdjustmentsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -140,6 +163,14 @@ export function ImageUploader({
   useEffect(() => {
     setShowIcons(defaultShowIcons);
   }, [defaultShowIcons]);
+
+  const updateSelectedImageMetadata = useCallback(
+    (metadata: SelectedImageMetadata | null) => {
+      setSelectedImageMetadata(metadata);
+      onImageMetadataChange?.(metadata);
+    },
+    [onImageMetadataChange],
+  );
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,6 +232,7 @@ export function ImageUploader({
 
   useEffect(() => {
     if (!previewUrl) {
+      updateSelectedImageMetadata(null);
       return;
     }
 
@@ -233,7 +265,13 @@ export function ImageUploader({
       };
       img.src = previewUrl;
     }
-  }, [previewUrl, step, cropArea.width, cropArea.height]);
+  }, [
+    previewUrl,
+    step,
+    cropArea.width,
+    cropArea.height,
+    updateSelectedImageMetadata,
+  ]);
 
   const handleCropMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -624,6 +662,7 @@ export function ImageUploader({
   const handleCancel = useCallback(() => {
     setSelectedFile(null);
     setPreviewUrl(null);
+    updateSelectedImageMetadata(null);
     setTransformations(DEFAULT_TRANSFORMATIONS);
     setStep(skipCropStep ? "adjust" : "crop");
     setCropArea({ x: 0, y: 0, width: 0, height: 0 });
@@ -633,7 +672,7 @@ export function ImageUploader({
     if (cameraInputRef.current) {
       cameraInputRef.current.value = "";
     }
-  }, [skipCropStep]);
+  }, [skipCropStep, updateSelectedImageMetadata]);
 
   const handleRotate = useCallback((angle: number) => {
     setTransformations((prev) => ({
@@ -761,14 +800,6 @@ export function ImageUploader({
     };
   }, [previewUrl]);
 
-  const hasTransformations = Object.values(transformations).some(
-    (val) =>
-      val !==
-      DEFAULT_TRANSFORMATIONS[
-        (Object.keys(transformations) as (keyof ImageTransformations)[])[0]
-      ],
-  );
-
   // If no file is selected, show the upload button
   if (!selectedFile || !previewUrl) {
     return (
@@ -817,16 +848,12 @@ export function ImageUploader({
     );
   }
 
-  // Show the upload/adjustment interface
+  // Show selected image preview and proportions (controls hidden)
   return (
     <Card className="w-full max-w-2xl mx-auto h-full bg-transparent! flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>
-            {step === "crop"
-              ? t("uploader.cropImage")
-              : t("uploader.adjustImage")}
-          </span>
+          <span>{t("uploader.adjustImage")}</span>
           <Button
             variant="ghost"
             size="sm"
@@ -838,479 +865,41 @@ export function ImageUploader({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-        {/* Image Preview */}
-        {step === "crop" ? (
-          <div className="flex justify-center bg-transparent rounded-lg p-4">
-            <div className="relative inline-block">
-              <img
-                ref={imageRef}
-                src={previewUrl}
-                alt="Preview"
-                className="max-w-full max-h-96 object-contain rounded-lg"
-                style={{
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                }}
-                onLoad={() => {
-                  if (imageRef.current) {
-                    const img = imageRef.current;
-                    setImageDimensions({
-                      width: img.offsetWidth,
-                      height: img.offsetHeight,
-                    });
-                    const minDim = Math.min(img.offsetWidth, img.offsetHeight);
-                    const initialCrop: CropArea = {
-                      x: (img.offsetWidth - minDim * 0.8) / 2,
-                      y: (img.offsetHeight - minDim * 0.8) / 2,
-                      width: minDim * 0.8,
-                      height: minDim * 0.8,
-                    };
-                    setCropArea(initialCrop);
-                  }
-                }}
-              />
-              {/* Crop selection overlay */}
-              {cropArea.width > 0 && cropArea.height > 0 && (
-                <>
-                  {/* Top overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: 0,
-                      top: 0,
-                      width: "100%",
-                      height: cropArea.y,
-                    }}
-                  />
-                  {/* Bottom overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: 0,
-                      top: cropArea.y + cropArea.height - 2,
-                      width: "100%",
-                      height:
-                        imageDimensions.height -
-                        cropArea.y -
-                        cropArea.height +
-                        2,
-                    }}
-                  />
-                  {/* Left overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: 0,
-                      top: cropArea.y,
-                      width: cropArea.x,
-                      height: cropArea.height,
-                    }}
-                  />
-                  {/* Right overlay */}
-                  <div
-                    className="absolute pointer-events-none bg-black/50"
-                    style={{
-                      left: cropArea.x + cropArea.width - 2,
-                      top: cropArea.y,
-                      width:
-                        imageDimensions.width - cropArea.x - cropArea.width + 2,
-                      height: cropArea.height,
-                    }}
-                  />
-                  {/* Crop selection border */}
-                  <div
-                    className="absolute border-2 border-white shadow-2xl"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.width,
-                      height: cropArea.height,
-                      cursor: "move",
-                      pointerEvents: "none",
-                    }}
-                  />
-                  {/* Drag overlay - only interactive within crop area */}
-                  <div
-                    className="absolute"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                      width: cropArea.width,
-                      height: cropArea.height,
-                      cursor: "move",
-                    }}
-                    onMouseDown={handleCropMouseDown}
-                  />
-                  {/* Resize handles */}
-                  {/* Top-left corner */}
-                  <div
-                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -ml-2 -mt-2"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y,
-                    }}
-                    onMouseDown={handleResizeMouseDown("nw")}
-                  />
-                  {/* Top-right corner */}
-                  <div
-                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nesw-resize -mr-2 -mt-2"
-                    style={{
-                      left: cropArea.x + cropArea.width,
-                      top: cropArea.y,
-                    }}
-                    onMouseDown={handleResizeMouseDown("ne")}
-                  />
-                  {/* Bottom-right corner */}
-                  <div
-                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nwse-resize -mr-2 -mb-2"
-                    style={{
-                      left: cropArea.x + cropArea.width,
-                      top: cropArea.y + cropArea.height,
-                    }}
-                    onMouseDown={handleResizeMouseDown("se")}
-                  />
-                  {/* Bottom-left corner */}
-                  <div
-                    className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full cursor-nesw-resize -ml-2 -mb-2"
-                    style={{
-                      left: cropArea.x,
-                      top: cropArea.y + cropArea.height,
-                    }}
-                    onMouseDown={handleResizeMouseDown("sw")}
-                  />
-                </>
-              )}
-              {imageDimensions.width === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
-                  {t("upload.loadingPreview")}
-                </div>
-              )}
-            </div>
+        <div className="flex-1 flex justify-center bg-transparent rounded-lg p-4 min-h-0">
+          <div className="relative w-full h-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center">
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-full h-full object-contain"
+              style={{
+                userSelect: "none",
+                WebkitUserSelect: "none",
+              }}
+              onLoad={(e) => {
+                const image = e.currentTarget;
+                const width = image.naturalWidth || image.width;
+                const height = image.naturalHeight || image.height;
+
+                if (width > 0 && height > 0) {
+                  updateSelectedImageMetadata({
+                    width,
+                    height,
+                    aspectRatio: formatAspectRatio(width, height),
+                  });
+                }
+              }}
+            />
           </div>
-        ) : (
-          <div className="flex-1 flex items-stretch justify-center gap-4 bg-transparent rounded-lg p-4 min-h-0">
-            {/* Left image part */}
-            <div
-              className="relative w-16 shrink-0 h-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/60 bg-muted/20 flex items-center justify-center"
-              data-testid="adjust-preview-left-slot"
-            ></div>
+        </div>
 
-            {/* Center image part */}
-            <div className="relative flex-1 min-w-0 h-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center">
-              {cropArea.width > 0 && cropArea.height > 0 && (
-                <canvas
-                  ref={centerCanvasRef}
-                  className="w-full h-full object-contain"
-                  data-testid="adjust-preview-image"
-                  style={{
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Right image part */}
-            <div
-              className="relative w-16 shrink-0 h-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/60 bg-muted/20 flex items-center justify-center"
-              data-testid="adjust-preview-right-slot"
-            ></div>
+        {selectedImageMetadata && (
+          <div
+            className="text-center text-sm text-muted-foreground"
+            data-testid="image-proportions"
+          >
+            {selectedImageMetadata.width} × {selectedImageMetadata.height} •{" "}
+            {selectedImageMetadata.aspectRatio}
           </div>
-        )}
-
-        {step === "crop" ? (
-          <>
-            <div className="text-center text-sm text-muted-foreground">
-              <Crop className="h-4 w-4 inline mr-2" />
-              {t("uploader.dragCropArea")}
-            </div>
-            <Button
-              type="button"
-              onClick={handleCropConfirm}
-              className="w-full"
-              size="sm"
-            >
-              <Check className="mr-2 h-4 w-4" />
-              {t("uploader.confirmCrop")}
-            </Button>
-          </>
-        ) : (
-          <>
-            {/* Action Buttons Row */}
-            <div className="flex gap-2 shrink-0">
-              {!skipCropStep && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setStep("crop");
-                  }}
-                  className="flex-1"
-                  size="sm"
-                >
-                  <Crop className="mr-2 h-4 w-4" />
-                  {t("uploader.backToCrop")}
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                className="flex-1"
-                size="sm"
-              >
-                <X className="mr-2 h-4 w-4" />
-                {t("uploader.cancel")}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleUpload}
-                disabled={isUploading}
-                className="flex-1"
-                size="sm"
-              >
-                {isUploading ? (
-                  <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    {t("uploader.uploadingProgress", {
-                      percent: uploadProgress,
-                    })}
-                    <div className="space-y-1">
-                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground text-right">
-                        {uploadProgress}%
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    {t("uploader.uploadPhoto")}
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <Separator />
-
-            {/* Transformation Controls */}
-            <Collapsible
-              open={isAdjustmentsOpen}
-              onOpenChange={setIsAdjustmentsOpen}
-            >
-              <CollapsibleTrigger asChild>
-                <button
-                  type="button"
-                  className="w-full px-4 py-3 border rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                >
-                  <Label className="flex items-center gap-2 cursor-pointer">
-                    <Sliders className="h-4 w-4" />
-                    <span>{t("uploader.imageAdjustments")}</span>
-                  </Label>
-                  <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-4">
-                {/* Rotation Controls */}
-                <div className="space-y-3">
-                  <Label className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <RotateCw className="h-4 w-4" />
-                      {t("uploader.rotation")}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {transformations.rotation}°
-                    </span>
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <Slider
-                      min={0}
-                      max={360}
-                      value={transformations.rotation}
-                      onChange={(value) =>
-                        setTransformations((prev) => ({
-                          ...prev,
-                          rotation: value,
-                        }))
-                      }
-                      className="flex-1"
-                    />
-                    <div className="flex gap-1">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleRotate(-90)}
-                        title={t("uploader.rotateMinus90")}
-                      >
-                        <RotateCw
-                          className="h-4 w-4"
-                          style={{ transform: "scaleX(-1)" }}
-                        />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleRotate(90)}
-                        title={t("uploader.rotatePlus90")}
-                      >
-                        <RotateCw className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Flip Controls */}
-                <div className="space-y-3">
-                  <Label className="flex items-center gap-2">
-                    {t("uploader.flip")}
-                  </Label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={
-                        transformations.flipHorizontal ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={handleFlipHorizontal}
-                      className="flex-1"
-                    >
-                      <FlipHorizontal className="mr-2 h-4 w-4" />
-                      {t("uploader.horizontal")}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={
-                        transformations.flipVertical ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={handleFlipVertical}
-                      className="flex-1"
-                    >
-                      <FlipVertical className="mr-2 h-4 w-4" />
-                      {t("uploader.vertical")}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Filters */}
-                <div className="space-y-4">
-                  {/* Grayscale (Black and White) */}
-                  <div className="space-y-2">
-                    <Label className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Zap className="h-4 w-4" />
-                        {t("uploader.blackAndWhite")}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {transformations.grayscale}%
-                      </span>
-                    </Label>
-                    <Slider
-                      min={0}
-                      max={100}
-                      value={transformations.grayscale}
-                      onChange={(value) =>
-                        setTransformations((prev) => ({
-                          ...prev,
-                          grayscale: value,
-                        }))
-                      }
-                    />
-                  </div>
-
-                  {/* Blur */}
-                  <div className="space-y-2">
-                    <Label className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Droplets className="h-4 w-4" />
-                        {t("upload.blur")}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {transformations.blur}px
-                      </span>
-                    </Label>
-                    <Slider
-                      min={0}
-                      max={10}
-                      step={0.5}
-                      value={transformations.blur}
-                      onChange={(value) =>
-                        setTransformations((prev) => ({
-                          ...prev,
-                          blur: value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                {/* Brightness Control */}
-                <div className="space-y-3">
-                  <Label className="flex items-center justify-between">
-                    <span>{t("upload.brightness")}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {transformations.brightness > 0
-                        ? `+${transformations.brightness}`
-                        : transformations.brightness}
-                    </span>
-                  </Label>
-                  <Slider
-                    min={-100}
-                    max={100}
-                    value={transformations.brightness}
-                    onChange={(value) =>
-                      setTransformations((prev) => ({
-                        ...prev,
-                        brightness: value,
-                      }))
-                    }
-                  />
-                </div>
-
-                {/* Contrast Control */}
-                <div className="space-y-3">
-                  <Label className="flex items-center justify-between">
-                    <span>{t("upload.contrast")}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {transformations.contrast > 0
-                        ? `+${transformations.contrast}`
-                        : transformations.contrast}
-                    </span>
-                  </Label>
-                  <Slider
-                    min={-100}
-                    max={100}
-                    value={transformations.contrast}
-                    onChange={(value) =>
-                      setTransformations((prev) => ({
-                        ...prev,
-                        contrast: value,
-                      }))
-                    }
-                  />
-                </div>
-
-                {hasTransformations && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleReset}
-                    className="w-full"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    {t("uploader.resetAllAdjustments")}
-                  </Button>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </>
         )}
       </CardContent>
     </Card>
