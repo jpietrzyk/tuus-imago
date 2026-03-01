@@ -1,6 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -890,6 +896,27 @@ export function ImageUploader({
               }}
             />
           </div>
+        </div>
+
+        <div className="flex justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid="image-proportions-dropdown-trigger"
+              >
+                Image proportions
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              <DropdownMenuItem>Vertical</DropdownMenuItem>
+              <DropdownMenuItem>Horizontal</DropdownMenuItem>
+              <DropdownMenuItem>Square</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {selectedImageMetadata && (

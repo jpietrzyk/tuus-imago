@@ -124,4 +124,31 @@ describe("ImageUploader", () => {
       });
     }
   });
+
+  it("shows proportions dropdown with vertical, horizontal and square options", async () => {
+    render(<ImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    );
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [file] } });
+
+      const dropdownTrigger = (await screen.findByTestId(
+        "image-proportions-dropdown-trigger",
+      )) as HTMLButtonElement;
+
+      fireEvent.pointerDown(dropdownTrigger);
+
+      await waitFor(() => {
+        expect(screen.getByText("Vertical")).toBeInTheDocument();
+        expect(screen.getByText("Horizontal")).toBeInTheDocument();
+        expect(screen.getByText("Square")).toBeInTheDocument();
+      });
+    }
+  });
 });
