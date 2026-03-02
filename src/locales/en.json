@@ -217,7 +217,13 @@
     "horizontal": "Horizontal",
     "vertical": "Vertical",
     "blackAndWhite": "Black & White",
-    "resetAllAdjustments": "Reset All Adjustments"
+    "resetAllAdjustments": "Reset All Adjustments",
+    "multiImageHint": "Swipe or use arrows to move between selected images. Tap an empty slot to add another image.",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "selectImageSlot": "Select image {index}",
+    "addImageSlot": "Add image to slot {index}",
+    "maxImagesError": "You can select up to 3 images"
   },
   "checkout": {
     "title": "Checkout",

@@ -217,7 +217,13 @@
     "horizontal": "Poziomo",
     "vertical": "Pionowo",
     "blackAndWhite": "Czarno-białe",
-    "resetAllAdjustments": "Resetuj wszystkie korekty"
+    "resetAllAdjustments": "Resetuj wszystkie korekty",
+    "multiImageHint": "Przesuń lub użyj strzałek, aby przechodzić między wybranymi zdjęciami. Kliknij pusty slot, aby dodać kolejne zdjęcie.",
+    "previousImage": "Poprzednie zdjęcie",
+    "nextImage": "Następne zdjęcie",
+    "selectImageSlot": "Wybierz zdjęcie {index}",
+    "addImageSlot": "Dodaj zdjęcie do slotu {index}",
+    "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia"
   },
   "checkout": {
     "title": "Zamówienie",
