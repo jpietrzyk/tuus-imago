@@ -343,7 +343,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("keeps selected proportion in smaller side preview", async () => {
+  it("shows non-active selected preview at main size clipped by side slot", async () => {
     render(<ImageUploader />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
@@ -380,18 +380,28 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      const secondImageDropdown = screen.getByTestId(
+        "image-proportions-dropdown-trigger",
+      );
+      fireEvent.pointerDown(secondImageDropdown);
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle/ }));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("selected-image-preview-frame")).toHaveStyle({
+          aspectRatio: String(1),
+        });
+      });
+
       await waitFor(() => {
         const leftFrame = screen.getByTestId(
           "uploader-slider-side-left-preview-frame",
         );
+        const leftSlot = screen.getByTestId("uploader-slider-side-left");
 
-        expect(leftFrame).toHaveStyle({
-          aspectRatio: String(2 / 3),
-          height: "100%",
-          width: "auto",
-          maxWidth: "100%",
-          maxHeight: "100%",
-        });
+        expect(leftFrame).toHaveStyle({ aspectRatio: String(1) });
+        expect(leftFrame).toHaveClass("h-full", "w-auto", "max-w-none");
+
+        expect(leftSlot).toHaveClass("overflow-hidden");
       });
     }
   });

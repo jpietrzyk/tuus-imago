@@ -353,12 +353,6 @@ export function ImageUploader({
     typeof leftSlotIndex === "number" ? selectedImages[leftSlotIndex] : null;
   const rightSlotImage =
     typeof rightSlotIndex === "number" ? selectedImages[rightSlotIndex] : null;
-  const leftSlotAspectRatio = leftSlotImage
-    ? getTargetAspectRatio(leftSlotImage.displayImageProportion)
-    : null;
-  const rightSlotAspectRatio = rightSlotImage
-    ? getTargetAspectRatio(rightSlotImage.displayImageProportion)
-    : null;
 
   useEffect(() => {
     selectedImagesRef.current = selectedImages;
@@ -492,20 +486,14 @@ export function ImageUploader({
             disabled={leftSlotIndex === null}
             data-testid="uploader-slider-side-left"
             aria-label={t("uploader.previousImage")}
-            className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
+            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
           >
             {leftSlotImage ? (
               <div
                 data-testid="uploader-slider-side-left-preview-frame"
-                className="flex items-center justify-center overflow-hidden"
+                className="flex h-full w-auto max-w-none items-center justify-end overflow-hidden"
                 style={{
-                  height: "100%",
-                  width: "auto",
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  aspectRatio: leftSlotAspectRatio
-                    ? String(leftSlotAspectRatio)
-                    : undefined,
+                  aspectRatio: String(previewFrameAspectRatio),
                 }}
               >
                 <img
@@ -574,20 +562,14 @@ export function ImageUploader({
             disabled={rightSlotIndex === null}
             data-testid="uploader-slider-side-right"
             aria-label={t("uploader.nextImage")}
-            className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
+            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
           >
             {rightSlotImage ? (
               <div
                 data-testid="uploader-slider-side-right-preview-frame"
-                className="flex items-center justify-center overflow-hidden"
+                className="flex h-full w-auto max-w-none items-center justify-start overflow-hidden"
                 style={{
-                  height: "100%",
-                  width: "auto",
-                  maxWidth: "100%",
-                  maxHeight: "100%",
-                  aspectRatio: rightSlotAspectRatio
-                    ? String(rightSlotAspectRatio)
-                    : undefined,
+                  aspectRatio: String(previewFrameAspectRatio),
                 }}
               >
                 <img
