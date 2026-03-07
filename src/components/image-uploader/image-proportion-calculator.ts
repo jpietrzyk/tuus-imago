@@ -43,7 +43,7 @@ export const getTargetAspectRatio = (
 ): number => {
   switch (proportion) {
     case "vertical":
-      return 3 / 4;
+      return 2 / 3;
     case "square":
     case "rectangle":
       return 1;

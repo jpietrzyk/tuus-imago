@@ -193,11 +193,11 @@ describe("ImageUploader", () => {
       fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical \(/ }));
 
       await waitFor(() => {
-        expect(previewCanvas.width).toBe(600);
+        expect(previewCanvas.width).toBe(533);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toMatch(/^Vertical \(50\.00%\)/);
+        expect(dropdownTrigger.textContent).toMatch(/^Vertical \(44\.44%\)/);
         expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
-          "Showing 50.00% of original area",
+          "Showing 44.44% of original area",
         );
       });
 
@@ -289,6 +289,57 @@ describe("ImageUploader", () => {
           screen.getByTestId("uploader-slider-side-left").querySelector("img"),
         ).toBeTruthy();
       });
+    }
+  });
+
+  it("keeps previous preview URL valid when adding another image", async () => {
+    const createObjectURLSpy = vi
+      .spyOn(URL, "createObjectURL")
+      .mockImplementationOnce(() => "blob:first-preview")
+      .mockImplementationOnce(() => "blob:second-preview");
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+
+    render(<ImageUploader />);
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+
+    const initialInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(initialInput).toBeDefined();
+
+    if (initialInput) {
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        const leftPreview = screen
+          .getByTestId("uploader-slider-side-left")
+          .querySelector("img");
+
+        expect(leftPreview).toHaveAttribute("src", "blob:first-preview");
+      });
+
+      expect(createObjectURLSpy).toHaveBeenCalledTimes(2);
+      expect(revokeObjectURLSpy).not.toHaveBeenCalledWith("blob:first-preview");
     }
   });
 });

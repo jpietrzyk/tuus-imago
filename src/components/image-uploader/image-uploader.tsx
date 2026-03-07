@@ -74,6 +74,7 @@ export function ImageUploader({
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
+  const selectedImagesRef = useRef<SelectedImageItem[]>([]);
 
   const activeImage = selectedImages[activeImageIndex] ?? null;
   const selectedFile = activeImage?.file ?? null;
@@ -354,6 +355,10 @@ export function ImageUploader({
     typeof rightSlotIndex === "number" ? selectedImages[rightSlotIndex] : null;
 
   useEffect(() => {
+    selectedImagesRef.current = selectedImages;
+  }, [selectedImages]);
+
+  useEffect(() => {
     if (!previewUrl || !previewCanvasRef.current) {
       return;
     }
@@ -414,11 +419,11 @@ export function ImageUploader({
 
   useEffect(() => {
     return () => {
-      if (selectedImages.length > 0) {
-        revokePreviewUrls(selectedImages);
+      if (selectedImagesRef.current.length > 0) {
+        revokePreviewUrls(selectedImagesRef.current);
       }
     };
-  }, [revokePreviewUrls, selectedImages]);
+  }, [revokePreviewUrls]);
 
   if (!selectedFile || !previewUrl) {
     return (
