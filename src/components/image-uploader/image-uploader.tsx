@@ -499,7 +499,10 @@ export function ImageUploader({
                 <img
                   src={leftSlotImage.previewUrl}
                   alt={t("uploader.selectImageSlot", {
-                    index: String(leftSlotIndex + 1),
+                    index:
+                      typeof leftSlotIndex === "number"
+                        ? String(leftSlotIndex + 1)
+                        : "",
                   })}
                   className="h-full w-full object-cover"
                   draggable={false}
