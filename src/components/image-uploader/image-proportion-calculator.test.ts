@@ -16,7 +16,7 @@ describe("image-proportion-calculator", () => {
     expect(result.outputWidth).toBe(1200);
     expect(result.outputHeight).toBe(675);
     expect(result.cropX).toBe(0);
-    expect(result.cropY).toBeCloseTo(62.5);
+    expect(result.cropY).toBeCloseTo(62.5, 2);
     expect(result.coveragePercent).toBeCloseTo(84.38, 2);
   });
 
@@ -27,11 +27,11 @@ describe("image-proportion-calculator", () => {
       proportion: "vertical",
     });
 
-    expect(result.outputWidth).toBe(600);
+    expect(result.outputWidth).toBe(533);
     expect(result.outputHeight).toBe(800);
-    expect(result.cropX).toBe(300);
+    expect(result.cropX).toBeCloseTo(333.33, 2);
     expect(result.cropY).toBe(0);
-    expect(result.coveragePercent).toBe(50);
+    expect(result.coveragePercent).toBeCloseTo(44.44, 2);
   });
 
   it("calculates square max-area centered crop", () => {
@@ -52,7 +52,7 @@ describe("image-proportion-calculator", () => {
     const result = calculateAllProportions(1200, 800);
 
     expect(result.horizontal.coveragePercent).toBeCloseTo(84.38, 2);
-    expect(result.vertical.coveragePercent).toBeCloseTo(50, 2);
+    expect(result.vertical.coveragePercent).toBeCloseTo(44.44, 2);
     expect(result.square.coveragePercent).toBeCloseTo(66.67, 2);
   });
 
