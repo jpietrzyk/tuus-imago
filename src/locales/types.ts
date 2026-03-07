@@ -209,6 +209,12 @@ export interface Translations {
     vertical: string;
     blackAndWhite: string;
     resetAllAdjustments: string;
+    multiImageHint: string;
+    previousImage: string;
+    nextImage: string;
+    selectImageSlot: string;
+    addImageSlot: string;
+    maxImagesError: string;
   };
   checkout: {
     title: string;
