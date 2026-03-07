@@ -353,6 +353,12 @@ export function ImageUploader({
     typeof leftSlotIndex === "number" ? selectedImages[leftSlotIndex] : null;
   const rightSlotImage =
     typeof rightSlotIndex === "number" ? selectedImages[rightSlotIndex] : null;
+  const leftSlotAspectRatio = leftSlotImage
+    ? getTargetAspectRatio(leftSlotImage.displayImageProportion)
+    : null;
+  const rightSlotAspectRatio = rightSlotImage
+    ? getTargetAspectRatio(rightSlotImage.displayImageProportion)
+    : null;
 
   useEffect(() => {
     selectedImagesRef.current = selectedImages;
@@ -489,14 +495,28 @@ export function ImageUploader({
             className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
           >
             {leftSlotImage ? (
-              <img
-                src={leftSlotImage.previewUrl}
-                alt={t("uploader.selectImageSlot", {
-                  index: String(leftSlotIndex + 1),
-                })}
-                className="h-full w-full object-cover"
-                draggable={false}
-              />
+              <div
+                data-testid="uploader-slider-side-left-preview-frame"
+                className="flex items-center justify-center overflow-hidden"
+                style={{
+                  height: "100%",
+                  width: "auto",
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  aspectRatio: leftSlotAspectRatio
+                    ? String(leftSlotAspectRatio)
+                    : undefined,
+                }}
+              >
+                <img
+                  src={leftSlotImage.previewUrl}
+                  alt={t("uploader.selectImageSlot", {
+                    index: String(leftSlotIndex + 1),
+                  })}
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              </div>
             ) : null}
           </button>
 
@@ -557,18 +577,32 @@ export function ImageUploader({
             className="h-20 w-20 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
           >
             {rightSlotImage ? (
-              <img
-                src={rightSlotImage.previewUrl}
-                alt={
-                  typeof rightSlotIndex === "number"
-                    ? t("uploader.selectImageSlot", {
-                        index: String(rightSlotIndex + 1),
-                      })
-                    : ""
-                }
-                className="h-full w-full object-cover"
-                draggable={false}
-              />
+              <div
+                data-testid="uploader-slider-side-right-preview-frame"
+                className="flex items-center justify-center overflow-hidden"
+                style={{
+                  height: "100%",
+                  width: "auto",
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  aspectRatio: rightSlotAspectRatio
+                    ? String(rightSlotAspectRatio)
+                    : undefined,
+                }}
+              >
+                <img
+                  src={rightSlotImage.previewUrl}
+                  alt={
+                    typeof rightSlotIndex === "number"
+                      ? t("uploader.selectImageSlot", {
+                          index: String(rightSlotIndex + 1),
+                        })
+                      : ""
+                  }
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              </div>
             ) : null}
           </button>
         </div>

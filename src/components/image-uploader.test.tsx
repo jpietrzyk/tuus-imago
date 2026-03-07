@@ -342,4 +342,57 @@ describe("ImageUploader", () => {
       expect(revokeObjectURLSpy).not.toHaveBeenCalledWith("blob:first-preview");
     }
   });
+
+  it("keeps selected proportion in smaller side preview", async () => {
+    render(<ImageUploader />);
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+
+    const initialInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(initialInput).toBeDefined();
+
+    if (initialInput) {
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      const dropdownTrigger = screen.getByTestId(
+        "image-proportions-dropdown-trigger",
+      );
+      fireEvent.pointerDown(dropdownTrigger);
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical \(/ }));
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        const leftFrame = screen.getByTestId(
+          "uploader-slider-side-left-preview-frame",
+        );
+
+        expect(leftFrame).toHaveStyle({
+          aspectRatio: String(2 / 3),
+          height: "100%",
+          width: "auto",
+          maxWidth: "100%",
+          maxHeight: "100%",
+        });
+      });
+    }
+  });
 });
