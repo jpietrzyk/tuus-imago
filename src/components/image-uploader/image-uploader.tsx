@@ -371,6 +371,12 @@ export function ImageUploader({
   const leftSlotIndex = activeImageIndex > 0 ? activeImageIndex - 1 : null;
   const rightSlotIndex =
     activeImageIndex < MAX_SELECTED_IMAGES - 1 ? activeImageIndex + 1 : null;
+  const leftSlotTargetIndex =
+    typeof leftSlotIndex === "number"
+      ? leftSlotIndex
+      : selectedImages.length < MAX_SELECTED_IMAGES
+        ? selectedImages.length
+        : null;
   const leftSlotImage =
     typeof leftSlotIndex === "number" ? selectedImages[leftSlotIndex] : null;
   const rightSlotImage =
@@ -529,23 +535,25 @@ export function ImageUploader({
           <button
             type="button"
             onClick={() => {
-              if (typeof leftSlotIndex === "number") {
-                handlePreviewSlotSelect(leftSlotIndex);
+              if (typeof leftSlotTargetIndex === "number") {
+                handlePreviewSlotSelect(leftSlotTargetIndex);
               }
             }}
-            disabled={leftSlotIndex === null}
+            disabled={leftSlotTargetIndex === null}
             data-testid="uploader-slider-side-left"
             aria-label={t("uploader.previousImage")}
-            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-border/35 bg-transparent disabled:cursor-default disabled:opacity-70"
+            className="h-full w-16 shrink-0 overflow-hidden rounded-md bg-transparent flex items-start justify-end disabled:cursor-default disabled:opacity-70"
           >
-            {leftSlotImage ? (
-              <div
-                data-testid="uploader-slider-side-left-preview-frame"
-                className="flex h-full w-auto max-w-none items-center justify-end overflow-hidden"
-                style={{
-                  aspectRatio: String(previewFrameAspectRatio),
-                }}
-              >
+            <div
+              data-testid="uploader-slider-side-left-preview-frame"
+              className={`flex h-full w-auto min-w-[125%] max-w-none items-start justify-end overflow-hidden rounded-md border-2 border-dashed ${
+                leftSlotImage ? "border-border/35" : "border-border/60"
+              }`}
+              style={{
+                aspectRatio: String(previewFrameAspectRatio),
+              }}
+            >
+              {leftSlotImage ? (
                 <img
                   src={leftSlotImage.previewUrl}
                   alt={t("uploader.selectImageSlot", {
@@ -554,16 +562,16 @@ export function ImageUploader({
                         ? String(leftSlotIndex + 1)
                         : "",
                   })}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover object-right-top"
                   draggable={false}
                 />
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </button>
 
           <div className="relative mx-3 flex-1 h-full min-w-0 flex items-center justify-center">
             <div
-              className="relative h-full w-auto max-w-full max-h-full overflow-hidden rounded-lg border border-border/40 flex items-center justify-center"
+              className="relative h-full w-auto max-w-full max-h-full overflow-hidden rounded-lg border-2 border-dashed border-border/35 flex items-center justify-center"
               data-testid="selected-image-preview-frame"
               style={{ aspectRatio: String(previewFrameAspectRatio) }}
               onTouchStart={handleSliderTouchStart}
@@ -619,16 +627,18 @@ export function ImageUploader({
             disabled={rightSlotIndex === null}
             data-testid="uploader-slider-side-right"
             aria-label={t("uploader.nextImage")}
-            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-border/35 bg-transparent disabled:cursor-default disabled:opacity-70"
+            className="h-full w-16 shrink-0 overflow-hidden rounded-md bg-transparent disabled:cursor-default disabled:opacity-70"
           >
-            {rightSlotImage ? (
-              <div
-                data-testid="uploader-slider-side-right-preview-frame"
-                className="flex h-full w-auto max-w-none items-center justify-start overflow-hidden"
-                style={{
-                  aspectRatio: String(previewFrameAspectRatio),
-                }}
-              >
+            <div
+              data-testid="uploader-slider-side-right-preview-frame"
+              className={`flex h-full w-auto max-w-none items-center justify-start overflow-hidden rounded-md border-2 border-dashed ${
+                rightSlotImage ? "border-border/35" : "border-border/60"
+              }`}
+              style={{
+                aspectRatio: String(previewFrameAspectRatio),
+              }}
+            >
+              {rightSlotImage ? (
                 <img
                   src={rightSlotImage.previewUrl}
                   alt={
@@ -641,8 +651,8 @@ export function ImageUploader({
                   className="h-full w-full object-cover"
                   draggable={false}
                 />
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </button>
         </div>
 
