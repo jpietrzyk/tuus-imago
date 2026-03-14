@@ -26,6 +26,7 @@ interface PreviewCropArea {
 
 export function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
+  const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [transformations, setTransformations] =
@@ -162,6 +163,7 @@ export function UploadPage() {
   const handleUploadError = (error: string) => {
     setUploadError(error);
     setUploadedImage(null);
+    setHasUploaderSelection(false);
     setIsSuccess(false);
     // Auto-hide error message after 5 seconds
     setTimeout(() => setUploadError(null), 5000);
@@ -414,7 +416,13 @@ export function UploadPage() {
   return (
     <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
       <div className="w-full max-w-2xl h-full transition-all duration-500 ease-in-out">
-        <Card className="h-full bg-black/10 backdrop-blur-md shadow-2xl">
+        <Card
+          className={
+            uploadedImage || hasUploaderSelection
+              ? "h-full border-0 !bg-transparent !shadow-none !ring-0"
+              : "h-full bg-black/10 backdrop-blur-md shadow-2xl"
+          }
+        >
           <CardContent className="h-full space-y-6">
             {/* Status Messages */}
             {isSuccess && (
@@ -471,6 +479,7 @@ export function UploadPage() {
                 <ImageUploader
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
+                  onSelectionStateChange={setHasUploaderSelection}
                   skipCropStep
                   defaultShowIcons
                   className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
@@ -484,7 +493,7 @@ export function UploadPage() {
 
             {/* Uploaded Image Preview */}
             {uploadedImage && (
-              <div className="space-y-4 pt-4 rounded-lg bg-white p-4 shadow-sm">
+              <div className="space-y-4 pt-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-base font-semibold text-gray-900">
                     {t("upload.uploadedPhoto")}
@@ -497,7 +506,7 @@ export function UploadPage() {
                     </span>
                   )}
                 </div>
-                <div className="rounded-lg bg-muted/50 p-4">
+                <div className="rounded-lg p-4">
                   <div
                     className="mb-3 inline-flex rounded-lg border border-gray-200 bg-white p-1"
                     role="tablist"
