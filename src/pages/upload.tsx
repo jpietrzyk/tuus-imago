@@ -415,7 +415,7 @@ export function UploadPage() {
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
-      <div className="w-full max-w-2xl h-full transition-all duration-500 ease-in-out">
+      <div className="w-full h-full transition-all duration-500 ease-in-out max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl overflow-hidden lg:overflow-visible">
         <Card
           className={
             uploadedImage || hasUploaderSelection
