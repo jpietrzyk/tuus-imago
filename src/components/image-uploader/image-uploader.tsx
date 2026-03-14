@@ -46,6 +46,7 @@ interface ImageUploaderProps {
   ) => void;
   onUploadError?: (error: string) => void;
   onImageMetadataChange?: (metadata: SelectedImageMetadata | null) => void;
+  onSelectionStateChange?: (hasSelection: boolean) => void;
   className?: string;
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
@@ -63,6 +64,7 @@ interface SelectedImageItem {
 export function ImageUploader({
   onUploadError,
   onImageMetadataChange,
+  onSelectionStateChange,
   className,
   defaultShowIcons = false,
 }: ImageUploaderProps) {
@@ -265,6 +267,7 @@ export function ImageUploader({
 
   const canMovePrevious = activeImageIndex > 0;
   const canMoveNext = activeImageIndex < selectedImages.length - 1;
+  const hasMultipleImages = selectedImages.length > 1;
 
   const moveToPreviousImage = useCallback(() => {
     if (!canMovePrevious) {
@@ -359,6 +362,10 @@ export function ImageUploader({
   }, [selectedImages]);
 
   useEffect(() => {
+    onSelectionStateChange?.(selectedImages.length > 0);
+  }, [onSelectionStateChange, selectedImages.length]);
+
+  useEffect(() => {
     if (!previewUrl || !previewCanvasRef.current) {
       return;
     }
@@ -442,7 +449,7 @@ export function ImageUploader({
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto h-full bg-transparent! flex flex-col">
+    <Card className="w-full max-w-2xl mx-auto h-full !bg-transparent !shadow-none !ring-0 border-0 flex flex-col">
       <input
         ref={fileInputRef}
         type="file"
@@ -486,7 +493,7 @@ export function ImageUploader({
             disabled={leftSlotIndex === null}
             data-testid="uploader-slider-side-left"
             aria-label={t("uploader.previousImage")}
-            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
+            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-border/35 bg-transparent disabled:cursor-default disabled:opacity-70"
           >
             {leftSlotImage ? (
               <div
@@ -519,16 +526,18 @@ export function ImageUploader({
               onTouchStart={handleSliderTouchStart}
               onTouchEnd={handleSliderTouchEnd}
             >
-              <button
-                type="button"
-                onClick={moveToPreviousImage}
-                disabled={!canMovePrevious}
-                aria-label={t("uploader.previousImage")}
-                data-testid="uploader-slider-prev"
-                className="absolute left-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
+              {hasMultipleImages && (
+                <button
+                  type="button"
+                  onClick={moveToPreviousImage}
+                  disabled={!canMovePrevious}
+                  aria-label={t("uploader.previousImage")}
+                  data-testid="uploader-slider-prev"
+                  className="absolute left-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              )}
 
               <canvas
                 ref={previewCanvasRef}
@@ -542,16 +551,18 @@ export function ImageUploader({
                 }}
               />
 
-              <button
-                type="button"
-                onClick={moveToNextImage}
-                disabled={!canMoveNext}
-                aria-label={t("uploader.nextImage")}
-                data-testid="uploader-slider-next"
-                className="absolute right-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+              {hasMultipleImages && (
+                <button
+                  type="button"
+                  onClick={moveToNextImage}
+                  disabled={!canMoveNext}
+                  aria-label={t("uploader.nextImage")}
+                  data-testid="uploader-slider-next"
+                  className="absolute right-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -565,7 +576,7 @@ export function ImageUploader({
             disabled={rightSlotIndex === null}
             data-testid="uploader-slider-side-right"
             aria-label={t("uploader.nextImage")}
-            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-dashed border-border/40 bg-muted/20 disabled:cursor-default disabled:opacity-80"
+            className="h-full w-16 shrink-0 overflow-hidden rounded-md border border-border/35 bg-transparent disabled:cursor-default disabled:opacity-70"
           >
             {rightSlotImage ? (
               <div
