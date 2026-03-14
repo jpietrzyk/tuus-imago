@@ -276,10 +276,16 @@ describe("ImageUploader", () => {
       expect(
         screen.getByTestId("uploader-slider-side-right"),
       ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("uploader-slider-side-left").querySelector("img"),
+      ).toBeNull();
+      expect(
+        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+      ).toBeNull();
     }
   });
 
-  it("adds second image when right side frame is clicked and file is selected", async () => {
+  it("adds second image to the clicked right slot", async () => {
     render(<ImageUploader />);
 
     mockImageWidth = 1200;
@@ -316,7 +322,60 @@ describe("ImageUploader", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "900 × 900",
+          "1200 × 800",
+        );
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
+      expect(
+        screen.getByTestId("uploader-slider-side-left").querySelector("img"),
+      ).toBeNull();
+    }
+  });
+
+  it("adds second image to the clicked left slot", async () => {
+    render(<ImageUploader />);
+
+    mockImageWidth = 1200;
+    mockImageHeight = 800;
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+    const initialInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(initialInput).toBeDefined();
+
+    if (initialInput) {
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      mockImageWidth = 900;
+      mockImageHeight = 900;
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-left"));
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).toContain(
+          "1200 × 800",
         );
       });
 
@@ -325,6 +384,10 @@ describe("ImageUploader", () => {
           screen.getByTestId("uploader-slider-side-left").querySelector("img"),
         ).toBeTruthy();
       });
+
+      expect(
+        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+      ).toBeNull();
     }
   });
 
@@ -365,6 +428,8 @@ describe("ImageUploader", () => {
       if (editorInput) {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
 
       await waitFor(() => {
         const leftPreview = screen
@@ -415,6 +480,8 @@ describe("ImageUploader", () => {
       if (editorInput) {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
 
       const secondImageDropdown = screen.getByTestId(
         "image-proportions-dropdown-trigger",

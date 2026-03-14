@@ -53,6 +53,10 @@ interface ImageUploaderProps {
 }
 
 const MAX_SELECTED_IMAGES = 3;
+const CENTER_SLOT_INDEX = Math.floor(MAX_SELECTED_IMAGES / 2);
+
+const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
+  Array.from({ length: MAX_SELECTED_IMAGES }, () => null);
 
 const getOptimalDisplayProportion = (
   sourceWidth: number,
@@ -87,28 +91,42 @@ export function ImageUploader({
   className,
   defaultShowIcons = false,
 }: ImageUploaderProps) {
-  const [selectedImages, setSelectedImages] = useState<SelectedImageItem[]>([]);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedImages, setSelectedImages] = useState<
+    Array<SelectedImageItem | null>
+  >(createEmptySelectionSlots);
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
-  const selectedImagesRef = useRef<SelectedImageItem[]>([]);
+  const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
+    createEmptySelectionSlots(),
+  );
 
-  const activeImage = selectedImages[activeImageIndex] ?? null;
+  const selectedImageCount = selectedImages.filter(Boolean).length;
+
+  const activeImage =
+    typeof activeImageIndex === "number"
+      ? (selectedImages[activeImageIndex] ?? null)
+      : null;
   const selectedFile = activeImage?.file ?? null;
   const previewUrl = activeImage?.previewUrl ?? null;
   const selectedImageMetadata = activeImage?.metadata ?? null;
   const displayImageProportion =
     activeImage?.displayImageProportion ?? "horizontal";
 
-  const revokePreviewUrls = useCallback((images: SelectedImageItem[]) => {
-    images.forEach((image) => {
-      URL.revokeObjectURL(image.previewUrl);
-    });
-  }, []);
+  const revokePreviewUrls = useCallback(
+    (images: Array<SelectedImageItem | null>) => {
+      images.forEach((image) => {
+        if (image) {
+          URL.revokeObjectURL(image.previewUrl);
+        }
+      });
+    },
+    [],
+  );
 
   const buildSelectedImageItem = useCallback(
     (file: File): SelectedImageItem => {
@@ -125,33 +143,45 @@ export function ImageUploader({
 
   const addOrReplaceSelection = useCallback(
     (file: File, preferredIndex?: number) => {
+      const currentImages = selectedImagesRef.current;
+      const hasExistingSelection = currentImages.some(Boolean);
+      const insertionIndex =
+        typeof preferredIndex === "number"
+          ? Math.max(0, Math.min(preferredIndex, MAX_SELECTED_IMAGES - 1))
+          : !hasExistingSelection
+            ? CENTER_SLOT_INDEX
+            : currentImages.findIndex((image) => image === null);
+
+      if (insertionIndex < 0) {
+        return;
+      }
+
       const nextImage = buildSelectedImageItem(file);
 
       setSelectedImages((prevImages) => {
         const nextImages = [...prevImages];
-        const insertionIndex =
-          typeof preferredIndex === "number"
-            ? Math.max(0, Math.min(preferredIndex, MAX_SELECTED_IMAGES - 1))
-            : Math.min(prevImages.length, MAX_SELECTED_IMAGES - 1);
 
-        if (insertionIndex < nextImages.length) {
+        if (nextImages[insertionIndex]) {
           URL.revokeObjectURL(nextImages[insertionIndex].previewUrl);
-          nextImages[insertionIndex] = nextImage;
-        } else if (nextImages.length < MAX_SELECTED_IMAGES) {
-          nextImages.push(nextImage);
         }
 
-        return nextImages.slice(0, MAX_SELECTED_IMAGES);
+        nextImages[insertionIndex] = nextImage;
+
+        return nextImages;
       });
 
-      const nextActiveIndex =
-        typeof preferredIndex === "number"
-          ? Math.max(0, Math.min(preferredIndex, MAX_SELECTED_IMAGES - 1))
-          : Math.min(selectedImages.length, MAX_SELECTED_IMAGES - 1);
+      setActiveImageIndex((currentActiveIndex) => {
+        const clickedEmptySlot =
+          typeof preferredIndex === "number" && !currentImages[preferredIndex];
 
-      setActiveImageIndex(nextActiveIndex);
+        if (hasExistingSelection && clickedEmptySlot) {
+          return currentActiveIndex;
+        }
+
+        return insertionIndex;
+      });
     },
-    [buildSelectedImageItem, selectedImages.length],
+    [buildSelectedImageItem],
   );
 
   const validateAndStoreFile = useCallback(
@@ -171,7 +201,7 @@ export function ImageUploader({
 
       if (
         typeof preferredIndex !== "number" &&
-        selectedImages.length >= MAX_SELECTED_IMAGES
+        selectedImageCount >= MAX_SELECTED_IMAGES
       ) {
         onUploadError?.(t("uploader.maxImagesError"));
         return;
@@ -179,13 +209,18 @@ export function ImageUploader({
 
       addOrReplaceSelection(file, preferredIndex);
     },
-    [addOrReplaceSelection, onUploadError, selectedImages.length],
+    [addOrReplaceSelection, onUploadError, selectedImageCount],
   );
 
   const updateActiveImage = useCallback(
     (updater: (image: SelectedImageItem) => SelectedImageItem) => {
       setSelectedImages((prevImages) => {
-        if (activeImageIndex < 0 || activeImageIndex >= prevImages.length) {
+        if (
+          typeof activeImageIndex !== "number" ||
+          activeImageIndex < 0 ||
+          activeImageIndex >= prevImages.length ||
+          !prevImages[activeImageIndex]
+        ) {
           return prevImages;
         }
 
@@ -250,9 +285,11 @@ export function ImageUploader({
 
   const handlePreviewSlotSelect = useCallback(
     (index: number) => {
-      if (index < selectedImages.length) {
+      const selectedImage = selectedImages[index];
+
+      if (selectedImage) {
         setActiveImageIndex(index);
-        onImageMetadataChange?.(selectedImages[index]?.metadata ?? null);
+        onImageMetadataChange?.(selectedImage.metadata ?? null);
         return;
       }
 
@@ -268,13 +305,13 @@ export function ImageUploader({
 
   const handleCancel = useCallback(() => {
     setSelectedImages((prevImages) => {
-      if (prevImages.length > 0) {
+      if (prevImages.some(Boolean)) {
         revokePreviewUrls(prevImages);
       }
 
-      return [];
+      return createEmptySelectionSlots();
     });
-    setActiveImageIndex(0);
+    setActiveImageIndex(null);
     updateSelectedImageMetadata(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -284,34 +321,63 @@ export function ImageUploader({
     }
   }, [revokePreviewUrls, updateSelectedImageMetadata]);
 
-  const canMovePrevious = activeImageIndex > 0;
-  const canMoveNext = activeImageIndex < selectedImages.length - 1;
-  const hasMultipleImages = selectedImages.length > 1;
+  const previousFilledSlotIndex = useMemo(() => {
+    if (typeof activeImageIndex !== "number") {
+      return null;
+    }
+
+    for (let index = activeImageIndex - 1; index >= 0; index -= 1) {
+      if (selectedImages[index]) {
+        return index;
+      }
+    }
+
+    return null;
+  }, [activeImageIndex, selectedImages]);
+
+  const nextFilledSlotIndex = useMemo(() => {
+    if (typeof activeImageIndex !== "number") {
+      return null;
+    }
+
+    for (
+      let index = activeImageIndex + 1;
+      index < selectedImages.length;
+      index += 1
+    ) {
+      if (selectedImages[index]) {
+        return index;
+      }
+    }
+
+    return null;
+  }, [activeImageIndex, selectedImages]);
+
+  const canMovePrevious = previousFilledSlotIndex !== null;
+  const canMoveNext = nextFilledSlotIndex !== null;
+  const hasMultipleImages = selectedImageCount > 1;
 
   const moveToPreviousImage = useCallback(() => {
-    if (!canMovePrevious) {
+    if (previousFilledSlotIndex === null) {
       return;
     }
 
-    const nextIndex = activeImageIndex - 1;
-    setActiveImageIndex(nextIndex);
-    onImageMetadataChange?.(selectedImages[nextIndex]?.metadata ?? null);
-  }, [
-    activeImageIndex,
-    canMovePrevious,
-    onImageMetadataChange,
-    selectedImages,
-  ]);
+    setActiveImageIndex(previousFilledSlotIndex);
+    onImageMetadataChange?.(
+      selectedImages[previousFilledSlotIndex]?.metadata ?? null,
+    );
+  }, [onImageMetadataChange, previousFilledSlotIndex, selectedImages]);
 
   const moveToNextImage = useCallback(() => {
-    if (!canMoveNext) {
+    if (nextFilledSlotIndex === null) {
       return;
     }
 
-    const nextIndex = activeImageIndex + 1;
-    setActiveImageIndex(nextIndex);
-    onImageMetadataChange?.(selectedImages[nextIndex]?.metadata ?? null);
-  }, [activeImageIndex, canMoveNext, onImageMetadataChange, selectedImages]);
+    setActiveImageIndex(nextFilledSlotIndex);
+    onImageMetadataChange?.(
+      selectedImages[nextFilledSlotIndex]?.metadata ?? null,
+    );
+  }, [nextFilledSlotIndex, onImageMetadataChange, selectedImages]);
 
   const handleSliderTouchStart = useCallback(
     (event: React.TouchEvent<HTMLDivElement>) => {
@@ -368,15 +434,15 @@ export function ImageUploader({
     [displayImageProportion],
   );
 
-  const leftSlotIndex = activeImageIndex > 0 ? activeImageIndex - 1 : null;
+  const leftSlotIndex =
+    typeof activeImageIndex === "number" && activeImageIndex > 0
+      ? activeImageIndex - 1
+      : null;
   const rightSlotIndex =
-    activeImageIndex < MAX_SELECTED_IMAGES - 1 ? activeImageIndex + 1 : null;
-  const leftSlotTargetIndex =
-    typeof leftSlotIndex === "number"
-      ? leftSlotIndex
-      : selectedImages.length < MAX_SELECTED_IMAGES
-        ? selectedImages.length
-        : null;
+    typeof activeImageIndex === "number" &&
+    activeImageIndex < MAX_SELECTED_IMAGES - 1
+      ? activeImageIndex + 1
+      : null;
   const leftSlotImage =
     typeof leftSlotIndex === "number" ? selectedImages[leftSlotIndex] : null;
   const rightSlotImage =
@@ -387,8 +453,8 @@ export function ImageUploader({
   }, [selectedImages]);
 
   useEffect(() => {
-    onSelectionStateChange?.(selectedImages.length > 0);
-  }, [onSelectionStateChange, selectedImages.length]);
+    onSelectionStateChange?.(selectedImageCount > 0);
+  }, [onSelectionStateChange, selectedImageCount]);
 
   useEffect(() => {
     if (!previewUrl || !previewCanvasRef.current) {
@@ -415,7 +481,10 @@ export function ImageUploader({
         height: sourceHeight,
         aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
       };
-      const currentSelectedImage = selectedImagesRef.current[activeImageIndex];
+      const currentSelectedImage =
+        typeof activeImageIndex === "number"
+          ? selectedImagesRef.current[activeImageIndex]
+          : null;
       const currentDisplayImageProportion =
         currentSelectedImage?.displayImageProportion ?? displayImageProportion;
       const isInitialMetadataLoad = !currentSelectedImage?.metadata;
@@ -475,7 +544,7 @@ export function ImageUploader({
 
   useEffect(() => {
     return () => {
-      if (selectedImagesRef.current.length > 0) {
+      if (selectedImagesRef.current.some(Boolean)) {
         revokePreviewUrls(selectedImagesRef.current);
       }
     };
@@ -498,7 +567,7 @@ export function ImageUploader({
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto h-full !bg-transparent !shadow-none !ring-0 border-0 flex flex-col">
+    <Card className="mx-auto flex h-full w-full max-w-2xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
       <input
         ref={fileInputRef}
         type="file"
@@ -535,11 +604,11 @@ export function ImageUploader({
           <button
             type="button"
             onClick={() => {
-              if (typeof leftSlotTargetIndex === "number") {
-                handlePreviewSlotSelect(leftSlotTargetIndex);
+              if (typeof leftSlotIndex === "number") {
+                handlePreviewSlotSelect(leftSlotIndex);
               }
             }}
-            disabled={leftSlotTargetIndex === null}
+            disabled={leftSlotIndex === null}
             data-testid="uploader-slider-side-left"
             aria-label={t("uploader.previousImage")}
             className="h-full w-16 shrink-0 overflow-hidden rounded-md bg-transparent flex items-start justify-end disabled:cursor-default disabled:opacity-70"
@@ -562,7 +631,7 @@ export function ImageUploader({
                         ? String(leftSlotIndex + 1)
                         : "",
                   })}
-                  className="h-full w-full object-cover object-right-top"
+                  className="h-full w-full object-cover object-top-right"
                   draggable={false}
                 />
               ) : null}
