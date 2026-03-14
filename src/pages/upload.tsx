@@ -419,7 +419,7 @@ export function UploadPage() {
         <Card
           className={
             uploadedImage || hasUploaderSelection
-              ? "h-full border-0 !bg-transparent !shadow-none !ring-0"
+              ? "h-full border-0 bg-transparent! shadow-none! ring-0!"
               : "h-full bg-black/10 backdrop-blur-md shadow-2xl"
           }
         >
