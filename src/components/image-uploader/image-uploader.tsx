@@ -63,18 +63,18 @@ const getOptimalDisplayProportion = (
   sourceHeight: number,
 ): ImageDisplayProportion => {
   const proportions = calculateAllProportions(sourceWidth, sourceHeight);
-  const orderedCandidates: ImageDisplayProportion[] = [
+  const orderedCandidates = ["horizontal", "vertical", "square"] as const;
+  type CandidateProportion = (typeof orderedCandidates)[number];
+
+  return orderedCandidates.reduce<CandidateProportion>(
+    (bestProportion, candidate) => {
+      const bestCoverage = proportions[bestProportion].coveragePercent;
+      const candidateCoverage = proportions[candidate].coveragePercent;
+
+      return candidateCoverage > bestCoverage ? candidate : bestProportion;
+    },
     "horizontal",
-    "vertical",
-    "square",
-  ];
-
-  return orderedCandidates.reduce((bestProportion, candidate) => {
-    const bestCoverage = proportions[bestProportion].coveragePercent;
-    const candidateCoverage = proportions[candidate].coveragePercent;
-
-    return candidateCoverage > bestCoverage ? candidate : bestProportion;
-  }, "horizontal" as ImageDisplayProportion);
+  );
 };
 
 interface SelectedImageItem {
