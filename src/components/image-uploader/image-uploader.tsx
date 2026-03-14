@@ -54,6 +54,25 @@ interface ImageUploaderProps {
 
 const MAX_SELECTED_IMAGES = 3;
 
+const getOptimalDisplayProportion = (
+  sourceWidth: number,
+  sourceHeight: number,
+): ImageDisplayProportion => {
+  const proportions = calculateAllProportions(sourceWidth, sourceHeight);
+  const orderedCandidates: ImageDisplayProportion[] = [
+    "horizontal",
+    "vertical",
+    "square",
+  ];
+
+  return orderedCandidates.reduce((bestProportion, candidate) => {
+    const bestCoverage = proportions[bestProportion].coveragePercent;
+    const candidateCoverage = proportions[candidate].coveragePercent;
+
+    return candidateCoverage > bestCoverage ? candidate : bestProportion;
+  }, "horizontal" as ImageDisplayProportion);
+};
+
 interface SelectedImageItem {
   file: File;
   previewUrl: string;
@@ -385,16 +404,34 @@ export function ImageUploader({
         return;
       }
 
-      updateSelectedImageMetadata({
+      const metadata: SelectedImageMetadata = {
         width: sourceWidth,
         height: sourceHeight,
         aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
-      });
+      };
+      const currentSelectedImage = selectedImagesRef.current[activeImageIndex];
+      const currentDisplayImageProportion =
+        currentSelectedImage?.displayImageProportion ?? displayImageProportion;
+      const isInitialMetadataLoad = !currentSelectedImage?.metadata;
+      const shouldAutoSelectOptimalProportion =
+        isInitialMetadataLoad && currentDisplayImageProportion === "horizontal";
+      const nextDisplayImageProportion = shouldAutoSelectOptimalProportion
+        ? getOptimalDisplayProportion(sourceWidth, sourceHeight)
+        : currentDisplayImageProportion;
+
+      updateActiveImage((selectedImage) => ({
+        ...selectedImage,
+        metadata,
+        displayImageProportion: shouldAutoSelectOptimalProportion
+          ? nextDisplayImageProportion
+          : selectedImage.displayImageProportion,
+      }));
+      onImageMetadataChange?.(metadata);
 
       const crop = calculateMaxCenteredCrop({
         sourceWidth,
         sourceHeight,
-        proportion: displayImageProportion,
+        proportion: nextDisplayImageProportion,
       });
 
       canvas.width = crop.outputWidth;
@@ -422,7 +459,13 @@ export function ImageUploader({
     };
 
     image.src = previewUrl;
-  }, [previewUrl, displayImageProportion, updateSelectedImageMetadata]);
+  }, [
+    activeImageIndex,
+    displayImageProportion,
+    onImageMetadataChange,
+    previewUrl,
+    updateActiveImage,
+  ]);
 
   useEffect(() => {
     return () => {

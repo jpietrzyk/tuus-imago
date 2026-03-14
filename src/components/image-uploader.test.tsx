@@ -215,6 +215,42 @@ describe("ImageUploader", () => {
     }
   });
 
+  it("defaults to the optimal proportion based on image coverage", async () => {
+    render(<ImageUploader />);
+
+    mockImageWidth = 800;
+    mockImageHeight = 1200;
+
+    const file = new File(["test"], "portrait.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    );
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [file] } });
+
+      const previewCanvas = (await screen.findByTestId(
+        "selected-image-preview-canvas",
+      )) as HTMLCanvasElement;
+
+      await waitFor(() => {
+        expect(previewCanvas.width).toBe(800);
+        expect(previewCanvas.height).toBe(1200);
+      });
+
+      const dropdownTrigger = screen.getByTestId(
+        "image-proportions-dropdown-trigger",
+      );
+
+      expect(dropdownTrigger.textContent).toMatch(/^Vertical \(100\.00%\)/);
+      expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
+        "Showing 100.00% of original area",
+      );
+    }
+  });
+
   it("shows side slider frames around preview after first image selection", async () => {
     render(<ImageUploader />);
 
