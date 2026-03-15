@@ -509,17 +509,8 @@ export function ImageUploader({
         proportion: nextDisplayImageProportion,
       });
 
-      // Determine the display size of the canvas and set backing store size for crisp rendering
-      const rect = canvas.getBoundingClientRect();
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const displayWidth = Math.max(1, Math.round(rect.width));
-      const displayHeight = Math.max(1, Math.round(rect.height));
-
-      // Set CSS display size to match layout, and set backing pixel size for high-DPI
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
-      canvas.width = Math.round(displayWidth * dpr);
-      canvas.height = Math.round(displayHeight * dpr);
+      canvas.width = crop.outputWidth;
+      canvas.height = crop.outputHeight;
 
       if (
         typeof HTMLImageElement !== "undefined" &&
@@ -638,7 +629,7 @@ export function ImageUploader({
           >
             <div
               data-testid="uploader-slider-side-left-preview-frame"
-              className={`flex h-full w-[280px] flex-shrink-0 md:w-[300px] lg:w-[320px] items-start justify-end overflow-hidden rounded-none border-0`}
+              className={`flex h-full max-w-none w-70 shrink-0 md:w-75 lg:w-[320px] items-start justify-end overflow-hidden rounded-none border-0`}
               style={{
                 aspectRatio: String(previewFrameAspectRatio),
               }}
@@ -721,7 +712,7 @@ export function ImageUploader({
           >
             <div
               data-testid="uploader-slider-side-right-preview-frame"
-              className={`flex h-full w-[280px] flex-shrink-0 md:w-[300px] lg:w-[320px] items-center justify-start overflow-hidden rounded-none border-0`}
+              className={`flex h-full max-w-none w-70 shrink-0 md:w-75 lg:w-[320px] items-center justify-start overflow-hidden rounded-none border-0`}
               style={{
                 aspectRatio: String(previewFrameAspectRatio),
               }}
