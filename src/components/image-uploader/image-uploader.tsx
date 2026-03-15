@@ -509,8 +509,17 @@ export function ImageUploader({
         proportion: nextDisplayImageProportion,
       });
 
-      canvas.width = crop.outputWidth;
-      canvas.height = crop.outputHeight;
+      // Determine the display size of the canvas and set backing store size for crisp rendering
+      const rect = canvas.getBoundingClientRect();
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      const displayWidth = Math.max(1, Math.round(rect.width));
+      const displayHeight = Math.max(1, Math.round(rect.height));
+
+      // Set CSS display size to match layout, and set backing pixel size for high-DPI
+      canvas.style.width = `${displayWidth}px`;
+      canvas.style.height = `${displayHeight}px`;
+      canvas.width = Math.round(displayWidth * dpr);
+      canvas.height = Math.round(displayHeight * dpr);
 
       if (
         typeof HTMLImageElement !== "undefined" &&
@@ -519,17 +528,43 @@ export function ImageUploader({
         return;
       }
 
-      context.clearRect(0, 0, crop.outputWidth, crop.outputHeight);
+      // Calculate proportional drawing dimensions so the cropped source is scaled without distortion
+      const srcW = crop.cropWidth;
+      const srcH = crop.cropHeight;
+      const dstW = canvas.width;
+      const dstH = canvas.height;
+
+      const srcAspect = srcW / srcH;
+      const dstAspect = dstW / dstH;
+
+      let drawW: number;
+      let drawH: number;
+
+      if (srcAspect > dstAspect) {
+        // source is relatively wider — fit by width
+        drawW = dstW;
+        drawH = Math.round(dstW / srcAspect);
+      } else {
+        // fit by height
+        drawH = dstH;
+        drawW = Math.round(dstH * srcAspect);
+      }
+
+      const offsetX = Math.round((dstW - drawW) / 2);
+      const offsetY = Math.round((dstH - drawH) / 2);
+
+      context.clearRect(0, 0, dstW, dstH);
+      // drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
       context.drawImage(
         image,
         crop.cropX,
         crop.cropY,
         crop.cropWidth,
         crop.cropHeight,
-        0,
-        0,
-        crop.outputWidth,
-        crop.outputHeight,
+        offsetX,
+        offsetY,
+        drawW,
+        drawH,
       );
     };
 
@@ -615,7 +650,7 @@ export function ImageUploader({
           >
             <div
               data-testid="uploader-slider-side-left-preview-frame"
-              className={`flex h-full w-auto min-w-full md:min-w-[150%] lg:min-w-[175%] max-w-none items-start justify-end overflow-hidden rounded-md border-2 border-dashed ${
+              className={`flex h-full w-[280px] flex-shrink-0 md:w-[300px] lg:w-[320px] items-start justify-end overflow-hidden rounded-md border-2 border-dashed ${
                 leftSlotImage ? "border-border/35" : "border-border/60"
               }`}
               style={{
@@ -700,7 +735,7 @@ export function ImageUploader({
           >
             <div
               data-testid="uploader-slider-side-right-preview-frame"
-              className={`flex h-full w-auto min-w-full md:min-w-[150%] lg:min-w-[175%] max-w-none items-center justify-start overflow-hidden rounded-md border-2 border-dashed ${
+              className={`flex h-full w-[280px] flex-shrink-0 md:w-[300px] lg:w-[320px] items-center justify-start overflow-hidden rounded-md border-2 border-dashed ${
                 rightSlotImage ? "border-border/35" : "border-border/60"
               }`}
               style={{
