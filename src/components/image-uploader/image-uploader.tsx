@@ -1,14 +1,13 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
+import SelectedImageSlot from "./selected-image-slot";
 import {
   calculateAllProportions,
-  calculateMaxCenteredCrop,
-  formatAspectRatio,
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
@@ -77,7 +76,7 @@ const getOptimalDisplayProportion = (
   );
 };
 
-interface SelectedImageItem {
+export interface SelectedImageItem {
   file: File;
   previewUrl: string;
   metadata: SelectedImageMetadata | null;
@@ -98,7 +97,6 @@ export function ImageUploader({
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
@@ -429,6 +427,17 @@ export function ImageUploader({
     };
   }, [selectedImageMetadata]);
 
+  const bestDisplayImageProportion = useMemo(() => {
+    if (!selectedImageMetadata) {
+      return null;
+    }
+
+    return getOptimalDisplayProportion(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+    );
+  }, [selectedImageMetadata]);
+
   const previewFrameAspectRatio = useMemo(
     () => getTargetAspectRatio(displayImageProportion),
     [displayImageProportion],
@@ -455,127 +464,6 @@ export function ImageUploader({
   useEffect(() => {
     onSelectionStateChange?.(selectedImageCount > 0);
   }, [onSelectionStateChange, selectedImageCount]);
-
-  useEffect(() => {
-    if (!previewUrl || !previewCanvasRef.current) {
-      return;
-    }
-
-    const canvas = previewCanvasRef.current;
-    const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
-
-    const image = new Image();
-    image.onload = () => {
-      const sourceWidth = image.naturalWidth || image.width;
-      const sourceHeight = image.naturalHeight || image.height;
-
-      if (sourceWidth <= 0 || sourceHeight <= 0) {
-        return;
-      }
-
-      const metadata: SelectedImageMetadata = {
-        width: sourceWidth,
-        height: sourceHeight,
-        aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
-      };
-      const currentSelectedImage =
-        typeof activeImageIndex === "number"
-          ? selectedImagesRef.current[activeImageIndex]
-          : null;
-      const currentDisplayImageProportion =
-        currentSelectedImage?.displayImageProportion ?? displayImageProportion;
-      const isInitialMetadataLoad = !currentSelectedImage?.metadata;
-      const shouldAutoSelectOptimalProportion =
-        isInitialMetadataLoad && currentDisplayImageProportion === "horizontal";
-      const nextDisplayImageProportion = shouldAutoSelectOptimalProportion
-        ? getOptimalDisplayProportion(sourceWidth, sourceHeight)
-        : currentDisplayImageProportion;
-
-      updateActiveImage((selectedImage) => ({
-        ...selectedImage,
-        metadata,
-        displayImageProportion: shouldAutoSelectOptimalProportion
-          ? nextDisplayImageProportion
-          : selectedImage.displayImageProportion,
-      }));
-      onImageMetadataChange?.(metadata);
-
-      const crop = calculateMaxCenteredCrop({
-        sourceWidth,
-        sourceHeight,
-        proportion: nextDisplayImageProportion,
-      });
-
-      // Determine the display size of the canvas and set backing store size for crisp rendering
-      const rect = canvas.getBoundingClientRect();
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const displayWidth = Math.max(1, Math.round(rect.width));
-      const displayHeight = Math.max(1, Math.round(rect.height));
-
-      // Set CSS display size to match layout, and set backing pixel size for high-DPI
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
-      canvas.width = Math.round(displayWidth * dpr);
-      canvas.height = Math.round(displayHeight * dpr);
-
-      if (
-        typeof HTMLImageElement !== "undefined" &&
-        !(image instanceof HTMLImageElement)
-      ) {
-        return;
-      }
-
-      // Calculate proportional drawing dimensions so the cropped source is scaled without distortion
-      const srcW = crop.cropWidth;
-      const srcH = crop.cropHeight;
-      const dstW = canvas.width;
-      const dstH = canvas.height;
-
-      const srcAspect = srcW / srcH;
-      const dstAspect = dstW / dstH;
-
-      let drawW: number;
-      let drawH: number;
-
-      if (srcAspect > dstAspect) {
-        // source is relatively wider — fit by width
-        drawW = dstW;
-        drawH = Math.round(dstW / srcAspect);
-      } else {
-        // fit by height
-        drawH = dstH;
-        drawW = Math.round(dstH * srcAspect);
-      }
-
-      const offsetX = Math.round((dstW - drawW) / 2);
-      const offsetY = Math.round((dstH - drawH) / 2);
-
-      context.clearRect(0, 0, dstW, dstH);
-      // drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-      context.drawImage(
-        image,
-        crop.cropX,
-        crop.cropY,
-        crop.cropWidth,
-        crop.cropHeight,
-        offsetX,
-        offsetY,
-        drawW,
-        drawH,
-      );
-    };
-
-    image.src = previewUrl;
-  }, [
-    activeImageIndex,
-    displayImageProportion,
-    onImageMetadataChange,
-    previewUrl,
-    updateActiveImage,
-  ]);
 
   useEffect(() => {
     return () => {
@@ -650,7 +538,7 @@ export function ImageUploader({
           >
             <div
               data-testid="uploader-slider-side-left-preview-frame"
-              className={`flex h-full w-[280px] flex-shrink-0 md:w-[300px] lg:w-[320px] items-start justify-end overflow-hidden rounded-md border-2 border-dashed ${
+              className={`flex h-full w-auto max-w-none min-w-[280px] shrink-0 md:min-w-[300px] lg:min-w-[320px] items-start justify-end overflow-hidden rounded-md border-2 border-dashed ${
                 leftSlotImage ? "border-border/35" : "border-border/60"
               }`}
               style={{
@@ -673,53 +561,34 @@ export function ImageUploader({
             </div>
           </button>
 
-          <div className="relative mx-3 flex-1 h-full min-w-0 flex items-center justify-center">
-            <div
-              className="relative h-full w-full md:w-[95%] lg:w-[92%] xl:w-[96%] max-w-480 max-h-full overflow-hidden rounded-lg border-2 border-dashed border-border/35 flex items-center justify-center"
-              data-testid="selected-image-preview-frame"
-              style={{ aspectRatio: String(previewFrameAspectRatio) }}
-              onTouchStart={handleSliderTouchStart}
-              onTouchEnd={handleSliderTouchEnd}
-            >
-              {hasMultipleImages && (
-                <button
-                  type="button"
-                  onClick={moveToPreviousImage}
-                  disabled={!canMovePrevious}
-                  aria-label={t("uploader.previousImage")}
-                  data-testid="uploader-slider-prev"
-                  className="absolute left-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              )}
-
-              <canvas
-                ref={previewCanvasRef}
-                role="img"
-                aria-label="Preview"
-                data-testid="selected-image-preview-canvas"
-                className="w-full h-auto max-h-full"
-                style={{
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                }}
-              />
-
-              {hasMultipleImages && (
-                <button
-                  type="button"
-                  onClick={moveToNextImage}
-                  disabled={!canMoveNext}
-                  aria-label={t("uploader.nextImage")}
-                  data-testid="uploader-slider-next"
-                  className="absolute right-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
+          <SelectedImageSlot
+            selectedImage={activeImage}
+            selectedImageMetadata={selectedImageMetadata}
+            bestProportion={bestDisplayImageProportion}
+            userSelectedProportion={displayImageProportion}
+            previewFrameAspectRatio={previewFrameAspectRatio}
+            hasMultipleImages={hasMultipleImages}
+            canMovePrevious={canMovePrevious}
+            canMoveNext={canMoveNext}
+            onMovePrevious={moveToPreviousImage}
+            onMoveNext={moveToNextImage}
+            onTouchStart={handleSliderTouchStart}
+            onTouchEnd={handleSliderTouchEnd}
+            onMetadataResolved={({
+              metadata,
+              nextDisplayImageProportion,
+              shouldAutoSelectOptimalProportion,
+            }) => {
+              updateActiveImage((selectedImage) => ({
+                ...selectedImage,
+                metadata,
+                displayImageProportion: shouldAutoSelectOptimalProportion
+                  ? nextDisplayImageProportion
+                  : selectedImage.displayImageProportion,
+              }));
+              onImageMetadataChange?.(metadata);
+            }}
+          />
 
           <button
             type="button"
@@ -735,7 +604,7 @@ export function ImageUploader({
           >
             <div
               data-testid="uploader-slider-side-right-preview-frame"
-              className={`flex h-full w-[280px] flex-shrink-0 md:w-[300px] lg:w-[320px] items-center justify-start overflow-hidden rounded-md border-2 border-dashed ${
+              className={`flex h-full w-auto max-w-none min-w-[280px] shrink-0 md:min-w-[300px] lg:min-w-[320px] items-center justify-start overflow-hidden rounded-md border-2 border-dashed ${
                 rightSlotImage ? "border-border/35" : "border-border/60"
               }`}
               style={{
