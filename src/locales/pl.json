@@ -223,6 +223,7 @@
     "nextImage": "Następne zdjęcie",
     "selectImageSlot": "Wybierz zdjęcie {index}",
     "addImageSlot": "Dodaj zdjęcie do slotu {index}",
+    "removeImageSlot": "Usuń zdjęcie ze slotu {index}",
     "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia"
   },
   "checkout": {

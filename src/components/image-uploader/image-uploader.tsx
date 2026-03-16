@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
-import SelectedImageSlot from "./selected-image-slot";
+import PaintingPreviewSlot from "./painting-preview-slot";
 import {
   calculateAllProportions,
   getTargetAspectRatio,
@@ -99,6 +99,7 @@ export function ImageUploader({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
+  const activeImageIndexRef = useRef<number | null>(null);
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     createEmptySelectionSlots(),
   );
@@ -301,6 +302,80 @@ export function ImageUploader({
     [onImageMetadataChange, selectedImages],
   );
 
+  const handleRemoveImageSlot = useCallback(
+    (index: number) => {
+      const currentImages = selectedImagesRef.current;
+
+      if (index < 0 || index >= currentImages.length || !currentImages[index]) {
+        return;
+      }
+
+      const nextImages = [...currentImages];
+      const removedImage = nextImages[index];
+
+      if (removedImage) {
+        URL.revokeObjectURL(removedImage.previewUrl);
+      }
+
+      nextImages[index] = null;
+
+      const filledIndexes = nextImages.reduce<number[]>(
+        (acc, image, imageIndex) => {
+          if (image) {
+            acc.push(imageIndex);
+          }
+
+          return acc;
+        },
+        [],
+      );
+
+      if (filledIndexes.length === 0) {
+        setSelectedImages(nextImages);
+        setActiveImageIndex(null);
+        activeImageIndexRef.current = null;
+        onImageMetadataChange?.(null);
+        return;
+      }
+
+      let nextActiveIndex = activeImageIndexRef.current;
+
+      if (nextActiveIndex === index || nextActiveIndex === null) {
+        const previousFilledSlot = filledIndexes
+          .filter((filledIndex) => filledIndex < index)
+          .at(-1);
+        const nextFilledSlot = filledIndexes.find(
+          (filledIndex) => filledIndex > index,
+        );
+
+        nextActiveIndex =
+          typeof previousFilledSlot === "number"
+            ? previousFilledSlot
+            : typeof nextFilledSlot === "number"
+              ? nextFilledSlot
+              : (filledIndexes[0] ?? null);
+      }
+
+      setSelectedImages(nextImages);
+      setActiveImageIndex(nextActiveIndex);
+      activeImageIndexRef.current = nextActiveIndex;
+      onImageMetadataChange?.(
+        typeof nextActiveIndex === "number"
+          ? (nextImages[nextActiveIndex]?.metadata ?? null)
+          : null,
+      );
+    },
+    [onImageMetadataChange],
+  );
+
+  const handleRemoveActiveImage = useCallback(() => {
+    const currentActiveIndex = activeImageIndexRef.current;
+
+    if (typeof currentActiveIndex === "number") {
+      handleRemoveImageSlot(currentActiveIndex);
+    }
+  }, [handleRemoveImageSlot]);
+
   const handleCancel = useCallback(() => {
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
@@ -462,6 +537,10 @@ export function ImageUploader({
   }, [selectedImages]);
 
   useEffect(() => {
+    activeImageIndexRef.current = activeImageIndex;
+  }, [activeImageIndex]);
+
+  useEffect(() => {
     onSelectionStateChange?.(selectedImageCount > 0);
   }, [onSelectionStateChange, selectedImageCount]);
 
@@ -557,12 +636,18 @@ export function ImageUploader({
                   className="h-full w-full object-cover object-center"
                   draggable={false}
                 />
-              ) : null}
+              ) : (
+                <Plus
+                  className="h-5 w-5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              )}
             </div>
           </button>
 
-          <SelectedImageSlot
+          <PaintingPreviewSlot
             selectedImage={activeImage}
+            activeSlotIndex={activeImageIndex}
             selectedImageMetadata={selectedImageMetadata}
             bestProportion={bestDisplayImageProportion}
             userSelectedProportion={displayImageProportion}
@@ -574,6 +659,7 @@ export function ImageUploader({
             onMoveNext={moveToNextImage}
             onTouchStart={handleSliderTouchStart}
             onTouchEnd={handleSliderTouchEnd}
+            onRemoveImage={handleRemoveActiveImage}
             onMetadataResolved={({
               metadata,
               nextDisplayImageProportion,
@@ -624,7 +710,12 @@ export function ImageUploader({
                   className="h-full w-full object-cover object-center"
                   draggable={false}
                 />
-              ) : null}
+              ) : (
+                <Plus
+                  className="h-5 w-5 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              )}
             </div>
           </button>
         </div>

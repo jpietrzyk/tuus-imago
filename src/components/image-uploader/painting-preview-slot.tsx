@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import { t } from "@/locales/i18n";
 import {
   calculateAllProportions,
@@ -12,8 +12,9 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 
-interface SelectedImageSlotProps {
+interface PaintingPreviewSlotProps {
   selectedImage: SelectedImageItem | null;
+  activeSlotIndex: number | null;
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
@@ -23,6 +24,7 @@ interface SelectedImageSlotProps {
   canMoveNext: boolean;
   onMovePrevious: () => void;
   onMoveNext: () => void;
+  onRemoveImage: () => void;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -51,8 +53,9 @@ const getOptimalDisplayProportion = (
   );
 };
 
-export default function SelectedImageSlot({
+export default function PaintingPreviewSlot({
   selectedImage,
+  activeSlotIndex,
   selectedImageMetadata,
   bestProportion,
   userSelectedProportion,
@@ -62,10 +65,11 @@ export default function SelectedImageSlot({
   canMoveNext,
   onMovePrevious,
   onMoveNext,
+  onRemoveImage,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
-}: SelectedImageSlotProps) {
+}: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const latestRenderConfigRef = useRef({
     selectedImageMetadata,
@@ -202,6 +206,21 @@ export default function SelectedImageSlot({
             <ChevronLeft className="h-4 w-4" />
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={onRemoveImage}
+          aria-label={t("uploader.removeImageSlot", {
+            index:
+              typeof activeSlotIndex === "number"
+                ? String(activeSlotIndex + 1)
+                : "",
+          })}
+          data-testid="uploader-remove-active-image"
+          className="absolute right-2 top-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
 
         <canvas
           ref={previewCanvasRef}
