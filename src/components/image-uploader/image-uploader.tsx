@@ -1,13 +1,17 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
 import PaintingPreviewSlot from "./painting-preview-slot";
+import SideSlotPreview from "./side-slot-preview";
+import { useImageSliderNavigation } from "./use-image-slider-navigation";
+import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
+  getOptimalDisplayProportion,
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
@@ -57,25 +61,6 @@ const CENTER_SLOT_INDEX = Math.floor(MAX_SELECTED_IMAGES / 2);
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
   Array.from({ length: MAX_SELECTED_IMAGES }, () => null);
 
-const getOptimalDisplayProportion = (
-  sourceWidth: number,
-  sourceHeight: number,
-): ImageDisplayProportion => {
-  const proportions = calculateAllProportions(sourceWidth, sourceHeight);
-  const orderedCandidates = ["horizontal", "vertical", "square"] as const;
-  type CandidateProportion = (typeof orderedCandidates)[number];
-
-  return orderedCandidates.reduce<CandidateProportion>(
-    (bestProportion, candidate) => {
-      const bestCoverage = proportions[bestProportion].coveragePercent;
-      const candidateCoverage = proportions[candidate].coveragePercent;
-
-      return candidateCoverage > bestCoverage ? candidate : bestProportion;
-    },
-    "horizontal",
-  );
-};
-
 export interface SelectedImageItem {
   file: File;
   previewUrl: string;
@@ -98,7 +83,6 @@ export function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
-  const touchStartXRef = useRef<number | null>(null);
   const activeImageIndexRef = useRef<number | null>(null);
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     createEmptySelectionSlots(),
@@ -394,40 +378,15 @@ export function ImageUploader({
     }
   }, [revokePreviewUrls, updateSelectedImageMetadata]);
 
-  const previousFilledSlotIndex = useMemo(() => {
-    if (typeof activeImageIndex !== "number") {
-      return null;
-    }
-
-    for (let index = activeImageIndex - 1; index >= 0; index -= 1) {
-      if (selectedImages[index]) {
-        return index;
-      }
-    }
-
-    return null;
-  }, [activeImageIndex, selectedImages]);
-
-  const nextFilledSlotIndex = useMemo(() => {
-    if (typeof activeImageIndex !== "number") {
-      return null;
-    }
-
-    for (
-      let index = activeImageIndex + 1;
-      index < selectedImages.length;
-      index += 1
-    ) {
-      if (selectedImages[index]) {
-        return index;
-      }
-    }
-
-    return null;
-  }, [activeImageIndex, selectedImages]);
-
-  const canMovePrevious = previousFilledSlotIndex !== null;
-  const canMoveNext = nextFilledSlotIndex !== null;
+  const {
+    previousFilledSlotIndex,
+    nextFilledSlotIndex,
+    canMovePrevious,
+    canMoveNext,
+  } = useImageSliderNavigation({
+    selectedImages,
+    activeImageIndex,
+  });
   const hasMultipleImages = selectedImageCount > 1;
 
   const moveToPreviousImage = useCallback(() => {
@@ -452,38 +411,13 @@ export function ImageUploader({
     );
   }, [nextFilledSlotIndex, onImageMetadataChange, selectedImages]);
 
-  const handleSliderTouchStart = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      touchStartXRef.current = event.touches[0]?.clientX ?? null;
-    },
-    [],
-  );
-
-  const handleSliderTouchEnd = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      const startX = touchStartXRef.current;
-      const endX = event.changedTouches[0]?.clientX;
-
-      touchStartXRef.current = null;
-
-      if (typeof startX !== "number" || typeof endX !== "number") {
-        return;
-      }
-
-      const deltaX = endX - startX;
-      const swipeThreshold = 30;
-
-      if (deltaX <= -swipeThreshold) {
-        moveToNextImage();
-        return;
-      }
-
-      if (deltaX >= swipeThreshold) {
-        moveToPreviousImage();
-      }
-    },
-    [moveToNextImage, moveToPreviousImage],
-  );
+  const {
+    onTouchStart: handleSliderTouchStart,
+    onTouchEnd: handleSliderTouchEnd,
+  } = useSliderSwipeNavigation({
+    onSwipeLeft: moveToNextImage,
+    onSwipeRight: moveToPreviousImage,
+  });
 
   const coveragePercent = useMemo(() => {
     if (!selectedImageMetadata) {
@@ -603,47 +537,13 @@ export function ImageUploader({
           className="flex-1 flex justify-center items-center bg-transparent rounded-lg p-4 min-h-0"
           data-testid="uploader-preview-slider"
         >
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof leftSlotIndex === "number") {
-                handlePreviewSlotSelect(leftSlotIndex);
-              }
-            }}
-            disabled={leftSlotIndex === null}
-            data-testid="uploader-slider-side-left"
-            aria-label={t("uploader.previousImage")}
-            className="h-full w-16 md:w-28 lg:w-40 xl:w-48 shrink-0 overflow-hidden rounded-md bg-transparent flex items-start justify-end disabled:cursor-default disabled:opacity-70"
-          >
-            <div
-              data-testid="uploader-slider-side-left-preview-frame"
-              className={`flex h-full w-auto max-w-none min-w-[280px] shrink-0 md:min-w-[300px] lg:min-w-[320px] items-start justify-end overflow-hidden rounded-md border-2 border-dashed ${
-                leftSlotImage ? "border-border/35" : "border-border/60"
-              }`}
-              style={{
-                aspectRatio: String(previewFrameAspectRatio),
-              }}
-            >
-              {leftSlotImage ? (
-                <img
-                  src={leftSlotImage.previewUrl}
-                  alt={t("uploader.selectImageSlot", {
-                    index:
-                      typeof leftSlotIndex === "number"
-                        ? String(leftSlotIndex + 1)
-                        : "",
-                  })}
-                  className="h-full w-full object-cover object-center"
-                  draggable={false}
-                />
-              ) : (
-                <Plus
-                  className="h-5 w-5 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-          </button>
+          <SideSlotPreview
+            position="left"
+            slotIndex={leftSlotIndex}
+            image={leftSlotImage}
+            previewFrameAspectRatio={previewFrameAspectRatio}
+            onSelectSlot={handlePreviewSlotSelect}
+          />
 
           <PaintingPreviewSlot
             selectedImage={activeImage}
@@ -676,48 +576,13 @@ export function ImageUploader({
             }}
           />
 
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof rightSlotIndex === "number") {
-                handlePreviewSlotSelect(rightSlotIndex);
-              }
-            }}
-            disabled={rightSlotIndex === null}
-            data-testid="uploader-slider-side-right"
-            aria-label={t("uploader.nextImage")}
-            className="h-full w-16 md:w-28 lg:w-40 xl:w-48 shrink-0 overflow-hidden rounded-md bg-transparent disabled:cursor-default disabled:opacity-70"
-          >
-            <div
-              data-testid="uploader-slider-side-right-preview-frame"
-              className={`flex h-full w-auto max-w-none min-w-[280px] shrink-0 md:min-w-[300px] lg:min-w-[320px] items-center justify-start overflow-hidden rounded-md border-2 border-dashed ${
-                rightSlotImage ? "border-border/35" : "border-border/60"
-              }`}
-              style={{
-                aspectRatio: String(previewFrameAspectRatio),
-              }}
-            >
-              {rightSlotImage ? (
-                <img
-                  src={rightSlotImage.previewUrl}
-                  alt={
-                    typeof rightSlotIndex === "number"
-                      ? t("uploader.selectImageSlot", {
-                          index: String(rightSlotIndex + 1),
-                        })
-                      : ""
-                  }
-                  className="h-full w-full object-cover object-center"
-                  draggable={false}
-                />
-              ) : (
-                <Plus
-                  className="h-5 w-5 text-muted-foreground"
-                  aria-hidden="true"
-                />
-              )}
-            </div>
-          </button>
+          <SideSlotPreview
+            position="right"
+            slotIndex={rightSlotIndex}
+            image={rightSlotImage}
+            previewFrameAspectRatio={previewFrameAspectRatio}
+            onSelectSlot={handlePreviewSlotSelect}
+          />
         </div>
 
         <div className="text-center text-xs text-muted-foreground">

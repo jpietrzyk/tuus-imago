@@ -2,11 +2,16 @@ import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import { t } from "@/locales/i18n";
 import {
-  calculateAllProportions,
   calculateMaxCenteredCrop,
   formatAspectRatio,
+  getOptimalDisplayProportion,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
+import {
+  drawCroppedImageToCanvas,
+  loadImageElement,
+  resolveImageDimensions,
+} from "./preview-canvas-utils";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -33,25 +38,6 @@ interface PaintingPreviewSlotProps {
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
 }
-
-const getOptimalDisplayProportion = (
-  sourceWidth: number,
-  sourceHeight: number,
-): ImageDisplayProportion => {
-  const proportions = calculateAllProportions(sourceWidth, sourceHeight);
-  const orderedCandidates = ["horizontal", "vertical", "square"] as const;
-  type CandidateProportion = (typeof orderedCandidates)[number];
-
-  return orderedCandidates.reduce<CandidateProportion>(
-    (bestProportion, candidate) => {
-      const bestCoverage = proportions[bestProportion].coveragePercent;
-      const candidateCoverage = proportions[candidate].coveragePercent;
-
-      return candidateCoverage > bestCoverage ? candidate : bestProportion;
-    },
-    "horizontal",
-  );
-};
 
 export default function PaintingPreviewSlot({
   selectedImage,
@@ -91,98 +77,72 @@ export default function PaintingPreviewSlot({
     }
 
     const canvas = previewCanvasRef.current;
-    const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
+    let isActive = true;
 
-    const image = new Image();
-    image.onload = () => {
-      const sourceWidth = image.naturalWidth || image.width;
-      const sourceHeight = image.naturalHeight || image.height;
+    const renderPreview = async () => {
+      try {
+        const image = await loadImageElement(selectedImage.previewUrl);
+        if (!isActive) {
+          return;
+        }
 
-      if (sourceWidth <= 0 || sourceHeight <= 0) {
-        return;
+        const { sourceWidth, sourceHeight } = resolveImageDimensions(image);
+
+        if (sourceWidth <= 0 || sourceHeight <= 0) {
+          return;
+        }
+
+        const metadata: SelectedImageMetadata = {
+          width: sourceWidth,
+          height: sourceHeight,
+          aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
+        };
+
+        const {
+          selectedImageMetadata: latestSelectedImageMetadata,
+          bestProportion: latestBestProportion,
+          userSelectedProportion: latestUserSelectedProportion,
+        } = latestRenderConfigRef.current;
+
+        const optimalDisplayProportion =
+          latestBestProportion ??
+          getOptimalDisplayProportion(sourceWidth, sourceHeight);
+        const shouldAutoSelectOptimalProportion =
+          !latestSelectedImageMetadata &&
+          latestUserSelectedProportion === "horizontal";
+        const nextDisplayImageProportion = shouldAutoSelectOptimalProportion
+          ? optimalDisplayProportion
+          : latestUserSelectedProportion;
+
+        onMetadataResolved({
+          metadata,
+          nextDisplayImageProportion,
+          shouldAutoSelectOptimalProportion,
+        });
+
+        const crop = calculateMaxCenteredCrop({
+          sourceWidth,
+          sourceHeight,
+          proportion: nextDisplayImageProportion,
+        });
+
+        // Source crop and destination frame share the same target ratio, so this fills
+        // the full slot without adding letterbox gaps.
+        drawCroppedImageToCanvas({
+          canvas,
+          image,
+          crop,
+        });
+      } catch {
+        // Ignore image loading errors in preview; uploader handles validation earlier.
       }
-
-      const metadata: SelectedImageMetadata = {
-        width: sourceWidth,
-        height: sourceHeight,
-        aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
-      };
-
-      const {
-        selectedImageMetadata: latestSelectedImageMetadata,
-        bestProportion: latestBestProportion,
-        userSelectedProportion: latestUserSelectedProportion,
-      } = latestRenderConfigRef.current;
-
-      const optimalDisplayProportion =
-        latestBestProportion ??
-        getOptimalDisplayProportion(sourceWidth, sourceHeight);
-      const shouldAutoSelectOptimalProportion =
-        !latestSelectedImageMetadata &&
-        latestUserSelectedProportion === "horizontal";
-      const nextDisplayImageProportion = shouldAutoSelectOptimalProportion
-        ? optimalDisplayProportion
-        : latestUserSelectedProportion;
-
-      onMetadataResolved({
-        metadata,
-        nextDisplayImageProportion,
-        shouldAutoSelectOptimalProportion,
-      });
-
-      const crop = calculateMaxCenteredCrop({
-        sourceWidth,
-        sourceHeight,
-        proportion: nextDisplayImageProportion,
-      });
-
-      // Use rendered size as backing store size to keep preview crisp on current layout.
-      const rect = canvas.getBoundingClientRect();
-      const dpr =
-        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-      const hasMeasuredCanvasSize = rect.width > 0 && rect.height > 0;
-      const displayWidth = hasMeasuredCanvasSize
-        ? Math.max(1, Math.round(rect.width))
-        : crop.outputWidth;
-      const displayHeight = hasMeasuredCanvasSize
-        ? Math.max(1, Math.round(rect.height))
-        : crop.outputHeight;
-
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
-      canvas.width = Math.round(displayWidth * dpr);
-      canvas.height = Math.round(displayHeight * dpr);
-
-      if (
-        typeof HTMLImageElement !== "undefined" &&
-        !(image instanceof HTMLImageElement)
-      ) {
-        return;
-      }
-
-      const dstW = canvas.width;
-      const dstH = canvas.height;
-
-      // Source crop and destination frame share the same target ratio, so this fills
-      // the full slot without adding letterbox gaps.
-      context.clearRect(0, 0, dstW, dstH);
-      context.drawImage(
-        image,
-        crop.cropX,
-        crop.cropY,
-        crop.cropWidth,
-        crop.cropHeight,
-        0,
-        0,
-        dstW,
-        dstH,
-      );
     };
 
-    image.src = selectedImage.previewUrl;
+    void renderPreview();
+
+    return () => {
+      isActive = false;
+    };
   }, [onMetadataResolved, selectedImage]);
 
   return (
