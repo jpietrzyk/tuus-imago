@@ -120,6 +120,67 @@ describe("preview-canvas-utils", () => {
     );
   });
 
+  it("falls back when measured canvas size is transiently tiny and keeps display size CSS-driven", () => {
+    const canvas = document.createElement("canvas");
+    const clearRect = vi.fn();
+    const drawImage = vi.fn();
+
+    Object.defineProperty(window, "devicePixelRatio", {
+      value: 2,
+      configurable: true,
+    });
+
+    vi.spyOn(canvas, "getContext").mockReturnValue({
+      clearRect,
+      drawImage,
+    } as unknown as CanvasRenderingContext2D);
+
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      width: 12,
+      height: 10,
+      x: 0,
+      y: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      toJSON: () => ({}),
+    });
+
+    const image = document.createElement("img");
+    const crop = createCrop();
+
+    const drawn = drawCroppedImageToCanvas({
+      canvas,
+      image,
+      crop,
+    });
+
+    expect(drawn).toBe(true);
+    // Uses crop output buffer size because tiny measured rect is considered unstable.
+    expect(canvas.width).toBe(crop.outputWidth * 2);
+    expect(canvas.height).toBe(crop.outputHeight * 2);
+    expect(canvas.style.width).toBe("");
+    expect(canvas.style.height).toBe("");
+    expect(clearRect).toHaveBeenCalledWith(
+      0,
+      0,
+      crop.outputWidth * 2,
+      crop.outputHeight * 2,
+    );
+    expect(drawImage).toHaveBeenCalledWith(
+      image,
+      crop.cropX,
+      crop.cropY,
+      crop.cropWidth,
+      crop.cropHeight,
+      0,
+      0,
+      crop.outputWidth * 2,
+      crop.outputHeight * 2,
+    );
+  });
+
   it("returns false when canvas context is unavailable", () => {
     const canvas = document.createElement("canvas");
     vi.spyOn(canvas, "getContext").mockReturnValue(null);
