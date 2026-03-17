@@ -5,8 +5,7 @@ import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
-import PaintingPreviewSlot from "./painting-preview-slot";
-import SideSlotPreview from "./side-slot-preview";
+import UploaderPreviewSlider from "./uploader-preview-slider";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
 import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
@@ -533,57 +532,41 @@ export function ImageUploader({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-        <div
-          className="flex-1 flex justify-center items-center bg-transparent rounded-lg p-4 min-h-0"
-          data-testid="uploader-preview-slider"
-        >
-          <SideSlotPreview
-            position="left"
-            slotIndex={leftSlotIndex}
-            image={leftSlotImage}
-            previewFrameAspectRatio={previewFrameAspectRatio}
-            onSelectSlot={handlePreviewSlotSelect}
-          />
-
-          <PaintingPreviewSlot
-            selectedImage={activeImage}
-            activeSlotIndex={activeImageIndex}
-            selectedImageMetadata={selectedImageMetadata}
-            bestProportion={bestDisplayImageProportion}
-            userSelectedProportion={displayImageProportion}
-            previewFrameAspectRatio={previewFrameAspectRatio}
-            hasMultipleImages={hasMultipleImages}
-            canMovePrevious={canMovePrevious}
-            canMoveNext={canMoveNext}
-            onMovePrevious={moveToPreviousImage}
-            onMoveNext={moveToNextImage}
-            onTouchStart={handleSliderTouchStart}
-            onTouchEnd={handleSliderTouchEnd}
-            onRemoveImage={handleRemoveActiveImage}
-            onMetadataResolved={({
+        <UploaderPreviewSlider
+          activeImage={activeImage}
+          activeImageIndex={activeImageIndex}
+          selectedImageMetadata={selectedImageMetadata}
+          bestProportion={bestDisplayImageProportion}
+          userSelectedProportion={displayImageProportion}
+          previewFrameAspectRatio={previewFrameAspectRatio}
+          hasMultipleImages={hasMultipleImages}
+          canMovePrevious={canMovePrevious}
+          canMoveNext={canMoveNext}
+          leftSlotIndex={leftSlotIndex}
+          rightSlotIndex={rightSlotIndex}
+          leftSlotImage={leftSlotImage}
+          rightSlotImage={rightSlotImage}
+          onSelectSlot={handlePreviewSlotSelect}
+          onMovePrevious={moveToPreviousImage}
+          onMoveNext={moveToNextImage}
+          onRemoveActiveImage={handleRemoveActiveImage}
+          onTouchStart={handleSliderTouchStart}
+          onTouchEnd={handleSliderTouchEnd}
+          onMetadataResolved={({
+            metadata,
+            nextDisplayImageProportion,
+            shouldAutoSelectOptimalProportion,
+          }) => {
+            updateActiveImage((selectedImage) => ({
+              ...selectedImage,
               metadata,
-              nextDisplayImageProportion,
-              shouldAutoSelectOptimalProportion,
-            }) => {
-              updateActiveImage((selectedImage) => ({
-                ...selectedImage,
-                metadata,
-                displayImageProportion: shouldAutoSelectOptimalProportion
-                  ? nextDisplayImageProportion
-                  : selectedImage.displayImageProportion,
-              }));
-              onImageMetadataChange?.(metadata);
-            }}
-          />
-
-          <SideSlotPreview
-            position="right"
-            slotIndex={rightSlotIndex}
-            image={rightSlotImage}
-            previewFrameAspectRatio={previewFrameAspectRatio}
-            onSelectSlot={handlePreviewSlotSelect}
-          />
-        </div>
+              displayImageProportion: shouldAutoSelectOptimalProportion
+                ? nextDisplayImageProportion
+                : selectedImage.displayImageProportion,
+            }));
+            onImageMetadataChange?.(metadata);
+          }}
+        />
 
         <div className="text-center text-xs text-muted-foreground">
           {t("uploader.multiImageHint")}
