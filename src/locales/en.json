@@ -223,6 +223,7 @@
     "nextImage": "Next image",
     "selectImageSlot": "Select image {index}",
     "addImageSlot": "Add image to slot {index}",
+    "removeImageSlot": "Remove image from slot {index}",
     "maxImagesError": "You can select up to 3 images"
   },
   "checkout": {

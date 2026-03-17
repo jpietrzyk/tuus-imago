@@ -429,6 +429,12 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
       fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
 
       await waitFor(() => {
@@ -505,6 +511,84 @@ describe("ImageUploader", () => {
         expect(leftFrame).toHaveClass("h-full", "w-auto", "max-w-none");
 
         expect(leftSlot).toHaveClass("overflow-hidden");
+      });
+    }
+  });
+
+  it("removes the active image and returns to upload area when it was the only one", async () => {
+    render(<ImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [file] } });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+
+      await waitFor(() => {
+        expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+      });
+    }
+  });
+
+  it("removes current active image and keeps remaining image active", async () => {
+    render(<ImageUploader />);
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [firstFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      mockImageWidth = 900;
+      mockImageHeight = 900;
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).toContain(
+          "1200 × 800",
+        );
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).toContain(
+          "900 × 900",
+        );
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeNull();
       });
     }
   });

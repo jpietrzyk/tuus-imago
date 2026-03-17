@@ -121,3 +121,22 @@ export const calculateAllProportions = (
     }),
   };
 };
+
+export const getOptimalDisplayProportion = (
+  sourceWidth: number,
+  sourceHeight: number,
+): ImageDisplayProportion => {
+  const proportions = calculateAllProportions(sourceWidth, sourceHeight);
+  const orderedCandidates = ["horizontal", "vertical", "square"] as const;
+  type CandidateProportion = (typeof orderedCandidates)[number];
+
+  return orderedCandidates.reduce<CandidateProportion>(
+    (bestProportion, candidate) => {
+      const bestCoverage = proportions[bestProportion].coveragePercent;
+      const candidateCoverage = proportions[candidate].coveragePercent;
+
+      return candidateCoverage > bestCoverage ? candidate : bestProportion;
+    },
+    "horizontal",
+  );
+};

@@ -214,6 +214,7 @@ export interface Translations {
     nextImage: string;
     selectImageSlot: string;
     addImageSlot: string;
+    removeImageSlot: string;
     maxImagesError: string;
   };
   checkout: {

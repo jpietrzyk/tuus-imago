@@ -1,14 +1,17 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
+import UploaderPreviewSlider from "./uploader-preview-slider";
+import { useImageSliderNavigation } from "./use-image-slider-navigation";
+import { usePreviewSliderSlots } from "./use-preview-slider-slots";
+import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
-  calculateMaxCenteredCrop,
-  formatAspectRatio,
+  getOptimalDisplayProportion,
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
@@ -58,26 +61,7 @@ const CENTER_SLOT_INDEX = Math.floor(MAX_SELECTED_IMAGES / 2);
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
   Array.from({ length: MAX_SELECTED_IMAGES }, () => null);
 
-const getOptimalDisplayProportion = (
-  sourceWidth: number,
-  sourceHeight: number,
-): ImageDisplayProportion => {
-  const proportions = calculateAllProportions(sourceWidth, sourceHeight);
-  const orderedCandidates = ["horizontal", "vertical", "square"] as const;
-  type CandidateProportion = (typeof orderedCandidates)[number];
-
-  return orderedCandidates.reduce<CandidateProportion>(
-    (bestProportion, candidate) => {
-      const bestCoverage = proportions[bestProportion].coveragePercent;
-      const candidateCoverage = proportions[candidate].coveragePercent;
-
-      return candidateCoverage > bestCoverage ? candidate : bestProportion;
-    },
-    "horizontal",
-  );
-};
-
-interface SelectedImageItem {
+export interface SelectedImageItem {
   file: File;
   previewUrl: string;
   metadata: SelectedImageMetadata | null;
@@ -98,9 +82,8 @@ export function ImageUploader({
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
-  const touchStartXRef = useRef<number | null>(null);
+  const activeImageIndexRef = useRef<number | null>(null);
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     createEmptySelectionSlots(),
   );
@@ -247,6 +230,28 @@ export function ImageUploader({
     [onImageMetadataChange, updateActiveImage],
   );
 
+  const handleMetadataResolved = useCallback(
+    ({
+      metadata,
+      nextDisplayImageProportion,
+      shouldAutoSelectOptimalProportion,
+    }: {
+      metadata: SelectedImageMetadata;
+      nextDisplayImageProportion: ImageDisplayProportion;
+      shouldAutoSelectOptimalProportion: boolean;
+    }) => {
+      updateActiveImage((selectedImage) => ({
+        ...selectedImage,
+        metadata,
+        displayImageProportion: shouldAutoSelectOptimalProportion
+          ? nextDisplayImageProportion
+          : selectedImage.displayImageProportion,
+      }));
+      onImageMetadataChange?.(metadata);
+    },
+    [onImageMetadataChange, updateActiveImage],
+  );
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -303,6 +308,80 @@ export function ImageUploader({
     [onImageMetadataChange, selectedImages],
   );
 
+  const handleRemoveImageSlot = useCallback(
+    (index: number) => {
+      const currentImages = selectedImagesRef.current;
+
+      if (index < 0 || index >= currentImages.length || !currentImages[index]) {
+        return;
+      }
+
+      const nextImages = [...currentImages];
+      const removedImage = nextImages[index];
+
+      if (removedImage) {
+        URL.revokeObjectURL(removedImage.previewUrl);
+      }
+
+      nextImages[index] = null;
+
+      const filledIndexes = nextImages.reduce<number[]>(
+        (acc, image, imageIndex) => {
+          if (image) {
+            acc.push(imageIndex);
+          }
+
+          return acc;
+        },
+        [],
+      );
+
+      if (filledIndexes.length === 0) {
+        setSelectedImages(nextImages);
+        setActiveImageIndex(null);
+        activeImageIndexRef.current = null;
+        onImageMetadataChange?.(null);
+        return;
+      }
+
+      let nextActiveIndex = activeImageIndexRef.current;
+
+      if (nextActiveIndex === index || nextActiveIndex === null) {
+        const previousFilledSlot = filledIndexes
+          .filter((filledIndex) => filledIndex < index)
+          .at(-1);
+        const nextFilledSlot = filledIndexes.find(
+          (filledIndex) => filledIndex > index,
+        );
+
+        nextActiveIndex =
+          typeof previousFilledSlot === "number"
+            ? previousFilledSlot
+            : typeof nextFilledSlot === "number"
+              ? nextFilledSlot
+              : (filledIndexes[0] ?? null);
+      }
+
+      setSelectedImages(nextImages);
+      setActiveImageIndex(nextActiveIndex);
+      activeImageIndexRef.current = nextActiveIndex;
+      onImageMetadataChange?.(
+        typeof nextActiveIndex === "number"
+          ? (nextImages[nextActiveIndex]?.metadata ?? null)
+          : null,
+      );
+    },
+    [onImageMetadataChange],
+  );
+
+  const handleRemoveActiveImage = useCallback(() => {
+    const currentActiveIndex = activeImageIndexRef.current;
+
+    if (typeof currentActiveIndex === "number") {
+      handleRemoveImageSlot(currentActiveIndex);
+    }
+  }, [handleRemoveImageSlot]);
+
   const handleCancel = useCallback(() => {
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
@@ -321,40 +400,15 @@ export function ImageUploader({
     }
   }, [revokePreviewUrls, updateSelectedImageMetadata]);
 
-  const previousFilledSlotIndex = useMemo(() => {
-    if (typeof activeImageIndex !== "number") {
-      return null;
-    }
-
-    for (let index = activeImageIndex - 1; index >= 0; index -= 1) {
-      if (selectedImages[index]) {
-        return index;
-      }
-    }
-
-    return null;
-  }, [activeImageIndex, selectedImages]);
-
-  const nextFilledSlotIndex = useMemo(() => {
-    if (typeof activeImageIndex !== "number") {
-      return null;
-    }
-
-    for (
-      let index = activeImageIndex + 1;
-      index < selectedImages.length;
-      index += 1
-    ) {
-      if (selectedImages[index]) {
-        return index;
-      }
-    }
-
-    return null;
-  }, [activeImageIndex, selectedImages]);
-
-  const canMovePrevious = previousFilledSlotIndex !== null;
-  const canMoveNext = nextFilledSlotIndex !== null;
+  const {
+    previousFilledSlotIndex,
+    nextFilledSlotIndex,
+    canMovePrevious,
+    canMoveNext,
+  } = useImageSliderNavigation({
+    selectedImages,
+    activeImageIndex,
+  });
   const hasMultipleImages = selectedImageCount > 1;
 
   const moveToPreviousImage = useCallback(() => {
@@ -379,38 +433,13 @@ export function ImageUploader({
     );
   }, [nextFilledSlotIndex, onImageMetadataChange, selectedImages]);
 
-  const handleSliderTouchStart = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      touchStartXRef.current = event.touches[0]?.clientX ?? null;
-    },
-    [],
-  );
-
-  const handleSliderTouchEnd = useCallback(
-    (event: React.TouchEvent<HTMLDivElement>) => {
-      const startX = touchStartXRef.current;
-      const endX = event.changedTouches[0]?.clientX;
-
-      touchStartXRef.current = null;
-
-      if (typeof startX !== "number" || typeof endX !== "number") {
-        return;
-      }
-
-      const deltaX = endX - startX;
-      const swipeThreshold = 30;
-
-      if (deltaX <= -swipeThreshold) {
-        moveToNextImage();
-        return;
-      }
-
-      if (deltaX >= swipeThreshold) {
-        moveToPreviousImage();
-      }
-    },
-    [moveToNextImage, moveToPreviousImage],
-  );
+  const {
+    onTouchStart: handleSliderTouchStart,
+    onTouchEnd: handleSliderTouchEnd,
+  } = useSliderSwipeNavigation({
+    onSwipeLeft: moveToNextImage,
+    onSwipeRight: moveToPreviousImage,
+  });
 
   const coveragePercent = useMemo(() => {
     if (!selectedImageMetadata) {
@@ -429,132 +458,39 @@ export function ImageUploader({
     };
   }, [selectedImageMetadata]);
 
+  const bestDisplayImageProportion = useMemo(() => {
+    if (!selectedImageMetadata) {
+      return null;
+    }
+
+    return getOptimalDisplayProportion(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+    );
+  }, [selectedImageMetadata]);
+
   const previewFrameAspectRatio = useMemo(
     () => getTargetAspectRatio(displayImageProportion),
     [displayImageProportion],
   );
 
-  const leftSlotIndex =
-    typeof activeImageIndex === "number" && activeImageIndex > 0
-      ? activeImageIndex - 1
-      : null;
-  const rightSlotIndex =
-    typeof activeImageIndex === "number" &&
-    activeImageIndex < MAX_SELECTED_IMAGES - 1
-      ? activeImageIndex + 1
-      : null;
-  const leftSlotImage =
-    typeof leftSlotIndex === "number" ? selectedImages[leftSlotIndex] : null;
-  const rightSlotImage =
-    typeof rightSlotIndex === "number" ? selectedImages[rightSlotIndex] : null;
+  const { leftSlotIndex, rightSlotIndex, leftSlotImage, rightSlotImage } =
+    usePreviewSliderSlots({
+      selectedImages,
+      activeImageIndex,
+    });
 
   useEffect(() => {
     selectedImagesRef.current = selectedImages;
   }, [selectedImages]);
 
   useEffect(() => {
-    onSelectionStateChange?.(selectedImageCount > 0);
-  }, [onSelectionStateChange, selectedImageCount]);
+    activeImageIndexRef.current = activeImageIndex;
+  }, [activeImageIndex]);
 
   useEffect(() => {
-    if (!previewUrl || !previewCanvasRef.current) {
-      return;
-    }
-
-    const canvas = previewCanvasRef.current;
-    const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
-
-    const image = new Image();
-    image.onload = () => {
-      const sourceWidth = image.naturalWidth || image.width;
-      const sourceHeight = image.naturalHeight || image.height;
-
-      if (sourceWidth <= 0 || sourceHeight <= 0) {
-        return;
-      }
-
-      const metadata: SelectedImageMetadata = {
-        width: sourceWidth,
-        height: sourceHeight,
-        aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
-      };
-      const currentSelectedImage =
-        typeof activeImageIndex === "number"
-          ? selectedImagesRef.current[activeImageIndex]
-          : null;
-      const currentDisplayImageProportion =
-        currentSelectedImage?.displayImageProportion ?? displayImageProportion;
-      const isInitialMetadataLoad = !currentSelectedImage?.metadata;
-      const shouldAutoSelectOptimalProportion =
-        isInitialMetadataLoad && currentDisplayImageProportion === "horizontal";
-      const nextDisplayImageProportion = shouldAutoSelectOptimalProportion
-        ? getOptimalDisplayProportion(sourceWidth, sourceHeight)
-        : currentDisplayImageProportion;
-
-      updateActiveImage((selectedImage) => ({
-        ...selectedImage,
-        metadata,
-        displayImageProportion: shouldAutoSelectOptimalProportion
-          ? nextDisplayImageProportion
-          : selectedImage.displayImageProportion,
-      }));
-      onImageMetadataChange?.(metadata);
-
-      const crop = calculateMaxCenteredCrop({
-        sourceWidth,
-        sourceHeight,
-        proportion: nextDisplayImageProportion,
-      });
-
-      canvas.width = crop.outputWidth;
-      canvas.height = crop.outputHeight;
-
-      if (
-        typeof HTMLImageElement !== "undefined" &&
-        !(image instanceof HTMLImageElement)
-      ) {
-        return;
-      }
-
-      // Scale the cropped source to cover the destination (object-fit: cover) and center it
-      const srcW = crop.cropWidth;
-      const srcH = crop.cropHeight;
-      const dstW = canvas.width;
-      const dstH = canvas.height;
-
-      const scale = Math.max(dstW / srcW, dstH / srcH);
-      const drawW = Math.round(srcW * scale);
-      const drawH = Math.round(srcH * scale);
-
-      const offsetX = Math.round((dstW - drawW) / 2);
-      const offsetY = Math.round((dstH - drawH) / 2);
-
-      context.clearRect(0, 0, dstW, dstH);
-      // drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-      context.drawImage(
-        image,
-        crop.cropX,
-        crop.cropY,
-        crop.cropWidth,
-        crop.cropHeight,
-        offsetX,
-        offsetY,
-        drawW,
-        drawH,
-      );
-    };
-
-    image.src = previewUrl;
-  }, [
-    activeImageIndex,
-    displayImageProportion,
-    onImageMetadataChange,
-    previewUrl,
-    updateActiveImage,
-  ]);
+    onSelectionStateChange?.(selectedImageCount > 0);
+  }, [onSelectionStateChange, selectedImageCount]);
 
   useEffect(() => {
     return () => {
@@ -611,129 +547,28 @@ export function ImageUploader({
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-        <div
-          className="flex-1 flex justify-center items-center bg-transparent rounded-lg min-h-0 overflow-visible"
-          data-testid="uploader-preview-slider"
-        >
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof leftSlotIndex === "number") {
-                handlePreviewSlotSelect(leftSlotIndex);
-              }
-            }}
-            disabled={leftSlotIndex === null}
-            data-testid="uploader-slider-side-left"
-            aria-label={t("uploader.previousImage")}
-            className="h-full w-16 md:w-28 lg:w-40 xl:w-48 shrink-0 overflow-hidden rounded-none bg-transparent flex items-start justify-end disabled:cursor-default disabled:opacity-70 md:-mr-8 lg:-mr-10"
-          >
-            <div
-              data-testid="uploader-slider-side-left-preview-frame"
-              className={`flex h-full max-w-none w-70 shrink-0 md:w-75 lg:w-[320px] items-start justify-end overflow-hidden rounded-none border-0`}
-              style={{
-                aspectRatio: String(previewFrameAspectRatio),
-              }}
-            >
-              {leftSlotImage ? (
-                <img
-                  src={leftSlotImage.previewUrl}
-                  alt={t("uploader.selectImageSlot", {
-                    index:
-                      typeof leftSlotIndex === "number"
-                        ? String(leftSlotIndex + 1)
-                        : "",
-                  })}
-                  className="h-full w-full object-cover object-center"
-                  draggable={false}
-                />
-              ) : null}
-            </div>
-          </button>
-
-          <div className="relative mx-0 flex-1 h-full min-w-0 flex items-center justify-center">
-            <div
-              className="relative h-full w-full md:w-[85%] lg:w-[80%] xl:w-[78%] max-w-640 max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center"
-              data-testid="selected-image-preview-frame"
-              style={{ aspectRatio: String(previewFrameAspectRatio) }}
-              onTouchStart={handleSliderTouchStart}
-              onTouchEnd={handleSliderTouchEnd}
-            >
-              {hasMultipleImages && (
-                <button
-                  type="button"
-                  onClick={moveToPreviousImage}
-                  disabled={!canMovePrevious}
-                  aria-label={t("uploader.previousImage")}
-                  data-testid="uploader-slider-prev"
-                  className="absolute left-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-              )}
-
-              <canvas
-                ref={previewCanvasRef}
-                role="img"
-                aria-label="Preview"
-                data-testid="selected-image-preview-canvas"
-                className="w-full h-full"
-                style={{
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                }}
-              />
-
-              {hasMultipleImages && (
-                <button
-                  type="button"
-                  onClick={moveToNextImage}
-                  disabled={!canMoveNext}
-                  aria-label={t("uploader.nextImage")}
-                  data-testid="uploader-slider-next"
-                  className="absolute right-2 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-background/90 text-muted-foreground disabled:opacity-40"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof rightSlotIndex === "number") {
-                handlePreviewSlotSelect(rightSlotIndex);
-              }
-            }}
-            disabled={rightSlotIndex === null}
-            data-testid="uploader-slider-side-right"
-            aria-label={t("uploader.nextImage")}
-            className="h-full w-16 md:w-28 lg:w-40 xl:w-48 shrink-0 overflow-hidden rounded-none bg-transparent disabled:cursor-default disabled:opacity-70 md:-ml-8 lg:-ml-10"
-          >
-            <div
-              data-testid="uploader-slider-side-right-preview-frame"
-              className={`flex h-full max-w-none w-70 shrink-0 md:w-75 lg:w-[320px] items-center justify-start overflow-hidden rounded-none border-0`}
-              style={{
-                aspectRatio: String(previewFrameAspectRatio),
-              }}
-            >
-              {rightSlotImage ? (
-                <img
-                  src={rightSlotImage.previewUrl}
-                  alt={
-                    typeof rightSlotIndex === "number"
-                      ? t("uploader.selectImageSlot", {
-                          index: String(rightSlotIndex + 1),
-                        })
-                      : ""
-                  }
-                  className="h-full w-full object-cover object-center"
-                  draggable={false}
-                />
-              ) : null}
-            </div>
-          </button>
-        </div>
+        <UploaderPreviewSlider
+          activeImage={activeImage}
+          activeImageIndex={activeImageIndex}
+          selectedImageMetadata={selectedImageMetadata}
+          bestProportion={bestDisplayImageProportion}
+          userSelectedProportion={displayImageProportion}
+          previewFrameAspectRatio={previewFrameAspectRatio}
+          hasMultipleImages={hasMultipleImages}
+          canMovePrevious={canMovePrevious}
+          canMoveNext={canMoveNext}
+          leftSlotIndex={leftSlotIndex}
+          rightSlotIndex={rightSlotIndex}
+          leftSlotImage={leftSlotImage}
+          rightSlotImage={rightSlotImage}
+          onSelectSlot={handlePreviewSlotSelect}
+          onMovePrevious={moveToPreviousImage}
+          onMoveNext={moveToNextImage}
+          onRemoveActiveImage={handleRemoveActiveImage}
+          onTouchStart={handleSliderTouchStart}
+          onTouchEnd={handleSliderTouchEnd}
+          onMetadataResolved={handleMetadataResolved}
+        />
 
         <div className="text-center text-xs text-muted-foreground">
           {t("uploader.multiImageHint")}
