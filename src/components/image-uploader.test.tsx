@@ -508,7 +508,13 @@ describe("ImageUploader", () => {
         const leftSlot = screen.getByTestId("uploader-slider-side-left");
 
         expect(leftFrame).toHaveStyle({ aspectRatio: String(1) });
-        expect(leftFrame).toHaveClass("h-full", "w-auto", "max-w-none");
+        expect(leftFrame).toHaveClass(
+          "h-full",
+          "w-full",
+          "min-w-0",
+          "max-w-full",
+          "aspect-square",
+        );
 
         expect(leftSlot).toHaveClass("overflow-hidden");
       });
@@ -589,6 +595,173 @@ describe("ImageUploader", () => {
         expect(
           screen.getByTestId("uploader-slider-side-right").querySelector("img"),
         ).toBeNull();
+      });
+    }
+  });
+
+  it("keeps side slots populated and falls back to remaining images after removals", async () => {
+    render(<ImageUploader />);
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+    const thirdFile = new File(["third"], "third.jpg", { type: "image/jpeg" });
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      mockImageWidth = 1200;
+      mockImageHeight = 800;
+      fireEvent.change(input, { target: { files: [firstFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).toContain(
+          "1200 × 800",
+        );
+      });
+
+      mockImageWidth = 900;
+      mockImageHeight = 900;
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      let editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+      expect(editorInput).toBeDefined();
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      mockImageWidth = 700;
+      mockImageHeight = 1100;
+      fireEvent.click(screen.getByTestId("uploader-slider-side-left"));
+
+      editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+      expect(editorInput).toBeDefined();
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [thirdFile] } });
+      }
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
+        ).toBeTruthy();
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+
+      await waitFor(() => {
+        expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+      });
+    }
+  });
+
+  it("applies swipe threshold before changing active slot", async () => {
+    render(<ImageUploader />);
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      mockImageWidth = 1200;
+      mockImageHeight = 800;
+      fireEvent.change(input, { target: { files: [firstFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).toContain(
+          "1200 × 800",
+        );
+      });
+
+      mockImageWidth = 900;
+      mockImageHeight = 900;
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+      expect(editorInput).toBeDefined();
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      const previewFrame = screen.getByTestId("selected-image-preview-frame");
+      const prevButton = screen.getByTestId(
+        "uploader-slider-prev",
+      ) as HTMLButtonElement;
+      const nextButton = screen.getByTestId(
+        "uploader-slider-next",
+      ) as HTMLButtonElement;
+
+      const startX = 200;
+      const canMoveNext = !nextButton.disabled;
+      const smallDelta = canMoveNext ? -25 : 25;
+      const largeDelta = canMoveNext ? -60 : 60;
+      const proportionsBeforeSwipe =
+        screen.getByTestId("image-proportions").textContent ?? "";
+
+      expect(canMoveNext || !prevButton.disabled).toBe(true);
+
+      fireEvent.touchStart(previewFrame, {
+        touches: [{ clientX: startX }],
+      });
+      fireEvent.touchEnd(previewFrame, {
+        changedTouches: [{ clientX: startX + smallDelta }],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).toBe(
+          proportionsBeforeSwipe,
+        );
+      });
+
+      fireEvent.touchStart(previewFrame, {
+        touches: [{ clientX: startX }],
+      });
+      fireEvent.touchEnd(previewFrame, {
+        changedTouches: [{ clientX: startX + largeDelta }],
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("image-proportions").textContent).not.toBe(
+          proportionsBeforeSwipe,
+        );
       });
     }
   });

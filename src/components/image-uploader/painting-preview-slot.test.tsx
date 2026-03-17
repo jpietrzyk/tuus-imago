@@ -164,4 +164,46 @@ describe("PaintingPreviewSlot", () => {
       screen.queryByTestId("uploader-slider-next"),
     ).not.toBeInTheDocument();
   });
+
+  it("applies vertical fixed frame preset when vertical proportion is selected", () => {
+    const props = {
+      ...createProps(),
+      userSelectedProportion: "vertical" as ImageDisplayProportion,
+    };
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
+      "w-full",
+      "max-h-full",
+      "max-w-[40rem]",
+      "md:max-w-[48rem]",
+      "aspect-[2/3]",
+    );
+  });
+
+  it.each([
+    {
+      proportion: "horizontal" as ImageDisplayProportion,
+      aspectClass: "aspect-[16/9]",
+    },
+    {
+      proportion: "square" as ImageDisplayProportion,
+      aspectClass: "aspect-square",
+    },
+  ])(
+    "applies stable frame aspect class for $proportion proportion",
+    ({ proportion, aspectClass }) => {
+      const props = {
+        ...createProps(),
+        userSelectedProportion: proportion,
+      };
+
+      render(<PaintingPreviewSlot {...props} />);
+
+      expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
+        aspectClass,
+      );
+    },
+  );
 });

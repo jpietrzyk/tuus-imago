@@ -344,6 +344,8 @@ export function ImageUploader({
         return;
       }
 
+      // Read active index from a ref so remove handlers always use the latest value,
+      // even when a removal happens right after navigation in the same render cycle.
       let nextActiveIndex = activeImageIndexRef.current;
 
       if (nextActiveIndex === index || nextActiveIndex === null) {

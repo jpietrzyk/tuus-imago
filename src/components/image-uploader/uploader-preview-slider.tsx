@@ -57,7 +57,7 @@ export default function UploaderPreviewSlider({
 }: UploaderPreviewSliderProps) {
   return (
     <div
-      className="flex-1 flex justify-center items-center bg-transparent rounded-lg min-h-0 overflow-visible"
+      className="flex w-full min-w-0 flex-1 items-center justify-center rounded-lg bg-transparent min-h-0 overflow-hidden"
       data-testid="uploader-preview-slider"
     >
       <SideSlotPreview
@@ -65,6 +65,8 @@ export default function UploaderPreviewSlider({
         slotIndex={leftSlotIndex}
         image={leftSlotImage}
         previewFrameAspectRatio={previewFrameAspectRatio}
+        selectedProportion={userSelectedProportion}
+        isNavigable={canMovePrevious}
         onSelectSlot={onSelectSlot}
       />
 
@@ -91,6 +93,8 @@ export default function UploaderPreviewSlider({
         slotIndex={rightSlotIndex}
         image={rightSlotImage}
         previewFrameAspectRatio={previewFrameAspectRatio}
+        selectedProportion={userSelectedProportion}
+        isNavigable={canMoveNext}
         onSelectSlot={onSelectSlot}
       />
     </div>
