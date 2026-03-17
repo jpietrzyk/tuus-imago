@@ -58,6 +58,9 @@ export default function PaintingPreviewSlot({
   usePreviewCanvasRender({
     previewUrl: selectedImage?.previewUrl ?? null,
     canvasRef: previewCanvasRef,
+    selectedImageMetadata,
+    bestProportion,
+    userSelectedProportion,
     latestRenderConfigRef,
     onMetadataResolved,
   });

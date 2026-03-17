@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import * as previewCanvasUtils from "./preview-canvas-utils";
 import * as previewRenderPlan from "./preview-render-plan";
@@ -43,9 +43,20 @@ function Harness({
     userSelectedProportion,
   });
 
+  useEffect(() => {
+    latestRenderConfigRef.current = {
+      selectedImageMetadata,
+      bestProportion,
+      userSelectedProportion,
+    };
+  }, [bestProportion, selectedImageMetadata, userSelectedProportion]);
+
   usePreviewCanvasRender({
     previewUrl,
     canvasRef,
+    selectedImageMetadata,
+    bestProportion,
+    userSelectedProportion,
     latestRenderConfigRef,
     onMetadataResolved,
   });
@@ -201,5 +212,92 @@ describe("usePreviewCanvasRender", () => {
     expect(previewRenderPlan.buildPreviewRenderPlan).not.toHaveBeenCalled();
     expect(onMetadataResolved).not.toHaveBeenCalled();
     expect(previewCanvasUtils.drawCroppedImageToCanvas).not.toHaveBeenCalled();
+  });
+
+  it("reruns render pipeline when proportion changes even with stable callback", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockImplementation(
+      ({ userSelectedProportion }) => ({
+        metadata: {
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        },
+        nextDisplayImageProportion: userSelectedProportion,
+        shouldAutoSelectOptimalProportion: false,
+        crop: {
+          cropX: 0,
+          cropY: 0,
+          cropWidth: 1200,
+          cropHeight: userSelectedProportion === "vertical" ? 1800 : 675,
+          outputWidth: userSelectedProportion === "vertical" ? 533 : 1200,
+          outputHeight: userSelectedProportion === "vertical" ? 800 : 675,
+          sourceArea: 960000,
+          cropArea: 810000,
+          coverageRatio: 0.84375,
+          coveragePercent: 84.38,
+          widthScale: 1,
+          heightScale: 0.84375,
+        },
+      }),
+    );
+
+    const { rerender } = render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={{
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        }}
+        bestProportion="horizontal"
+        userSelectedProportion="horizontal"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={{
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        }}
+        bestProportion="horizontal"
+        userSelectedProportion="vertical"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(2);
+    });
+
+    expect(previewRenderPlan.buildPreviewRenderPlan).toHaveBeenNthCalledWith(
+      2,
+      {
+        sourceWidth: 1200,
+        sourceHeight: 800,
+        selectedImageMetadata: {
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        },
+        bestProportion: "horizontal",
+        userSelectedProportion: "vertical",
+      },
+    );
   });
 });

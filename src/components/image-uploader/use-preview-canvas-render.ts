@@ -11,6 +11,9 @@ import type { SelectedImageMetadata } from "./image-uploader";
 interface UsePreviewCanvasRenderArgs {
   previewUrl: string | null;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  selectedImageMetadata: SelectedImageMetadata | null;
+  bestProportion: ImageDisplayProportion | null;
+  userSelectedProportion: ImageDisplayProportion;
   latestRenderConfigRef: React.MutableRefObject<{
     selectedImageMetadata: SelectedImageMetadata | null;
     bestProportion: ImageDisplayProportion | null;
@@ -26,6 +29,9 @@ interface UsePreviewCanvasRenderArgs {
 export const usePreviewCanvasRender = ({
   previewUrl,
   canvasRef,
+  selectedImageMetadata,
+  bestProportion,
+  userSelectedProportion,
   latestRenderConfigRef,
   onMetadataResolved,
 }: UsePreviewCanvasRenderArgs) => {
@@ -91,5 +97,13 @@ export const usePreviewCanvasRender = ({
     return () => {
       isActive = false;
     };
-  }, [canvasRef, latestRenderConfigRef, onMetadataResolved, previewUrl]);
+  }, [
+    bestProportion,
+    canvasRef,
+    latestRenderConfigRef,
+    onMetadataResolved,
+    previewUrl,
+    selectedImageMetadata,
+    userSelectedProportion,
+  ]);
 };

@@ -230,6 +230,28 @@ export function ImageUploader({
     [onImageMetadataChange, updateActiveImage],
   );
 
+  const handleMetadataResolved = useCallback(
+    ({
+      metadata,
+      nextDisplayImageProportion,
+      shouldAutoSelectOptimalProportion,
+    }: {
+      metadata: SelectedImageMetadata;
+      nextDisplayImageProportion: ImageDisplayProportion;
+      shouldAutoSelectOptimalProportion: boolean;
+    }) => {
+      updateActiveImage((selectedImage) => ({
+        ...selectedImage,
+        metadata,
+        displayImageProportion: shouldAutoSelectOptimalProportion
+          ? nextDisplayImageProportion
+          : selectedImage.displayImageProportion,
+      }));
+      onImageMetadataChange?.(metadata);
+    },
+    [onImageMetadataChange, updateActiveImage],
+  );
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -545,20 +567,7 @@ export function ImageUploader({
           onRemoveActiveImage={handleRemoveActiveImage}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
-          onMetadataResolved={({
-            metadata,
-            nextDisplayImageProportion,
-            shouldAutoSelectOptimalProportion,
-          }) => {
-            updateActiveImage((selectedImage) => ({
-              ...selectedImage,
-              metadata,
-              displayImageProportion: shouldAutoSelectOptimalProportion
-                ? nextDisplayImageProportion
-                : selectedImage.displayImageProportion,
-            }));
-            onImageMetadataChange?.(metadata);
-          }}
+          onMetadataResolved={handleMetadataResolved}
         />
 
         <div className="text-center text-xs text-muted-foreground">
