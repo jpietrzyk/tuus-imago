@@ -63,9 +63,9 @@ export default function PaintingPreviewSlot({
   });
 
   return (
-    <div className="relative mx-3 flex-1 h-full min-w-0 flex items-center justify-center">
+    <div className="relative mx-0 flex-1 h-full min-w-0 flex items-center justify-center">
       <div
-        className="relative h-full w-full md:w-[95%] lg:w-[92%] xl:w-[96%] max-w-480 max-h-full overflow-hidden rounded-lg border-2 border-dashed border-border/35 flex items-center justify-center"
+        className="relative h-full w-full md:w-[85%] lg:w-[80%] xl:w-[78%] max-w-640 max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center"
         data-testid="selected-image-preview-frame"
         style={{ aspectRatio: String(previewFrameAspectRatio) }}
         onTouchStart={onTouchStart}

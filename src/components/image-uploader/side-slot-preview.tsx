@@ -32,8 +32,10 @@ export default function SideSlotPreview({
         isLeft ? "uploader-slider-side-left" : "uploader-slider-side-right"
       }
       aria-label={t(isLeft ? "uploader.previousImage" : "uploader.nextImage")}
-      className={`h-full w-16 md:w-28 lg:w-40 xl:w-48 shrink-0 overflow-hidden rounded-md bg-transparent disabled:cursor-default disabled:opacity-70 ${
-        isLeft ? "flex items-start justify-end" : ""
+      className={`h-full w-16 md:w-28 lg:w-40 xl:w-48 shrink-0 overflow-hidden rounded-none bg-transparent disabled:cursor-default disabled:opacity-70 ${
+        isLeft
+          ? "flex items-start justify-end md:-mr-8 lg:-mr-10"
+          : "md:-ml-8 lg:-ml-10"
       }`}
     >
       <div
@@ -42,9 +44,9 @@ export default function SideSlotPreview({
             ? "uploader-slider-side-left-preview-frame"
             : "uploader-slider-side-right-preview-frame"
         }
-        className={`flex h-full w-auto max-w-none min-w-[280px] shrink-0 md:min-w-[300px] lg:min-w-[320px] overflow-hidden rounded-md border-2 border-dashed ${
+        className={`flex h-full w-auto max-w-none min-w-[280px] shrink-0 md:min-w-[300px] lg:min-w-[320px] overflow-hidden rounded-none border-0 ${
           isLeft ? "items-start justify-end" : "items-center justify-start"
-        } ${image ? "border-border/35" : "border-border/60"}`}
+        }`}
         style={{
           aspectRatio: String(previewFrameAspectRatio),
         }}

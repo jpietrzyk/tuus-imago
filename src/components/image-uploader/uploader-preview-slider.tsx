@@ -57,7 +57,7 @@ export default function UploaderPreviewSlider({
 }: UploaderPreviewSliderProps) {
   return (
     <div
-      className="flex-1 flex justify-center items-center bg-transparent rounded-lg p-4 min-h-0"
+      className="flex-1 flex justify-center items-center bg-transparent rounded-lg min-h-0 overflow-visible"
       data-testid="uploader-preview-slider"
     >
       <SideSlotPreview
