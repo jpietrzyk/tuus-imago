@@ -52,5 +52,10 @@
     "ui\n": "link:@vitest/ui\n",
     "vite": "^7.2.4",
     "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "overrides": {
+      "html-encoding-sniffer": "^4.0.0"
+    }
   }
 }
