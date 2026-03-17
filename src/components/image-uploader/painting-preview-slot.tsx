@@ -1,17 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import { t } from "@/locales/i18n";
-import {
-  calculateMaxCenteredCrop,
-  formatAspectRatio,
-  getOptimalDisplayProportion,
-  type ImageDisplayProportion,
-} from "./image-proportion-calculator";
-import {
-  drawCroppedImageToCanvas,
-  loadImageElement,
-  resolveImageDimensions,
-} from "./preview-canvas-utils";
+import { type ImageDisplayProportion } from "./image-proportion-calculator";
+import { usePreviewCanvasRender } from "./use-preview-canvas-render";
+import { usePreviewRenderConfig } from "./use-preview-render-config";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -57,93 +49,18 @@ export default function PaintingPreviewSlot({
   onMetadataResolved,
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-  const latestRenderConfigRef = useRef({
+  const latestRenderConfigRef = usePreviewRenderConfig({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
   });
 
-  useEffect(() => {
-    latestRenderConfigRef.current = {
-      selectedImageMetadata,
-      bestProportion,
-      userSelectedProportion,
-    };
-  }, [bestProportion, selectedImageMetadata, userSelectedProportion]);
-
-  useEffect(() => {
-    if (!selectedImage?.previewUrl || !previewCanvasRef.current) {
-      return;
-    }
-
-    const canvas = previewCanvasRef.current;
-    let isActive = true;
-
-    const renderPreview = async () => {
-      try {
-        const image = await loadImageElement(selectedImage.previewUrl);
-        if (!isActive) {
-          return;
-        }
-
-        const { sourceWidth, sourceHeight } = resolveImageDimensions(image);
-
-        if (sourceWidth <= 0 || sourceHeight <= 0) {
-          return;
-        }
-
-        const metadata: SelectedImageMetadata = {
-          width: sourceWidth,
-          height: sourceHeight,
-          aspectRatio: formatAspectRatio(sourceWidth, sourceHeight),
-        };
-
-        const {
-          selectedImageMetadata: latestSelectedImageMetadata,
-          bestProportion: latestBestProportion,
-          userSelectedProportion: latestUserSelectedProportion,
-        } = latestRenderConfigRef.current;
-
-        const optimalDisplayProportion =
-          latestBestProportion ??
-          getOptimalDisplayProportion(sourceWidth, sourceHeight);
-        const shouldAutoSelectOptimalProportion =
-          !latestSelectedImageMetadata &&
-          latestUserSelectedProportion === "horizontal";
-        const nextDisplayImageProportion = shouldAutoSelectOptimalProportion
-          ? optimalDisplayProportion
-          : latestUserSelectedProportion;
-
-        onMetadataResolved({
-          metadata,
-          nextDisplayImageProportion,
-          shouldAutoSelectOptimalProportion,
-        });
-
-        const crop = calculateMaxCenteredCrop({
-          sourceWidth,
-          sourceHeight,
-          proportion: nextDisplayImageProportion,
-        });
-
-        // Source crop and destination frame share the same target ratio, so this fills
-        // the full slot without adding letterbox gaps.
-        drawCroppedImageToCanvas({
-          canvas,
-          image,
-          crop,
-        });
-      } catch {
-        // Ignore image loading errors in preview; uploader handles validation earlier.
-      }
-    };
-
-    void renderPreview();
-
-    return () => {
-      isActive = false;
-    };
-  }, [onMetadataResolved, selectedImage]);
+  usePreviewCanvasRender({
+    previewUrl: selectedImage?.previewUrl ?? null,
+    canvasRef: previewCanvasRef,
+    latestRenderConfigRef,
+    onMetadataResolved,
+  });
 
   return (
     <div className="relative mx-3 flex-1 h-full min-w-0 flex items-center justify-center">
