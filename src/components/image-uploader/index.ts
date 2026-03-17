@@ -29,4 +29,5 @@ export {
 } from "./preview-canvas-utils";
 
 export { useImageSliderNavigation } from "./use-image-slider-navigation";
+export { usePreviewSliderSlots } from "./use-preview-slider-slots";
 export { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";

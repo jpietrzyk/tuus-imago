@@ -7,6 +7,7 @@ import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
+import { usePreviewSliderSlots } from "./use-preview-slider-slots";
 import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
@@ -451,19 +452,11 @@ export function ImageUploader({
     [displayImageProportion],
   );
 
-  const leftSlotIndex =
-    typeof activeImageIndex === "number" && activeImageIndex > 0
-      ? activeImageIndex - 1
-      : null;
-  const rightSlotIndex =
-    typeof activeImageIndex === "number" &&
-    activeImageIndex < MAX_SELECTED_IMAGES - 1
-      ? activeImageIndex + 1
-      : null;
-  const leftSlotImage =
-    typeof leftSlotIndex === "number" ? selectedImages[leftSlotIndex] : null;
-  const rightSlotImage =
-    typeof rightSlotIndex === "number" ? selectedImages[rightSlotIndex] : null;
+  const { leftSlotIndex, rightSlotIndex, leftSlotImage, rightSlotImage } =
+    usePreviewSliderSlots({
+      selectedImages,
+      activeImageIndex,
+    });
 
   useEffect(() => {
     selectedImagesRef.current = selectedImages;
