@@ -43,7 +43,9 @@ export const drawCroppedImageToCanvas = ({
 
   const rect = canvas.getBoundingClientRect();
   const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-  const hasMeasuredCanvasSize = rect.width > 0 && rect.height > 0;
+  // Ignore transient tiny measurements that can happen during initial layout/animation.
+  // In those cases, use crop output size for the internal canvas buffer.
+  const hasMeasuredCanvasSize = rect.width >= 32 && rect.height >= 32;
   const displayWidth = hasMeasuredCanvasSize
     ? Math.max(1, Math.round(rect.width))
     : crop.outputWidth;
@@ -51,8 +53,6 @@ export const drawCroppedImageToCanvas = ({
     ? Math.max(1, Math.round(rect.height))
     : crop.outputHeight;
 
-  canvas.style.width = `${displayWidth}px`;
-  canvas.style.height = `${displayHeight}px`;
   canvas.width = Math.round(displayWidth * dpr);
   canvas.height = Math.round(displayHeight * dpr);
 
