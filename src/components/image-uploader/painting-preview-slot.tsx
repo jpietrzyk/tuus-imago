@@ -51,6 +51,12 @@ export default function PaintingPreviewSlot({
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFocusPulseActive, setIsFocusPulseActive] = useState(false);
+  const frameAspectRatioClassName =
+    userSelectedProportion === "vertical"
+      ? "aspect-[2/3]"
+      : userSelectedProportion === "horizontal"
+        ? "aspect-[16/9]"
+        : "aspect-square";
   const latestRenderConfigRef = usePreviewRenderConfig({
     selectedImageMetadata,
     bestProportion,
@@ -95,7 +101,7 @@ export default function PaintingPreviewSlot({
   return (
     <div className="relative mx-0 flex h-full w-full min-w-0 flex-1 items-center justify-center">
       <div
-        className={`relative h-auto max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${slotFramePreset.mainFrameSizeClassName} ${
+        className={`relative h-auto max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${slotFramePreset.mainFrameSizeClassName} ${frameAspectRatioClassName} ${
           isFocusPulseActive
             ? "scale-[0.985] md:scale-[0.995] opacity-95"
             : "scale-100 opacity-100"

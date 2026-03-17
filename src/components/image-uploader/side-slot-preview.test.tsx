@@ -129,6 +129,9 @@ describe("SideSlotPreview", () => {
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass(firstVerticalClass);
+    expect(
+      screen.getByTestId("uploader-slider-side-left-preview-frame"),
+    ).toHaveClass("aspect-[2/3]");
   });
 
   it("uses square side preset when rectangle proportion is selected", () => {
@@ -145,5 +148,8 @@ describe("SideSlotPreview", () => {
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass(firstSquareClass);
+    expect(
+      screen.getByTestId("uploader-slider-side-left-preview-frame"),
+    ).toHaveClass("aspect-square");
   });
 });

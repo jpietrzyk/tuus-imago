@@ -175,8 +175,10 @@ describe("PaintingPreviewSlot", () => {
 
     expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
       "w-full",
+      "max-h-full",
       "max-w-[40rem]",
       "md:max-w-[48rem]",
+      "aspect-[2/3]",
     );
   });
 });

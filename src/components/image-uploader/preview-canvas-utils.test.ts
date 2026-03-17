@@ -196,4 +196,57 @@ describe("preview-canvas-utils", () => {
       }),
     ).toBe(false);
   });
+
+  it("preserves crop aspect ratio when measured canvas box has mismatched ratio", () => {
+    const canvas = document.createElement("canvas");
+    const clearRect = vi.fn();
+    const drawImage = vi.fn();
+
+    vi.spyOn(canvas, "getContext").mockReturnValue({
+      clearRect,
+      drawImage,
+    } as unknown as CanvasRenderingContext2D);
+
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      width: 800,
+      height: 450,
+      x: 0,
+      y: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      toJSON: () => ({}),
+    });
+
+    const image = document.createElement("img");
+    const crop = {
+      ...createCrop(),
+      outputWidth: 720,
+      outputHeight: 1080,
+      cropWidth: 720,
+      cropHeight: 1080,
+    };
+
+    const drawn = drawCroppedImageToCanvas({
+      canvas,
+      image,
+      crop,
+    });
+
+    expect(drawn).toBe(true);
+    expect(canvas.width).toBe(800);
+    expect(canvas.height).toBe(450);
+    expect(drawImage).toHaveBeenCalledWith(
+      image,
+      crop.cropX,
+      crop.cropY,
+      crop.cropWidth,
+      crop.cropHeight,
+      250,
+      0,
+      300,
+      450,
+    );
+  });
 });

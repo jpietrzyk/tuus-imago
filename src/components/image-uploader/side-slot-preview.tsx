@@ -25,6 +25,12 @@ export default function SideSlotPreview({
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
   const slotFramePreset = resolveSlotFramePreset(selectedProportion);
+  const slotAspectRatioClassName =
+    selectedProportion === "vertical"
+      ? "aspect-[2/3]"
+      : selectedProportion === "horizontal"
+        ? "aspect-[16/9]"
+        : "aspect-square";
 
   return (
     <button
@@ -55,7 +61,7 @@ export default function SideSlotPreview({
             ? "uploader-slider-side-left-preview-frame"
             : "uploader-slider-side-right-preview-frame"
         }
-        className={`flex h-full w-auto w-full min-w-0 max-w-none ${slotFramePreset.sideFrameMinWidthClassName} overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+        className={`flex h-full w-full min-w-0 max-w-full ${slotFramePreset.sideFrameMinWidthClassName} ${slotAspectRatioClassName} overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
           isLeft ? "items-start justify-end" : "items-center justify-start"
         } ${
           image

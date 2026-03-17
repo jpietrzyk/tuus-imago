@@ -65,6 +65,22 @@ export const drawCroppedImageToCanvas = ({
 
   const dstW = canvas.width;
   const dstH = canvas.height;
+  const cropAspectRatio = crop.outputWidth / crop.outputHeight;
+  const canvasAspectRatio = dstW / dstH;
+
+  let drawWidth = dstW;
+  let drawHeight = dstH;
+
+  // Preserve crop proportions inside the measured canvas box to avoid
+  // stretching when layout briefly reports a mismatched aspect ratio.
+  if (canvasAspectRatio > cropAspectRatio) {
+    drawWidth = Math.round(dstH * cropAspectRatio);
+  } else if (canvasAspectRatio < cropAspectRatio) {
+    drawHeight = Math.round(dstW / cropAspectRatio);
+  }
+
+  const drawX = Math.floor((dstW - drawWidth) / 2);
+  const drawY = Math.floor((dstH - drawHeight) / 2);
 
   context.clearRect(0, 0, dstW, dstH);
   context.drawImage(
@@ -73,10 +89,10 @@ export const drawCroppedImageToCanvas = ({
     crop.cropY,
     crop.cropWidth,
     crop.cropHeight,
-    0,
-    0,
-    dstW,
-    dstH,
+    drawX,
+    drawY,
+    drawWidth,
+    drawHeight,
   );
 
   return true;
