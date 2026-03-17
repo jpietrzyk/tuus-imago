@@ -164,4 +164,19 @@ describe("PaintingPreviewSlot", () => {
       screen.queryByTestId("uploader-slider-next"),
     ).not.toBeInTheDocument();
   });
+
+  it("applies vertical fixed frame preset when vertical proportion is selected", () => {
+    const props = {
+      ...createProps(),
+      userSelectedProportion: "vertical" as ImageDisplayProportion,
+    };
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
+      "w-full",
+      "max-w-[40rem]",
+      "md:max-w-[48rem]",
+    );
+  });
 });

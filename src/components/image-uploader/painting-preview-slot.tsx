@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Minus } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
+import { resolveSlotFramePreset } from "./slot-frame-presets";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -49,11 +50,37 @@ export default function PaintingPreviewSlot({
   onMetadataResolved,
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isFocusPulseActive, setIsFocusPulseActive] = useState(false);
   const latestRenderConfigRef = usePreviewRenderConfig({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
   });
+  const slotFramePreset = resolveSlotFramePreset(userSelectedProportion);
+
+  useEffect(() => {
+    if (!selectedImage) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      setIsFocusPulseActive(true);
+    });
+
+    const timeoutId = window.setTimeout(() => {
+      setIsFocusPulseActive(false);
+    }, 220);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    activeSlotIndex,
+    selectedImage,
+    selectedImage?.previewUrl,
+    userSelectedProportion,
+  ]);
 
   usePreviewCanvasRender({
     previewUrl: selectedImage?.previewUrl ?? null,
@@ -68,7 +95,11 @@ export default function PaintingPreviewSlot({
   return (
     <div className="relative mx-0 flex-1 h-full min-w-0 flex items-center justify-center">
       <div
-        className="relative h-full w-full md:w-[85%] lg:w-[80%] xl:w-[78%] max-w-640 max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center"
+        className={`relative h-auto max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${slotFramePreset.mainFrameSizeClassName} ${
+          isFocusPulseActive
+            ? "scale-[0.985] md:scale-[0.995] opacity-95"
+            : "scale-100 opacity-100"
+        }`}
         data-testid="selected-image-preview-frame"
         style={{ aspectRatio: String(previewFrameAspectRatio) }}
         onTouchStart={onTouchStart}

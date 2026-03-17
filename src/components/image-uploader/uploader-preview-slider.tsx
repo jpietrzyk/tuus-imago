@@ -65,6 +65,8 @@ export default function UploaderPreviewSlider({
         slotIndex={leftSlotIndex}
         image={leftSlotImage}
         previewFrameAspectRatio={previewFrameAspectRatio}
+        selectedProportion={userSelectedProportion}
+        isNavigable={canMovePrevious}
         onSelectSlot={onSelectSlot}
       />
 
@@ -91,6 +93,8 @@ export default function UploaderPreviewSlider({
         slotIndex={rightSlotIndex}
         image={rightSlotImage}
         previewFrameAspectRatio={previewFrameAspectRatio}
+        selectedProportion={userSelectedProportion}
+        isNavigable={canMoveNext}
         onSelectSlot={onSelectSlot}
       />
     </div>
