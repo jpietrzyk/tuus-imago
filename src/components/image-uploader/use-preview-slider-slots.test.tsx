@@ -27,7 +27,9 @@ function Harness({ selectedImages, activeImageIndex }: HarnessProps) {
       <div data-testid="left-index">{String(leftSlotIndex)}</div>
       <div data-testid="right-index">{String(rightSlotIndex)}</div>
       <div data-testid="left-image">{leftSlotImage?.previewUrl ?? "null"}</div>
-      <div data-testid="right-image">{rightSlotImage?.previewUrl ?? "null"}</div>
+      <div data-testid="right-image">
+        {rightSlotImage?.previewUrl ?? "null"}
+      </div>
     </div>
   );
 }
@@ -36,7 +38,11 @@ describe("usePreviewSliderSlots", () => {
   it("returns empty side slots when there is no active index", () => {
     render(
       <Harness
-        selectedImages={[createItem("left"), createItem("center"), createItem("right")]}
+        selectedImages={[
+          createItem("left"),
+          createItem("center"),
+          createItem("right"),
+        ]}
         activeImageIndex={null}
       />,
     );
@@ -50,7 +56,11 @@ describe("usePreviewSliderSlots", () => {
   it("returns side slot indexes and images around active center", () => {
     render(
       <Harness
-        selectedImages={[createItem("left"), createItem("center"), createItem("right")]}
+        selectedImages={[
+          createItem("left"),
+          createItem("center"),
+          createItem("right"),
+        ]}
         activeImageIndex={1}
       />,
     );

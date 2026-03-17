@@ -1,11 +1,22 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import UploaderPreviewSlider from "./uploader-preview-slider";
-import type { SelectedImageItem, SelectedImageMetadata } from "./image-uploader";
+import type {
+  SelectedImageItem,
+  SelectedImageMetadata,
+} from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 
 vi.mock("./side-slot-preview", () => ({
-  default: ({ position, onSelectSlot, slotIndex }: { position: string; onSelectSlot: (index: number) => void; slotIndex: number | null }) => (
+  default: ({
+    position,
+    onSelectSlot,
+    slotIndex,
+  }: {
+    position: string;
+    onSelectSlot: (index: number) => void;
+    slotIndex: number | null;
+  }) => (
     <button
       type="button"
       data-testid={`mock-side-${position}`}
@@ -21,7 +32,15 @@ vi.mock("./side-slot-preview", () => ({
 }));
 
 vi.mock("./painting-preview-slot", () => ({
-  default: ({ onMovePrevious, onMoveNext, onRemoveImage }: { onMovePrevious: () => void; onMoveNext: () => void; onRemoveImage: () => void }) => (
+  default: ({
+    onMovePrevious,
+    onMoveNext,
+    onRemoveImage,
+  }: {
+    onMovePrevious: () => void;
+    onMoveNext: () => void;
+    onRemoveImage: () => void;
+  }) => (
     <div data-testid="mock-painting-slot">
       <button type="button" data-testid="mock-prev" onClick={onMovePrevious}>
         prev
