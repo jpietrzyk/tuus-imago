@@ -249,4 +249,55 @@ describe("preview-canvas-utils", () => {
       450,
     );
   });
+
+  it("centers square crop inside a wide measured canvas without stretching", () => {
+    const canvas = document.createElement("canvas");
+    const clearRect = vi.fn();
+    const drawImage = vi.fn();
+
+    vi.spyOn(canvas, "getContext").mockReturnValue({
+      clearRect,
+      drawImage,
+    } as unknown as CanvasRenderingContext2D);
+
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      width: 1000,
+      height: 500,
+      x: 0,
+      y: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      toJSON: () => ({}),
+    });
+
+    const image = document.createElement("img");
+    const crop = {
+      ...createCrop(),
+      outputWidth: 1080,
+      outputHeight: 1080,
+      cropWidth: 1080,
+      cropHeight: 1080,
+    };
+
+    const drawn = drawCroppedImageToCanvas({
+      canvas,
+      image,
+      crop,
+    });
+
+    expect(drawn).toBe(true);
+    expect(drawImage).toHaveBeenCalledWith(
+      image,
+      crop.cropX,
+      crop.cropY,
+      crop.cropWidth,
+      crop.cropHeight,
+      250,
+      0,
+      500,
+      500,
+    );
+  });
 });

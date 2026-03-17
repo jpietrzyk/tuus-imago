@@ -181,4 +181,29 @@ describe("PaintingPreviewSlot", () => {
       "aspect-[2/3]",
     );
   });
+
+  it.each([
+    {
+      proportion: "horizontal" as ImageDisplayProportion,
+      aspectClass: "aspect-[16/9]",
+    },
+    {
+      proportion: "square" as ImageDisplayProportion,
+      aspectClass: "aspect-square",
+    },
+  ])(
+    "applies stable frame aspect class for $proportion proportion",
+    ({ proportion, aspectClass }) => {
+      const props = {
+        ...createProps(),
+        userSelectedProportion: proportion,
+      };
+
+      render(<PaintingPreviewSlot {...props} />);
+
+      expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
+        aspectClass,
+      );
+    },
+  );
 });
