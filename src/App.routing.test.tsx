@@ -125,7 +125,9 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    const homeLogoLink = screen.getByRole("link", { name: "TuusImago" });
+    const homeLogoLink = screen.getByRole("link", {
+      name: "Tuus Imago – home",
+    });
     expect(homeLogoLink).toBeInTheDocument();
     expect(homeLogoLink).toHaveAttribute("href", "/");
 
@@ -134,10 +136,9 @@ describe("App Component Routing", () => {
         <App />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "TuusImago" })).toHaveAttribute(
-      "href",
-      "/",
-    );
+    expect(
+      screen.getByRole("link", { name: "Tuus Imago – home" }),
+    ).toHaveAttribute("href", "/");
   });
 
   it("should render footer links on all pages", () => {
