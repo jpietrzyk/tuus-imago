@@ -63,7 +63,7 @@ describe("ProcessTimeline Component", () => {
 
   it("should have correct styling on main container", () => {
     const { container } = render(<ProcessTimeline />);
-    const mainContainer = container.querySelector(".py-6.md\\:py-8");
+    const mainContainer = container.querySelector(".py-2.md\\:py-4");
     expect(mainContainer).toBeInTheDocument();
   });
 
