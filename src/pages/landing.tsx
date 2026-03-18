@@ -9,10 +9,10 @@ export function LandingPage() {
     <div className="h-full flex flex-col items-center justify-center gap-6 lg:gap-8 px-4 py-6">
       {/* Hero section */}
       <div className="text-center space-y-4 md:space-y-6 w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-        <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-lg">
+        <h1 className="text-4xl md:text-6xl font-bold text-slate-900 drop-shadow-lg">
           {t("landing.hero.title")}
         </h1>
-        <p className="text-base md:text-lg text-white/80 drop-shadow-md">
+        <p className="text-base md:text-lg text-slate-700 drop-shadow-md">
           {t("landing.hero.description")}
         </p>
       </div>
