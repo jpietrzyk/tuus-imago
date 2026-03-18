@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
 import { LandingPage } from "./pages/landing";
 import { StartPage } from "./pages/start";
 import { UploadPage } from "./pages/upload";
@@ -18,14 +19,9 @@ import { TermsPage } from "./pages/terms";
 // Main App Component with Routes
 export function App() {
   return (
-    <div className="h-screen flex flex-col">
-      <div className="flex-1 overflow-auto relative bg-slate-50">
-        <div className="fixed top-6 left-6 z-10">
-          <h1 className="text-3xl font-bold drop-shadow-lg">
-            <span className="text-white">Tuus</span>
-            <span className="text-blue-300">Imago</span>
-          </h1>
-        </div>
+    <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
+      <Header />
+      <main className="flex-1 overflow-auto relative">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/start" element={<StartPage />} />
@@ -42,7 +38,7 @@ export function App() {
           <Route path="/shipping" element={<ShippingPage />} />
           <Route path="/terms" element={<TermsPage />} />
         </Routes>
-      </div>
+      </main>
       <Footer />
     </div>
   );

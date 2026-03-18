@@ -118,6 +118,28 @@ describe("App Component Routing", () => {
     ).toBeInTheDocument();
   });
 
+  it("should render header with logo link on all routes", () => {
+    const { rerender } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const homeLogoLink = screen.getByRole("link", { name: "TuusImago" });
+    expect(homeLogoLink).toBeInTheDocument();
+    expect(homeLogoLink).toHaveAttribute("href", "/");
+
+    rerender(
+      <MemoryRouter initialEntries={["/about"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("link", { name: "TuusImago" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+  });
+
   it("should render footer links on all pages", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>

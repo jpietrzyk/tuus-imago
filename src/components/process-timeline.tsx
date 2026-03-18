@@ -32,9 +32,9 @@ const steps: Step[] = [
 
 export function ProcessTimeline() {
   return (
-    <div className="w-full py-6 md:py-8">
+    <div className="w-full py-2 md:py-4">
       <div className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-8 text-gray-900 dark:text-gray-100">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-4 md:mb-6 text-gray-900 dark:text-gray-100">
           {t("processTimeline.title")}
         </h2>
 
