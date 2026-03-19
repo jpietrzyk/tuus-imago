@@ -623,7 +623,7 @@ export function ImageUploader({
           onMetadataResolved={handleMetadataResolved}
         />
 
-        <p className="w-full px-1 text-xs leading-relaxed text-muted-foreground">
+        <p className="w-full px-1 text-center text-xs leading-relaxed text-muted-foreground">
           {t("uploader.multiImageHint")}
         </p>
 
