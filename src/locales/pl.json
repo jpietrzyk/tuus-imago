@@ -12,8 +12,24 @@
     "security": "Bezpieczeństwo",
     "shipping": "Dostawa",
     "terms": "Warunki",
+    "legalMenu": "Legal",
+    "paymentsP24": "Płatności P24",
     "loading": "Ładowanie...",
     "processing": "Przetwarzanie..."
+  },
+  "legalMenu": {
+    "title": "Informacje prawne i płatności",
+    "subtitle": "Dostęp do prywatności, regulaminów i informacji o płatnościach przed zakupem.",
+    "close": "Zamknij menu prawne",
+    "sections": {
+      "legal": "Twoje dokumenty prawne",
+      "payments": "Płatności (Przelewy24)",
+      "company": "Firma i kontakt"
+    },
+    "paymentIntro": "Linki Przelewy24 zostaną podłączone po dostarczeniu finalnych adresów URL.",
+    "p24Terms": "Regulamin Przelewy24",
+    "p24Privacy": "Polityka prywatności Przelewy24",
+    "comingSoon": "Wkrótce"
   },
   "landing": {
     "hero": {

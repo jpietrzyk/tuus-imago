@@ -12,8 +12,24 @@
     "security": "Security",
     "shipping": "Shipping",
     "terms": "Terms",
+    "legalMenu": "Legal",
+    "paymentsP24": "Payments P24",
     "loading": "Loading...",
     "processing": "Processing..."
+  },
+  "legalMenu": {
+    "title": "Legal and Payments",
+    "subtitle": "Access privacy, terms, and payment information before checkout.",
+    "close": "Close legal menu",
+    "sections": {
+      "legal": "Your legal documents",
+      "payments": "Payments (Przelewy24)",
+      "company": "Company and contact"
+    },
+    "paymentIntro": "Przelewy24 links will be connected after final URLs are provided.",
+    "p24Terms": "Przelewy24 Terms of Service",
+    "p24Privacy": "Przelewy24 Privacy Policy",
+    "comingSoon": "Coming soon"
   },
   "landing": {
     "hero": {

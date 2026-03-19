@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import {
+  LegalNavigationSheet,
+  type LegalMenuSection,
+} from "@/components/legal-navigation-sheet";
 import { LandingPage } from "./pages/landing";
 import { StartPage } from "./pages/start";
 import { UploadPage } from "./pages/upload";
@@ -18,9 +23,18 @@ import { TermsPage } from "./pages/terms";
 
 // Main App Component with Routes
 export function App() {
+  const [isLegalSheetOpen, setIsLegalSheetOpen] = useState(false);
+  const [activeLegalSection, setActiveLegalSection] =
+    useState<LegalMenuSection>("legal");
+
+  const openLegalSheet = (section: LegalMenuSection) => {
+    setActiveLegalSection(section);
+    setIsLegalSheetOpen(true);
+  };
+
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
-      <Header />
+      <Header onOpenLegalMenu={openLegalSheet} />
       <main className="flex-1 overflow-auto relative">
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -39,7 +53,12 @@ export function App() {
           <Route path="/terms" element={<TermsPage />} />
         </Routes>
       </main>
-      <Footer />
+      <Footer onOpenLegalMenu={() => openLegalSheet("legal")} />
+      <LegalNavigationSheet
+        open={isLegalSheetOpen}
+        onOpenChange={setIsLegalSheetOpen}
+        activeSection={activeLegalSection}
+      />
     </div>
   );
 }
