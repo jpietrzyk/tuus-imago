@@ -22,7 +22,6 @@ interface UploaderPreviewSliderProps {
   leftSlotImage: SelectedImageItem | null;
   rightSlotImage: SelectedImageItem | null;
   onSelectSlot: (index: number) => void;
-  onRemoveActiveImage: () => void;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -47,7 +46,6 @@ export default function UploaderPreviewSlider({
   leftSlotImage,
   rightSlotImage,
   onSelectSlot,
-  onRemoveActiveImage,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -77,7 +75,6 @@ export default function UploaderPreviewSlider({
           previewFrameAspectRatio={previewFrameAspectRatio}
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
-          onRemoveImage={onRemoveActiveImage}
           onMetadataResolved={onMetadataResolved}
         />
 

@@ -32,13 +32,7 @@ vi.mock("./side-slot-preview", () => ({
 }));
 
 vi.mock("./painting-preview-slot", () => ({
-  default: ({ onRemoveImage }: { onRemoveImage: () => void }) => (
-    <div data-testid="mock-painting-slot">
-      <button type="button" data-testid="mock-remove" onClick={onRemoveImage}>
-        remove
-      </button>
-    </div>
-  ),
+  default: () => <div data-testid="mock-painting-slot" />,
 }));
 
 const createItem = (name: string): SelectedImageItem => ({
@@ -69,7 +63,6 @@ const createProps = () => ({
   leftSlotImage: createItem("left"),
   rightSlotImage: createItem("right"),
   onSelectSlot: vi.fn(),
-  onRemoveActiveImage: vi.fn(),
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
   onMetadataResolved: vi.fn(),
@@ -87,17 +80,15 @@ describe("UploaderPreviewSlider", () => {
     expect(screen.getByTestId("mock-side-right")).toBeInTheDocument();
   });
 
-  it("forwards interaction callbacks to composed children", () => {
+  it("forwards slot selection callbacks", () => {
     const props = createProps();
 
     render(<UploaderPreviewSlider {...props} />);
 
     fireEvent.click(screen.getByTestId("mock-side-left"));
-    fireEvent.click(screen.getByTestId("mock-remove"));
     fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
     expect(props.onSelectSlot).toHaveBeenCalledWith(0);
-    expect(props.onRemoveActiveImage).toHaveBeenCalledTimes(1);
     expect(props.onSelectSlot).toHaveBeenCalledWith(2);
   });
 

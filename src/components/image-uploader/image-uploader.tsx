@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
@@ -579,7 +580,27 @@ export function ImageUploader({
         className="hidden"
       />
       <CardHeader>
-        <CardTitle>{t("uploader.adjustImage")}</CardTitle>
+        <div className="grid min-h-9 grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <CardTitle className="truncate">
+            {t("uploader.adjustImage")}
+          </CardTitle>
+          <button
+            type="button"
+            onClick={handleRemoveActiveImage}
+            aria-label={t("uploader.removeImageSlot", {
+              index:
+                typeof activeImageIndex === "number"
+                  ? String(activeImageIndex + 1)
+                  : "",
+            })}
+            data-testid="uploader-remove-active-image"
+            className="z-10 inline-flex items-center justify-center gap-1.5 justify-self-center rounded-full border border-border/70 bg-background/95 px-3 py-1.5 text-xs font-semibold tracking-[0.01em] text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{t("uploader.clearSlot")}</span>
+          </button>
+          <span aria-hidden="true" />
+        </div>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-5 overflow-hidden pb-5">
         <UploaderPreviewSlider
@@ -597,7 +618,6 @@ export function ImageUploader({
           leftSlotImage={leftSlotImage}
           rightSlotImage={rightSlotImage}
           onSelectSlot={handlePreviewSlotSelect}
-          onRemoveActiveImage={handleRemoveActiveImage}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
           onMetadataResolved={handleMetadataResolved}

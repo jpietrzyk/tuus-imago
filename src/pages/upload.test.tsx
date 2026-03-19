@@ -32,16 +32,6 @@ describe("UploadPage Component", () => {
     expect(cameraIcon).toBeInTheDocument();
   });
 
-  it("should render supported formats text", () => {
-    render(
-      <MemoryRouter>
-        <UploadPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
-  });
-
   it("should display success message when upload succeeds", () => {
     render(
       <MemoryRouter>

@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
-import { t } from "@/locales/i18n";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
@@ -17,7 +15,6 @@ interface PaintingPreviewSlotProps {
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   previewFrameAspectRatio: number;
-  onRemoveImage: () => void;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -34,7 +31,6 @@ export default function PaintingPreviewSlot({
   bestProportion,
   userSelectedProportion,
   previewFrameAspectRatio,
-  onRemoveImage,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -101,22 +97,6 @@ export default function PaintingPreviewSlot({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <button
-          type="button"
-          onClick={onRemoveImage}
-          aria-label={t("uploader.removeImageSlot", {
-            index:
-              typeof activeSlotIndex === "number"
-                ? String(activeSlotIndex + 1)
-                : "",
-          })}
-          data-testid="uploader-remove-active-image"
-          className="absolute right-3 top-3 z-10 inline-flex items-center justify-center gap-1.5 rounded-full border border-border/70 bg-background/95 px-3 py-1.5 text-xs font-semibold tracking-[0.01em] text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          <X className="h-3.5 w-3.5" />
-          <span>{t("uploader.clearSlot")}</span>
-        </button>
-
         <canvas
           ref={previewCanvasRef}
           role="img"

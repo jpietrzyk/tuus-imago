@@ -231,27 +231,6 @@ export function UploadPage({
   const isCheckoutAvailable = Boolean(uploadedImage || hasUploaderSelection);
   const isResetAvailable = hasUploaderSelection;
 
-  const handleFooterReset = useCallback(() => {
-    if (!uploadedImage) {
-      setUploaderResetVersion((previousVersion) => previousVersion + 1);
-    }
-
-    setUploadedImage(null);
-    setHasUploaderSelection(false);
-    setUploadError(null);
-    setIsSuccess(false);
-    setTransformations(null);
-    setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
-    setUseAiPreview(true);
-    setIsPreviewLoading(false);
-    setPreviewLoadProgress(0);
-    setPreviewError(null);
-    setCropMode("manual");
-    setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
-    setPreviewDisplayDimensions({ width: 0, height: 0 });
-    setAppliedManualCropCoordinates(undefined);
-  }, [uploadedImage]);
-
   const startPreviewReload = useCallback((reason: "preview" | "crop") => {
     setPreviewLoadingReason(reason);
     setIsPreviewLoading(true);
@@ -287,12 +266,30 @@ export function UploadPage({
   }, [isResetAvailable, onResetAvailabilityChange]);
 
   useEffect(() => {
+    const handleFooterReset = () => {
+      setUploadedImage(null);
+      setHasUploaderSelection(false);
+      setUploadError(null);
+      setIsSuccess(false);
+      setTransformations(null);
+      setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
+      setUseAiPreview(true);
+      setIsPreviewLoading(false);
+      setPreviewLoadProgress(0);
+      setPreviewError(null);
+      setCropMode("manual");
+      setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
+      setPreviewDisplayDimensions({ width: 0, height: 0 });
+      setAppliedManualCropCoordinates(undefined);
+      setUploaderResetVersion((previousVersion) => previousVersion + 1);
+    };
+
     onResetActionChange?.(handleFooterReset);
 
     return () => {
       onResetActionChange?.(null);
     };
-  }, [handleFooterReset, onResetActionChange]);
+  }, [onResetActionChange]);
 
   useEffect(() => {
     if (
@@ -544,10 +541,6 @@ export function UploadPage({
                   defaultShowIcons
                   className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
                 />
-
-                <p className="text-sm text-gray-500 text-center">
-                  {t("upload.fileSupport")}
-                </p>
               </div>
             )}
 
