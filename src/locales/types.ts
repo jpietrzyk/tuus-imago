@@ -4,8 +4,32 @@ export interface Translations {
     copyright: string;
     aboutUs: string;
     legalAndPrivacy: string;
+    consents: string;
+    contact: string;
+    cookies: string;
+    privacy: string;
+    returns: string;
+    security: string;
+    shipping: string;
+    terms: string;
+    legalMenu: string;
+    paymentsP24: string;
     loading: string;
     processing: string;
+  };
+  legalMenu: {
+    title: string;
+    subtitle: string;
+    close: string;
+    sections: {
+      legal: string;
+      payments: string;
+      company: string;
+    };
+    paymentIntro: string;
+    p24Terms: string;
+    p24Privacy: string;
+    comingSoon: string;
   };
   landing: {
     hero: {
