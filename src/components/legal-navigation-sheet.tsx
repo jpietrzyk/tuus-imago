@@ -3,8 +3,8 @@ import {
   BadgeDollarSign,
   Building2,
   CheckCircle,
+  ChevronRight,
   Cookie,
-  ExternalLink,
   FileText,
   Lock,
   Mail,
@@ -136,7 +136,7 @@ export function LegalNavigationSheet({
                     />
                     {t(labelKey)}
                   </span>
-                  <ExternalLink
+                  <ChevronRight
                     className="h-3.5 w-3.5 text-gray-400"
                     aria-hidden="true"
                   />
@@ -199,7 +199,7 @@ export function LegalNavigationSheet({
                     />
                     {t(labelKey)}
                   </span>
-                  <ExternalLink
+                  <ChevronRight
                     className="h-3.5 w-3.5 text-gray-400"
                     aria-hidden="true"
                   />
