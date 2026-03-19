@@ -1,75 +1,95 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { Footer } from "./footer";
+import { tr } from "@/test/i18n-test";
 
 describe("Footer Component", () => {
   it("should render the footer with copyright text", () => {
     render(
       <MemoryRouter>
-        <Footer />
+        <Footer onOpenLegalMenu={vi.fn()} />
       </MemoryRouter>,
     );
 
     expect(screen.getByText(/© \d{4} Tuus Imago/i)).toBeInTheDocument();
   });
 
-  it("should render About Us link with correct href", () => {
+  it("should render legal CTA button", () => {
     render(
       <MemoryRouter>
-        <Footer />
+        <Footer onOpenLegalMenu={vi.fn()} />
       </MemoryRouter>,
     );
 
-    const aboutLink = screen.getByRole("link", { name: /o nas/i });
-    expect(aboutLink).toBeInTheDocument();
-    expect(aboutLink).toHaveAttribute("href", "/about");
-  });
-
-  it("should render Legal & Privacy link with correct href", () => {
-    render(
-      <MemoryRouter>
-        <Footer />
-      </MemoryRouter>,
-    );
-
-    const legalLink = screen.getByRole("link", {
-      name: /prawne i prywatność/i,
+    const legalButton = screen.getByRole("button", {
+      name: tr("common.legalMenu"),
     });
-    expect(legalLink).toBeInTheDocument();
-    expect(legalLink).toHaveAttribute("href", "/legal");
+    expect(legalButton).toBeInTheDocument();
   });
 
-  it("should render Info icon in About Us link", () => {
+  it("should call callback when legal CTA is clicked", async () => {
+    const user = userEvent.setup();
+    const onOpenLegalMenu = vi.fn();
+
     render(
       <MemoryRouter>
-        <Footer />
+        <Footer onOpenLegalMenu={onOpenLegalMenu} />
       </MemoryRouter>,
     );
 
-    const aboutLink = screen.getByRole("link", { name: /o nas/i });
-    const icon = aboutLink.querySelector("svg");
-    expect(icon).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: tr("common.legalMenu") }),
+    );
+
+    expect(onOpenLegalMenu).toHaveBeenCalledTimes(1);
   });
 
-  it("should render FileText icon in Legal & Privacy link", () => {
+  it("should not render legacy about link in footer", () => {
     render(
       <MemoryRouter>
-        <Footer />
+        <Footer onOpenLegalMenu={vi.fn()} />
       </MemoryRouter>,
     );
 
-    const legalLink = screen.getByRole("link", {
-      name: /prawne i prywatność/i,
+    expect(
+      screen.queryByRole("link", { name: tr("common.aboutUs") }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should not render legacy legal route link in footer", () => {
+    render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("link", {
+        name: tr("common.legalAndPrivacy"),
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should render scale icon in legal CTA button", () => {
+    render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const legalButton = screen.getByRole("button", {
+      name: tr("common.legalMenu"),
     });
-    const icon = legalLink.querySelector("svg");
+    const icon = legalButton.querySelector("svg");
     expect(icon).toBeInTheDocument();
   });
 
   it("should have correct styling classes", () => {
     const { container } = render(
       <MemoryRouter>
-        <Footer />
+        <Footer onOpenLegalMenu={vi.fn()} />
       </MemoryRouter>,
     );
 

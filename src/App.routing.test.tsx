@@ -148,16 +148,23 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    // Check for about and legal links in footer
-    const aboutLink = screen.getByRole("link", { name: tr("common.aboutUs") });
-    const legalLink = screen.getByRole("link", {
-      name: tr("common.legalAndPrivacy"),
+    const legalButtons = screen.getAllByRole("button", {
+      name: tr("common.legalMenu"),
     });
 
-    expect(aboutLink).toBeInTheDocument();
-    expect(aboutLink).toHaveAttribute("href", "/about");
-    expect(legalLink).toBeInTheDocument();
-    expect(legalLink).toHaveAttribute("href", "/legal");
+    expect(legalButtons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("should render payments action in header", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: tr("common.paymentsP24") }),
+    ).toBeInTheDocument();
   });
 
   it("should render upload page when route is /upload", () => {
