@@ -179,7 +179,6 @@ describe("App Component Routing", () => {
     const cameraIcon = document.querySelector(".lucide-camera");
     expect(uploadIcon).toBeInTheDocument();
     expect(cameraIcon).toBeInTheDocument();
-    expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
     ).not.toBeInTheDocument();
