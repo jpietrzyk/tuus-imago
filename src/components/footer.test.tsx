@@ -102,4 +102,37 @@ describe("Footer Component", () => {
       "shadow-lg",
     );
   });
+
+  it("should not render checkout CTA by default", () => {
+    render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should render checkout CTA when enabled and call callback", async () => {
+    const user = userEvent.setup();
+    const onCheckout = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer
+          onOpenLegalMenu={vi.fn()}
+          showCheckout
+          onCheckout={onCheckout}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: tr("checkout.openCheckout") }),
+    );
+
+    expect(onCheckout).toHaveBeenCalledTimes(1);
+  });
 });

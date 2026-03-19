@@ -32,22 +32,8 @@ vi.mock("./side-slot-preview", () => ({
 }));
 
 vi.mock("./painting-preview-slot", () => ({
-  default: ({
-    onMovePrevious,
-    onMoveNext,
-    onRemoveImage,
-  }: {
-    onMovePrevious: () => void;
-    onMoveNext: () => void;
-    onRemoveImage: () => void;
-  }) => (
+  default: ({ onRemoveImage }: { onRemoveImage: () => void }) => (
     <div data-testid="mock-painting-slot">
-      <button type="button" data-testid="mock-prev" onClick={onMovePrevious}>
-        prev
-      </button>
-      <button type="button" data-testid="mock-next" onClick={onMoveNext}>
-        next
-      </button>
       <button type="button" data-testid="mock-remove" onClick={onRemoveImage}>
         remove
       </button>
@@ -69,13 +55,13 @@ const metadata: SelectedImageMetadata = {
 };
 
 const createProps = () => ({
+  slots: [createItem("left"), createItem("center"), createItem("right")],
   activeImage: createItem("center"),
   activeImageIndex: 1,
   selectedImageMetadata: metadata,
   bestProportion: "horizontal" as ImageDisplayProportion,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
   previewFrameAspectRatio: 16 / 9,
-  hasMultipleImages: true,
   canMovePrevious: true,
   canMoveNext: true,
   leftSlotIndex: 0,
@@ -83,8 +69,6 @@ const createProps = () => ({
   leftSlotImage: createItem("left"),
   rightSlotImage: createItem("right"),
   onSelectSlot: vi.fn(),
-  onMovePrevious: vi.fn(),
-  onMoveNext: vi.fn(),
   onRemoveActiveImage: vi.fn(),
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
@@ -109,13 +93,25 @@ describe("UploaderPreviewSlider", () => {
     render(<UploaderPreviewSlider {...props} />);
 
     fireEvent.click(screen.getByTestId("mock-side-left"));
-    fireEvent.click(screen.getByTestId("mock-prev"));
-    fireEvent.click(screen.getByTestId("mock-next"));
     fireEvent.click(screen.getByTestId("mock-remove"));
+    fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
     expect(props.onSelectSlot).toHaveBeenCalledWith(0);
-    expect(props.onMovePrevious).toHaveBeenCalledTimes(1);
-    expect(props.onMoveNext).toHaveBeenCalledTimes(1);
     expect(props.onRemoveActiveImage).toHaveBeenCalledTimes(1);
+    expect(props.onSelectSlot).toHaveBeenCalledWith(2);
+  });
+
+  it("renders one navigation dot for each slot and accents the active one", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} />);
+
+    expect(screen.getByTestId("uploader-slot-dots")).toBeInTheDocument();
+    expect(screen.getByTestId("uploader-slot-dot-0")).toBeInTheDocument();
+    expect(screen.getByTestId("uploader-slot-dot-1")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByTestId("uploader-slot-dot-2")).toBeInTheDocument();
   });
 });

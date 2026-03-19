@@ -74,12 +74,13 @@ describe("ImageUploader", () => {
     if (input) {
       fireEvent.change(input, { target: { files: [file] } });
 
-      await screen.findByRole("img", { name: "Preview" });
+      const previewCanvas = (await screen.findByTestId(
+        "selected-image-preview-canvas",
+      )) as HTMLCanvasElement;
 
       await waitFor(() => {
-        const proportions = screen.getByTestId("image-proportions");
-        expect(proportions.textContent).toContain("×");
-        expect(proportions.textContent).toContain(":");
+        expect(previewCanvas.width).toBeGreaterThan(0);
+        expect(previewCanvas.height).toBeGreaterThan(0);
       });
     }
   });
@@ -146,13 +147,13 @@ describe("ImageUploader", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByRole("menuitem", { name: /^Vertical \(/ }),
+          screen.getByRole("menuitem", { name: "Vertical" }),
         ).toBeInTheDocument();
         expect(
-          screen.getByRole("menuitem", { name: /^Horizontal \(/ }),
+          screen.getByRole("menuitem", { name: "Horizontal" }),
         ).toBeInTheDocument();
         expect(
-          screen.getByRole("menuitem", { name: /^Rectangle \(/ }),
+          screen.getByRole("menuitem", { name: "Rectangle" }),
         ).toBeInTheDocument();
       });
     }
@@ -184,33 +185,22 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
 
-      expect(dropdownTrigger.textContent).toMatch(/^Horizontal \(84\.38%\)/);
-      expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
-        "Showing 84.38% of original area",
-      );
-
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical \(/ }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Vertical" }));
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(533);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toMatch(/^Vertical \(44\.44%\)/);
-        expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
-          "Showing 44.44% of original area",
-        );
+        expect(dropdownTrigger.textContent).toBe("Vertical");
       });
 
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle \(/ }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Rectangle" }));
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(800);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toMatch(/^Rectangle \(66\.67%\)/);
-        expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
-          "Showing 66.67% of original area",
-        );
+        expect(dropdownTrigger.textContent).toBe("Rectangle");
       });
     }
   });
@@ -244,10 +234,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
 
-      expect(dropdownTrigger.textContent).toMatch(/^Vertical \(100\.00%\)/);
-      expect(screen.getByTestId("selected-coverage-hint").textContent).toBe(
-        "Showing 100.00% of original area",
-      );
+      expect(dropdownTrigger.textContent).toBe("Vertical");
     }
   });
 
@@ -320,10 +307,12 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      const previewCanvas = screen.getByTestId(
+        "selected-image-preview-canvas",
+      ) as HTMLCanvasElement;
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "1200 × 800",
-        );
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(675);
       });
 
       await waitFor(() => {
@@ -373,10 +362,12 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      const previewCanvas = screen.getByTestId(
+        "selected-image-preview-canvas",
+      ) as HTMLCanvasElement;
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "1200 × 800",
-        );
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(675);
       });
 
       await waitFor(() => {
@@ -473,7 +464,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical \(/ }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Vertical" }));
 
       fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
 
@@ -493,7 +484,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
       fireEvent.pointerDown(secondImageDropdown);
-      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle/ }));
+      fireEvent.click(screen.getByRole("menuitem", { name: "Rectangle" }));
 
       await waitFor(() => {
         expect(screen.getByTestId("selected-image-preview-frame")).toHaveStyle({
@@ -577,18 +568,19 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      const previewCanvas = screen.getByTestId(
+        "selected-image-preview-canvas",
+      ) as HTMLCanvasElement;
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "1200 × 800",
-        );
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(675);
       });
 
       fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
 
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "900 × 900",
-        );
+        expect(previewCanvas.width).toBe(900);
+        expect(previewCanvas.height).toBe(506);
       });
 
       await waitFor(() => {
@@ -620,10 +612,12 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [firstFile] } });
       await screen.findByRole("img", { name: "Preview" });
 
+      const previewCanvas = screen.getByTestId(
+        "selected-image-preview-canvas",
+      ) as HTMLCanvasElement;
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "1200 × 800",
-        );
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(675);
       });
 
       mockImageWidth = 900;
@@ -703,10 +697,12 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [firstFile] } });
       await screen.findByRole("img", { name: "Preview" });
 
+      const previewCanvas = screen.getByTestId(
+        "selected-image-preview-canvas",
+      ) as HTMLCanvasElement;
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toContain(
-          "1200 × 800",
-        );
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(675);
       });
 
       mockImageWidth = 900;
@@ -721,47 +717,46 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      // Wait for second image to register in right slot
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
       const previewFrame = screen.getByTestId("selected-image-preview-frame");
-      const prevButton = screen.getByTestId(
-        "uploader-slider-prev",
-      ) as HTMLButtonElement;
-      const nextButton = screen.getByTestId(
-        "uploader-slider-next",
-      ) as HTMLButtonElement;
-
+      // First image (1200×800) is still active; second is in right slot → canMoveNext=true
+      // Swipe left (negative delta) to move to the next (right) slot
       const startX = 200;
-      const canMoveNext = !nextButton.disabled;
-      const smallDelta = canMoveNext ? -25 : 25;
-      const largeDelta = canMoveNext ? -60 : 60;
-      const proportionsBeforeSwipe =
-        screen.getByTestId("image-proportions").textContent ?? "";
-
-      expect(canMoveNext || !prevButton.disabled).toBe(true);
+      const canvasSizeBefore = {
+        width: previewCanvas.width,
+        height: previewCanvas.height,
+      };
 
       fireEvent.touchStart(previewFrame, {
         touches: [{ clientX: startX }],
       });
       fireEvent.touchEnd(previewFrame, {
-        changedTouches: [{ clientX: startX + smallDelta }],
+        changedTouches: [{ clientX: startX - 25 }],
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).toBe(
-          proportionsBeforeSwipe,
-        );
+        expect(previewCanvas.width).toBe(canvasSizeBefore.width);
+        expect(previewCanvas.height).toBe(canvasSizeBefore.height);
       });
 
       fireEvent.touchStart(previewFrame, {
         touches: [{ clientX: startX }],
       });
       fireEvent.touchEnd(previewFrame, {
-        changedTouches: [{ clientX: startX + largeDelta }],
+        changedTouches: [{ clientX: startX - 60 }],
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("image-proportions").textContent).not.toBe(
-          proportionsBeforeSwipe,
-        );
+        expect(
+          previewCanvas.width !== canvasSizeBefore.width ||
+            previewCanvas.height !== canvasSizeBefore.height,
+        ).toBe(true);
       });
     }
   });

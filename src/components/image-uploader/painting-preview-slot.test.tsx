@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import PaintingPreviewSlot from "./painting-preview-slot";
+import { tr } from "@/test/i18n-test";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -29,11 +30,6 @@ const createProps = () => ({
   bestProportion: null as ImageDisplayProportion | null,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
   previewFrameAspectRatio: 16 / 9,
-  hasMultipleImages: true,
-  canMovePrevious: true,
-  canMoveNext: true,
-  onMovePrevious: vi.fn(),
-  onMoveNext: vi.fn(),
   onRemoveImage: vi.fn(),
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
@@ -146,17 +142,12 @@ describe("PaintingPreviewSlot", () => {
     expect(previewCanvasUtils.drawCroppedImageToCanvas).not.toHaveBeenCalled();
   });
 
-  it("renders remove button always and navigation arrows only when multiple images", () => {
-    const props = {
-      ...createProps(),
-      hasMultipleImages: false,
-    };
-
-    render(<PaintingPreviewSlot {...props} />);
+  it("renders a descriptive clear button without navigation arrows", () => {
+    render(<PaintingPreviewSlot {...createProps()} />);
 
     expect(
       screen.getByTestId("uploader-remove-active-image"),
-    ).toBeInTheDocument();
+    ).toHaveTextContent(tr("uploader.clearSlot"));
     expect(
       screen.queryByTestId("uploader-slider-prev"),
     ).not.toBeInTheDocument();

@@ -17,6 +17,7 @@ interface UploaderToolsProps {
   onSelectProportion: (proportion: UploaderProportion) => void;
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
+  showCoverageDetails?: boolean;
 }
 
 const PROPORTION_LABELS: Record<UploaderProportion, string> = {
@@ -37,12 +38,12 @@ export function UploaderTools({
   onSelectProportion,
   coveragePercent,
   selectedProportion,
+  showCoverageDetails = false,
 }: UploaderToolsProps) {
   const selectedCoverage = coveragePercent?.[selectedProportion];
-  const selectedLabel = formatOptionLabel(
-    PROPORTION_LABELS[selectedProportion],
-    selectedCoverage,
-  );
+  const selectedLabel = showCoverageDetails
+    ? formatOptionLabel(PROPORTION_LABELS[selectedProportion], selectedCoverage)
+    : PROPORTION_LABELS[selectedProportion];
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -60,17 +61,24 @@ export function UploaderTools({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
           <DropdownMenuItem onSelect={() => onSelectProportion("vertical")}>
-            {formatOptionLabel("Vertical", coveragePercent?.vertical)}
+            {showCoverageDetails
+              ? formatOptionLabel("Vertical", coveragePercent?.vertical)
+              : "Vertical"}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onSelectProportion("horizontal")}>
-            {formatOptionLabel("Horizontal", coveragePercent?.horizontal)}
+            {showCoverageDetails
+              ? formatOptionLabel("Horizontal", coveragePercent?.horizontal)
+              : "Horizontal"}
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onSelectProportion("rectangle")}>
-            {formatOptionLabel("Rectangle", coveragePercent?.rectangle)}
+            {showCoverageDetails
+              ? formatOptionLabel("Rectangle", coveragePercent?.rectangle)
+              : "Rectangle"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {typeof selectedCoverage === "number" &&
+      {showCoverageDetails &&
+        typeof selectedCoverage === "number" &&
         !Number.isNaN(selectedCoverage) && (
           <div
             className="text-xs text-muted-foreground"

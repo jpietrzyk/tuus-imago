@@ -62,7 +62,13 @@ describe("SideSlotPreview", () => {
 
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
-    ).toHaveClass("opacity-70", "md:opacity-65");
+    ).toHaveClass(
+      "opacity-90",
+      "md:opacity-85",
+      "border",
+      "border-dashed",
+      "bg-muted/35",
+    );
   });
 
   it("renders image and applies filled opacity classes when slot has image", () => {

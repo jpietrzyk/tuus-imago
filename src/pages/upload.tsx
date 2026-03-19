@@ -24,7 +24,13 @@ interface PreviewCropArea {
   height: number;
 }
 
-export function UploadPage() {
+interface UploadPageProps {
+  onCheckoutAvailabilityChange?: (available: boolean) => void;
+}
+
+export function UploadPage({
+  onCheckoutAvailabilityChange,
+}: UploadPageProps = {}) {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -216,6 +222,7 @@ export function UploadPage() {
 
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
+  const isCheckoutAvailable = Boolean(uploadedImage || hasUploaderSelection);
 
   const startPreviewReload = useCallback((reason: "preview" | "crop") => {
     setPreviewLoadingReason(reason);
@@ -234,6 +241,14 @@ export function UploadPage() {
       [adjustment]: !prev[adjustment],
     }));
   };
+
+  useEffect(() => {
+    onCheckoutAvailabilityChange?.(isCheckoutAvailable);
+
+    return () => {
+      onCheckoutAvailabilityChange?.(false);
+    };
+  }, [isCheckoutAvailable, onCheckoutAvailabilityChange]);
 
   useEffect(() => {
     if (

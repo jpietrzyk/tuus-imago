@@ -180,8 +180,10 @@ describe("App Component Routing", () => {
     expect(uploadIcon).toBeInTheDocument();
     expect(cameraIcon).toBeInTheDocument();
     expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+    ).not.toBeInTheDocument();
   });
-
 
   it("should render upload button on landing page", () => {
     render(
@@ -219,6 +221,18 @@ describe("App Component Routing", () => {
     // Upload button should NOT be on legal page
     expect(
       screen.queryByRole("button", { name: tr("landing.cta.button") }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should not render footer checkout CTA on non-upload routes", () => {
+    render(
+      <MemoryRouter initialEntries={["/about"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
     ).not.toBeInTheDocument();
   });
 
