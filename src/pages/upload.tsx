@@ -26,10 +26,14 @@ interface PreviewCropArea {
 
 interface UploadPageProps {
   onCheckoutAvailabilityChange?: (available: boolean) => void;
+  onResetAvailabilityChange?: (available: boolean) => void;
+  onResetActionChange?: (action: (() => void) | null) => void;
 }
 
 export function UploadPage({
   onCheckoutAvailabilityChange,
+  onResetAvailabilityChange,
+  onResetActionChange,
 }: UploadPageProps = {}) {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
@@ -66,6 +70,7 @@ export function UploadPage({
   });
   const [appliedManualCropCoordinates, setAppliedManualCropCoordinates] =
     useState<string | undefined>(undefined);
+  const [uploaderResetVersion, setUploaderResetVersion] = useState(0);
   const previewDragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -150,6 +155,7 @@ export function UploadPage({
             },
           };
     setUploadedImage(uploadResult);
+    setHasUploaderSelection(false);
     setTransformations(transformationsParam);
     setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
     setUseAiPreview(true);
@@ -223,6 +229,28 @@ export function UploadPage({
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
   const isCheckoutAvailable = Boolean(uploadedImage || hasUploaderSelection);
+  const isResetAvailable = hasUploaderSelection;
+
+  const handleFooterReset = useCallback(() => {
+    if (!uploadedImage) {
+      setUploaderResetVersion((previousVersion) => previousVersion + 1);
+    }
+
+    setUploadedImage(null);
+    setHasUploaderSelection(false);
+    setUploadError(null);
+    setIsSuccess(false);
+    setTransformations(null);
+    setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
+    setUseAiPreview(true);
+    setIsPreviewLoading(false);
+    setPreviewLoadProgress(0);
+    setPreviewError(null);
+    setCropMode("manual");
+    setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
+    setPreviewDisplayDimensions({ width: 0, height: 0 });
+    setAppliedManualCropCoordinates(undefined);
+  }, [uploadedImage]);
 
   const startPreviewReload = useCallback((reason: "preview" | "crop") => {
     setPreviewLoadingReason(reason);
@@ -249,6 +277,22 @@ export function UploadPage({
       onCheckoutAvailabilityChange?.(false);
     };
   }, [isCheckoutAvailable, onCheckoutAvailabilityChange]);
+
+  useEffect(() => {
+    onResetAvailabilityChange?.(isResetAvailable);
+
+    return () => {
+      onResetAvailabilityChange?.(false);
+    };
+  }, [isResetAvailable, onResetAvailabilityChange]);
+
+  useEffect(() => {
+    onResetActionChange?.(handleFooterReset);
+
+    return () => {
+      onResetActionChange?.(null);
+    };
+  }, [handleFooterReset, onResetActionChange]);
 
   useEffect(() => {
     if (
@@ -495,6 +539,7 @@ export function UploadPage({
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   onSelectionStateChange={setHasUploaderSelection}
+                  externalResetTrigger={uploaderResetVersion}
                   skipCropStep
                   defaultShowIcons
                   className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"

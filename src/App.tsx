@@ -27,6 +27,8 @@ export function App() {
     useState<LegalMenuSection>("legal");
   const [isFooterCheckoutAvailable, setIsFooterCheckoutAvailable] =
     useState(false);
+  const [isFooterResetAvailable, setIsFooterResetAvailable] = useState(false);
+  const [onFooterReset, setOnFooterReset] = useState<(() => void) | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -35,8 +37,14 @@ export function App() {
     setIsLegalSheetOpen(true);
   };
 
+  const handleFooterResetActionChange = (action: (() => void) | null) => {
+    setOnFooterReset(() => action);
+  };
+
   const showFooterCheckout =
     location.pathname === "/upload" && isFooterCheckoutAvailable;
+  const showFooterReset =
+    location.pathname === "/upload" && isFooterResetAvailable;
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
@@ -49,6 +57,8 @@ export function App() {
             element={
               <UploadPage
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
+                onResetAvailabilityChange={setIsFooterResetAvailable}
+                onResetActionChange={handleFooterResetActionChange}
               />
             }
           />
@@ -69,6 +79,8 @@ export function App() {
         onOpenLegalMenu={() => openLegalSheet("legal")}
         showCheckout={showFooterCheckout}
         onCheckout={() => navigate("/checkout")}
+        showReset={showFooterReset}
+        onReset={onFooterReset ?? undefined}
       />
       <LegalNavigationSheet
         open={isLegalSheetOpen}

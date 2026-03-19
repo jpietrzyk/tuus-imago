@@ -135,4 +135,77 @@ describe("Footer Component", () => {
 
     expect(onCheckout).toHaveBeenCalledTimes(1);
   });
+
+  it("should not render reset CTA by default", () => {
+    render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: tr("uploader.resetSlots") }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should open confirmation dialog and confirm destructive reset", async () => {
+    const user = userEvent.setup();
+    const onReset = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} showReset onReset={onReset} />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: tr("uploader.resetSlots") }),
+    );
+
+    expect(
+      screen.getByText(tr("uploader.resetSlotsConfirmTitle")),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(tr("uploader.resetSlotsConfirmDescription")),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: tr("uploader.resetSlotsConfirmAction"),
+      }),
+    );
+
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it("should close reset dialog without action on cancel", async () => {
+    const user = userEvent.setup();
+    const onReset = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} showReset onReset={onReset} />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: tr("uploader.resetSlots") }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: tr("uploader.cancel") }),
+    );
+
+    expect(onReset).not.toHaveBeenCalled();
+  });
+
+  it("should use three-column footer layout for centered checkout", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <Footer onOpenLegalMenu={vi.fn()} showCheckout onCheckout={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    const layoutRow = container.querySelector("footer > div > div");
+    expect(layoutRow).toHaveClass("grid", "grid-cols-[1fr_auto_1fr]");
+  });
 });

@@ -1,7 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RotateCcw } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderTools from "./uploader-tools";
@@ -53,6 +51,7 @@ interface ImageUploaderProps {
   className?: string;
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
+  externalResetTrigger?: number;
 }
 
 const MAX_SELECTED_IMAGES = 3;
@@ -75,6 +74,7 @@ export function ImageUploader({
   onSelectionStateChange,
   className,
   defaultShowIcons = false,
+  externalResetTrigger,
 }: ImageUploaderProps) {
   const [selectedImages, setSelectedImages] = useState<
     Array<SelectedImageItem | null>
@@ -84,6 +84,9 @@ export function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
+  const lastExternalResetTriggerRef = useRef<number | undefined>(
+    externalResetTrigger,
+  );
   const activeImageIndexRef = useRef<number | null>(null);
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     createEmptySelectionSlots(),
@@ -412,7 +415,6 @@ export function ImageUploader({
     selectedImages,
     activeImageIndex,
   });
-  const hasMultipleImages = selectedImageCount > 1;
 
   const moveToPreviousImage = useCallback(() => {
     if (previousFilledSlotIndex === null) {
@@ -527,6 +529,22 @@ export function ImageUploader({
     };
   }, [revokePreviewUrls]);
 
+  useEffect(() => {
+    if (typeof externalResetTrigger !== "number") {
+      return;
+    }
+
+    const lastTrigger = lastExternalResetTriggerRef.current;
+    if (
+      typeof lastTrigger === "number" &&
+      externalResetTrigger !== lastTrigger
+    ) {
+      handleCancel();
+    }
+
+    lastExternalResetTriggerRef.current = externalResetTrigger;
+  }, [externalResetTrigger, handleCancel]);
+
   if (!selectedFile || !previewUrl) {
     return (
       <UploaderDropArea
@@ -585,23 +603,9 @@ export function ImageUploader({
           onMetadataResolved={handleMetadataResolved}
         />
 
-        <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-3 sm:px-4">
-          <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
-              {t("uploader.multiImageHint")}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCancel}
-              className="gap-2 border-border/70 bg-background/85 font-medium hover:bg-background"
-            >
-              <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              {t("uploader.resetSlots")}
-            </Button>
-          </div>
-        </div>
+        <p className="w-full px-1 text-xs leading-relaxed text-muted-foreground">
+          {t("uploader.multiImageHint")}
+        </p>
 
         <div className="rounded-xl border border-border/60 bg-background/75 px-3 py-3 sm:px-4">
           <UploaderTools
