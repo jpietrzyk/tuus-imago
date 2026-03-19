@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
@@ -37,9 +37,12 @@ export function App() {
     setIsLegalSheetOpen(true);
   };
 
-  const handleFooterResetActionChange = (action: (() => void) | null) => {
-    setOnFooterReset(() => action);
-  };
+  const handleFooterResetActionChange = useCallback(
+    (action: (() => void) | null) => {
+      setOnFooterReset(() => action);
+    },
+    [],
+  );
 
   const showFooterCheckout =
     location.pathname === "/upload" && isFooterCheckoutAvailable;
