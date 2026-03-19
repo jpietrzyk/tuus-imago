@@ -7,7 +7,6 @@ import {
   type LegalMenuSection,
 } from "@/components/legal-navigation-sheet";
 import { LandingPage } from "./pages/landing";
-import { StartPage } from "./pages/start";
 import { UploadPage } from "./pages/upload";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
@@ -38,7 +37,6 @@ export function App() {
       <main className="flex-1 overflow-auto relative">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/start" element={<StartPage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/legal" element={<LegalPage />} />

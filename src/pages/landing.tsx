@@ -19,7 +19,7 @@ export function LandingPage() {
 
       {/* CTA button */}
       <div className="text-center">
-        <Link to="/start">
+        <Link to="/upload">
           <Button
             size="lg"
             className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
