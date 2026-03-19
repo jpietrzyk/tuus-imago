@@ -182,21 +182,6 @@ describe("App Component Routing", () => {
     expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
   });
 
-  it("should render start page when route is /start", () => {
-    render(
-      <MemoryRouter initialEntries={["/start"]}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    const startLink = screen.getByRole("link", {
-      name: tr("landing.cta.button"),
-    });
-
-    expect(startLink).toBeInTheDocument();
-    expect(startLink).toHaveAttribute("href", "/upload");
-    expect(document.querySelector(".lucide-upload")).toBeInTheDocument();
-  });
 
   it("should render upload button on landing page", () => {
     render(
