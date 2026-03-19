@@ -90,7 +90,7 @@ export default function SideSlotPreview({
         ) : (
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-border/70 bg-background/80">
             <Plus
-              className="h-4.5 w-4.5 text-muted-foreground"
+              className="h-[18px] w-[18px] text-muted-foreground"
               aria-hidden="true"
             />
           </span>

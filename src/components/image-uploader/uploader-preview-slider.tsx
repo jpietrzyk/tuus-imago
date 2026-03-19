@@ -91,7 +91,7 @@ export default function UploaderPreviewSlider({
 
       <div
         className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-muted/55 px-3 py-1.5 shadow-sm backdrop-blur-sm"
-        aria-label="Preview slot navigation"
+        aria-label={t("uploader.previewSlotNavigation")}
         data-testid="uploader-slot-dots"
       >
         {slots.map((slot, index) => {

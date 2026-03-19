@@ -237,6 +237,7 @@
     "multiImageHint": "Swipe or tap a slot dot to move between selected images. Tap an empty slot to add another image.",
     "previousImage": "Previous image",
     "nextImage": "Next image",
+    "previewSlotNavigation": "Preview slot navigation",
     "selectImageSlot": "Select image {index}",
     "addImageSlot": "Add image to slot {index}",
     "removeImageSlot": "Remove image from slot {index}",
