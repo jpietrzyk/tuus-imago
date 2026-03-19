@@ -29,12 +29,6 @@ const createProps = () => ({
   bestProportion: null as ImageDisplayProportion | null,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
   previewFrameAspectRatio: 16 / 9,
-  hasMultipleImages: true,
-  canMovePrevious: true,
-  canMoveNext: true,
-  onMovePrevious: vi.fn(),
-  onMoveNext: vi.fn(),
-  onRemoveImage: vi.fn(),
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
   onMetadataResolved: vi.fn(),
@@ -146,17 +140,12 @@ describe("PaintingPreviewSlot", () => {
     expect(previewCanvasUtils.drawCroppedImageToCanvas).not.toHaveBeenCalled();
   });
 
-  it("renders remove button always and navigation arrows only when multiple images", () => {
-    const props = {
-      ...createProps(),
-      hasMultipleImages: false,
-    };
-
-    render(<PaintingPreviewSlot {...props} />);
+  it("does not render clear or navigation controls inside painting slot", () => {
+    render(<PaintingPreviewSlot {...createProps()} />);
 
     expect(
-      screen.getByTestId("uploader-remove-active-image"),
-    ).toBeInTheDocument();
+      screen.queryByTestId("uploader-remove-active-image"),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId("uploader-slider-prev"),
     ).not.toBeInTheDocument();

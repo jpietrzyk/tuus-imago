@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
@@ -53,10 +52,12 @@ interface ImageUploaderProps {
   className?: string;
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
+  externalResetTrigger?: number;
 }
 
 const MAX_SELECTED_IMAGES = 3;
 const CENTER_SLOT_INDEX = Math.floor(MAX_SELECTED_IMAGES / 2);
+const SHOW_UPLOADER_DEBUG = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
 
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
   Array.from({ length: MAX_SELECTED_IMAGES }, () => null);
@@ -74,6 +75,7 @@ export function ImageUploader({
   onSelectionStateChange,
   className,
   defaultShowIcons = false,
+  externalResetTrigger,
 }: ImageUploaderProps) {
   const [selectedImages, setSelectedImages] = useState<
     Array<SelectedImageItem | null>
@@ -83,6 +85,9 @@ export function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
+  const lastExternalResetTriggerRef = useRef<number | undefined>(
+    externalResetTrigger,
+  );
   const activeImageIndexRef = useRef<number | null>(null);
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     createEmptySelectionSlots(),
@@ -411,7 +416,6 @@ export function ImageUploader({
     selectedImages,
     activeImageIndex,
   });
-  const hasMultipleImages = selectedImageCount > 1;
 
   const moveToPreviousImage = useCallback(() => {
     if (previousFilledSlotIndex === null) {
@@ -460,6 +464,30 @@ export function ImageUploader({
     };
   }, [selectedImageMetadata]);
 
+  const debugCoverageRows = useMemo(() => {
+    if (!coveragePercent) {
+      return [];
+    }
+
+    return [
+      {
+        key: "horizontal",
+        label: t("uploader.debugHorizontalCoverage"),
+        value: coveragePercent.horizontal,
+      },
+      {
+        key: "vertical",
+        label: t("uploader.debugVerticalCoverage"),
+        value: coveragePercent.vertical,
+      },
+      {
+        key: "rectangle",
+        label: t("uploader.debugRectangleCoverage"),
+        value: coveragePercent.rectangle,
+      },
+    ];
+  }, [coveragePercent]);
+
   const bestDisplayImageProportion = useMemo(() => {
     if (!selectedImageMetadata) {
       return null;
@@ -502,6 +530,22 @@ export function ImageUploader({
     };
   }, [revokePreviewUrls]);
 
+  useEffect(() => {
+    if (typeof externalResetTrigger !== "number") {
+      return;
+    }
+
+    const lastTrigger = lastExternalResetTriggerRef.current;
+    if (
+      typeof lastTrigger === "number" &&
+      externalResetTrigger !== lastTrigger
+    ) {
+      handleCancel();
+    }
+
+    lastExternalResetTriggerRef.current = externalResetTrigger;
+  }, [externalResetTrigger, handleCancel]);
+
   if (!selectedFile || !previewUrl) {
     return (
       <UploaderDropArea
@@ -536,27 +580,37 @@ export function ImageUploader({
         className="hidden"
       />
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>{t("uploader.adjustImage")}</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCancel}
-            className="text-destructive hover:text-destructive"
+        <div className="grid min-h-9 grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <CardTitle className="truncate">
+            {t("uploader.adjustImage")}
+          </CardTitle>
+          <button
+            type="button"
+            onClick={handleRemoveActiveImage}
+            aria-label={t("uploader.removeImageSlot", {
+              index:
+                typeof activeImageIndex === "number"
+                  ? String(activeImageIndex + 1)
+                  : "",
+            })}
+            data-testid="uploader-remove-active-image"
+            className="z-10 inline-flex items-center justify-center gap-1.5 justify-self-center rounded-full border border-border/70 bg-background/95 px-3 py-1.5 text-xs font-semibold tracking-[0.01em] text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <X className="h-4 w-4" />
-          </Button>
-        </CardTitle>
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>{t("uploader.clearSlot")}</span>
+          </button>
+          <span aria-hidden="true" />
+        </div>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
+      <CardContent className="flex-1 flex flex-col space-y-5 overflow-hidden pb-5">
         <UploaderPreviewSlider
+          slots={selectedImages}
           activeImage={activeImage}
           activeImageIndex={activeImageIndex}
           selectedImageMetadata={selectedImageMetadata}
           bestProportion={bestDisplayImageProportion}
           userSelectedProportion={displayImageProportion}
           previewFrameAspectRatio={previewFrameAspectRatio}
-          hasMultipleImages={hasMultipleImages}
           canMovePrevious={canMovePrevious}
           canMoveNext={canMoveNext}
           leftSlotIndex={leftSlotIndex}
@@ -564,41 +618,76 @@ export function ImageUploader({
           leftSlotImage={leftSlotImage}
           rightSlotImage={rightSlotImage}
           onSelectSlot={handlePreviewSlotSelect}
-          onMovePrevious={moveToPreviousImage}
-          onMoveNext={moveToNextImage}
-          onRemoveActiveImage={handleRemoveActiveImage}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
           onMetadataResolved={handleMetadataResolved}
         />
 
-        <div className="text-center text-xs text-muted-foreground">
+        <p className="w-full px-1 text-center text-xs leading-relaxed text-muted-foreground">
           {t("uploader.multiImageHint")}
+        </p>
+
+        <div className="rounded-xl border border-border/60 bg-background/75 px-3 py-3 sm:px-4">
+          <UploaderTools
+            onSelectProportion={(proportion) => {
+              updateActiveImage((image) => ({
+                ...image,
+                displayImageProportion:
+                  proportion === "rectangle" ? "square" : proportion,
+              }));
+            }}
+            coveragePercent={coveragePercent}
+            selectedProportion={
+              displayImageProportion === "square"
+                ? "rectangle"
+                : displayImageProportion
+            }
+            showCoverageDetails={SHOW_UPLOADER_DEBUG}
+          />
         </div>
 
-        <UploaderTools
-          onSelectProportion={(proportion) => {
-            updateActiveImage((image) => ({
-              ...image,
-              displayImageProportion:
-                proportion === "rectangle" ? "square" : proportion,
-            }));
-          }}
-          coveragePercent={coveragePercent}
-          selectedProportion={
-            displayImageProportion === "square"
-              ? "rectangle"
-              : displayImageProportion
-          }
-        />
-
-        {selectedImageMetadata && (
+        {SHOW_UPLOADER_DEBUG && selectedImageMetadata && (
           <div
-            className="text-center text-sm text-muted-foreground"
-            data-testid="image-proportions"
+            className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950"
+            data-testid="uploader-proportion-debug"
           >
-            {selectedImageMetadata.width} × {selectedImageMetadata.height} •{" "}
-            {selectedImageMetadata.aspectRatio}
+            <p className="font-semibold uppercase tracking-[0.12em] text-[11px] text-amber-700">
+              {t("uploader.debugTitle")}
+            </p>
+            <div className="mt-2 space-y-1.5">
+              <p>
+                <span className="font-medium">
+                  {t("uploader.debugImageSize")}:{" "}
+                </span>
+                {selectedImageMetadata.width} × {selectedImageMetadata.height}
+              </p>
+              <p>
+                <span className="font-medium">
+                  {t("uploader.debugImageRatio")}:{" "}
+                </span>
+                {selectedImageMetadata.aspectRatio}
+              </p>
+              <p>
+                <span className="font-medium">
+                  {t("uploader.debugCurrentFrame")}:{" "}
+                </span>
+                {displayImageProportion}
+              </p>
+              <p>
+                <span className="font-medium">
+                  {t("uploader.debugSuggestedFrame")}:{" "}
+                </span>
+                {bestDisplayImageProportion ?? t("uploader.debugUnknown")}
+              </p>
+              {debugCoverageRows.map(({ key, label, value }) => (
+                <p key={key}>
+                  <span className="font-medium">{label}: </span>
+                  {typeof value === "number" && !Number.isNaN(value)
+                    ? `${value.toFixed(2)}%`
+                    : t("uploader.debugUnknown")}
+                </p>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>

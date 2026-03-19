@@ -24,7 +24,17 @@ interface PreviewCropArea {
   height: number;
 }
 
-export function UploadPage() {
+interface UploadPageProps {
+  onCheckoutAvailabilityChange?: (available: boolean) => void;
+  onResetAvailabilityChange?: (available: boolean) => void;
+  onResetActionChange?: (action: (() => void) | null) => void;
+}
+
+export function UploadPage({
+  onCheckoutAvailabilityChange,
+  onResetAvailabilityChange,
+  onResetActionChange,
+}: UploadPageProps = {}) {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -60,6 +70,7 @@ export function UploadPage() {
   });
   const [appliedManualCropCoordinates, setAppliedManualCropCoordinates] =
     useState<string | undefined>(undefined);
+  const [uploaderResetVersion, setUploaderResetVersion] = useState(0);
   const previewDragStateRef = useRef({
     isDragging: false,
     isResizing: false,
@@ -144,6 +155,7 @@ export function UploadPage() {
             },
           };
     setUploadedImage(uploadResult);
+    setHasUploaderSelection(false);
     setTransformations(transformationsParam);
     setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
     setUseAiPreview(true);
@@ -216,6 +228,8 @@ export function UploadPage() {
 
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
+  const isCheckoutAvailable = Boolean(uploadedImage || hasUploaderSelection);
+  const isResetAvailable = hasUploaderSelection;
 
   const startPreviewReload = useCallback((reason: "preview" | "crop") => {
     setPreviewLoadingReason(reason);
@@ -234,6 +248,48 @@ export function UploadPage() {
       [adjustment]: !prev[adjustment],
     }));
   };
+
+  useEffect(() => {
+    onCheckoutAvailabilityChange?.(isCheckoutAvailable);
+
+    return () => {
+      onCheckoutAvailabilityChange?.(false);
+    };
+  }, [isCheckoutAvailable, onCheckoutAvailabilityChange]);
+
+  useEffect(() => {
+    onResetAvailabilityChange?.(isResetAvailable);
+
+    return () => {
+      onResetAvailabilityChange?.(false);
+    };
+  }, [isResetAvailable, onResetAvailabilityChange]);
+
+  useEffect(() => {
+    const handleFooterReset = () => {
+      setUploadedImage(null);
+      setHasUploaderSelection(false);
+      setUploadError(null);
+      setIsSuccess(false);
+      setTransformations(null);
+      setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
+      setUseAiPreview(true);
+      setIsPreviewLoading(false);
+      setPreviewLoadProgress(0);
+      setPreviewError(null);
+      setCropMode("manual");
+      setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
+      setPreviewDisplayDimensions({ width: 0, height: 0 });
+      setAppliedManualCropCoordinates(undefined);
+      setUploaderResetVersion((previousVersion) => previousVersion + 1);
+    };
+
+    onResetActionChange?.(handleFooterReset);
+
+    return () => {
+      onResetActionChange?.(null);
+    };
+  }, [onResetActionChange]);
 
   useEffect(() => {
     if (
@@ -480,14 +536,11 @@ export function UploadPage() {
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   onSelectionStateChange={setHasUploaderSelection}
+                  externalResetTrigger={uploaderResetVersion}
                   skipCropStep
                   defaultShowIcons
                   className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
                 />
-
-                <p className="text-sm text-gray-500 text-center">
-                  {t("upload.fileSupport")}
-                </p>
               </div>
             )}
 

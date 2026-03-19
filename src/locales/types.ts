@@ -224,6 +224,7 @@ export interface Translations {
     cancel: string;
     uploadPhoto: string;
     uploading: string;
+    uploadingProgress: string;
     imageAdjustments: string;
     rotation: string;
     rotateMinus90: string;
@@ -236,9 +237,25 @@ export interface Translations {
     multiImageHint: string;
     previousImage: string;
     nextImage: string;
+    previewSlotNavigation: string;
     selectImageSlot: string;
     addImageSlot: string;
     removeImageSlot: string;
+    clearSlot: string;
+    resetSlots: string;
+    resetShort: string;
+    resetSlotsConfirmTitle: string;
+    resetSlotsConfirmDescription: string;
+    resetSlotsConfirmAction: string;
+    debugTitle: string;
+    debugImageSize: string;
+    debugImageRatio: string;
+    debugCurrentFrame: string;
+    debugSuggestedFrame: string;
+    debugHorizontalCoverage: string;
+    debugVerticalCoverage: string;
+    debugRectangleCoverage: string;
+    debugUnknown: string;
     maxImagesError: string;
   };
   checkout: {
@@ -264,6 +281,7 @@ export interface Translations {
     enhancedPhoto: string;
     canvasPrint: string;
     total: string;
+    openCheckout: string;
     placeOrder: string;
     requiredFields: string;
     errorName: string;

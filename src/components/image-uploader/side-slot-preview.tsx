@@ -68,7 +68,7 @@ export default function SideSlotPreview({
             ? isNavigable
               ? "opacity-95 md:opacity-92"
               : "opacity-80 md:opacity-75"
-            : "opacity-70 md:opacity-65"
+            : "border border-dashed border-border/85 bg-muted/35 opacity-90 md:opacity-85"
         }`}
         style={{
           aspectRatio: String(previewFrameAspectRatio),
@@ -88,7 +88,12 @@ export default function SideSlotPreview({
             draggable={false}
           />
         ) : (
-          <Plus className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-border/70 bg-background/80">
+            <Plus
+              className="h-[18px] w-[18px] text-muted-foreground"
+              aria-hidden="true"
+            />
+          </span>
         )}
       </div>
     </button>

@@ -5,7 +5,6 @@ import { UploadPage } from "./upload";
 import type { ImageTransformations } from "@/lib/image-transformations";
 import { getTransformedPreviewUrl } from "@/lib/image-transformations";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
-import { tr } from "@/test/i18n-test";
 
 describe("UploadPage Component", () => {
   it("should render drag and drop area", () => {
@@ -30,16 +29,6 @@ describe("UploadPage Component", () => {
     // Camera icon should be visible immediately in the first upload stage
     const cameraIcon = document.querySelector(".lucide-camera");
     expect(cameraIcon).toBeInTheDocument();
-  });
-
-  it("should render supported formats text", () => {
-    render(
-      <MemoryRouter>
-        <UploadPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
   });
 
   it("should display success message when upload succeeds", () => {

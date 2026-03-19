@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { useState, useCallback } from "react";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import {
@@ -25,11 +25,29 @@ export function App() {
   const [isLegalSheetOpen, setIsLegalSheetOpen] = useState(false);
   const [activeLegalSection, setActiveLegalSection] =
     useState<LegalMenuSection>("legal");
+  const [isFooterCheckoutAvailable, setIsFooterCheckoutAvailable] =
+    useState(false);
+  const [isFooterResetAvailable, setIsFooterResetAvailable] = useState(false);
+  const [onFooterReset, setOnFooterReset] = useState<(() => void) | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const openLegalSheet = (section: LegalMenuSection) => {
     setActiveLegalSection(section);
     setIsLegalSheetOpen(true);
   };
+
+  const handleFooterResetActionChange = useCallback(
+    (action: (() => void) | null) => {
+      setOnFooterReset(() => action);
+    },
+    [],
+  );
+
+  const showFooterCheckout =
+    location.pathname === "/upload" && isFooterCheckoutAvailable;
+  const showFooterReset =
+    location.pathname === "/upload" && isFooterResetAvailable;
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
@@ -37,7 +55,16 @@ export function App() {
       <main className="flex-1 overflow-auto relative">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/upload" element={<UploadPage />} />
+          <Route
+            path="/upload"
+            element={
+              <UploadPage
+                onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
+                onResetAvailabilityChange={setIsFooterResetAvailable}
+                onResetActionChange={handleFooterResetActionChange}
+              />
+            }
+          />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
@@ -51,7 +78,13 @@ export function App() {
           <Route path="/terms" element={<TermsPage />} />
         </Routes>
       </main>
-      <Footer onOpenLegalMenu={() => openLegalSheet("legal")} />
+      <Footer
+        onOpenLegalMenu={() => openLegalSheet("legal")}
+        showCheckout={showFooterCheckout}
+        onCheckout={() => navigate("/checkout")}
+        showReset={showFooterReset}
+        onReset={onFooterReset ?? undefined}
+      />
       <LegalNavigationSheet
         open={isLegalSheetOpen}
         onOpenChange={setIsLegalSheetOpen}

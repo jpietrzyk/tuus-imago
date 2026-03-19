@@ -1,6 +1,6 @@
 /// <reference types="@testing-library/jest-dom" />
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "./App";
@@ -175,13 +175,16 @@ describe("App Component Routing", () => {
     );
 
     // Check for upload page elements
-    const uploadIcon = document.querySelector(".lucide-upload");
-    const cameraIcon = document.querySelector(".lucide-camera");
-    expect(uploadIcon).toBeInTheDocument();
-    expect(cameraIcon).toBeInTheDocument();
-    expect(screen.getByText(tr("upload.fileSupport"))).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Upload from device" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open camera" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+    ).not.toBeInTheDocument();
   });
-
 
   it("should render upload button on landing page", () => {
     render(
@@ -220,6 +223,55 @@ describe("App Component Routing", () => {
     expect(
       screen.queryByRole("button", { name: tr("landing.cta.button") }),
     ).not.toBeInTheDocument();
+  });
+
+  it("should not render footer checkout CTA on non-upload routes", () => {
+    render(
+      <MemoryRouter initialEntries={["/about"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: tr("uploader.resetSlots") }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should show footer reset CTA on upload route only after selecting an image", async () => {
+    render(
+      <MemoryRouter initialEntries={["/upload"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: tr("uploader.resetSlots") }),
+    ).not.toBeInTheDocument();
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, {
+        target: {
+          files: [new File(["test"], "test.jpg", { type: "image/jpeg" })],
+        },
+      });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: tr("uploader.resetSlots") }),
+        ).toBeInTheDocument();
+      });
+    }
   });
 
   it("should render home navigation link on about page", () => {
