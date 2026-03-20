@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import bgDebug from "./assets/testowe.png";
+import bgProduction from "./assets/2.png";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import {
@@ -50,8 +52,21 @@ export function App() {
   const showFooterReset =
     location.pathname === "/upload" && isFooterResetAvailable;
 
+  const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
+  const [useTestBackground, setUseTestBackground] = useState(isDebug);
+  const bgImage = useTestBackground ? bgDebug : bgProduction;
+
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
+    <div
+      className="h-screen overflow-hidden flex flex-col"
+      style={{
+        backgroundImage: `url(${bgImage})`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <Header onOpenLegalMenu={openLegalSheet} />
       <main className="flex-1 overflow-auto relative">
         <Routes>
@@ -92,6 +107,25 @@ export function App() {
         onOpenChange={setIsLegalSheetOpen}
         activeSection={activeLegalSection}
       />
+      {isDebug && (
+        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-2 text-xs font-medium text-amber-900 shadow-lg backdrop-blur-sm">
+          <span className="select-none">BG:</span>
+          <button
+            type="button"
+            onClick={() => setUseTestBackground((v) => !v)}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${useTestBackground ? "bg-amber-500" : "bg-amber-200"}`}
+            aria-pressed={useTestBackground}
+            aria-label="Toggle test background"
+          >
+            <span
+              className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${useTestBackground ? "translate-x-4" : "translate-x-0"}`}
+            />
+          </button>
+          <span className="select-none text-amber-700">
+            {useTestBackground ? "test" : "prod"}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
