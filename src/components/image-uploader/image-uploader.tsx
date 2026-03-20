@@ -245,33 +245,16 @@ export function ImageUploader({
       nextDisplayImageProportion: ImageDisplayProportion;
       shouldAutoSelectOptimalProportion: boolean;
     }) => {
-      const currentMetadata = selectedImageMetadata;
-      const metadataChanged =
-        !currentMetadata ||
-        currentMetadata.width !== metadata.width ||
-        currentMetadata.height !== metadata.height ||
-        currentMetadata.aspectRatio !== metadata.aspectRatio;
-
-      const nextProportion = shouldAutoSelectOptimalProportion
-        ? nextDisplayImageProportion
-        : displayImageProportion;
-      const proportionChanged = nextProportion !== displayImageProportion;
-
-      if (metadataChanged || proportionChanged) {
-        updateActiveImage((selectedImage) => ({
-          ...selectedImage,
-          metadata,
-          displayImageProportion: nextProportion,
-        }));
-        onImageMetadataChange?.(metadata);
-      }
+      updateActiveImage((selectedImage) => ({
+        ...selectedImage,
+        metadata,
+        displayImageProportion: shouldAutoSelectOptimalProportion
+          ? nextDisplayImageProportion
+          : selectedImage.displayImageProportion,
+      }));
+      onImageMetadataChange?.(metadata);
     },
-    [
-      onImageMetadataChange,
-      updateActiveImage,
-      selectedImageMetadata,
-      displayImageProportion,
-    ],
+    [onImageMetadataChange, updateActiveImage],
   );
 
   const handleFileSelect = useCallback(
