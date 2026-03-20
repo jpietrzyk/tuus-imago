@@ -7,14 +7,14 @@ export function HomeUploadEntryPage() {
     <div className="flex h-full flex-col items-center justify-center gap-8 px-4 py-6">
       <Link
         to="/upload"
-        className="group flex w-full max-w-48 flex-col items-center justify-center rounded-2xl border-3 border-dashed border-slate-400 bg-white/10 px-2 py-5 text-center shadow-inner transition-colors hover:border-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 aspect-2/3"
+        className="group flex w-full max-w-48 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 px-2 py-5 text-center text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 aspect-2/3"
         aria-label={t("homeUploadEntry.ctaText")}
       >
         <Camera
-          className="mb-6 h-20 w-20 text-slate-600 transition-transform group-hover:scale-105"
+          className="mb-6 h-20 w-20 transition-transform group-hover:scale-105"
           aria-hidden="true"
         />
-        <p className="text-2xl font-semibold text-slate-800 md:text-3xl">
+        <p className="text-2xl font-semibold md:text-3xl">
           {t("homeUploadEntry.ctaText")}
         </p>
       </Link>
