@@ -67,7 +67,7 @@ export interface SelectedImageItem {
   previewUrl: string;
   metadata: SelectedImageMetadata | null;
   displayImageProportion: ImageDisplayProportion;
-  autoSelectOptimalPending: boolean;
+  autoSelectOptimalPending?: boolean;
 }
 
 export function ImageUploader({
