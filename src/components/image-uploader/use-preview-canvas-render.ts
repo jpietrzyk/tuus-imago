@@ -103,7 +103,6 @@ export const usePreviewCanvasRender = ({
     latestRenderConfigRef,
     onMetadataResolved,
     previewUrl,
-    selectedImageMetadata,
     userSelectedProportion,
   ]);
 };

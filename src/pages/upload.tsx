@@ -30,6 +30,8 @@ interface UploadPageProps {
   onResetActionChange?: (action: (() => void) | null) => void;
 }
 
+const PREVIEW_LOADING_TIMEOUT_MS = 30000;
+
 export function UploadPage({
   onCheckoutAvailabilityChange,
   onResetAvailabilityChange,
@@ -46,6 +48,9 @@ export function UploadPage({
   );
   const [useAiPreview, setUseAiPreview] = useState(true);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(
+    typeof document === "undefined" ? true : !document.hidden,
+  );
   const [previewLoadProgress, setPreviewLoadProgress] = useState(0);
   const [previewLoadingReason, setPreviewLoadingReason] = useState<
     "preview" | "crop"
@@ -449,7 +454,40 @@ export function UploadPage({
   ]);
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isPreviewLoading || !useAiPreview) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsPreviewLoading(false);
+      setPreviewLoadProgress(0);
+      setPreviewLoadingReason("preview");
+      setPreviewError(t("upload.aiPreviewError"));
+    }, PREVIEW_LOADING_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isPreviewLoading, useAiPreview]);
+
+  useEffect(() => {
     if (!isPreviewLoading) {
+      return;
+    }
+
+    if (!isPageVisible) {
       return;
     }
 
@@ -467,7 +505,7 @@ export function UploadPage({
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [isPreviewLoading, previewLoadingReason]);
+  }, [isPageVisible, isPreviewLoading, previewLoadingReason]);
 
   return (
     <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
