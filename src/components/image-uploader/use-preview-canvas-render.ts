@@ -12,6 +12,7 @@ interface UsePreviewCanvasRenderArgs {
   previewUrl: string | null;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   selectedImageMetadata: SelectedImageMetadata | null;
+  allowAutoSelectOptimalProportion?: boolean;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   latestRenderConfigRef: React.MutableRefObject<{
@@ -30,6 +31,7 @@ export const usePreviewCanvasRender = ({
   previewUrl,
   canvasRef,
   selectedImageMetadata,
+  allowAutoSelectOptimalProportion = true,
   bestProportion,
   userSelectedProportion,
   latestRenderConfigRef,
@@ -72,6 +74,7 @@ export const usePreviewCanvasRender = ({
           sourceWidth,
           sourceHeight,
           selectedImageMetadata,
+          allowAutoSelectOptimalProportion,
           bestProportion,
           userSelectedProportion,
         });
@@ -103,7 +106,8 @@ export const usePreviewCanvasRender = ({
     latestRenderConfigRef,
     onMetadataResolved,
     previewUrl,
+    allowAutoSelectOptimalProportion,
     userSelectedProportion,
-       selectedImageMetadata,
+    selectedImageMetadata,
   ]);
 };

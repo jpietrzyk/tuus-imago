@@ -122,6 +122,7 @@ describe("usePreviewCanvasRender", () => {
       sourceWidth: 1200,
       sourceHeight: 800,
       selectedImageMetadata: null,
+      allowAutoSelectOptimalProportion: true,
       bestProportion: null,
       userSelectedProportion: "horizontal",
     });
@@ -295,6 +296,7 @@ describe("usePreviewCanvasRender", () => {
           height: 800,
           aspectRatio: "3:2",
         },
+        allowAutoSelectOptimalProportion: true,
         bestProportion: "horizontal",
         userSelectedProportion: "vertical",
       },
