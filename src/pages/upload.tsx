@@ -510,13 +510,7 @@ export function UploadPage({
   return (
     <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
       <div className="w-full h-full transition-all duration-500 ease-in-out max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl overflow-hidden lg:overflow-visible">
-        <Card
-          className={
-            uploadedImage || hasUploaderSelection
-              ? "h-full border-0 bg-transparent! shadow-none! ring-0!"
-              : "h-full bg-black/10 backdrop-blur-md shadow-2xl"
-          }
-        >
+        <Card className="h-full border-0 bg-transparent! shadow-none! ring-0!">
           <CardContent className="h-full space-y-6">
             {/* Status Messages */}
             {isSuccess && (
@@ -577,7 +571,7 @@ export function UploadPage({
                   externalResetTrigger={uploaderResetVersion}
                   skipCropStep
                   defaultShowIcons
-                  className="w-full max-w-sm md:max-w-none h-full py-6 text-lg font-semibold"
+                  className="w-full max-w-sm h-full py-6 text-lg font-semibold"
                 />
               </div>
             )}
