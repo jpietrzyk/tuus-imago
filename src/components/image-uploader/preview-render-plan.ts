@@ -8,6 +8,7 @@ interface BuildPreviewRenderPlanArgs {
   sourceWidth: number;
   sourceHeight: number;
   selectedImageMetadata: SelectedImageMetadata | null;
+  allowAutoSelectOptimalProportion?: boolean;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
 }
@@ -16,6 +17,7 @@ export const buildPreviewRenderPlan = ({
   sourceWidth,
   sourceHeight,
   selectedImageMetadata,
+  allowAutoSelectOptimalProportion = true,
   bestProportion,
   userSelectedProportion,
 }: BuildPreviewRenderPlanArgs) => {
@@ -31,6 +33,7 @@ export const buildPreviewRenderPlan = ({
     sourceWidth,
     sourceHeight,
     selectedImageMetadata,
+    allowAutoSelectOptimalProportion,
     bestProportion,
     userSelectedProportion,
   });

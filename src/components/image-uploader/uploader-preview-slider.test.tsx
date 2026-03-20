@@ -40,6 +40,7 @@ const createItem = (name: string): SelectedImageItem => ({
   previewUrl: `blob:${name}`,
   metadata: null,
   displayImageProportion: "horizontal",
+  autoSelectOptimalPending: false,
 });
 
 const metadata: SelectedImageMetadata = {

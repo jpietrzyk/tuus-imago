@@ -67,6 +67,7 @@ export interface SelectedImageItem {
   previewUrl: string;
   metadata: SelectedImageMetadata | null;
   displayImageProportion: ImageDisplayProportion;
+  autoSelectOptimalPending?: boolean;
 }
 
 export function ImageUploader({
@@ -117,13 +118,14 @@ export function ImageUploader({
   );
 
   const buildSelectedImageItem = useCallback(
-    (file: File): SelectedImageItem => {
+    (file: File, autoSelectOptimalPending = true): SelectedImageItem => {
       const previewUrl = URL.createObjectURL(file);
       return {
         file,
         previewUrl,
         metadata: null,
         displayImageProportion: "horizontal",
+        autoSelectOptimalPending,
       };
     },
     [],
@@ -133,6 +135,8 @@ export function ImageUploader({
     (file: File, preferredIndex?: number) => {
       const currentImages = selectedImagesRef.current;
       const hasExistingSelection = currentImages.some(Boolean);
+      const clickedEmptySlot =
+        typeof preferredIndex === "number" && !currentImages[preferredIndex];
       const insertionIndex =
         typeof preferredIndex === "number"
           ? Math.max(0, Math.min(preferredIndex, MAX_SELECTED_IMAGES - 1))
@@ -144,7 +148,13 @@ export function ImageUploader({
         return;
       }
 
-      const nextImage = buildSelectedImageItem(file);
+      const shouldAutoSelectOptimalWhenActive = !(
+        hasExistingSelection && clickedEmptySlot
+      );
+      const nextImage = buildSelectedImageItem(
+        file,
+        shouldAutoSelectOptimalWhenActive,
+      );
 
       setSelectedImages((prevImages) => {
         const nextImages = [...prevImages];
@@ -159,9 +169,6 @@ export function ImageUploader({
       });
 
       setActiveImageIndex((currentActiveIndex) => {
-        const clickedEmptySlot =
-          typeof preferredIndex === "number" && !currentImages[preferredIndex];
-
         if (hasExistingSelection && clickedEmptySlot) {
           return currentActiveIndex;
         }
@@ -212,8 +219,15 @@ export function ImageUploader({
           return prevImages;
         }
 
+        const currentImage = prevImages[activeImageIndex];
+        const updatedImage = updater(currentImage);
+
+        if (updatedImage === currentImage) {
+          return prevImages;
+        }
+
         const nextImages = [...prevImages];
-        nextImages[activeImageIndex] = updater(prevImages[activeImageIndex]);
+        nextImages[activeImageIndex] = updatedImage;
         return nextImages;
       });
     },
@@ -245,13 +259,32 @@ export function ImageUploader({
       nextDisplayImageProportion: ImageDisplayProportion;
       shouldAutoSelectOptimalProportion: boolean;
     }) => {
-      updateActiveImage((selectedImage) => ({
-        ...selectedImage,
-        metadata,
-        displayImageProportion: shouldAutoSelectOptimalProportion
+      updateActiveImage((selectedImage) => {
+        const currentMetadata = selectedImage.metadata;
+        const metadataUnchanged =
+          !!currentMetadata &&
+          currentMetadata.width === metadata.width &&
+          currentMetadata.height === metadata.height &&
+          currentMetadata.aspectRatio === metadata.aspectRatio;
+
+        const resolvedDisplayImageProportion = shouldAutoSelectOptimalProportion
           ? nextDisplayImageProportion
-          : selectedImage.displayImageProportion,
-      }));
+          : selectedImage.displayImageProportion;
+        const proportionUnchanged =
+          resolvedDisplayImageProportion ===
+          selectedImage.displayImageProportion;
+
+        if (metadataUnchanged && proportionUnchanged) {
+          return selectedImage;
+        }
+
+        return {
+          ...selectedImage,
+          metadata: metadataUnchanged ? currentMetadata : metadata,
+          displayImageProportion: resolvedDisplayImageProportion,
+          autoSelectOptimalPending: false,
+        };
+      });
       onImageMetadataChange?.(metadata);
     },
     [onImageMetadataChange, updateActiveImage],

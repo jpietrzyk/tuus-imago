@@ -78,6 +78,8 @@ export default function PaintingPreviewSlot({
     previewUrl: selectedImage?.previewUrl ?? null,
     canvasRef: previewCanvasRef,
     selectedImageMetadata,
+    allowAutoSelectOptimalProportion:
+      selectedImage?.autoSelectOptimalPending ?? true,
     bestProportion,
     userSelectedProportion,
     latestRenderConfigRef,

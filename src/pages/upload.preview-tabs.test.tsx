@@ -1,5 +1,5 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { render, screen, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { tr } from "@/test/i18n-test";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
@@ -50,7 +50,53 @@ vi.mock("@/components/image-uploader", () => ({
 
 import { UploadPage } from "./upload";
 
+let isDocumentHidden = false;
+
+const dispatchVisibilityChange = (hidden: boolean) => {
+  isDocumentHidden = hidden;
+  act(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+};
+
 describe("UploadPage preview tabs", () => {
+  let originalHiddenDescriptor: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    isDocumentHidden = false;
+
+    // Capture the original property descriptor before overriding
+    originalHiddenDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "hidden",
+    );
+
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => isDocumentHidden,
+    });
+  });
+
+  afterEach(() => {
+    // Reset visibility before cleanup (while component still mounted)
+    dispatchVisibilityChange(false);
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+    vi.clearAllTimers();
+    vi.useRealTimers();
+
+    // Restore the original property descriptor to prevent test pollution
+    if (originalHiddenDescriptor) {
+      Object.defineProperty(document, "hidden", originalHiddenDescriptor);
+    } else {
+      // If no descriptor existed, remove the property
+      delete (document as { hidden?: boolean }).hidden;
+    }
+  });
+
   it("shows 'Twój obraz' by default and switches to original image on 'Oryginał' tab", () => {
     render(
       <MemoryRouter>
@@ -91,5 +137,59 @@ describe("UploadPage preview tabs", () => {
       "src",
       mockUploadResult.info.secure_url,
     );
+  });
+
+  it("stops preview loading after timeout and shows fallback error", () => {
+    render(
+      <MemoryRouter>
+        <UploadPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /mock successful upload/i }),
+    );
+
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(30000);
+    });
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getByText(tr("upload.aiPreviewError"))).toBeInTheDocument();
+  });
+
+  it("does not advance preview progress while page is hidden", () => {
+    render(
+      <MemoryRouter>
+        <UploadPage />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /mock successful upload/i }),
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    dispatchVisibilityChange(true);
+
+    const progressbar = screen.getByRole("progressbar");
+    const progressBeforeHidden = Number(
+      progressbar.getAttribute("aria-valuenow") ?? "0",
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
+
+    const progressAfterHidden = Number(
+      progressbar.getAttribute("aria-valuenow") ?? "0",
+    );
+
+    expect(progressAfterHidden).toBe(progressBeforeHidden);
   });
 });
