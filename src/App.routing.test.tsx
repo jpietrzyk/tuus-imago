@@ -34,14 +34,29 @@ describe("App Component Routing", () => {
     },
   );
 
-  it("should render landing page when route is /", () => {
+  it("should render upload entry page when route is /", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    // Check for main landing page elements
+    const uploadEntryLink = screen.getByRole("link", {
+      name: tr("homeUploadEntry.ctaText"),
+    });
+
+    expect(uploadEntryLink).toBeInTheDocument();
+    expect(uploadEntryLink).toHaveAttribute("href", "/upload");
+    expect(screen.getByText(tr("homeUploadEntry.ctaText"))).toBeInTheDocument();
+  });
+
+  it("should render landing page when route is /how-it-works", () => {
+    render(
+      <MemoryRouter initialEntries={["/how-it-works"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
     expect(
       screen.getByRole("button", { name: tr("landing.cta.button") }),
     ).toBeInTheDocument();
@@ -186,14 +201,14 @@ describe("App Component Routing", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should render upload button on landing page", () => {
+  it("should render upload button on /how-it-works page", () => {
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/how-it-works"]}>
         <App />
       </MemoryRouter>,
     );
 
-    // Upload button should be on landing page
+    // Upload button should be on how-it-works page
     expect(
       screen.getByRole("button", { name: tr("landing.cta.button") }),
     ).toBeInTheDocument();

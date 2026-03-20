@@ -40,6 +40,10 @@
       "button": "Prześlij swoje zdjęcie"
     }
   },
+  "homeUploadEntry": {
+    "ctaText": "kliknij aby dodać zdjęcie",
+    "howItWorksLink": "Jak to działa?"
+  },
   "processTimeline": {
     "title": "Jak to działa",
     "steps": {

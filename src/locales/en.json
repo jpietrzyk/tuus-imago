@@ -40,6 +40,10 @@
       "button": "Upload Your Photo"
     }
   },
+  "homeUploadEntry": {
+    "ctaText": "click to add photo",
+    "howItWorksLink": "How it works"
+  },
   "processTimeline": {
     "title": "How it works",
     "steps": {

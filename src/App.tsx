@@ -6,6 +6,7 @@ import {
   LegalNavigationSheet,
   type LegalMenuSection,
 } from "@/components/legal-navigation-sheet";
+import { HomeUploadEntryPage } from "./pages/home-upload-entry";
 import { LandingPage } from "./pages/landing";
 import { UploadPage } from "./pages/upload";
 import { AboutPage } from "./pages/about";
@@ -54,7 +55,8 @@ export function App() {
       <Header onOpenLegalMenu={openLegalSheet} />
       <main className="flex-1 overflow-auto relative">
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<HomeUploadEntryPage />} />
+          <Route path="/how-it-works" element={<LandingPage />} />
           <Route
             path="/upload"
             element={
