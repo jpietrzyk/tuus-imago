@@ -93,7 +93,7 @@ describe("UploadPage preview tabs", () => {
       Object.defineProperty(document, "hidden", originalHiddenDescriptor);
     } else {
       // If no descriptor existed, remove the property
-      delete (document as any).hidden;
+      delete (document as { hidden?: boolean }).hidden;
     }
   });
 
