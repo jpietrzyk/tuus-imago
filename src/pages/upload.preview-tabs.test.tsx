@@ -60,9 +60,17 @@ const dispatchVisibilityChange = (hidden: boolean) => {
 };
 
 describe("UploadPage preview tabs", () => {
+  let originalHiddenDescriptor: PropertyDescriptor | undefined;
+
   beforeEach(() => {
     vi.useFakeTimers();
     isDocumentHidden = false;
+
+    // Capture the original property descriptor before overriding
+    originalHiddenDescriptor = Object.getOwnPropertyDescriptor(
+      document,
+      "hidden",
+    );
 
     Object.defineProperty(document, "hidden", {
       configurable: true,
@@ -71,12 +79,22 @@ describe("UploadPage preview tabs", () => {
   });
 
   afterEach(() => {
+    // Reset visibility before cleanup (while component still mounted)
+    dispatchVisibilityChange(false);
+
     act(() => {
       vi.runOnlyPendingTimers();
     });
-    vi.useRealTimers();
     vi.clearAllTimers();
-    dispatchVisibilityChange(false);
+    vi.useRealTimers();
+
+    // Restore the original property descriptor to prevent test pollution
+    if (originalHiddenDescriptor) {
+      Object.defineProperty(document, "hidden", originalHiddenDescriptor);
+    } else {
+      // If no descriptor existed, remove the property
+      delete (document as any).hidden;
+    }
   });
 
   it("shows 'Twój obraz' by default and switches to original image on 'Oryginał' tab", () => {
