@@ -311,29 +311,31 @@ describe("usePreviewCanvasRender", () => {
       sourceWidth: 1200,
       sourceHeight: 800,
     });
-    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
-      metadata: {
-        width: 1200,
-        height: 800,
-        aspectRatio: "3:2",
-      },
-      nextDisplayImageProportion: "horizontal",
-      shouldAutoSelectOptimalProportion: false,
-      crop: {
-        cropX: 0,
-        cropY: 0,
-        cropWidth: 1200,
-        cropHeight: 675,
-        outputWidth: 1200,
-        outputHeight: 675,
-        sourceArea: 960000,
-        cropArea: 810000,
-        coverageRatio: 0.84375,
-        coveragePercent: 84.38,
-        widthScale: 1,
-        heightScale: 0.84375,
-      },
-    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockImplementation(
+      () => ({
+        metadata: {
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        },
+        nextDisplayImageProportion: "horizontal",
+        shouldAutoSelectOptimalProportion: false,
+        crop: {
+          cropX: 0,
+          cropY: 0,
+          cropWidth: 1200,
+          cropHeight: 675,
+          outputWidth: 1200,
+          outputHeight: 675,
+          sourceArea: 960000,
+          cropArea: 810000,
+          coverageRatio: 0.84375,
+          coveragePercent: 84.38,
+          widthScale: 1,
+          heightScale: 0.84375,
+        },
+      }),
+    );
 
     interface StatefulHarnessProps {
       previewUrl: string | null;
@@ -387,6 +389,7 @@ describe("usePreviewCanvasRender", () => {
       expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
     });
 
+    expect(previewRenderPlan.buildPreviewRenderPlan).toHaveBeenCalledTimes(1);
     // Should only draw once, not repeatedly in a feedback loop
     expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
       1,
