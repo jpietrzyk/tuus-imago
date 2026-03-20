@@ -13,6 +13,7 @@ const createItem = (name: string): SelectedImageItem => ({
   previewUrl: `blob:${name}`,
   metadata: null,
   displayImageProportion: "horizontal",
+  autoSelectOptimalPending: false,
 });
 
 function Harness({ selectedImages, activeImageIndex }: HarnessProps) {
