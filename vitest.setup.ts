@@ -1,6 +1,29 @@
 import "@testing-library/jest-dom/vitest";
 import "@testing-library/jest-dom";
 
+// ResizeObserver polyfill for jsdom
+const globalWithResizeObserver = globalThis as typeof globalThis & {
+  ResizeObserver?: typeof ResizeObserver;
+};
+
+if (typeof globalWithResizeObserver.ResizeObserver === "undefined") {
+  globalWithResizeObserver.ResizeObserver = class ResizeObserver {
+    constructor(callback: ResizeObserverCallback) {
+      void callback;
+    }
+
+    observe(target: Element) {
+      void target;
+    }
+
+    unobserve(target: Element) {
+      void target;
+    }
+
+    disconnect() {}
+  };
+}
+
 // Simple polyfill for HTMLCanvasElement in jsdom to suppress warnings
 if (typeof window.HTMLCanvasElement !== "function") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

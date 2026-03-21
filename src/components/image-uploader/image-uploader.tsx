@@ -53,6 +53,7 @@ interface ImageUploaderProps {
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
   externalResetTrigger?: number;
+  showDebugData?: boolean;
 }
 
 const MAX_SELECTED_IMAGES = 3;
@@ -77,6 +78,7 @@ export function ImageUploader({
   className,
   defaultShowIcons = false,
   externalResetTrigger,
+  showDebugData = true,
 }: ImageUploaderProps) {
   const [selectedImages, setSelectedImages] = useState<
     Array<SelectedImageItem | null>
@@ -95,6 +97,7 @@ export function ImageUploader({
   );
 
   const selectedImageCount = selectedImages.filter(Boolean).length;
+  const shouldShowUploaderDebugData = SHOW_UPLOADER_DEBUG && showDebugData;
 
   const activeImage =
     typeof activeImageIndex === "number"
@@ -674,11 +677,11 @@ export function ImageUploader({
                 ? "rectangle"
                 : displayImageProportion
             }
-            showCoverageDetails={SHOW_UPLOADER_DEBUG}
+            showCoverageDetails={shouldShowUploaderDebugData}
           />
         </div>
 
-        {SHOW_UPLOADER_DEBUG && selectedImageMetadata && (
+        {shouldShowUploaderDebugData && selectedImageMetadata && (
           <div
             className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950"
             data-testid="uploader-proportion-debug"

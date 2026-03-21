@@ -129,6 +129,11 @@ export const usePreviewCanvasRender = ({
     window.addEventListener("resize", scheduleResizeDraw);
     window.addEventListener("orientationchange", scheduleResizeDraw);
 
+    // Redraw when the canvas element itself changes size due to layout shifts
+    // (e.g. debug panel showing/hiding, container resize unrelated to window).
+    const resizeObserver = new ResizeObserver(scheduleResizeDraw);
+    resizeObserver.observe(canvas);
+
     return () => {
       isActive = false;
 
@@ -138,6 +143,7 @@ export const usePreviewCanvasRender = ({
 
       window.removeEventListener("resize", scheduleResizeDraw);
       window.removeEventListener("orientationchange", scheduleResizeDraw);
+      resizeObserver.disconnect();
     };
   }, [
     bestProportion,
