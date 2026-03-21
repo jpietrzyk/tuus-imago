@@ -28,6 +28,7 @@ interface UploadPageProps {
   onCheckoutAvailabilityChange?: (available: boolean) => void;
   onResetAvailabilityChange?: (available: boolean) => void;
   onResetActionChange?: (action: (() => void) | null) => void;
+  imageDebugDataEnabled?: boolean;
 }
 
 const PREVIEW_LOADING_TIMEOUT_MS = 30000;
@@ -36,6 +37,7 @@ export function UploadPage({
   onCheckoutAvailabilityChange,
   onResetAvailabilityChange,
   onResetActionChange,
+  imageDebugDataEnabled = true,
 }: UploadPageProps = {}) {
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
@@ -568,6 +570,7 @@ export function UploadPage({
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
                   onSelectionStateChange={setHasUploaderSelection}
+                  showDebugData={imageDebugDataEnabled}
                   externalResetTrigger={uploaderResetVersion}
                   skipCropStep
                   defaultShowIcons

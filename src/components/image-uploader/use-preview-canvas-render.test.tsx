@@ -455,4 +455,76 @@ describe("usePreviewCanvasRender", () => {
 
     expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
   });
+
+  it("redraws preview canvas when canvas element resizes (e.g. debug panel toggle)", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+    let capturedResizeCallback: ResizeObserverCallback | null = null;
+
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          capturedResizeCallback = callback;
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
+      metadata: { width: 1200, height: 800, aspectRatio: "3:2" },
+      nextDisplayImageProportion: "horizontal",
+      shouldAutoSelectOptimalProportion: false,
+      crop: {
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 1200,
+        cropHeight: 675,
+        outputWidth: 1200,
+        outputHeight: 675,
+        sourceArea: 960000,
+        cropArea: 810000,
+        coverageRatio: 0.84375,
+        coveragePercent: 84.38,
+        widthScale: 1,
+        heightScale: 0.84375,
+      },
+    });
+
+    render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={null}
+        bestProportion={null}
+        userSelectedProportion="horizontal"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    // Simulate a layout-driven canvas resize (e.g. debug panel appearing/disappearing).
+    expect(capturedResizeCallback).not.toBeNull();
+    capturedResizeCallback?.([], null as unknown as ResizeObserver);
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        2,
+      );
+    });
+
+    // Image should not be reloaded — only redrawn.
+    expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
+  });
 });

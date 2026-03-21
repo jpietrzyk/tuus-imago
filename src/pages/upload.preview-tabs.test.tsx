@@ -30,22 +30,30 @@ const mockTransformations: ImageTransformations = {
   blur: 0,
 };
 
+let lastImageUploaderProps: { showDebugData?: boolean } | null = null;
+
 vi.mock("@/components/image-uploader", () => ({
   ImageUploader: ({
     onUploadSuccess,
+    showDebugData,
   }: {
     onUploadSuccess?: (
       result: UploadResult,
       transformations: ImageTransformations,
     ) => void;
-  }) => (
-    <button
-      type="button"
-      onClick={() => onUploadSuccess?.(mockUploadResult, mockTransformations)}
-    >
-      Mock successful upload
-    </button>
-  ),
+    showDebugData?: boolean;
+  }) => {
+    lastImageUploaderProps = { showDebugData };
+
+    return (
+      <button
+        type="button"
+        onClick={() => onUploadSuccess?.(mockUploadResult, mockTransformations)}
+      >
+        Mock successful upload
+      </button>
+    );
+  },
 }));
 
 import { UploadPage } from "./upload";
@@ -65,6 +73,7 @@ describe("UploadPage preview tabs", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     isDocumentHidden = false;
+    lastImageUploaderProps = null;
 
     // Capture the original property descriptor before overriding
     originalHiddenDescriptor = Object.getOwnPropertyDescriptor(
@@ -191,5 +200,17 @@ describe("UploadPage preview tabs", () => {
     );
 
     expect(progressAfterHidden).toBe(progressBeforeHidden);
+  });
+
+  it("forwards image debug toggle state to ImageUploader", () => {
+    render(
+      <MemoryRouter>
+        <UploadPage imageDebugDataEnabled={false} />
+      </MemoryRouter>,
+    );
+
+    expect(lastImageUploaderProps).toEqual({
+      showDebugData: false,
+    });
   });
 });
