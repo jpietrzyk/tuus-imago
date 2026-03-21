@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import { t } from "@/locales/i18n";
 import type { SelectedImageItem } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
@@ -24,6 +23,7 @@ export default function SideSlotPreview({
   onSelectSlot,
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
+  const isAddSlotAction = !image && typeof slotIndex === "number";
   const slotFramePreset = resolveSlotFramePreset(selectedProportion);
   const slotAspectRatioClassName =
     selectedProportion === "vertical"
@@ -44,7 +44,13 @@ export default function SideSlotPreview({
       data-testid={
         isLeft ? "uploader-slider-side-left" : "uploader-slider-side-right"
       }
-      aria-label={t(isLeft ? "uploader.previousImage" : "uploader.nextImage")}
+      aria-label={
+        isAddSlotAction
+          ? t("uploader.addImageSlot", {
+              index: String(slotIndex + 1),
+            })
+          : t(isLeft ? "uploader.previousImage" : "uploader.nextImage")
+      }
       className={`h-full w-12 md:w-20 lg:w-28 xl:w-36 shrink-0 overflow-hidden rounded-none bg-transparent transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-default disabled:opacity-70 ${
         isLeft
           ? "flex items-start justify-end md:-mr-4 lg:-mr-6"
@@ -68,7 +74,7 @@ export default function SideSlotPreview({
             ? isNavigable
               ? "opacity-95 md:opacity-92"
               : "opacity-80 md:opacity-75"
-            : "border border-dashed border-border/85 bg-muted/35 opacity-90 md:opacity-85"
+            : "border border-dashed border-primary/45 bg-primary/10 opacity-95"
         }`}
         style={{
           aspectRatio: String(previewFrameAspectRatio),
@@ -87,14 +93,7 @@ export default function SideSlotPreview({
             className="h-full w-full object-cover object-center"
             draggable={false}
           />
-        ) : (
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-border/70 bg-background/80">
-            <Plus
-              className="h-[18px] w-[18px] text-muted-foreground"
-              aria-hidden="true"
-            />
-          </span>
-        )}
+        ) : null}
       </div>
     </button>
   );
