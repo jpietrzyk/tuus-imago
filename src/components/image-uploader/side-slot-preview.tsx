@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import { t } from "@/locales/i18n";
 import type { SelectedImageItem } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
@@ -68,7 +67,7 @@ export default function SideSlotPreview({
             ? isNavigable
               ? "opacity-95 md:opacity-92"
               : "opacity-80 md:opacity-75"
-            : "border border-dashed border-border/85 bg-muted/35 opacity-90 md:opacity-85"
+            : "border border-dashed border-primary/45 bg-primary/10 opacity-95"
         }`}
         style={{
           aspectRatio: String(previewFrameAspectRatio),
@@ -87,14 +86,7 @@ export default function SideSlotPreview({
             className="h-full w-full object-cover object-center"
             draggable={false}
           />
-        ) : (
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-border/70 bg-background/80">
-            <Plus
-              className="h-[18px] w-[18px] text-muted-foreground"
-              aria-hidden="true"
-            />
-          </span>
-        )}
+        ) : null}
       </div>
     </button>
   );

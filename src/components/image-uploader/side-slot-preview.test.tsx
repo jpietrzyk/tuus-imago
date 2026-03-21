@@ -64,11 +64,11 @@ describe("SideSlotPreview", () => {
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass(
-      "opacity-90",
-      "md:opacity-85",
+      "opacity-95",
       "border",
       "border-dashed",
-      "bg-muted/35",
+      "border-primary/45",
+      "bg-primary/10",
     );
   });
 
