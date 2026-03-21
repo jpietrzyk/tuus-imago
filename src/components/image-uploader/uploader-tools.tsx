@@ -5,7 +5,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  RectangleHorizontal,
+  RectangleVertical,
+  Square,
+  type LucideIcon,
+} from "lucide-react";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 
 export type UploaderProportion = Extract<
@@ -20,10 +26,10 @@ interface UploaderToolsProps {
   showCoverageDetails?: boolean;
 }
 
-const PROPORTION_LABELS: Record<UploaderProportion, string> = {
-  horizontal: "Horizontal",
-  vertical: "Vertical",
-  rectangle: "Rectangle",
+const PROPORTION_ICONS: Record<UploaderProportion, LucideIcon> = {
+  horizontal: RectangleHorizontal,
+  vertical: RectangleVertical,
+  rectangle: Square,
 };
 
 const formatOptionLabel = (label: string, coverage?: number): string => {
@@ -41,9 +47,7 @@ export function UploaderTools({
   showCoverageDetails = false,
 }: UploaderToolsProps) {
   const selectedCoverage = coveragePercent?.[selectedProportion];
-  const selectedLabel = showCoverageDetails
-    ? formatOptionLabel(PROPORTION_LABELS[selectedProportion], selectedCoverage)
-    : PROPORTION_LABELS[selectedProportion];
+  const SelectedIcon = PROPORTION_ICONS[selectedProportion];
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -51,29 +55,39 @@ export function UploaderTools({
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
-            variant="outline"
-            size="sm"
+            variant="secondary"
+            size="lg"
             data-testid="image-proportions-dropdown-trigger"
+            className="px-8 py-6 shadow-lg border-2"
           >
-            {selectedLabel}
-            <ChevronDown className="ml-2 h-4 w-4" />
+            <SelectedIcon className="h-10 w-10" />
+            <ChevronDown className="ml-2 h-10 w-10" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
           <DropdownMenuItem onSelect={() => onSelectProportion("vertical")}>
-            {showCoverageDetails
-              ? formatOptionLabel("Vertical", coveragePercent?.vertical)
-              : "Vertical"}
+            <RectangleVertical className="h-5 w-5" />
+            <span className="sr-only">
+              {showCoverageDetails
+                ? formatOptionLabel("Vertical", coveragePercent?.vertical)
+                : "Vertical"}
+            </span>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onSelectProportion("horizontal")}>
-            {showCoverageDetails
-              ? formatOptionLabel("Horizontal", coveragePercent?.horizontal)
-              : "Horizontal"}
+            <RectangleHorizontal className="h-5 w-5" />
+            <span className="sr-only">
+              {showCoverageDetails
+                ? formatOptionLabel("Horizontal", coveragePercent?.horizontal)
+                : "Horizontal"}
+            </span>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => onSelectProportion("rectangle")}>
-            {showCoverageDetails
-              ? formatOptionLabel("Rectangle", coveragePercent?.rectangle)
-              : "Rectangle"}
+            <Square className="h-5 w-5" />
+            <span className="sr-only">
+              {showCoverageDetails
+                ? formatOptionLabel("Rectangle", coveragePercent?.rectangle)
+                : "Rectangle"}
+            </span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
