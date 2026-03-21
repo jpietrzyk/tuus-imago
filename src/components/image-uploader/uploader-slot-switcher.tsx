@@ -52,7 +52,7 @@ export function UploaderSlotSwitcher({
                     : "h-2.5 w-2.5 bg-foreground/65 group-hover:bg-foreground/80"
                   : isActive
                     ? "h-3 w-3 border border-dashed border-primary bg-primary/20"
-                    : "h-2.5 w-2.5 border border-dashed border-muted-foreground/70 bg-background/40"
+                    : "h-2.5 w-2.5 border border-dashed border-muted-foreground bg-background/20"
               }`}
             />
           </button>
