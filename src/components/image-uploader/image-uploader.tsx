@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
@@ -613,10 +613,9 @@ export function ImageUploader({
         className="hidden"
       />
       <CardHeader>
+        <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
         <div className="grid min-h-9 grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <CardTitle className="truncate">
-            {t("uploader.adjustImage")}
-          </CardTitle>
+          <span aria-hidden="true" />
           <button
             type="button"
             onClick={handleRemoveActiveImage}
