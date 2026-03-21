@@ -613,6 +613,7 @@ export function ImageUploader({
         className="hidden"
       />
       <CardHeader>
+        <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
         <div className="grid min-h-9 grid-cols-[1fr_auto_1fr] items-center gap-2">
           <span aria-hidden="true" />
           <button
