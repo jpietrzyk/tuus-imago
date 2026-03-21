@@ -14,6 +14,7 @@ import {
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
+import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
 
 export interface ImageTransformations {
   rotation: number;
@@ -443,6 +444,47 @@ export function ImageUploader({
     }
   }, [revokePreviewUrls, updateSelectedImageMetadata]);
 
+  const handleSplitActiveImage = useCallback(async () => {
+    if (!activeImage) {
+      return;
+    }
+
+    const shouldSplitImage = window.confirm(
+      "Split selected image into 3 slots? This will replace all current slots.",
+    );
+
+    if (!shouldSplitImage) {
+      return;
+    }
+
+    try {
+      const splitFiles = await splitImageIntoVerticalThirdFiles({
+        previewUrl: activeImage.previewUrl,
+        sourceFile: activeImage.file,
+      });
+
+      setSelectedImages((prevImages) => {
+        if (prevImages.some(Boolean)) {
+          revokePreviewUrls(prevImages);
+        }
+
+        return splitFiles.map((file) => buildSelectedImageItem(file));
+      });
+
+      setActiveImageIndex(CENTER_SLOT_INDEX);
+      activeImageIndexRef.current = CENTER_SLOT_INDEX;
+      onImageMetadataChange?.(null);
+    } catch {
+      onUploadError?.(t("upload.error"));
+    }
+  }, [
+    activeImage,
+    buildSelectedImageItem,
+    onImageMetadataChange,
+    onUploadError,
+    revokePreviewUrls,
+  ]);
+
   const {
     previousFilledSlotIndex,
     nextFilledSlotIndex,
@@ -661,6 +703,10 @@ export function ImageUploader({
           slots={selectedImages}
           activeSlotIndex={activeImageIndex}
           onSelectSlot={handlePreviewSlotSelect}
+          onSplitImage={() => {
+            void handleSplitActiveImage();
+          }}
+          canSplitImage={!!activeImage}
           onSelectProportion={(proportion) => {
             updateActiveImage((image) => ({
               ...image,

@@ -9,6 +9,8 @@ interface UploaderPreviewToolsPanelProps {
   slots: Array<SelectedImageItem | null>;
   activeSlotIndex: number | null;
   onSelectSlot: (index: number) => void;
+  onSplitImage: () => void;
+  canSplitImage: boolean;
   onSelectProportion: (proportion: UploaderProportion) => void;
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
@@ -19,6 +21,8 @@ export function UploaderPreviewToolsPanel({
   slots,
   activeSlotIndex,
   onSelectSlot,
+  onSplitImage,
+  canSplitImage,
   onSelectProportion,
   coveragePercent,
   selectedProportion,
@@ -38,8 +42,9 @@ export function UploaderPreviewToolsPanel({
           type="button"
           variant="secondary"
           size="lg"
-          disabled
-          aria-label="Split (coming soon)"
+          onClick={onSplitImage}
+          disabled={!canSplitImage}
+          aria-label="Split selected image"
           className="px-8 py-6 shadow-lg border-2"
         >
           <SplitSquareVertical className="h-10 w-10" />

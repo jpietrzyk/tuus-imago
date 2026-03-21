@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ImageUploader } from "./image-uploader";
+import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
+
+vi.mock("./image-uploader/split-image-into-thirds", () => ({
+  splitImageIntoVerticalThirdFiles: vi.fn(),
+}));
 
 let mockImageWidth = 1200;
 let mockImageHeight = 800;
@@ -29,6 +34,59 @@ describe("ImageUploader", () => {
     );
 
     vi.stubGlobal("fetch", vi.fn());
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockReset();
+  });
+
+  it("splits active image into three slots after confirmation", async () => {
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
+      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
+      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<ImageUploader />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      const splitButton = screen.getByRole("button", {
+        name: "Split selected image",
+      });
+
+      expect(splitButton).toBeEnabled();
+      fireEvent.click(splitButton);
+
+      await waitFor(() => {
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
+          previewUrl: expect.stringContaining("blob:"),
+          sourceFile,
+        });
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
+        ).toBeTruthy();
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+    }
   });
 
   it("renders upload area when no file is selected", () => {
