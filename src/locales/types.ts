@@ -234,7 +234,6 @@ export interface Translations {
     vertical: string;
     blackAndWhite: string;
     resetAllAdjustments: string;
-    multiImageHint: string;
     previousImage: string;
     nextImage: string;
     previewSlotNavigation: string;

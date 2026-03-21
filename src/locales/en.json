@@ -238,7 +238,6 @@
     "vertical": "Vertical",
     "blackAndWhite": "Black & White",
     "resetAllAdjustments": "Reset All Adjustments",
-    "multiImageHint": "Swipe or tap a slot dot to move between selected images. Tap an empty slot to add another image.",
     "previousImage": "Previous image",
     "nextImage": "Next image",
     "previewSlotNavigation": "Preview slot navigation",

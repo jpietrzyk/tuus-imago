@@ -50,7 +50,6 @@ const metadata: SelectedImageMetadata = {
 };
 
 const createProps = () => ({
-  slots: [createItem("left"), createItem("center"), createItem("right")],
   activeImage: createItem("center"),
   activeImageIndex: 1,
   selectedImageMetadata: metadata,
@@ -81,29 +80,13 @@ describe("UploaderPreviewSlider", () => {
     expect(screen.getByTestId("mock-side-right")).toBeInTheDocument();
   });
 
-  it("forwards slot selection callbacks", () => {
+  it("forwards slot selection callbacks via side slots", () => {
     const props = createProps();
 
     render(<UploaderPreviewSlider {...props} />);
 
     fireEvent.click(screen.getByTestId("mock-side-left"));
-    fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
     expect(props.onSelectSlot).toHaveBeenCalledWith(0);
-    expect(props.onSelectSlot).toHaveBeenCalledWith(2);
-  });
-
-  it("renders one navigation dot for each slot and accents the active one", () => {
-    const props = createProps();
-
-    render(<UploaderPreviewSlider {...props} />);
-
-    expect(screen.getByTestId("uploader-slot-dots")).toBeInTheDocument();
-    expect(screen.getByTestId("uploader-slot-dot-0")).toBeInTheDocument();
-    expect(screen.getByTestId("uploader-slot-dot-1")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByTestId("uploader-slot-dot-2")).toBeInTheDocument();
   });
 });
