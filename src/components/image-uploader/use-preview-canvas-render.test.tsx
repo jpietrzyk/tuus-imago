@@ -459,7 +459,7 @@ describe("usePreviewCanvasRender", () => {
   it("redraws preview canvas when canvas element resizes (e.g. debug panel toggle)", async () => {
     const onMetadataResolved = vi.fn();
     const image = document.createElement("img");
-    let capturedResizeCallback: ResizeObserverCallback | null = null;
+    let capturedResizeCallback: unknown = null;
 
     vi.stubGlobal(
       "ResizeObserver",
@@ -515,8 +515,10 @@ describe("usePreviewCanvasRender", () => {
     });
 
     // Simulate a layout-driven canvas resize (e.g. debug panel appearing/disappearing).
-    expect(capturedResizeCallback).not.toBeNull();
-    capturedResizeCallback?.([], null as unknown as ResizeObserver);
+    if (typeof capturedResizeCallback !== "function") {
+      throw new Error("ResizeObserver callback was not captured");
+    }
+    capturedResizeCallback([], null);
 
     await waitFor(() => {
       expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(

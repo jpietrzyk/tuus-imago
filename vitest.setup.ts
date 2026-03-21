@@ -4,10 +4,7 @@ import "@testing-library/jest-dom";
 // ResizeObserver polyfill for jsdom
 if (typeof global.ResizeObserver === "undefined") {
   global.ResizeObserver = class ResizeObserver {
-    private callback: ResizeObserverCallback;
-    constructor(callback: ResizeObserverCallback) {
-      this.callback = callback;
-    }
+    constructor(_callback: ResizeObserverCallback) {}
     observe() {}
     unobserve() {}
     disconnect() {}
