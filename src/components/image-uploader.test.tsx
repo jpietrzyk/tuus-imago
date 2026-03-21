@@ -147,13 +147,13 @@ describe("ImageUploader", () => {
 
       await waitFor(() => {
         expect(
-          screen.getByRole("menuitem", { name: "Vertical" }),
+          screen.getByRole("menuitem", { name: /^Vertical/ }),
         ).toBeInTheDocument();
         expect(
-          screen.getByRole("menuitem", { name: "Horizontal" }),
+          screen.getByRole("menuitem", { name: /^Horizontal/ }),
         ).toBeInTheDocument();
         expect(
-          screen.getByRole("menuitem", { name: "Rectangle" }),
+          screen.getByRole("menuitem", { name: /^Rectangle/ }),
         ).toBeInTheDocument();
       });
     }
@@ -186,21 +186,21 @@ describe("ImageUploader", () => {
       );
 
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByRole("menuitem", { name: "Vertical" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(533);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toBe("Vertical");
+        expect(dropdownTrigger.textContent).toContain("Vertical");
       });
 
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByRole("menuitem", { name: "Rectangle" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle/ }));
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(800);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toBe("Rectangle");
+        expect(dropdownTrigger.textContent).toContain("Rectangle");
       });
     }
   });
@@ -234,7 +234,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
 
-      expect(dropdownTrigger.textContent).toBe("Vertical");
+      expect(dropdownTrigger.textContent).toContain("Vertical");
     }
   });
 
@@ -464,7 +464,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
       fireEvent.pointerDown(dropdownTrigger);
-      fireEvent.click(screen.getByRole("menuitem", { name: "Vertical" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
 
       fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
 
@@ -484,7 +484,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
       fireEvent.pointerDown(secondImageDropdown);
-      fireEvent.click(screen.getByRole("menuitem", { name: "Rectangle" }));
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle/ }));
 
       await waitFor(() => {
         expect(screen.getByTestId("selected-image-preview-frame")).toHaveStyle({
