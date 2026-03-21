@@ -68,8 +68,8 @@ describe("SideSlotPreview", () => {
       "opacity-95",
       "border",
       "border-dashed",
-      "border-primary/45",
-      "bg-primary/10",
+      "border-primary/70",
+      "bg-primary/5",
     );
   });
 

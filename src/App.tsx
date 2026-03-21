@@ -90,8 +90,8 @@ export function App() {
     location.pathname === "/upload" && isFooterResetAvailable;
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
-  const [useTestBackground, setUseTestBackground] = useState(isDebug);
-  const [showUploaderDebugData, setShowUploaderDebugData] = useState(isDebug);
+  const [useTestBackground, setUseTestBackground] = useState(false);
+  const [showUploaderDebugData, setShowUploaderDebugData] = useState(false);
   const [bgDebugUrl, setBgDebugUrl] = useState<string | null>(null);
 
   useEffect(() => {

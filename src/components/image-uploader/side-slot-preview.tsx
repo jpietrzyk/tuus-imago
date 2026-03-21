@@ -74,7 +74,7 @@ export default function SideSlotPreview({
             ? isNavigable
               ? "opacity-95 md:opacity-92"
               : "opacity-80 md:opacity-75"
-            : "border border-dashed border-primary/45 bg-primary/10 opacity-95"
+            : "border border-dashed border-primary/70 bg-primary/5 opacity-95"
         }`}
         style={{
           aspectRatio: String(previewFrameAspectRatio),
