@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ImageUploader } from "./image-uploader";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
+import { t as tr } from "../locales/i18n";
 
 vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
@@ -50,7 +51,6 @@ describe("ImageUploader", () => {
     vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
       splitPartFiles,
     );
-    vi.spyOn(window, "confirm").mockReturnValue(true);
 
     render(<ImageUploader />);
 
@@ -65,7 +65,7 @@ describe("ImageUploader", () => {
       await screen.findByRole("img", { name: "Preview" });
 
       const splitButton = screen.getByRole("button", {
-        name: "Split selected image",
+        name: tr("uploader.splitSelectedImage"),
       });
 
       expect(splitButton).toBeEnabled();
@@ -85,6 +85,80 @@ describe("ImageUploader", () => {
         expect(
           screen.getByTestId("uploader-slider-side-right").querySelector("img"),
         ).toBeTruthy();
+      });
+    }
+  });
+
+  it("asks for confirmation before splitting when other slots are already used", async () => {
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "first-part-1.jpg", { type: "image/jpeg" }),
+      new File(["center"], "first-part-2.jpg", { type: "image/jpeg" }),
+      new File(["right"], "first-part-3.jpg", { type: "image/jpeg" }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+
+    render(<ImageUploader />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [firstFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
+      const splitButton = screen.getByRole("button", {
+        name: tr("uploader.splitSelectedImage"),
+      });
+
+      fireEvent.click(splitButton);
+
+      expect(
+        screen.getByText(tr("uploader.splitSlotsConfirmTitle")),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(tr("uploader.splitSlotsConfirmDescription")),
+      ).toBeInTheDocument();
+      expect(splitImageIntoVerticalThirdFiles).not.toHaveBeenCalled();
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSlotsConfirmAction"),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
+          previewUrl: expect.stringContaining("blob:"),
+          sourceFile: firstFile,
+        });
       });
     }
   });

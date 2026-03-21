@@ -449,14 +449,6 @@ export function ImageUploader({
       return;
     }
 
-    const shouldSplitImage = window.confirm(
-      "Split selected image into 3 slots? This will replace all current slots.",
-    );
-
-    if (!shouldSplitImage) {
-      return;
-    }
-
     try {
       const splitFiles = await splitImageIntoVerticalThirdFiles({
         previewUrl: activeImage.previewUrl,
@@ -703,10 +695,9 @@ export function ImageUploader({
           slots={selectedImages}
           activeSlotIndex={activeImageIndex}
           onSelectSlot={handlePreviewSlotSelect}
-          onSplitImage={() => {
-            void handleSplitActiveImage();
-          }}
+          onSplitImage={() => void handleSplitActiveImage()}
           canSplitImage={!!activeImage}
+          shouldConfirmSplit={selectedImageCount > 1}
           onSelectProportion={(proportion) => {
             updateActiveImage((image) => ({
               ...image,
