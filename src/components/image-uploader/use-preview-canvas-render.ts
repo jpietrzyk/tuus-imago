@@ -45,6 +45,63 @@ export const usePreviewCanvasRender = ({
     }
 
     let isActive = true;
+    let resizeFrameId: number | null = null;
+    let loadedImage: HTMLImageElement | null = null;
+    let sourceWidth = 0;
+    let sourceHeight = 0;
+
+    const drawPreview = () => {
+      if (!isActive || !loadedImage || sourceWidth <= 0 || sourceHeight <= 0) {
+        return;
+      }
+
+      const {
+        selectedImageMetadata,
+        bestProportion,
+        userSelectedProportion,
+      } = latestRenderConfigRef.current;
+
+      const {
+        metadata,
+        crop,
+        nextDisplayImageProportion,
+        shouldAutoSelectOptimalProportion,
+      } = buildPreviewRenderPlan({
+        sourceWidth,
+        sourceHeight,
+        selectedImageMetadata,
+        allowAutoSelectOptimalProportion,
+        bestProportion,
+        userSelectedProportion,
+      });
+
+      onMetadataResolved({
+        metadata,
+        nextDisplayImageProportion,
+        shouldAutoSelectOptimalProportion,
+      });
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image: loadedImage,
+        crop,
+      });
+    };
+
+    const scheduleResizeDraw = () => {
+      if (!isActive || !loadedImage) {
+        return;
+      }
+
+      if (resizeFrameId !== null) {
+        window.cancelAnimationFrame(resizeFrameId);
+      }
+
+      resizeFrameId = window.requestAnimationFrame(() => {
+        resizeFrameId = null;
+        drawPreview();
+      });
+    };
 
     const renderPreview = async () => {
       try {
@@ -53,52 +110,34 @@ export const usePreviewCanvasRender = ({
           return;
         }
 
-        const { sourceWidth, sourceHeight } = resolveImageDimensions(image);
+        const dimensions = resolveImageDimensions(image);
+        sourceWidth = dimensions.sourceWidth;
+        sourceHeight = dimensions.sourceHeight;
+        loadedImage = image;
 
         if (sourceWidth <= 0 || sourceHeight <= 0) {
           return;
         }
 
-        const {
-          selectedImageMetadata,
-          bestProportion,
-          userSelectedProportion,
-        } = latestRenderConfigRef.current;
-
-        const {
-          metadata,
-          crop,
-          nextDisplayImageProportion,
-          shouldAutoSelectOptimalProportion,
-        } = buildPreviewRenderPlan({
-          sourceWidth,
-          sourceHeight,
-          selectedImageMetadata,
-          allowAutoSelectOptimalProportion,
-          bestProportion,
-          userSelectedProportion,
-        });
-
-        onMetadataResolved({
-          metadata,
-          nextDisplayImageProportion,
-          shouldAutoSelectOptimalProportion,
-        });
-
-        drawCroppedImageToCanvas({
-          canvas,
-          image,
-          crop,
-        });
+        drawPreview();
       } catch {
         // Ignore image loading errors in preview; uploader handles validation earlier.
       }
     };
 
     void renderPreview();
+    window.addEventListener("resize", scheduleResizeDraw);
+    window.addEventListener("orientationchange", scheduleResizeDraw);
 
     return () => {
       isActive = false;
+
+      if (resizeFrameId !== null) {
+        window.cancelAnimationFrame(resizeFrameId);
+      }
+
+      window.removeEventListener("resize", scheduleResizeDraw);
+      window.removeEventListener("orientationchange", scheduleResizeDraw);
     };
   }, [
     bestProportion,
