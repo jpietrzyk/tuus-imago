@@ -1,6 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import bgDebug from "./assets/testowe.png";
 import bgProduction from "./assets/2.png";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
@@ -54,12 +53,33 @@ export function App() {
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
   const [useTestBackground, setUseTestBackground] = useState(isDebug);
-  const bgImage = useTestBackground ? bgDebug : bgProduction;
+  const [bgDebugUrl, setBgDebugUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isDebug || !useTestBackground || bgDebugUrl) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    void import("./assets/testowe.png").then((module) => {
+      if (!isCancelled) {
+        setBgDebugUrl(module.default);
+      }
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isDebug, useTestBackground, bgDebugUrl]);
+
+  const bgImage = useTestBackground && bgDebugUrl ? bgDebugUrl : bgProduction;
 
   return (
     <div
-      className="h-screen overflow-hidden flex flex-col"
+      className="h-screen overflow-hidden flex flex-col bg-background"
       style={{
+        backgroundColor: "var(--background)",
         backgroundImage: `url(${bgImage})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
