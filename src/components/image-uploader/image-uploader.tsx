@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import UploaderDropArea from "./uploader-drop-area";
-import UploaderTools from "./uploader-tools";
 import UploaderPreviewSlider from "./uploader-preview-slider";
+import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
 import { usePreviewSliderSlots } from "./use-preview-slider-slots";
 import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
@@ -639,7 +639,6 @@ export function ImageUploader({
       </CardHeader>
       <CardContent className="flex-1 flex flex-col space-y-5 overflow-hidden pb-5">
         <UploaderPreviewSlider
-          slots={selectedImages}
           activeImage={activeImage}
           activeImageIndex={activeImageIndex}
           selectedImageMetadata={selectedImageMetadata}
@@ -658,28 +657,25 @@ export function ImageUploader({
           onMetadataResolved={handleMetadataResolved}
         />
 
-        <p className="w-full px-1 text-center text-xs leading-relaxed text-muted-foreground">
-          {t("uploader.multiImageHint")}
-        </p>
-
-        <div className="rounded-xl border border-border/60 bg-background/75 px-3 py-3 sm:px-4">
-          <UploaderTools
-            onSelectProportion={(proportion) => {
-              updateActiveImage((image) => ({
-                ...image,
-                displayImageProportion:
-                  proportion === "rectangle" ? "square" : proportion,
-              }));
-            }}
-            coveragePercent={coveragePercent}
-            selectedProportion={
-              displayImageProportion === "square"
-                ? "rectangle"
-                : displayImageProportion
-            }
-            showCoverageDetails={shouldShowUploaderDebugData}
-          />
-        </div>
+        <UploaderPreviewToolsPanel
+          slots={selectedImages}
+          activeSlotIndex={activeImageIndex}
+          onSelectSlot={handlePreviewSlotSelect}
+          onSelectProportion={(proportion) => {
+            updateActiveImage((image) => ({
+              ...image,
+              displayImageProportion:
+                proportion === "rectangle" ? "square" : proportion,
+            }));
+          }}
+          coveragePercent={coveragePercent}
+          selectedProportion={
+            displayImageProportion === "square"
+              ? "rectangle"
+              : displayImageProportion
+          }
+          showCoverageDetails={shouldShowUploaderDebugData}
+        />
 
         {shouldShowUploaderDebugData && selectedImageMetadata && (
           <div
