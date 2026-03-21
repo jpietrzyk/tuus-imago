@@ -191,7 +191,7 @@ describe("ImageUploader", () => {
       await waitFor(() => {
         expect(previewCanvas.width).toBe(533);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toContain("Vertical");
+        expect(dropdownTrigger).toHaveAttribute("aria-label", "Vertical");
       });
 
       fireEvent.pointerDown(dropdownTrigger);
@@ -200,7 +200,7 @@ describe("ImageUploader", () => {
       await waitFor(() => {
         expect(previewCanvas.width).toBe(800);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger.textContent).toContain("Rectangle");
+        expect(dropdownTrigger).toHaveAttribute("aria-label", "Rectangle");
       });
     }
   });
@@ -234,7 +234,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
 
-      expect(dropdownTrigger.textContent).toContain("Vertical");
+      expect(dropdownTrigger).toHaveAttribute("aria-label", "Vertical");
     }
   });
 

@@ -25,7 +25,7 @@ export function UploaderPreviewToolsPanel({
   showCoverageDetails = false,
 }: UploaderPreviewToolsPanelProps) {
   return (
-    <div className="mx-auto grid w-1/2 grid-cols-3 items-center gap-y-3 rounded-xl border border-border/60 bg-background/75 px-3 py-3 sm:px-4">
+    <div className="mx-auto grid w-1/2 grid-cols-3 items-center gap-y-3 rounded-xl border border-border/60 px-3 py-3 sm:px-4">
       <div className="col-span-3 w-full">
         <UploaderSlotSwitcher
           slots={slots}

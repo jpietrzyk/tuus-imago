@@ -32,6 +32,12 @@ const PROPORTION_ICONS: Record<UploaderProportion, LucideIcon> = {
   rectangle: Square,
 };
 
+const PROPORTION_LABELS: Record<UploaderProportion, string> = {
+  horizontal: "Horizontal",
+  vertical: "Vertical",
+  rectangle: "Rectangle",
+};
+
 const formatOptionLabel = (label: string, coverage?: number): string => {
   if (typeof coverage !== "number" || Number.isNaN(coverage)) {
     return label;
@@ -59,6 +65,7 @@ export function UploaderTools({
             size="lg"
             data-testid="image-proportions-dropdown-trigger"
             className="px-8 py-6 shadow-lg border-2"
+            aria-label={PROPORTION_LABELS[selectedProportion]}
           >
             <SelectedIcon className="h-10 w-10" />
             <ChevronDown className="ml-2 h-10 w-10" />
