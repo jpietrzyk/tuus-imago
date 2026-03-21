@@ -72,30 +72,25 @@ export function UploaderTools({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
-          <DropdownMenuItem onSelect={() => onSelectProportion("vertical")}>
-            <RectangleVertical className="h-5 w-5" />
-            <span className="sr-only">
-              {showCoverageDetails
-                ? formatOptionLabel("Vertical", coveragePercent?.vertical)
-                : "Vertical"}
-            </span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onSelectProportion("horizontal")}>
-            <RectangleHorizontal className="h-5 w-5" />
-            <span className="sr-only">
-              {showCoverageDetails
-                ? formatOptionLabel("Horizontal", coveragePercent?.horizontal)
-                : "Horizontal"}
-            </span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onSelectProportion("rectangle")}>
-            <Square className="h-5 w-5" />
-            <span className="sr-only">
-              {showCoverageDetails
-                ? formatOptionLabel("Rectangle", coveragePercent?.rectangle)
-                : "Rectangle"}
-            </span>
-          </DropdownMenuItem>
+          {(Object.keys(PROPORTION_ICONS) as UploaderProportion[]).map(
+            (proportion) => {
+              const Icon = PROPORTION_ICONS[proportion];
+              const label = PROPORTION_LABELS[proportion];
+              return (
+                <DropdownMenuItem
+                  key={proportion}
+                  onSelect={() => onSelectProportion(proportion)}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>
+                    {showCoverageDetails
+                      ? formatOptionLabel(label, coveragePercent?.[proportion])
+                      : label}
+                  </span>
+                </DropdownMenuItem>
+              );
+            },
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       {showCoverageDetails &&
