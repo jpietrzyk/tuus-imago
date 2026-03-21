@@ -23,6 +23,7 @@ export default function SideSlotPreview({
   onSelectSlot,
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
+  const isAddSlotAction = !image && typeof slotIndex === "number";
   const slotFramePreset = resolveSlotFramePreset(selectedProportion);
   const slotAspectRatioClassName =
     selectedProportion === "vertical"
@@ -43,7 +44,13 @@ export default function SideSlotPreview({
       data-testid={
         isLeft ? "uploader-slider-side-left" : "uploader-slider-side-right"
       }
-      aria-label={t(isLeft ? "uploader.previousImage" : "uploader.nextImage")}
+      aria-label={
+        isAddSlotAction
+          ? t("uploader.addImageSlot", {
+              index: String(slotIndex + 1),
+            })
+          : t(isLeft ? "uploader.previousImage" : "uploader.nextImage")
+      }
       className={`h-full w-12 md:w-20 lg:w-28 xl:w-36 shrink-0 overflow-hidden rounded-none bg-transparent transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-default disabled:opacity-70 ${
         isLeft
           ? "flex items-start justify-end md:-mr-4 lg:-mr-6"

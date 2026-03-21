@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import SideSlotPreview from "./side-slot-preview";
+import { t } from "@/locales/i18n";
 import { resolveSlotFramePreset } from "./slot-frame-presets";
 import type { SelectedImageItem } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
@@ -85,6 +86,36 @@ describe("SideSlotPreview", () => {
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass("opacity-95", "md:opacity-92");
     expect(screen.getByRole("img")).toBeInTheDocument();
+  });
+
+  it("uses add image aria-label for empty selectable slot", () => {
+    const props = {
+      ...createProps(),
+      slotIndex: 3,
+      image: null,
+    };
+
+    render(<SideSlotPreview {...props} />);
+
+    expect(screen.getByTestId("uploader-slider-side-left")).toHaveAttribute(
+      "aria-label",
+      t("uploader.addImageSlot", { index: "4" }),
+    );
+  });
+
+  it("keeps navigation aria-label for filled slot", () => {
+    const props = {
+      ...createProps(),
+      position: "right" as const,
+      image: createImageItem("filled"),
+    };
+
+    render(<SideSlotPreview {...props} />);
+
+    expect(screen.getByTestId("uploader-slider-side-right")).toHaveAttribute(
+      "aria-label",
+      t("uploader.nextImage"),
+    );
   });
 
   it("de-emphasizes filled side slot when it is not navigable", () => {
