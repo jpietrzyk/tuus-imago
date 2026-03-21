@@ -8,7 +8,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 
-type UploaderProportion = Extract<
+export type UploaderProportion = Extract<
   ImageDisplayProportion,
   "horizontal" | "vertical" | "rectangle"
 >;

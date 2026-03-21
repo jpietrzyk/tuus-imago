@@ -1,12 +1,7 @@
 import UploaderSlotSwitcher from "./uploader-slot-switcher";
 import UploaderTools from "./uploader-tools";
 import type { SelectedImageItem } from "./image-uploader";
-import type { ImageDisplayProportion } from "./image-proportion-calculator";
-
-type UploaderProportion = Extract<
-  ImageDisplayProportion,
-  "horizontal" | "vertical" | "rectangle"
->;
+import type { UploaderProportion } from "./uploader-tools";
 
 interface UploaderPreviewToolsPanelProps {
   slots: Array<SelectedImageItem | null>;

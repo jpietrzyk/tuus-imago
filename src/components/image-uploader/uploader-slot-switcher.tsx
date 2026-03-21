@@ -15,6 +15,7 @@ export function UploaderSlotSwitcher({
   return (
     <div
       className="flex w-full items-center justify-between rounded-full border border-border/70 bg-muted/55 px-3 py-1.5 shadow-sm backdrop-blur-sm"
+      role="group"
       aria-label={t("uploader.previewSlotNavigation")}
       data-testid="uploader-slot-dots"
     >
