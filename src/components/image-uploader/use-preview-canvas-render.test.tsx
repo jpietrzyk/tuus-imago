@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
@@ -67,6 +67,10 @@ function Harness({
 describe("usePreviewCanvasRender", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("loads image, builds render plan, emits metadata and draws to canvas", async () => {
