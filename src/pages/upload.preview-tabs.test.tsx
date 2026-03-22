@@ -259,12 +259,12 @@ describe("UploadPage preview tabs", () => {
   });
 
   it("renders uploaded slot links after footer-triggered batch upload action", async () => {
-    let uploadAction: (() => void) | null = null;
+    let uploadAction: (() => Promise<void>) | null = null;
 
     render(
       <MemoryRouter>
         <UploadPage
-          onUploadActionChange={(action) => {
+          onCheckoutWithUpload={(action) => {
             uploadAction = action;
           }}
         />
@@ -278,7 +278,7 @@ describe("UploadPage preview tabs", () => {
     expect(uploadAction).not.toBeNull();
 
     await act(async () => {
-      uploadAction?.();
+      await uploadAction?.();
     });
 
     expect(

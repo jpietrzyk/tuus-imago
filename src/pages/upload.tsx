@@ -29,26 +29,22 @@ interface PreviewCropArea {
 }
 
 interface UploadPageProps {
-  onUploadAvailabilityChange?: (available: boolean) => void;
-  onUploadActionChange?: (action: (() => void) | null) => void;
-  onUploadPendingChange?: (pending: boolean) => void;
   onCheckoutAvailabilityChange?: (available: boolean) => void;
   onResetAvailabilityChange?: (available: boolean) => void;
   onResetActionChange?: (action: (() => void) | null) => void;
   onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
+  onCheckoutWithUpload?: (action: (() => Promise<void>) | null) => void;
   imageDebugDataEnabled?: boolean;
 }
 
 const PREVIEW_LOADING_TIMEOUT_MS = 30000;
 
 export function UploadPage({
-  onUploadAvailabilityChange,
-  onUploadActionChange,
-  onUploadPendingChange,
   onCheckoutAvailabilityChange,
   onResetAvailabilityChange,
   onResetActionChange,
   onSuccessfulSlotsChange,
+  onCheckoutWithUpload,
   imageDebugDataEnabled = true,
 }: UploadPageProps = {}) {
   const uploaderRef = useRef<ImageUploaderHandle | null>(null);
@@ -260,7 +256,7 @@ export function UploadPage({
     successfulUploadedSlots.length === 0 &&
     !uploadedImage;
   const isCheckoutAvailable = Boolean(
-    uploadedImage || successfulUploadedSlots.length > 0,
+    uploadedImage || successfulUploadedSlots.length > 0 || hasUploaderSelection,
   );
   const isResetAvailable = hasUploaderSelection;
 
@@ -312,14 +308,6 @@ export function UploadPage({
   };
 
   useEffect(() => {
-    onUploadAvailabilityChange?.(isUploadAvailable);
-
-    return () => {
-      onUploadAvailabilityChange?.(false);
-    };
-  }, [isUploadAvailable, onUploadAvailabilityChange]);
-
-  useEffect(() => {
     const successful = uploadedSlots.filter(
       (slot) => !slot.error && !!slot.transformedUrl,
     );
@@ -331,20 +319,12 @@ export function UploadPage({
   }, [uploadedSlots, onSuccessfulSlotsChange]);
 
   useEffect(() => {
-    onUploadPendingChange?.(isBatchUploading);
+    onCheckoutWithUpload?.(isUploadAvailable ? handleBatchUpload : null);
 
     return () => {
-      onUploadPendingChange?.(false);
+      onCheckoutWithUpload?.(null);
     };
-  }, [isBatchUploading, onUploadPendingChange]);
-
-  useEffect(() => {
-    onUploadActionChange?.(handleBatchUpload);
-
-    return () => {
-      onUploadActionChange?.(null);
-    };
-  }, [handleBatchUpload, onUploadActionChange]);
+  }, [isUploadAvailable, handleBatchUpload, onCheckoutWithUpload]);
 
   useEffect(() => {
     onCheckoutAvailabilityChange?.(isCheckoutAvailable);

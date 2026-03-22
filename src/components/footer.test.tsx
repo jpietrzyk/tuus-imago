@@ -136,50 +136,6 @@ describe("Footer Component", () => {
     expect(onCheckout).toHaveBeenCalledTimes(1);
   });
 
-  it("should render upload CTA when enabled and confirm upload action", async () => {
-    const user = userEvent.setup();
-    const onUpload = vi.fn();
-
-    render(
-      <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} showUpload onUpload={onUpload} />
-      </MemoryRouter>,
-    );
-
-    await user.click(
-      screen.getByRole("button", { name: tr("uploader.uploadSelectedSlots") }),
-    );
-
-    expect(
-      screen.getByText(tr("uploader.uploadSelectedSlotsConfirmTitle")),
-    ).toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole("button", {
-        name: tr("uploader.uploadSelectedSlotsConfirmAction"),
-      }),
-    );
-
-    expect(onUpload).toHaveBeenCalledTimes(1);
-  });
-
-  it("should render disabled upload CTA while upload is pending", () => {
-    render(
-      <MemoryRouter>
-        <Footer
-          onOpenLegalMenu={vi.fn()}
-          showUpload
-          onUpload={vi.fn()}
-          isUploadPending
-        />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("button", { name: tr("uploader.uploading") }),
-    ).toBeDisabled();
-  });
-
   it("should not render reset CTA by default", () => {
     render(
       <MemoryRouter>

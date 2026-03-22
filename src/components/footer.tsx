@@ -1,10 +1,4 @@
-import {
-  RotateCcw,
-  Scale,
-  ShoppingBag,
-  TriangleAlert,
-  Upload,
-} from "lucide-react";
+import { RotateCcw, Scale, ShoppingBag, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,9 +15,6 @@ import { t } from "@/locales/i18n";
 
 interface FooterProps {
   onOpenLegalMenu: () => void;
-  showUpload?: boolean;
-  onUpload?: () => void;
-  isUploadPending?: boolean;
   showCheckout?: boolean;
   onCheckout?: () => void;
   showReset?: boolean;
@@ -32,9 +23,6 @@ interface FooterProps {
 
 export function Footer({
   onOpenLegalMenu,
-  showUpload = false,
-  onUpload,
-  isUploadPending = false,
   showCheckout = false,
   onCheckout,
   showReset = false,
@@ -82,7 +70,7 @@ export function Footer({
                     <AlertDialogAction
                       variant="destructive"
                       onClick={onReset}
-                      className="w-full sm:w-auto h-auto min-h-9 whitespace-normal break-words text-center leading-tight"
+                      className="w-full sm:w-auto h-auto min-h-9 whitespace-normal wrap-break-word text-center leading-tight"
                     >
                       {t("uploader.resetSlotsConfirmAction")}
                     </AlertDialogAction>
@@ -103,49 +91,6 @@ export function Footer({
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />
                 {t("checkout.openCheckout")}
               </Button>
-            ) : showUpload && onUpload ? (
-              isUploadPending ? (
-                <Button
-                  size="sm"
-                  disabled
-                  className="h-9 gap-2 rounded-full px-4 text-xs font-semibold tracking-[0.01em] shadow-sm sm:text-sm"
-                  aria-label={t("uploader.uploading")}
-                >
-                  <Upload className="h-4 w-4" aria-hidden="true" />
-                  {t("uploader.uploading")}
-                </Button>
-              ) : (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="h-9 gap-2 rounded-full px-4 text-xs font-semibold tracking-[0.01em] shadow-sm sm:text-sm"
-                      aria-label={t("uploader.uploadSelectedSlots")}
-                    >
-                      <Upload className="h-4 w-4" aria-hidden="true" />
-                      {t("uploader.uploadSelectedSlots")}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent size="sm">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {t("uploader.uploadSelectedSlotsConfirmTitle")}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("uploader.uploadSelectedSlotsConfirmDescription")}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>
-                        {t("uploader.cancel")}
-                      </AlertDialogCancel>
-                      <AlertDialogAction onClick={onUpload}>
-                        {t("uploader.uploadSelectedSlotsConfirmAction")}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )
             ) : null}
           </div>
 

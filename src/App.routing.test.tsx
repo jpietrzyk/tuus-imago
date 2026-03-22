@@ -289,7 +289,7 @@ describe("App Component Routing", () => {
     }
   });
 
-  it("should show footer upload CTA on upload route after selecting an image", async () => {
+  it("should show footer checkout CTA on upload route after selecting an image", async () => {
     render(
       <MemoryRouter initialEntries={["/upload"]}>
         <App />
@@ -298,7 +298,7 @@ describe("App Component Routing", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: tr("uploader.uploadSelectedSlots"),
+        name: tr("checkout.openCheckout"),
       }),
     ).not.toBeInTheDocument();
 
@@ -318,7 +318,7 @@ describe("App Component Routing", () => {
       await waitFor(() => {
         expect(
           screen.getByRole("button", {
-            name: tr("uploader.uploadSelectedSlots"),
+            name: tr("checkout.openCheckout"),
           }),
         ).toBeInTheDocument();
       });
