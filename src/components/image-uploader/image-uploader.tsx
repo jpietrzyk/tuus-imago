@@ -108,8 +108,6 @@ export function ImageUploader({
     typeof activeImageIndex === "number"
       ? (selectedImages[activeImageIndex] ?? null)
       : null;
-  const selectedFile = activeImage?.file ?? null;
-  const previewUrl = activeImage?.previewUrl ?? null;
   const selectedImageMetadata = activeImage?.metadata ?? null;
   const displayImageProportion =
     activeImage?.displayImageProportion ?? "horizontal";
@@ -417,24 +415,28 @@ export function ImageUploader({
         return;
       }
 
-      // Read active index from a ref so remove handlers always use the latest value,
-      // even when a removal happens right after navigation in the same render cycle.
+      // Preserve center-slot focus after clearing the center image so side
+      // slots stay anchored and visible in split workflows.
       let nextActiveIndex = activeImageIndexRef.current;
 
       if (nextActiveIndex === index || nextActiveIndex === null) {
-        const previousFilledSlot = filledIndexes
-          .filter((filledIndex) => filledIndex < index)
-          .at(-1);
-        const nextFilledSlot = filledIndexes.find(
-          (filledIndex) => filledIndex > index,
-        );
+        if (index === CENTER_SLOT_INDEX) {
+          nextActiveIndex = CENTER_SLOT_INDEX;
+        } else {
+          const previousFilledSlot = filledIndexes
+            .filter((filledIndex) => filledIndex < index)
+            .at(-1);
+          const nextFilledSlot = filledIndexes.find(
+            (filledIndex) => filledIndex > index,
+          );
 
-        nextActiveIndex =
-          typeof previousFilledSlot === "number"
-            ? previousFilledSlot
-            : typeof nextFilledSlot === "number"
-              ? nextFilledSlot
-              : (filledIndexes[0] ?? null);
+          nextActiveIndex =
+            typeof previousFilledSlot === "number"
+              ? previousFilledSlot
+              : typeof nextFilledSlot === "number"
+                ? nextFilledSlot
+                : (filledIndexes[0] ?? null);
+        }
       }
 
       setSelectedImages(nextImages);
@@ -652,7 +654,7 @@ export function ImageUploader({
     lastExternalResetTriggerRef.current = externalResetTrigger;
   }, [externalResetTrigger, handleCancel]);
 
-  if (!selectedFile || !previewUrl) {
+  if (selectedImageCount === 0) {
     return (
       <UploaderDropArea
         showIcons={showIcons}
@@ -692,6 +694,7 @@ export function ImageUploader({
           <button
             type="button"
             onClick={handleRemoveActiveImage}
+            disabled={!activeImage}
             aria-label={t("uploader.removeImageSlot", {
               index:
                 typeof activeImageIndex === "number"
@@ -699,7 +702,7 @@ export function ImageUploader({
                   : "",
             })}
             data-testid="uploader-remove-active-image"
-            className="z-10 inline-flex items-center justify-center gap-1.5 justify-self-center rounded-full border border-border/70 bg-background/95 px-3 py-1.5 text-xs font-semibold tracking-[0.01em] text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="z-10 inline-flex items-center justify-center gap-1.5 justify-self-center rounded-full border border-border/70 bg-background/95 px-3 py-1.5 text-xs font-semibold tracking-[0.01em] text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
             <span>{t("uploader.clearSlot")}</span>

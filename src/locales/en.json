@@ -251,6 +251,7 @@
     "addImageSlot": "Add image to slot {index}",
     "removeImageSlot": "Remove image from slot {index}",
     "clearSlot": "Clear slot",
+    "emptyCenterSlotPlaceholder": "This slot is empty. Pick a side slot to continue.",
     "resetSlots": "Clear all slots",
     "resetShort": "Reset",
     "splitSelectedImage": "Split selected image",

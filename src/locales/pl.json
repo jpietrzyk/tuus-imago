@@ -251,6 +251,7 @@
     "addImageSlot": "Dodaj zdjęcie do slotu {index}",
     "removeImageSlot": "Usuń zdjęcie ze slotu {index}",
     "clearSlot": "Wyczyść slot",
+    "emptyCenterSlotPlaceholder": "Ten slot jest pusty. Wybierz slot boczny, aby kontynuować.",
     "resetSlots": "Wyczyść wszystkie sloty",
     "resetShort": "Reset",
     "splitSelectedImage": "Podziel wybrane zdjęcie",

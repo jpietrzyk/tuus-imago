@@ -156,6 +156,15 @@ describe("PaintingPreviewSlot", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("renders placeholder when active center slot has no image", () => {
+    render(<PaintingPreviewSlot {...createProps()} selectedImage={null} />);
+
+    expect(
+      screen.getByTestId("selected-image-preview-placeholder"),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+  });
+
   it("applies vertical fixed frame preset when vertical proportion is selected", () => {
     const props = {
       ...createProps(),
