@@ -247,6 +247,7 @@ export interface Translations {
     addImageSlot: string;
     removeImageSlot: string;
     clearSlot: string;
+    emptyCenterSlotPlaceholder: string;
     resetSlots: string;
     resetShort: string;
     splitSelectedImage: string;
