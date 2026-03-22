@@ -65,10 +65,15 @@ export function App() {
   const [isLegalSheetOpen, setIsLegalSheetOpen] = useState(false);
   const [activeLegalSection, setActiveLegalSection] =
     useState<LegalMenuSection>("legal");
+  const [isFooterUploadAvailable, setIsFooterUploadAvailable] = useState(false);
+  const [isFooterUploadPending, setIsFooterUploadPending] = useState(false);
   const [isFooterCheckoutAvailable, setIsFooterCheckoutAvailable] =
     useState(false);
   const [isFooterResetAvailable, setIsFooterResetAvailable] = useState(false);
   const [onFooterReset, setOnFooterReset] = useState<(() => void) | null>(null);
+  const [onFooterUpload, setOnFooterUpload] = useState<(() => void) | null>(
+    null,
+  );
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -84,6 +89,17 @@ export function App() {
     [],
   );
 
+  const handleFooterUploadActionChange = useCallback(
+    (action: (() => void) | null) => {
+      setOnFooterUpload(() => action);
+    },
+    [],
+  );
+
+  const showFooterUpload =
+    location.pathname === "/upload" &&
+    isFooterUploadAvailable &&
+    !isFooterCheckoutAvailable;
   const showFooterCheckout =
     location.pathname === "/upload" && isFooterCheckoutAvailable;
   const showFooterReset =
@@ -135,6 +151,9 @@ export function App() {
             path="/upload"
             element={
               <UploadPage
+                onUploadAvailabilityChange={setIsFooterUploadAvailable}
+                onUploadActionChange={handleFooterUploadActionChange}
+                onUploadPendingChange={setIsFooterUploadPending}
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onResetAvailabilityChange={setIsFooterResetAvailable}
                 onResetActionChange={handleFooterResetActionChange}
@@ -157,6 +176,9 @@ export function App() {
       </main>
       <Footer
         onOpenLegalMenu={() => openLegalSheet("legal")}
+        showUpload={showFooterUpload}
+        onUpload={onFooterUpload ?? undefined}
+        isUploadPending={isFooterUploadPending}
         showCheckout={showFooterCheckout}
         onCheckout={() => navigate("/checkout")}
         showReset={showFooterReset}

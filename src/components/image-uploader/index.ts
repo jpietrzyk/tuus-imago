@@ -1,7 +1,10 @@
 export { ImageUploader } from "./image-uploader";
 export type {
+  BatchUploadSummary,
+  ImageUploaderHandle,
   ImageTransformations,
   SelectedImageMetadata,
+  UploadedSlotResult,
 } from "./image-uploader";
 
 export { UploaderDropArea } from "./uploader-drop-area";

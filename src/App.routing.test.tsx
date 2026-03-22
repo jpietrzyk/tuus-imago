@@ -289,6 +289,42 @@ describe("App Component Routing", () => {
     }
   });
 
+  it("should show footer upload CTA on upload route after selecting an image", async () => {
+    render(
+      <MemoryRouter initialEntries={["/upload"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.queryByRole("button", {
+        name: tr("uploader.uploadSelectedSlots"),
+      }),
+    ).not.toBeInTheDocument();
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, {
+        target: {
+          files: [new File(["test"], "test.jpg", { type: "image/jpeg" })],
+        },
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", {
+            name: tr("uploader.uploadSelectedSlots"),
+          }),
+        ).toBeInTheDocument();
+      });
+    }
+  });
+
   it("should render home navigation link on about page", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>

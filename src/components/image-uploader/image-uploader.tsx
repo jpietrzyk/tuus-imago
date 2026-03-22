@@ -1,7 +1,16 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import {
+  forwardRef,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+  useImperativeHandle,
+} from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
+import { uploadImageToCloudinary } from "../../lib/cloudinary-upload";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
@@ -76,15 +85,60 @@ export interface SelectedImageItem {
   };
 }
 
-export function ImageUploader({
-  onUploadError,
-  onImageMetadataChange,
-  onSelectionStateChange,
-  className,
-  defaultShowIcons = false,
-  externalResetTrigger,
-  showDebugData = true,
-}: ImageUploaderProps) {
+type UploadSlotKey = "left" | "center" | "right";
+
+export interface UploadedSlotResult {
+  slotIndex: number;
+  slotKey: UploadSlotKey;
+  transformations: ImageTransformations;
+  transformedUrl?: string;
+  publicId?: string;
+  secureUrl?: string;
+  error?: string;
+}
+
+export interface BatchUploadSummary {
+  results: UploadedSlotResult[];
+  successCount: number;
+  failureCount: number;
+  totalCount: number;
+}
+
+export interface ImageUploaderHandle {
+  uploadFilledSlots: () => Promise<BatchUploadSummary>;
+}
+
+const SLOT_KEYS: UploadSlotKey[] = ["left", "center", "right"];
+
+function getUploadTransformations(
+  image: SelectedImageItem,
+): ImageTransformations {
+  return {
+    rotation: 0,
+    flipHorizontal: false,
+    flipVertical: false,
+    brightness: image.previewEffects.brightness,
+    contrast: image.previewEffects.contrast,
+    grayscale: 0,
+    blur: 0,
+  };
+}
+
+export const ImageUploader = forwardRef<
+  ImageUploaderHandle,
+  ImageUploaderProps
+>(function ImageUploader(
+  {
+    onUploadError,
+    onImageMetadataChange,
+    onSelectionStateChange,
+    className,
+    defaultShowIcons = false,
+    externalResetTrigger,
+    showDebugData = true,
+  }: ImageUploaderProps,
+  ref,
+) {
   const [selectedImages, setSelectedImages] = useState<
     Array<SelectedImageItem | null>
   >(createEmptySelectionSlots);
@@ -515,6 +569,80 @@ export function ImageUploader({
     revokePreviewUrls,
   ]);
 
+  const uploadFilledSlots =
+    useCallback(async (): Promise<BatchUploadSummary> => {
+      const filledSlots = selectedImagesRef.current.flatMap(
+        (image, slotIndex) => (image ? [{ image, slotIndex }] : []),
+      );
+
+      if (filledSlots.length === 0) {
+        return {
+          results: [],
+          successCount: 0,
+          failureCount: 0,
+          totalCount: 0,
+        };
+      }
+
+      const batchId =
+        globalThis.crypto?.randomUUID?.() ?? `batch-${Date.now().toString(36)}`;
+      const results: UploadedSlotResult[] = [];
+
+      for (const { image, slotIndex } of filledSlots) {
+        const slotKey = SLOT_KEYS[slotIndex] ?? "center";
+        const transformations = getUploadTransformations(image);
+
+        try {
+          const uploaded = await uploadImageToCloudinary({
+            file: image.file,
+            transformations,
+            context: `slot=${slotKey}|batch_id=${batchId}`,
+          });
+
+          results.push({
+            slotIndex,
+            slotKey,
+            transformations,
+            transformedUrl: uploaded.transformedUrl,
+            publicId: uploaded.asset.public_id,
+            secureUrl: uploaded.asset.secure_url,
+          });
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : t("upload.uploadFailed");
+
+          results.push({
+            slotIndex,
+            slotKey,
+            transformations,
+            error: message,
+          });
+        }
+      }
+
+      const failureCount = results.filter((result) => !!result.error).length;
+      const successCount = results.length - failureCount;
+
+      if (failureCount > 0 && successCount === 0) {
+        onUploadError?.(results[0]?.error ?? t("upload.uploadFailed"));
+      }
+
+      return {
+        results,
+        successCount,
+        failureCount,
+        totalCount: results.length,
+      };
+    }, [onUploadError]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      uploadFilledSlots,
+    }),
+    [uploadFilledSlots],
+  );
+
   const {
     previousFilledSlotIndex,
     nextFilledSlotIndex,
@@ -804,4 +932,6 @@ export function ImageUploader({
       </CardContent>
     </Card>
   );
-}
+});
+
+ImageUploader.displayName = "ImageUploader";
