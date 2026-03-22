@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { t } from "@/locales/i18n";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
@@ -101,17 +102,27 @@ export default function PaintingPreviewSlot({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        <canvas
-          ref={previewCanvasRef}
-          role="img"
-          aria-label="Preview"
-          data-testid="selected-image-preview-canvas"
-          className="w-full h-full"
-          style={{
-            userSelect: "none",
-            WebkitUserSelect: "none",
-          }}
-        />
+        {selectedImage ? (
+          <canvas
+            ref={previewCanvasRef}
+            role="img"
+            aria-label="Preview"
+            data-testid="selected-image-preview-canvas"
+            className="w-full h-full"
+            style={{
+              userSelect: "none",
+              WebkitUserSelect: "none",
+            }}
+          />
+        ) : (
+          <div
+            data-testid="selected-image-preview-placeholder"
+            className="flex h-full w-full items-center justify-center border border-dashed border-primary/70 bg-primary/5 px-4 text-center text-sm font-medium text-muted-foreground"
+            aria-live="polite"
+          >
+            {t("uploader.emptyCenterSlotPlaceholder")}
+          </div>
+        )}
       </div>
     </div>
   );

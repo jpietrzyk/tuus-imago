@@ -108,8 +108,6 @@ export function ImageUploader({
     typeof activeImageIndex === "number"
       ? (selectedImages[activeImageIndex] ?? null)
       : null;
-  const selectedFile = activeImage?.file ?? null;
-  const previewUrl = activeImage?.previewUrl ?? null;
   const selectedImageMetadata = activeImage?.metadata ?? null;
   const displayImageProportion =
     activeImage?.displayImageProportion ?? "horizontal";
@@ -417,24 +415,28 @@ export function ImageUploader({
         return;
       }
 
-      // Read active index from a ref so remove handlers always use the latest value,
-      // even when a removal happens right after navigation in the same render cycle.
+      // Preserve center-slot focus after clearing the center image so side
+      // slots stay anchored and visible in split workflows.
       let nextActiveIndex = activeImageIndexRef.current;
 
       if (nextActiveIndex === index || nextActiveIndex === null) {
-        const previousFilledSlot = filledIndexes
-          .filter((filledIndex) => filledIndex < index)
-          .at(-1);
-        const nextFilledSlot = filledIndexes.find(
-          (filledIndex) => filledIndex > index,
-        );
+        if (index === CENTER_SLOT_INDEX) {
+          nextActiveIndex = CENTER_SLOT_INDEX;
+        } else {
+          const previousFilledSlot = filledIndexes
+            .filter((filledIndex) => filledIndex < index)
+            .at(-1);
+          const nextFilledSlot = filledIndexes.find(
+            (filledIndex) => filledIndex > index,
+          );
 
-        nextActiveIndex =
-          typeof previousFilledSlot === "number"
-            ? previousFilledSlot
-            : typeof nextFilledSlot === "number"
-              ? nextFilledSlot
-              : (filledIndexes[0] ?? null);
+          nextActiveIndex =
+            typeof previousFilledSlot === "number"
+              ? previousFilledSlot
+              : typeof nextFilledSlot === "number"
+                ? nextFilledSlot
+                : (filledIndexes[0] ?? null);
+        }
       }
 
       setSelectedImages(nextImages);
@@ -652,7 +654,7 @@ export function ImageUploader({
     lastExternalResetTriggerRef.current = externalResetTrigger;
   }, [externalResetTrigger, handleCancel]);
 
-  if (!selectedFile || !previewUrl) {
+  if (selectedImageCount === 0) {
     return (
       <UploaderDropArea
         showIcons={showIcons}
