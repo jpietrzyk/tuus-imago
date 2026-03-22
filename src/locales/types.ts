@@ -243,6 +243,10 @@ export interface Translations {
     clearSlot: string;
     resetSlots: string;
     resetShort: string;
+    splitSelectedImage: string;
+    splitSlotsConfirmTitle: string;
+    splitSlotsConfirmDescription: string;
+    splitSlotsConfirmAction: string;
     resetSlotsConfirmTitle: string;
     resetSlotsConfirmDescription: string;
     resetSlotsConfirmAction: string;
