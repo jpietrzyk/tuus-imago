@@ -41,6 +41,7 @@ const createItem = (name: string): SelectedImageItem => ({
   metadata: null,
   displayImageProportion: "horizontal",
   autoSelectOptimalPending: false,
+  previewEffects: { brightness: 0, contrast: 0 },
 });
 
 const metadata: SelectedImageMetadata = {

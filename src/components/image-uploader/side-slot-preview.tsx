@@ -32,6 +32,28 @@ export default function SideSlotPreview({
         ? "aspect-[16/9]"
         : "aspect-square";
 
+  // Build CSS filter for preview effects
+  const getEffectFilter = () => {
+    if (!image || !image.previewEffects) {
+      return undefined;
+    }
+
+    const { brightness, contrast } = image.previewEffects;
+
+    if (brightness === 0 && contrast === 0) {
+      return undefined;
+    }
+
+    const brightnessFactor = 1 + brightness / 100;
+    const contrastFactor = 1 + contrast / 100;
+
+    // Clamp values to reasonable ranges
+    const clampedBrightness = Math.max(0, Math.min(2, brightnessFactor));
+    const clampedContrast = Math.max(0, Math.min(2, contrastFactor));
+
+    return `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
+  };
+
   return (
     <button
       type="button"
@@ -91,6 +113,9 @@ export default function SideSlotPreview({
                 : ""
             }
             className="h-full w-full object-cover object-center"
+            style={{
+              filter: getEffectFilter(),
+            }}
             draggable={false}
           />
         ) : null}
