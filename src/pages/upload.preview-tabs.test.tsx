@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle } from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -75,7 +75,9 @@ vi.mock("@/components/image-uploader", () => ({
         uploadFilledSlots: () => Promise<typeof mockBatchUploadResult>;
       }>,
     ) => {
-      lastImageUploaderProps = { showDebugData };
+      useEffect(() => {
+        lastImageUploaderProps = { showDebugData };
+      }, [showDebugData]);
 
       useImperativeHandle(ref, () => ({
         uploadFilledSlots: async () => mockBatchUploadResult,
