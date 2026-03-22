@@ -27,7 +27,7 @@ interface HarnessProps {
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
-  previewEffects?: { brightness: number; contrast: number } | null;
+  previewEffects: { brightness: number; contrast: number } | null;
 }
 
 function Harness({
@@ -39,11 +39,16 @@ function Harness({
   previewEffects,
 }: HarnessProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const latestRenderConfigRef = useRef({
+  const latestRenderConfigRef = useRef<{
+    selectedImageMetadata: SelectedImageMetadata | null;
+    bestProportion: ImageDisplayProportion | null;
+    userSelectedProportion: ImageDisplayProportion;
+    previewEffects: { brightness: number; contrast: number } | null;
+  }>({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
-    previewEffects,
+    previewEffects: previewEffects ?? null,
   });
 
   useEffect(() => {
@@ -51,7 +56,7 @@ function Harness({
       selectedImageMetadata,
       bestProportion,
       userSelectedProportion,
-      previewEffects,
+      previewEffects: previewEffects ?? null,
     };
   }, [
     bestProportion,
@@ -68,7 +73,7 @@ function Harness({
     userSelectedProportion,
     latestRenderConfigRef,
     onMetadataResolved,
-    previewEffects,
+    previewEffects: previewEffects ?? null,
   });
 
   return <canvas ref={canvasRef} data-testid="canvas" />;
@@ -123,6 +128,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata={null}
         bestProportion={null}
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
@@ -171,6 +177,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata={null}
         bestProportion={null}
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
@@ -205,6 +212,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata={null}
         bestProportion={null}
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
@@ -215,6 +223,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata={null}
         bestProportion={null}
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
@@ -275,6 +284,7 @@ describe("usePreviewCanvasRender", () => {
         }}
         bestProportion="horizontal"
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
@@ -293,6 +303,7 @@ describe("usePreviewCanvasRender", () => {
         }}
         bestProportion="horizontal"
         userSelectedProportion="vertical"
+        previewEffects={null}
       />,
     );
 
@@ -363,6 +374,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata: storedMetadata,
         bestProportion: null as ImageDisplayProportion | null,
         userSelectedProportion: "horizontal" as ImageDisplayProportion,
+        previewEffects: null as { brightness: number; contrast: number } | null,
       });
 
       useEffect(() => {
@@ -370,6 +382,7 @@ describe("usePreviewCanvasRender", () => {
           selectedImageMetadata: storedMetadata,
           bestProportion: null,
           userSelectedProportion: "horizontal",
+          previewEffects: null,
         };
       }, [storedMetadata]);
 
@@ -392,6 +405,7 @@ describe("usePreviewCanvasRender", () => {
         userSelectedProportion: "horizontal",
         latestRenderConfigRef,
         onMetadataResolved: handleMetadataResolved,
+        previewEffects: null,
       });
 
       return <canvas ref={canvasRef} data-testid="canvas" />;
@@ -450,6 +464,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata={null}
         bestProportion={null}
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
@@ -519,6 +534,7 @@ describe("usePreviewCanvasRender", () => {
         selectedImageMetadata={null}
         bestProportion={null}
         userSelectedProportion="horizontal"
+        previewEffects={null}
       />,
     );
 
