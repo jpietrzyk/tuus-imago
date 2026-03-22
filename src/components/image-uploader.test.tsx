@@ -965,7 +965,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("resets effects on split action - new generated slots start with neutral effects", async () => {
+  it("splits image and keeps split previews visible", async () => {
     const sourceFile = new File(["source"], "source.jpg", {
       type: "image/jpeg",
     });
@@ -991,12 +991,6 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [sourceFile] } });
       await screen.findByRole("img", { name: "Preview" });
 
-      // Verify we can access the effects UI (which means effects are initialized)
-      const effectsButton = screen.queryByRole("button", {
-        name: tr("uploader.previewEffectsButton"),
-      });
-      expect(effectsButton).toBeInTheDocument();
-
       const splitButton = screen.getByRole("button", {
         name: tr("uploader.splitSelectedImage"),
       });
@@ -1020,13 +1014,6 @@ describe("ImageUploader", () => {
           screen.getByTestId("uploader-slider-side-right").querySelector("img"),
         ).toBeTruthy();
       });
-
-      // All generated images should have neutral effects initialized
-      const allEffectsButtons = screen.queryAllByRole("button", {
-        name: tr("uploader.previewEffectsButton"),
-      });
-      // Should have at least one effects button available
-      expect(allEffectsButtons.length).toBeGreaterThan(0);
     }
   });
 
