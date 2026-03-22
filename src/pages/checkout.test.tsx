@@ -225,10 +225,22 @@ describe("CheckoutPage", () => {
     expect(images.length).toBeGreaterThanOrEqual(2);
     expect(images[0]).toHaveAttribute(
       "src",
-      "https://res.cloudinary.com/test/image/upload/left.jpg",
+      "https://res.cloudinary.com/test/image/upload/c_fill,g_auto,h_48,w_48/f_auto/q_auto/left.jpg",
     );
     expect(images[1]).toHaveAttribute(
       "src",
+      "https://res.cloudinary.com/test/image/upload/c_fill,g_auto,h_48,w_48/f_auto/q_auto/right.jpg",
+    );
+
+    const imageLinks = screen.getAllByRole("link", {
+      name: tr("upload.openUploadedImage"),
+    });
+    expect(imageLinks[0]).toHaveAttribute(
+      "href",
+      "https://res.cloudinary.com/test/image/upload/left.jpg",
+    );
+    expect(imageLinks[1]).toHaveAttribute(
+      "href",
       "https://res.cloudinary.com/test/image/upload/right.jpg",
     );
   });

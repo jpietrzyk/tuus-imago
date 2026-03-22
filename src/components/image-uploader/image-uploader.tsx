@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
-import { uploadImageToCloudinary } from "../../lib/cloudinary-upload";
+import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";

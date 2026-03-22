@@ -3,7 +3,10 @@ import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
 import type { ImageTransformations } from "@/lib/image-transformations";
-import { getTransformedPreviewUrl } from "@/lib/image-transformations";
+import {
+  getCloudinaryThumbnailUrl,
+  getTransformedPreviewUrl,
+} from "@/lib/image-transformations";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
 
 describe("UploadPage Component", () => {
@@ -226,6 +229,23 @@ describe("UploadPage Component", () => {
       expect(transformedUrl).toBe(
         "https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,ar_1:1/e_enhance/v123/sample.jpg",
       );
+    });
+
+    it("should compose optimized Cloudinary thumbnail URL", () => {
+      const originalUrl =
+        "https://res.cloudinary.com/demo/image/upload/e_brightness:10/v123/sample.jpg";
+
+      const thumbnailUrl = getCloudinaryThumbnailUrl(originalUrl, 48, 48);
+
+      expect(thumbnailUrl).toBe(
+        "https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,h_48,w_48/f_auto/q_auto/e_brightness:10/v123/sample.jpg",
+      );
+    });
+
+    it("should return original URL for non-Cloudinary thumbnail sources", () => {
+      const originalUrl = "https://example.com/sample.jpg";
+
+      expect(getCloudinaryThumbnailUrl(originalUrl, 48, 48)).toBe(originalUrl);
     });
 
     it("should handle transformations in handleUploadSuccess callback", () => {

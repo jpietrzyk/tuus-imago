@@ -175,6 +175,7 @@ export interface Translations {
     batchUploadFailed: string;
     partialUploadSummary: string;
     dropFile: string;
+    uploading: string;
     uploadingSlotProgress: string;
     clickToUpload: string;
     fileSupport: string;

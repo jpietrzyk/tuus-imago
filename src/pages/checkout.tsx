@@ -16,6 +16,9 @@ import {
 } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
+import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
+
+type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -23,7 +26,10 @@ export function CheckoutPage() {
   const uploadedSlots = (
     (location.state as { uploadedSlots?: UploadedSlotResult[] } | null)
       ?.uploadedSlots ?? []
-  ).filter((slot) => !slot.error && !!slot.transformedUrl);
+  ).filter(
+    (slot): slot is UploadedCheckoutSlot =>
+      !slot.error && typeof slot.transformedUrl === "string",
+  );
 
   const slotLabel = (slotKey: UploadedSlotResult["slotKey"]): string => {
     if (slotKey === "left") return t("upload.slotLeft");
@@ -247,7 +253,11 @@ export function CheckoutPage() {
                             className="flex items-center gap-3 py-1"
                           >
                             <img
-                              src={slot.transformedUrl}
+                              src={getCloudinaryThumbnailUrl(
+                                slot.transformedUrl,
+                                48,
+                                48,
+                              )}
                               alt={slotLabel(slot.slotKey)}
                               className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
                             />

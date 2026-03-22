@@ -98,7 +98,7 @@ export default function SideSlotPreview({
             ? "uploader-slider-side-left-preview-frame"
             : "uploader-slider-side-right-preview-frame"
         }
-        className={`flex h-full w-full min-w-0 max-w-full ${slotFramePreset.sideFrameMinWidthClassName} ${slotAspectRatioClassName} overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+        className={`relative flex h-full w-full min-w-0 max-w-full ${slotFramePreset.sideFrameMinWidthClassName} ${slotAspectRatioClassName} overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
           isLeft ? "items-start justify-end" : "items-center justify-start"
         } ${
           image

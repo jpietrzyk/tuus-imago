@@ -360,11 +360,13 @@ export function UploadPage({
       (slot) => !slot.error && !!slot.transformedUrl,
     );
     onSuccessfulSlotsChange?.(successful);
+  }, [uploadedSlots, onSuccessfulSlotsChange]);
 
+  useEffect(() => {
     return () => {
       onSuccessfulSlotsChange?.([]);
     };
-  }, [uploadedSlots, onSuccessfulSlotsChange]);
+  }, [onSuccessfulSlotsChange]);
 
   useEffect(() => {
     onCheckoutWithUpload?.(isUploadAvailable ? handleBatchUpload : null);
