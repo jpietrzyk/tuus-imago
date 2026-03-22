@@ -491,7 +491,12 @@ export function ImageUploader({
           revokePreviewUrls(prevImages);
         }
 
-        return splitFiles.map((file) => buildSelectedImageItem(file));
+        return splitFiles.map((file) => ({
+          ...buildSelectedImageItem(file),
+          previewEffects: {
+            ...activeImage.previewEffects,
+          },
+        }));
       });
 
       setActiveImageIndex(CENTER_SLOT_INDEX);
