@@ -226,6 +226,12 @@ export interface Translations {
     uploading: string;
     uploadingProgress: string;
     imageAdjustments: string;
+    previewEffectsTitle: string;
+    previewEffectsDescription: string;
+    previewEffectsButton: string;
+    brightness: string;
+    contrast: string;
+    effectsReset: string;
     rotation: string;
     rotateMinus90: string;
     rotatePlus90: string;
