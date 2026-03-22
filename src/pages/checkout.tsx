@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,11 +12,25 @@ import {
   MapPin,
   User,
   CreditCard,
+  ExternalLink,
 } from "lucide-react";
 import { t } from "@/locales/i18n";
+import { type UploadedSlotResult } from "@/components/image-uploader";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const uploadedSlots = (
+    (location.state as { uploadedSlots?: UploadedSlotResult[] } | null)
+      ?.uploadedSlots ?? []
+  ).filter((slot) => !slot.error && !!slot.transformedUrl);
+
+  const slotLabel = (slotKey: UploadedSlotResult["slotKey"]): string => {
+    if (slotKey === "left") return t("upload.slotLeft");
+    if (slotKey === "right") return t("upload.slotRight");
+    return t("upload.slotCenter");
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -222,18 +236,58 @@ export function CheckoutPage() {
                     {t("checkout.orderSummary")}
                   </h3>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">
-                        {t("checkout.enhancedPhoto")}
-                      </span>
-                      <span className="font-semibold text-gray-900">1x</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">
-                        {t("checkout.canvasPrint")}
-                      </span>
-                      <span className="font-semibold text-gray-900">1x</span>
-                    </div>
+                    {uploadedSlots.length > 0 ? (
+                      <>
+                        <p className="text-sm font-medium text-gray-700 mb-2">
+                          {t("checkout.uploadedImages")}
+                        </p>
+                        {uploadedSlots.map((slot) => (
+                          <div
+                            key={slot.slotKey}
+                            className="flex items-center gap-3 py-1"
+                          >
+                            <img
+                              src={slot.transformedUrl}
+                              alt={slotLabel(slot.slotKey)}
+                              className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800">
+                                {slotLabel(slot.slotKey)}
+                              </p>
+                            </div>
+                            <a
+                              href={slot.transformedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 text-blue-600 hover:text-blue-800"
+                              aria-label={t("upload.openUploadedImage")}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">
+                            {t("checkout.enhancedPhoto")}
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            1x
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700">
+                            {t("checkout.canvasPrint")}
+                          </span>
+                          <span className="font-semibold text-gray-900">
+                            1x
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                       <span className="text-gray-900">
                         {t("checkout.total")}

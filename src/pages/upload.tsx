@@ -35,6 +35,7 @@ interface UploadPageProps {
   onCheckoutAvailabilityChange?: (available: boolean) => void;
   onResetAvailabilityChange?: (available: boolean) => void;
   onResetActionChange?: (action: (() => void) | null) => void;
+  onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
   imageDebugDataEnabled?: boolean;
 }
 
@@ -47,6 +48,7 @@ export function UploadPage({
   onCheckoutAvailabilityChange,
   onResetAvailabilityChange,
   onResetActionChange,
+  onSuccessfulSlotsChange,
   imageDebugDataEnabled = true,
 }: UploadPageProps = {}) {
   const uploaderRef = useRef<ImageUploaderHandle | null>(null);
@@ -316,6 +318,17 @@ export function UploadPage({
       onUploadAvailabilityChange?.(false);
     };
   }, [isUploadAvailable, onUploadAvailabilityChange]);
+
+  useEffect(() => {
+    const successful = uploadedSlots.filter(
+      (slot) => !slot.error && !!slot.transformedUrl,
+    );
+    onSuccessfulSlotsChange?.(successful);
+
+    return () => {
+      onSuccessfulSlotsChange?.([]);
+    };
+  }, [uploadedSlots, onSuccessfulSlotsChange]);
 
   useEffect(() => {
     onUploadPendingChange?.(isBatchUploading);

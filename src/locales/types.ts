@@ -301,6 +301,7 @@ export interface Translations {
     country: string;
     countryPlaceholder: string;
     orderSummary: string;
+    uploadedImages: string;
     enhancedPhoto: string;
     canvasPrint: string;
     total: string;

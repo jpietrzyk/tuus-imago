@@ -10,6 +10,7 @@ import {
 import { HomeUploadEntryPage } from "./pages/home-upload-entry";
 import { LandingPage } from "./pages/landing";
 import { UploadPage } from "./pages/upload";
+import { type UploadedSlotResult } from "@/components/image-uploader";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
 import { CheckoutPage } from "./pages/checkout";
@@ -74,6 +75,9 @@ export function App() {
   const [onFooterUpload, setOnFooterUpload] = useState<(() => void) | null>(
     null,
   );
+  const [successfulSlotsForCheckout, setSuccessfulSlotsForCheckout] = useState<
+    UploadedSlotResult[]
+  >([]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -157,6 +161,7 @@ export function App() {
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onResetAvailabilityChange={setIsFooterResetAvailable}
                 onResetActionChange={handleFooterResetActionChange}
+                onSuccessfulSlotsChange={setSuccessfulSlotsForCheckout}
                 imageDebugDataEnabled={showUploaderDebugData}
               />
             }
@@ -180,7 +185,11 @@ export function App() {
         onUpload={onFooterUpload ?? undefined}
         isUploadPending={isFooterUploadPending}
         showCheckout={showFooterCheckout}
-        onCheckout={() => navigate("/checkout")}
+        onCheckout={() =>
+          navigate("/checkout", {
+            state: { uploadedSlots: successfulSlotsForCheckout },
+          })
+        }
         showReset={showFooterReset}
         onReset={onFooterReset ?? undefined}
       />

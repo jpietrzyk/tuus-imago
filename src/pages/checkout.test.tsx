@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { CheckoutPage } from "./checkout";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { tr } from "@/test/i18n-test";
+import { type UploadedSlotResult } from "@/components/image-uploader";
 
 describe("CheckoutPage", () => {
   beforeEach(() => {
@@ -13,6 +14,18 @@ describe("CheckoutPage", () => {
   const renderWithRouter = () => {
     return render(
       <MemoryRouter initialEntries={["/checkout"]}>
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  };
+
+  const renderWithSlots = (uploadedSlots: UploadedSlotResult[]) => {
+    return render(
+      <MemoryRouter
+        initialEntries={[{ pathname: "/checkout", state: { uploadedSlots } }]}
+      >
         <Routes>
           <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
@@ -163,5 +176,66 @@ describe("CheckoutPage", () => {
   it("renders help text", () => {
     renderWithRouter();
     expect(screen.getByText(tr("checkout.requiredFields"))).toBeDefined();
+  });
+
+  it("renders uploaded slot images in order summary when passed via location state", () => {
+    const mockSlots: UploadedSlotResult[] = [
+      {
+        slotIndex: 0,
+        slotKey: "left",
+        transformations: {
+          brightness: 0,
+          contrast: 0,
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          grayscale: false,
+          blur: 0,
+        },
+        transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+        publicId: "tuus-imago/left",
+        secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+      },
+      {
+        slotIndex: 2,
+        slotKey: "right",
+        transformations: {
+          brightness: 10,
+          contrast: 0,
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          grayscale: false,
+          blur: 0,
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/right.jpg",
+        publicId: "tuus-imago/right",
+        secureUrl: "https://res.cloudinary.com/test/image/upload/right.jpg",
+      },
+    ];
+
+    renderWithSlots(mockSlots);
+
+    expect(screen.getByText(tr("checkout.uploadedImages"))).toBeDefined();
+    expect(screen.getByText(tr("upload.slotLeft"))).toBeDefined();
+    expect(screen.getByText(tr("upload.slotRight"))).toBeDefined();
+
+    const images = screen.getAllByRole("img");
+    expect(images.length).toBeGreaterThanOrEqual(2);
+    expect(images[0]).toHaveAttribute(
+      "src",
+      "https://res.cloudinary.com/test/image/upload/left.jpg",
+    );
+    expect(images[1]).toHaveAttribute(
+      "src",
+      "https://res.cloudinary.com/test/image/upload/right.jpg",
+    );
+  });
+
+  it("renders static order summary when no slots passed via location state", () => {
+    renderWithRouter();
+    expect(screen.getByText(tr("checkout.enhancedPhoto"))).toBeDefined();
+    expect(screen.getByText(tr("checkout.canvasPrint"))).toBeDefined();
   });
 });
