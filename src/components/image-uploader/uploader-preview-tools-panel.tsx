@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
-import { Settings, SplitSquareVertical, TriangleAlert } from "lucide-react";
+import { SplitSquareVertical, TriangleAlert } from "lucide-react";
 import UploaderSlotSwitcher from "./uploader-slot-switcher";
 import UploaderTools from "./uploader-tools";
+import UploaderEffectsPopover from "./uploader-effects-popover";
 import type { SelectedImageItem } from "./image-uploader";
 import type { UploaderProportion } from "./uploader-tools";
 
@@ -25,6 +26,13 @@ interface UploaderPreviewToolsPanelProps {
   canSplitImage: boolean;
   shouldConfirmSplit: boolean;
   onSelectProportion: (proportion: UploaderProportion) => void;
+  onUpdateEffect: (
+    effectName: "brightness" | "contrast",
+    value: number,
+  ) => void;
+  onResetEffects: () => void;
+  activeImageEffects: { brightness: number; contrast: number } | null;
+  canUpdateEffects: boolean;
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
   showCoverageDetails?: boolean;
@@ -38,6 +46,10 @@ export function UploaderPreviewToolsPanel({
   canSplitImage,
   shouldConfirmSplit,
   onSelectProportion,
+  onUpdateEffect,
+  onResetEffects,
+  activeImageEffects,
+  canUpdateEffects,
   coveragePercent,
   selectedProportion,
   showCoverageDetails = false,
@@ -99,16 +111,12 @@ export function UploaderPreviewToolsPanel({
         )}
       </div>
       <div className="col-start-2 flex justify-center">
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-          disabled
-          aria-label="Settings (coming soon)"
-          className="px-8 py-6 shadow-lg border-2"
-        >
-          <Settings className="h-10 w-10" />
-        </Button>
+        <UploaderEffectsPopover
+          effects={activeImageEffects}
+          onUpdateEffect={onUpdateEffect}
+          onResetEffects={onResetEffects}
+          disabled={!canUpdateEffects}
+        />
       </div>
       <div className="col-start-3 flex justify-end">
         <UploaderTools

@@ -27,6 +27,7 @@ interface HarnessProps {
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
+  previewEffects?: { brightness: number; contrast: number } | null;
 }
 
 function Harness({
@@ -35,12 +36,14 @@ function Harness({
   selectedImageMetadata,
   bestProportion,
   userSelectedProportion,
+  previewEffects,
 }: HarnessProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const latestRenderConfigRef = useRef({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
+    previewEffects,
   });
 
   useEffect(() => {
@@ -48,8 +51,14 @@ function Harness({
       selectedImageMetadata,
       bestProportion,
       userSelectedProportion,
+      previewEffects,
     };
-  }, [bestProportion, selectedImageMetadata, userSelectedProportion]);
+  }, [
+    bestProportion,
+    selectedImageMetadata,
+    userSelectedProportion,
+    previewEffects,
+  ]);
 
   usePreviewCanvasRender({
     previewUrl,
@@ -59,6 +68,7 @@ function Harness({
     userSelectedProportion,
     latestRenderConfigRef,
     onMetadataResolved,
+    previewEffects,
   });
 
   return <canvas ref={canvasRef} data-testid="canvas" />;
@@ -532,5 +542,209 @@ describe("usePreviewCanvasRender", () => {
 
     // Image should not be reloaded — only redrawn.
     expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
+  });
+
+  it("stores previewEffects in latestRenderConfigRef when provided", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
+      metadata: {
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      },
+      nextDisplayImageProportion: "horizontal",
+      shouldAutoSelectOptimalProportion: false,
+      crop: {
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 1200,
+        cropHeight: 675,
+        outputWidth: 1200,
+        outputHeight: 675,
+        sourceArea: 960000,
+        cropArea: 810000,
+        coverageRatio: 0.84375,
+        coveragePercent: 84.38,
+        widthScale: 1,
+        heightScale: 0.84375,
+      },
+    });
+
+    const effects = { brightness: 50, contrast: -30 };
+
+    render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={null}
+        bestProportion={null}
+        userSelectedProportion="horizontal"
+        previewEffects={effects}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    // Verify effects were passed to drawCroppedImageToCanvas
+    expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledWith(
+      expect.objectContaining({
+        effects: { brightness: 50, contrast: -30 },
+      }),
+    );
+  });
+
+  it("passes previewEffects parameter to drawCroppedImageToCanvas when effects exist", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
+      metadata: {
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      },
+      nextDisplayImageProportion: "horizontal",
+      shouldAutoSelectOptimalProportion: false,
+      crop: {
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 1200,
+        cropHeight: 675,
+        outputWidth: 1200,
+        outputHeight: 675,
+        sourceArea: 960000,
+        cropArea: 810000,
+        coverageRatio: 0.84375,
+        coveragePercent: 84.38,
+        widthScale: 1,
+        heightScale: 0.84375,
+      },
+    });
+
+    render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={null}
+        bestProportion={null}
+        userSelectedProportion="horizontal"
+        previewEffects={{ brightness: 25, contrast: 10 }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalled();
+    });
+
+    // Last call should include effects parameter
+    expect(
+      vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas),
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        effects: { brightness: 25, contrast: 10 },
+      }),
+    );
+  });
+
+  it("rerenders when previewEffects change", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
+      metadata: {
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      },
+      nextDisplayImageProportion: "horizontal",
+      shouldAutoSelectOptimalProportion: false,
+      crop: {
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 1200,
+        cropHeight: 675,
+        outputWidth: 1200,
+        outputHeight: 675,
+        sourceArea: 960000,
+        cropArea: 810000,
+        coverageRatio: 0.84375,
+        coveragePercent: 84.38,
+        widthScale: 1,
+        heightScale: 0.84375,
+      },
+    });
+
+    const { rerender } = render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={{
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        }}
+        bestProportion="horizontal"
+        userSelectedProportion="horizontal"
+        previewEffects={{ brightness: 0, contrast: 0 }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    // Change effects
+    rerender(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={{
+          width: 1200,
+          height: 800,
+          aspectRatio: "3:2",
+        }}
+        bestProportion="horizontal"
+        userSelectedProportion="horizontal"
+        previewEffects={{ brightness: 50, contrast: 20 }}
+      />,
+    );
+
+    // Should trigger another render with new effects
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        2,
+      );
+    });
+
+    expect(
+      vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas),
+    ).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        effects: { brightness: 50, contrast: 20 },
+      }),
+    );
   });
 });

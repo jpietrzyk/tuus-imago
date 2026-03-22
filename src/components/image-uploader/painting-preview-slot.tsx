@@ -47,6 +47,7 @@ export default function PaintingPreviewSlot({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
+    previewEffects: selectedImage?.previewEffects ?? null,
   });
   const slotFramePreset = resolveSlotFramePreset(userSelectedProportion);
 
@@ -82,6 +83,7 @@ export default function PaintingPreviewSlot({
       selectedImage?.autoSelectOptimalPending ?? true,
     bestProportion,
     userSelectedProportion,
+    previewEffects: selectedImage?.previewEffects ?? null,
     latestRenderConfigRef,
     onMetadataResolved,
   });

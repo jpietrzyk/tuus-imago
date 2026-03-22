@@ -31,10 +31,12 @@ export const drawCroppedImageToCanvas = ({
   canvas,
   image,
   crop,
+  effects,
 }: {
   canvas: HTMLCanvasElement;
   image: HTMLImageElement;
   crop: CropCalculationResult;
+  effects?: { brightness: number; contrast: number } | null;
 }): boolean => {
   const context = canvas.getContext("2d");
   if (!context) {
@@ -81,6 +83,19 @@ export const drawCroppedImageToCanvas = ({
 
   const drawX = Math.floor((dstW - drawWidth) / 2);
   const drawY = Math.floor((dstH - drawHeight) / 2);
+
+  // Apply preview effects via canvas filter if present
+  if (effects && (effects.brightness !== 0 || effects.contrast !== 0)) {
+    // Convert slider values (-100 to 100) to filter values (0 to 2)
+    const brightnessFactor = 1 + effects.brightness / 100;
+    const contrastFactor = 1 + effects.contrast / 100;
+
+    // Clamp values to reasonable ranges
+    const clampedBrightness = Math.max(0, Math.min(2, brightnessFactor));
+    const clampedContrast = Math.max(0, Math.min(2, contrastFactor));
+
+    context.filter = `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
+  }
 
   context.clearRect(0, 0, dstW, dstH);
   context.drawImage(

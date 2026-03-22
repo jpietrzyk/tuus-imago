@@ -70,6 +70,10 @@ export interface SelectedImageItem {
   metadata: SelectedImageMetadata | null;
   displayImageProportion: ImageDisplayProportion;
   autoSelectOptimalPending?: boolean;
+  previewEffects: {
+    brightness: number;
+    contrast: number;
+  };
 }
 
 export function ImageUploader({
@@ -130,6 +134,10 @@ export function ImageUploader({
         metadata: null,
         displayImageProportion: "horizontal",
         autoSelectOptimalPending,
+        previewEffects: {
+          brightness: 0,
+          contrast: 0,
+        },
       };
     },
     [],
@@ -293,6 +301,29 @@ export function ImageUploader({
     },
     [onImageMetadataChange, updateActiveImage],
   );
+
+  const updateActiveImageEffect = useCallback(
+    (effectName: "brightness" | "contrast", value: number) => {
+      updateActiveImage((image) => ({
+        ...image,
+        previewEffects: {
+          ...image.previewEffects,
+          [effectName]: value,
+        },
+      }));
+    },
+    [updateActiveImage],
+  );
+
+  const resetActiveImageEffects = useCallback(() => {
+    updateActiveImage((image) => ({
+      ...image,
+      previewEffects: {
+        brightness: 0,
+        contrast: 0,
+      },
+    }));
+  }, [updateActiveImage]);
 
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -705,6 +736,10 @@ export function ImageUploader({
                 proportion === "rectangle" ? "square" : proportion,
             }));
           }}
+          onUpdateEffect={updateActiveImageEffect}
+          onResetEffects={resetActiveImageEffects}
+          activeImageEffects={activeImage?.previewEffects ?? null}
+          canUpdateEffects={!!activeImage}
           coveragePercent={coveragePercent}
           selectedProportion={
             displayImageProportion === "square"

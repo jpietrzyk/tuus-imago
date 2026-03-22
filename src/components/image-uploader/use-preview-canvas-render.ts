@@ -15,10 +15,12 @@ interface UsePreviewCanvasRenderArgs {
   allowAutoSelectOptimalProportion?: boolean;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
+  previewEffects: { brightness: number; contrast: number } | null;
   latestRenderConfigRef: React.MutableRefObject<{
     selectedImageMetadata: SelectedImageMetadata | null;
     bestProportion: ImageDisplayProportion | null;
     userSelectedProportion: ImageDisplayProportion;
+    previewEffects: { brightness: number; contrast: number } | null;
   }>;
   onMetadataResolved: (args: {
     metadata: SelectedImageMetadata;
@@ -34,6 +36,7 @@ export const usePreviewCanvasRender = ({
   allowAutoSelectOptimalProportion = true,
   bestProportion,
   userSelectedProportion,
+  previewEffects,
   latestRenderConfigRef,
   onMetadataResolved,
 }: UsePreviewCanvasRenderArgs) => {
@@ -59,6 +62,7 @@ export const usePreviewCanvasRender = ({
         selectedImageMetadata,
         bestProportion,
         userSelectedProportion,
+        previewEffects,
       } = latestRenderConfigRef.current;
 
       const {
@@ -85,6 +89,7 @@ export const usePreviewCanvasRender = ({
         canvas,
         image: loadedImage,
         crop,
+        effects: previewEffects,
       });
     };
 
@@ -154,5 +159,6 @@ export const usePreviewCanvasRender = ({
     allowAutoSelectOptimalProportion,
     userSelectedProportion,
     selectedImageMetadata,
+    previewEffects,
   ]);
 };

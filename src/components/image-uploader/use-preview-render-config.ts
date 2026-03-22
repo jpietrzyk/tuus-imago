@@ -6,17 +6,20 @@ interface PreviewRenderConfig {
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
+  previewEffects: { brightness: number; contrast: number } | null;
 }
 
 export const usePreviewRenderConfig = ({
   selectedImageMetadata,
   bestProportion,
   userSelectedProportion,
+  previewEffects,
 }: PreviewRenderConfig) => {
   const latestRenderConfigRef = useRef<PreviewRenderConfig>({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
+    previewEffects,
   });
 
   useEffect(() => {
@@ -24,8 +27,9 @@ export const usePreviewRenderConfig = ({
       selectedImageMetadata,
       bestProportion,
       userSelectedProportion,
+      previewEffects,
     };
-  }, [bestProportion, selectedImageMetadata, userSelectedProportion]);
+  }, [bestProportion, selectedImageMetadata, userSelectedProportion, previewEffects]);
 
   return latestRenderConfigRef;
 };
