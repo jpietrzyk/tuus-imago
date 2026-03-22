@@ -84,6 +84,10 @@ export const drawCroppedImageToCanvas = ({
   const drawX = Math.floor((dstW - drawWidth) / 2);
   const drawY = Math.floor((dstH - drawHeight) / 2);
 
+  // Reset filter to a known state before each draw so stale effects from a
+  // previous render don't persist (e.g. after "Reset Effects" is pressed).
+  context.filter = "none";
+
   // Apply preview effects via canvas filter if present
   if (effects && (effects.brightness !== 0 || effects.contrast !== 0)) {
     // Convert slider values (-100 to 100) to filter values (0 to 2)
