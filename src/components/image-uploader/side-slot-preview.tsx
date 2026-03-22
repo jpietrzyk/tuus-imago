@@ -1,4 +1,5 @@
 import { t } from "@/locales/i18n";
+import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import { resolveSlotFramePreset } from "./slot-frame-presets";
@@ -10,6 +11,10 @@ interface SideSlotPreviewProps {
   previewFrameAspectRatio: number;
   selectedProportion: ImageDisplayProportion;
   isNavigable: boolean;
+  isUploadOverlayVisible?: boolean;
+  uploadProgress?: number;
+  uploadProgressLabel?: string;
+  uploadingSlotIndex?: number | null;
   onSelectSlot: (index: number) => void;
 }
 
@@ -20,6 +25,10 @@ export default function SideSlotPreview({
   previewFrameAspectRatio,
   selectedProportion,
   isNavigable,
+  isUploadOverlayVisible = false,
+  uploadProgress = 0,
+  uploadProgressLabel,
+  uploadingSlotIndex = null,
   onSelectSlot,
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
@@ -103,21 +112,32 @@ export default function SideSlotPreview({
         }}
       >
         {image ? (
-          <img
-            src={image.previewUrl}
-            alt={
-              typeof slotIndex === "number"
-                ? t("uploader.selectImageSlot", {
-                    index: String(slotIndex + 1),
-                  })
-                : ""
-            }
-            className="h-full w-full object-cover object-center"
-            style={{
-              filter: getEffectFilter(),
-            }}
-            draggable={false}
-          />
+          <>
+            <img
+              src={image.previewUrl}
+              alt={
+                typeof slotIndex === "number"
+                  ? t("uploader.selectImageSlot", {
+                      index: String(slotIndex + 1),
+                    })
+                  : ""
+              }
+              className="h-full w-full object-cover object-center"
+              style={{
+                filter: getEffectFilter(),
+              }}
+              draggable={false}
+            />
+            <UploadProgressOverlay
+              isVisible={
+                isUploadOverlayVisible &&
+                typeof slotIndex === "number" &&
+                slotIndex === uploadingSlotIndex
+              }
+              progress={uploadProgress}
+              label={uploadProgressLabel}
+            />
+          </>
         ) : null}
       </div>
     </button>

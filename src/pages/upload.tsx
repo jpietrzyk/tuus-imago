@@ -54,6 +54,12 @@ export function UploadPage({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isBatchUploading, setIsBatchUploading] = useState(false);
+  const [batchUploadProgress, setBatchUploadProgress] = useState(0);
+  const [uploadingSlotIndex, setUploadingSlotIndex] = useState<number | null>(
+    null,
+  );
+  const [uploadingSlotStep, setUploadingSlotStep] = useState(0);
+  const [uploadingSlotsTotal, setUploadingSlotsTotal] = useState(0);
   const [transformations, setTransformations] =
     useState<ImageTransformations | null>(null);
   const [aiAdjustments, setAiAdjustments] = useState<AiAdjustments>(
@@ -266,6 +272,10 @@ export function UploadPage({
     }
 
     setIsBatchUploading(true);
+    setBatchUploadProgress(0);
+    setUploadingSlotIndex(null);
+    setUploadingSlotStep(0);
+    setUploadingSlotsTotal(0);
     setUploadError(null);
 
     try {
@@ -286,6 +296,10 @@ export function UploadPage({
       );
     } finally {
       setIsBatchUploading(false);
+      setBatchUploadProgress(0);
+      setUploadingSlotIndex(null);
+      setUploadingSlotStep(0);
+      setUploadingSlotsTotal(0);
     }
   }, []);
 
@@ -295,6 +309,40 @@ export function UploadPage({
     setPreviewLoadProgress(0);
     setPreviewError(null);
   }, []);
+
+  const handleUploadProgress = useCallback(
+    (progress: {
+      currentSlotIndex: number;
+      slotIndex: number;
+      currentStep: number;
+      totalSlots: number;
+      currentSlotKey: string;
+      slotProgress: number;
+    }) => {
+      const boundedSlotProgress = Math.min(
+        Math.max(progress.slotProgress, 0),
+        1,
+      );
+      const progressPercent = Math.round(
+        ((progress.currentSlotIndex + boundedSlotProgress) /
+          progress.totalSlots) *
+          100,
+      );
+      setBatchUploadProgress(progressPercent);
+      setUploadingSlotIndex(progress.slotIndex);
+      setUploadingSlotStep(progress.currentStep);
+      setUploadingSlotsTotal(progress.totalSlots);
+    },
+    [],
+  );
+
+  const uploadProgressLabel =
+    uploadingSlotStep > 0 && uploadingSlotsTotal > 0
+      ? t("upload.uploadingSlotProgress", {
+          current: uploadingSlotStep,
+          total: uploadingSlotsTotal,
+        })
+      : t("upload.uploading");
 
   const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
     if (useAiPreview) {
@@ -350,6 +398,7 @@ export function UploadPage({
       setIsSuccess(false);
       setUploadedSlots([]);
       setIsBatchUploading(false);
+      setBatchUploadProgress(0);
       setTransformations(null);
       setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
       setUseAiPreview(true);
@@ -637,18 +686,25 @@ export function UploadPage({
 
             {/* Upload Widget */}
             {!uploadedImage && (
-              <div className="flex h-full min-h-0 flex-col items-center gap-4">
-                <ImageUploader
-                  ref={uploaderRef}
-                  onUploadSuccess={handleUploadSuccess}
-                  onUploadError={handleUploadError}
-                  onSelectionStateChange={setHasUploaderSelection}
-                  showDebugData={imageDebugDataEnabled}
-                  externalResetTrigger={uploaderResetVersion}
-                  skipCropStep
-                  defaultShowIcons
-                  className="w-full max-w-sm h-full py-6 text-lg font-semibold"
-                />
+              <div className="relative flex h-full min-h-0 w-full flex-col items-center gap-4">
+                <div className="relative h-full min-h-0 w-full">
+                  <ImageUploader
+                    ref={uploaderRef}
+                    onUploadSuccess={handleUploadSuccess}
+                    onUploadError={handleUploadError}
+                    onSelectionStateChange={setHasUploaderSelection}
+                    onUploadProgress={handleUploadProgress}
+                    showDebugData={imageDebugDataEnabled}
+                    externalResetTrigger={uploaderResetVersion}
+                    skipCropStep
+                    defaultShowIcons
+                    isUploadOverlayVisible={isBatchUploading}
+                    uploadProgress={batchUploadProgress}
+                    uploadProgressLabel={uploadProgressLabel}
+                    uploadingSlotIndex={uploadingSlotIndex}
+                    className="mx-auto h-full w-full max-w-sm py-6 text-lg font-semibold"
+                  />
+                </div>
               </div>
             )}
 

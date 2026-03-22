@@ -177,6 +177,8 @@
     "uploadFailed": "Upload failed",
     "batchUploadSuccess": "Selected slots uploaded successfully.",
     "batchUploadFailed": "No selected slots were uploaded.",
+    "uploading": "Uploading selected slots...",
+    "uploadingSlotProgress": "Uploading slot {current} of {total}...",
     "partialUploadSummary": "Uploaded {successCount} of {totalCount} selected slots.",
     "dropFile": "Drop your file here",
     "clickToUpload": "Click to upload or drag and drop your image here",

@@ -13,6 +13,10 @@ interface UploaderPreviewSliderProps {
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   previewFrameAspectRatio: number;
+  isUploadOverlayVisible?: boolean;
+  uploadProgress?: number;
+  uploadProgressLabel?: string;
+  uploadingSlotIndex?: number | null;
   canMovePrevious: boolean;
   canMoveNext: boolean;
   leftSlotIndex: number | null;
@@ -36,6 +40,10 @@ export default function UploaderPreviewSlider({
   bestProportion,
   userSelectedProportion,
   previewFrameAspectRatio,
+  isUploadOverlayVisible = false,
+  uploadProgress = 0,
+  uploadProgressLabel,
+  uploadingSlotIndex = null,
   canMovePrevious,
   canMoveNext,
   leftSlotIndex,
@@ -59,6 +67,10 @@ export default function UploaderPreviewSlider({
         previewFrameAspectRatio={previewFrameAspectRatio}
         selectedProportion={userSelectedProportion}
         isNavigable={canMovePrevious}
+        isUploadOverlayVisible={isUploadOverlayVisible}
+        uploadProgress={uploadProgress}
+        uploadProgressLabel={uploadProgressLabel}
+        uploadingSlotIndex={uploadingSlotIndex}
         onSelectSlot={onSelectSlot}
       />
 
@@ -69,6 +81,10 @@ export default function UploaderPreviewSlider({
         bestProportion={bestProportion}
         userSelectedProportion={userSelectedProportion}
         previewFrameAspectRatio={previewFrameAspectRatio}
+        isUploadOverlayVisible={isUploadOverlayVisible}
+        uploadProgress={uploadProgress}
+        uploadProgressLabel={uploadProgressLabel}
+        uploadingSlotIndex={uploadingSlotIndex}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMetadataResolved={onMetadataResolved}
@@ -81,6 +97,10 @@ export default function UploaderPreviewSlider({
         previewFrameAspectRatio={previewFrameAspectRatio}
         selectedProportion={userSelectedProportion}
         isNavigable={canMoveNext}
+        isUploadOverlayVisible={isUploadOverlayVisible}
+        uploadProgress={uploadProgress}
+        uploadProgressLabel={uploadProgressLabel}
+        uploadingSlotIndex={uploadingSlotIndex}
         onSelectSlot={onSelectSlot}
       />
     </div>

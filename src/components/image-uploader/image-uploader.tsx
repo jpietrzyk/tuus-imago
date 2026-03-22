@@ -59,6 +59,18 @@ interface ImageUploaderProps {
   onUploadError?: (error: string) => void;
   onImageMetadataChange?: (metadata: SelectedImageMetadata | null) => void;
   onSelectionStateChange?: (hasSelection: boolean) => void;
+  onUploadProgress?: (progress: {
+    currentSlotIndex: number;
+    slotIndex: number;
+    currentStep: number;
+    totalSlots: number;
+    currentSlotKey: UploadSlotKey;
+    slotProgress: number;
+  }) => void;
+  isUploadOverlayVisible?: boolean;
+  uploadProgress?: number;
+  uploadProgressLabel?: string;
+  uploadingSlotIndex?: number | null;
   className?: string;
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
@@ -132,6 +144,11 @@ export const ImageUploader = forwardRef<
     onUploadError,
     onImageMetadataChange,
     onSelectionStateChange,
+    onUploadProgress,
+    isUploadOverlayVisible = false,
+    uploadProgress = 0,
+    uploadProgressLabel,
+    uploadingSlotIndex = null,
     className,
     defaultShowIcons = false,
     externalResetTrigger,
@@ -588,15 +605,36 @@ export const ImageUploader = forwardRef<
         globalThis.crypto?.randomUUID?.() ?? `batch-${Date.now().toString(36)}`;
       const results: UploadedSlotResult[] = [];
 
-      for (const { image, slotIndex } of filledSlots) {
+      for (let i = 0; i < filledSlots.length; i++) {
+        const { image, slotIndex } = filledSlots[i];
         const slotKey = SLOT_KEYS[slotIndex] ?? "center";
         const transformations = getUploadTransformations(image);
+
+        // Emit progress
+        onUploadProgress?.({
+          currentSlotIndex: i,
+          slotIndex,
+          currentStep: i + 1,
+          totalSlots: filledSlots.length,
+          currentSlotKey: slotKey,
+          slotProgress: 0,
+        });
 
         try {
           const uploaded = await uploadImageToCloudinary({
             file: image.file,
             transformations,
             context: `slot=${slotKey}|batch_id=${batchId}`,
+            onUploadProgress: (slotProgressFraction) => {
+              onUploadProgress?.({
+                currentSlotIndex: i,
+                slotIndex,
+                currentStep: i + 1,
+                totalSlots: filledSlots.length,
+                currentSlotKey: slotKey,
+                slotProgress: slotProgressFraction,
+              });
+            },
           });
 
           results.push({
@@ -633,7 +671,7 @@ export const ImageUploader = forwardRef<
         failureCount,
         totalCount: results.length,
       };
-    }, [onUploadError]);
+    }, [onUploadError, onUploadProgress]);
 
   useImperativeHandle(
     ref,
@@ -846,6 +884,10 @@ export const ImageUploader = forwardRef<
           bestProportion={bestDisplayImageProportion}
           userSelectedProportion={displayImageProportion}
           previewFrameAspectRatio={previewFrameAspectRatio}
+          isUploadOverlayVisible={isUploadOverlayVisible}
+          uploadProgress={uploadProgress}
+          uploadProgressLabel={uploadProgressLabel}
+          uploadingSlotIndex={uploadingSlotIndex}
           canMovePrevious={canMovePrevious}
           canMoveNext={canMoveNext}
           leftSlotIndex={leftSlotIndex}

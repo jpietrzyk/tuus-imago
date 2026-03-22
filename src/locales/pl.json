@@ -177,6 +177,8 @@
     "uploadFailed": "Przesyłanie nie powiodło się",
     "batchUploadSuccess": "Wybrane sloty zostały przesłane pomyślnie.",
     "batchUploadFailed": "Nie udało się przesłać żadnego wybranego slotu.",
+    "uploading": "Przesyłanie wybranych slotów...",
+    "uploadingSlotProgress": "Przesyłanie slotu {current} z {total}...",
     "partialUploadSummary": "Przesłano {successCount} z {totalCount} wybranych slotów.",
     "dropFile": "Upuść swój plik tutaj",
     "clickToUpload": "Kliknij, aby przesłać lub przeciągnij i upuść swoje zdjęcie tutaj",

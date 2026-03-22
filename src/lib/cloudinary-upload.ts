@@ -32,6 +32,7 @@ export interface CloudinaryDirectUploadInput {
   transformations: ImageTransformations;
   context?: string;
   signal?: AbortSignal;
+  onUploadProgress?: (fraction: number) => void;
 }
 
 export interface CloudinaryDirectUploadResult {
@@ -76,6 +77,7 @@ export async function uploadImageToCloudinary({
   transformations,
   context,
   signal,
+  onUploadProgress,
 }: CloudinaryDirectUploadInput): Promise<CloudinaryDirectUploadResult> {
   const configError = getCloudinaryUploadConfigError();
 
@@ -109,20 +111,84 @@ export async function uploadImageToCloudinary({
     formData.append("context", context);
   }
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-      signal,
-    },
-  );
-
-  const data = await parseJsonResponse<
+  const data = await new Promise<
     CloudinaryUploadedAsset | { error?: { message?: string } }
-  >(response);
+  >((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
 
-  if (!response.ok || !("secure_url" in data)) {
+    xhr.open(
+      "POST",
+      `https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`,
+    );
+    xhr.responseType = "json";
+
+    xhr.upload.onprogress = (event: ProgressEvent<EventTarget>) => {
+      if (!onUploadProgress || !event.lengthComputable) {
+        return;
+      }
+
+      const fraction = Math.min(
+        Math.max(event.loaded / event.total, 0),
+        1,
+      );
+      onUploadProgress(fraction);
+    };
+
+    xhr.onerror = () => {
+      reject(new Error("Cloudinary upload failed."));
+    };
+
+    xhr.onload = () => {
+      const responseData = xhr.response as
+        | CloudinaryUploadedAsset
+        | { error?: { message?: string } }
+        | null;
+
+      if (!responseData) {
+        reject(new Error("Cloudinary upload failed."));
+        return;
+      }
+
+      if (xhr.status < 200 || xhr.status >= 300) {
+        reject(
+          new Error(
+            "error" in responseData && responseData.error?.message
+              ? responseData.error.message
+              : "Cloudinary upload failed.",
+          ),
+        );
+        return;
+      }
+
+      onUploadProgress?.(1);
+      resolve(responseData);
+    };
+
+    if (signal) {
+      const abortHandler = () => {
+        xhr.abort();
+        reject(new DOMException("Upload aborted.", "AbortError"));
+      };
+
+      if (signal.aborted) {
+        abortHandler();
+        return;
+      }
+
+      signal.addEventListener("abort", abortHandler, { once: true });
+      xhr.addEventListener(
+        "loadend",
+        () => {
+          signal.removeEventListener("abort", abortHandler);
+        },
+        { once: true },
+      );
+    }
+
+    xhr.send(formData);
+  });
+
+  if (!("secure_url" in data)) {
     throw new Error(
       "error" in data && data.error?.message
         ? data.error.message
