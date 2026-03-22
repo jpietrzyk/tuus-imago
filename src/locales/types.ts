@@ -176,6 +176,7 @@ export interface Translations {
     partialUploadSummary: string;
     dropFile: string;
     uploading: string;
+    uploading: string;
     uploadingSlotProgress: string;
     clickToUpload: string;
     fileSupport: string;
