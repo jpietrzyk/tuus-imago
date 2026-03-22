@@ -1014,16 +1014,6 @@ describe("ImageUploader", () => {
           screen.getByTestId("uploader-slider-side-right").querySelector("img"),
         ).toBeTruthy();
       });
-
-      const leftImage = screen
-        .getByTestId("uploader-slider-side-left")
-        .querySelector("img") as HTMLImageElement;
-      const rightImage = screen
-        .getByTestId("uploader-slider-side-right")
-        .querySelector("img") as HTMLImageElement;
-
-      expect(leftImage).toBeTruthy();
-      expect(rightImage).toBeTruthy();
     }
   });
 
