@@ -189,7 +189,7 @@ describe("CheckoutPage", () => {
           rotation: 0,
           flipHorizontal: false,
           flipVertical: false,
-          grayscale: false,
+          grayscale: 0,
           blur: 0,
         },
         transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
@@ -205,7 +205,7 @@ describe("CheckoutPage", () => {
           rotation: 0,
           flipHorizontal: false,
           flipVertical: false,
-          grayscale: false,
+          grayscale: 0,
           blur: 0,
         },
         transformedUrl:
