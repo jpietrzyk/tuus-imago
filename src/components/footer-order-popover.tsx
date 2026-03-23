@@ -138,7 +138,7 @@ export function FooterOrderPopover({
 
             <div className="flex items-center justify-between border-t border-border/70 pt-2 text-xs font-semibold">
               <span>{t("checkout.orderSelectionTotal")}</span>
-              <span>{`${totalPrice} zł`}</span>
+              <span>{new Intl.NumberFormat(undefined, { style: "currency", currency: "PLN" }).format(totalPrice)}</span>
             </div>
           </div>
         )}
