@@ -36,7 +36,7 @@ export function Footer({
   checkoutDisabled = false,
   onCheckout,
   orderRows = [],
-  checkedOrderSlotKeys = new Set(),
+  checkedOrderSlotKeys = new Set<UploadSlotKey>(),
   onToggleOrderSlot,
   showReset = false,
   onReset,
