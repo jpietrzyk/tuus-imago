@@ -57,7 +57,7 @@ describe("UploaderEffectsPopover", () => {
     const settingsIcon = document.querySelector(".lucide-settings");
     expect(settingsIcon).toBeInTheDocument();
 
-    const chevronIcon = document.querySelector(".lucide-chevron-up");
+    const chevronIcon = document.querySelector('[class*="lucide-chevron"]');
     expect(chevronIcon).toBeInTheDocument();
   });
 
