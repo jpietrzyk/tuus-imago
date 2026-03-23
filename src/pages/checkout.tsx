@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -113,6 +123,7 @@ export function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [genericError, setGenericError] = useState<string | null>(null);
+  const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -182,12 +193,40 @@ export function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link
-          to="/"
+        <button
+          type="button"
+          onClick={() => setIsBackDialogOpen(true)}
           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
         >
-          {t("common.backToHome")}
-        </Link>
+          {t("checkout.backToUpload")}
+        </button>
+
+        <AlertDialog open={isBackDialogOpen} onOpenChange={setIsBackDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("checkout.backToUploadDialogTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("checkout.backToUploadDialogDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t("checkout.backToUploadDialogCancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() =>
+                  navigate("/upload", {
+                    state: { restoredSlots: uploadedSlots },
+                  })
+                }
+              >
+                {t("checkout.backToUploadDialogConfirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">

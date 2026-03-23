@@ -22,6 +22,7 @@ function hasExactTextContent(expectedText: string) {
 describe("CheckoutPage", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
+    sessionStorage.clear();
   });
 
   const renderWithRouter = () => {
@@ -75,14 +76,13 @@ describe("CheckoutPage", () => {
     expect(screen.getByText(tr("checkout.title"))).toBeDefined();
   });
 
-  it("renders back to home link", () => {
+  it("renders back to upload link", () => {
     renderWithRouter();
-    // Check that the back link exists in the document
-    const links = screen.getAllByRole("link");
-    const backToHomeLink = links.find((link) =>
-      link.textContent?.includes(tr("common.backToHome")),
-    );
-    expect(backToHomeLink).toBeDefined();
+    const backLink = screen.getByRole("link", {
+      name: tr("checkout.backToUpload"),
+    });
+    expect(backLink).toBeDefined();
+    expect(backLink).toHaveAttribute("href", "/upload");
   });
 
   it("renders personal information section", () => {
@@ -422,5 +422,77 @@ describe("CheckoutPage", () => {
         ),
       ),
     ).toBeDefined();
+  });
+
+  it("persists form data to sessionStorage on input change", async () => {
+    renderWithRouter();
+    await userEvent.type(
+      screen.getByLabelText(tr("checkout.fullName")),
+      "Jane",
+    );
+    const saved = sessionStorage.getItem("checkout-form-draft");
+    expect(saved).not.toBeNull();
+    const parsed = JSON.parse(saved!) as { name: string };
+    expect(parsed.name).toBe("Jane");
+  });
+
+  it("restores form data from sessionStorage on mount", async () => {
+    sessionStorage.setItem(
+      "checkout-form-draft",
+      JSON.stringify({
+        name: "Restored",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        postalCode: "",
+        country: "",
+      }),
+    );
+    renderWithRouter();
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Restored");
+    });
+  });
+
+  it("clears sessionStorage draft after successful order submission", async () => {
+    // Pre-seed sessionStorage so the form mounts valid (avoids the combobox interaction)
+    sessionStorage.setItem(
+      "checkout-form-draft",
+      JSON.stringify({
+        name: "Jane Doe",
+        email: "jane@example.com",
+        phone: "",
+        address: "1 Main St",
+        city: "Warsaw",
+        postalCode: "00-001",
+        country: "Poland",
+      }),
+    );
+    renderWithRouter();
+    // Wait until the restore useEffect fires and its re-render reflects in the DOM
+    await waitFor(
+      () => {
+        expect(
+          (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+            .value,
+        ).toBe("Jane Doe");
+      },
+      { timeout: 3000 },
+    );
+    // Submit the form directly (formData is now fully restored, form is valid)
+    act(() => {
+      fireEvent.submit(document.querySelector("form") as HTMLFormElement);
+    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+    expect(sessionStorage.getItem("checkout-form-draft")).toBeNull();
   });
 });

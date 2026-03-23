@@ -295,6 +295,11 @@
   },
   "checkout": {
     "title": "Checkout",
+    "backToUpload": "← Back to Upload",
+    "backToUploadDialogTitle": "Leave checkout?",
+    "backToUploadDialogDescription": "Any information you entered will be lost.",
+    "backToUploadDialogConfirm": "Go back",
+    "backToUploadDialogCancel": "Stay",
     "subtitle": "Complete your order details",
     "orderSuccessful": "Order Successful!",
     "orderSuccessMessage": "Your order has been placed successfully. You will receive a confirmation e-mail shortly.",

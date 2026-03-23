@@ -295,6 +295,11 @@
   },
   "checkout": {
     "title": "Zamówienie",
+    "backToUpload": "← Powrót do przesyłania",
+    "backToUploadDialogTitle": "Opuścić zamówienie?",
+    "backToUploadDialogDescription": "Wszelkie wprowadzone informacje zostaną utracone.",
+    "backToUploadDialogConfirm": "Wróć",
+    "backToUploadDialogCancel": "Zostań",
     "subtitle": "Uzupełnij szczegóły zamówienia",
     "orderSuccessful": "Zamówienie zakończone pomyślnie!",
     "orderSuccessMessage": "Twoje zamówienie zostało złożone pomyślnie. Wkrótce otrzymasz potwierdzenie e-mail.",

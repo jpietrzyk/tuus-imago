@@ -338,6 +338,11 @@ export interface Translations {
     errorGeneric: string;
     orderNumber: string;
     continueShoppingButton: string;
+    backToUpload: string;
+    backToUploadDialogTitle: string;
+    backToUploadDialogDescription: string;
+    backToUploadDialogConfirm: string;
+    backToUploadDialogCancel: string;
   };
 }
 

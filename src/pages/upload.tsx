@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import {
   ImageUploader,
@@ -35,7 +36,9 @@ interface UploadPageProps {
   onResetActionChange?: (action: (() => void) | null) => void;
   onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
   onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
-  onCheckoutWithUpload?: (action: (() => Promise<UploadedSlotResult[]>) | null) => void;
+  onCheckoutWithUpload?: (
+    action: (() => Promise<UploadedSlotResult[]>) | null,
+  ) => void;
   imageDebugDataEnabled?: boolean;
 }
 
@@ -50,9 +53,14 @@ export function UploadPage({
   onCheckoutWithUpload,
   imageDebugDataEnabled = true,
 }: UploadPageProps = {}) {
+  const location = useLocation();
+  const restoredSlots =
+    (location.state as { restoredSlots?: UploadedSlotResult[] } | null)
+      ?.restoredSlots ?? [];
   const uploaderRef = useRef<ImageUploaderHandle | null>(null);
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
-  const [uploadedSlots, setUploadedSlots] = useState<UploadedSlotResult[]>([]);
+  const [uploadedSlots, setUploadedSlots] =
+    useState<UploadedSlotResult[]>(restoredSlots);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -715,6 +723,9 @@ export function UploadPage({
                     externalResetTrigger={uploaderResetVersion}
                     skipCropStep
                     defaultShowIcons
+                    initialSlots={
+                      restoredSlots.length > 0 ? restoredSlots : undefined
+                    }
                     isUploadOverlayVisible={isBatchUploading}
                     uploadProgress={batchUploadProgress}
                     uploadProgressLabel={uploadProgressLabel}
@@ -725,7 +736,7 @@ export function UploadPage({
               </div>
             )}
 
-            {uploadedSlots.length > 0 && (
+            {uploadedSlots.length > 0 && restoredSlots.length === 0 && (
               <div className="space-y-3 rounded-xl border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur-sm">
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-900">
