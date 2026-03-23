@@ -190,7 +190,7 @@ function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
 
   return getTransformedPreviewUrl(
     reusableUploadedAsset.secureUrl,
-    getUploadTransformations(image),
+    null,
     undefined,
     getAiAdjustments(image),
   );
@@ -220,8 +220,9 @@ export const ImageUploader = forwardRef<
     Array<SelectedImageItem | null>
   >(createEmptySelectionSlots);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
-  const [activeBackgroundUploadIndex, setActiveBackgroundUploadIndex] =
-    useState<number | null>(null);
+  const [busyBackgroundUploadSlots, setBusyBackgroundUploadSlots] = useState<
+    Set<number>
+  >(() => new Set());
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -489,7 +490,15 @@ export const ImageUploader = forwardRef<
     }
 
     const uploadPromise = (async () => {
-      setActiveBackgroundUploadIndex(slotIndex);
+      setBusyBackgroundUploadSlots((prevBusySlots) => {
+        if (prevBusySlots.has(slotIndex)) {
+          return prevBusySlots;
+        }
+
+        const nextBusySlots = new Set(prevBusySlots);
+        nextBusySlots.add(slotIndex);
+        return nextBusySlots;
+      });
 
       try {
         const slotKey = SLOT_KEYS[slotIndex] ?? "center";
@@ -521,9 +530,15 @@ export const ImageUploader = forwardRef<
         });
       } finally {
         backgroundUploadPromisesRef.current.delete(slotIndex);
-        setActiveBackgroundUploadIndex((currentIndex) =>
-          currentIndex === slotIndex ? null : currentIndex,
-        );
+        setBusyBackgroundUploadSlots((prevBusySlots) => {
+          if (!prevBusySlots.has(slotIndex)) {
+            return prevBusySlots;
+          }
+
+          const nextBusySlots = new Set(prevBusySlots);
+          nextBusySlots.delete(slotIndex);
+          return nextBusySlots;
+        });
       }
     })();
 
@@ -1193,11 +1208,11 @@ export const ImageUploader = forwardRef<
           canUpdateEffects={!!activeImage}
           isRemoveBackgroundBusy={
             typeof activeImageIndex === "number" &&
-            activeImageIndex === activeBackgroundUploadIndex
+            busyBackgroundUploadSlots.has(activeImageIndex)
           }
           isEnhanceBusy={
             typeof activeImageIndex === "number" &&
-            activeImageIndex === activeBackgroundUploadIndex
+            busyBackgroundUploadSlots.has(activeImageIndex)
           }
           coveragePercent={coveragePercent}
           selectedProportion={

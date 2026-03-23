@@ -50,6 +50,10 @@ export default function PaintingPreviewSlot({
   onMetadataResolved,
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const effectivePreviewUrl = previewUrl ?? selectedImage?.previewUrl ?? null;
+  const effectivePreviewEffects = useCloudPreview
+    ? null
+    : (selectedImage?.previewEffects ?? null);
   const [isFocusPulseActive, setIsFocusPulseActive] = useState(false);
   const frameAspectRatioClassName =
     userSelectedProportion === "vertical"
@@ -61,7 +65,7 @@ export default function PaintingPreviewSlot({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
-    previewEffects: selectedImage?.previewEffects ?? null,
+    previewEffects: effectivePreviewEffects,
   });
   const slotFramePreset = resolveSlotFramePreset(userSelectedProportion);
 
@@ -90,14 +94,14 @@ export default function PaintingPreviewSlot({
   ]);
 
   usePreviewCanvasRender({
-    previewUrl: previewUrl ?? selectedImage?.previewUrl ?? null,
+    previewUrl: effectivePreviewUrl,
     canvasRef: previewCanvasRef,
     selectedImageMetadata,
     allowAutoSelectOptimalProportion:
       selectedImage?.autoSelectOptimalPending ?? true,
     bestProportion,
     userSelectedProportion,
-    previewEffects: selectedImage?.previewEffects ?? null,
+    previewEffects: effectivePreviewEffects,
     latestRenderConfigRef,
     onMetadataResolved,
   });

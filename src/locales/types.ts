@@ -16,6 +16,8 @@ export interface Translations {
     paymentsP24: string;
     loading: string;
     processing: string;
+    on: string;
+    off: string;
   };
   legalMenu: {
     title: string;
@@ -240,6 +242,10 @@ export interface Translations {
     previewEffectsTitle: string;
     previewEffectsDescription: string;
     previewEffectsButton: string;
+    removeBackgroundDescription: string;
+    enhanceDescription: string;
+    canvasEffectsGroupTitle: string;
+    aiEffectsGroupTitle: string;
     brightness: string;
     contrast: string;
     effectsReset: string;

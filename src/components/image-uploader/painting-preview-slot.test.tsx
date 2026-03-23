@@ -113,6 +113,37 @@ describe("PaintingPreviewSlot", () => {
     });
   });
 
+  it("skips local canvas effects when cloud preview is enabled", async () => {
+    const props = {
+      ...createProps(),
+      selectedImage: {
+        ...createImageItem("selected"),
+        previewEffects: { brightness: 35, contrast: -20 },
+      },
+      useCloudPreview: true,
+      previewUrl:
+        "https://res.cloudinary.com/demo/image/upload/e_brightness:35,e_contrast:-20/sample.jpg",
+    };
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mockReturnValue(
+      true,
+    );
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({ effects: null }),
+      );
+    });
+  });
+
   it("does not emit metadata if effect is cleaned up before image load resolves", async () => {
     const props = createProps();
     const image = document.createElement("img");
