@@ -1,10 +1,45 @@
 /// <reference types="@testing-library/jest-dom" />
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "./App";
 import { tr } from "@/test/i18n-test";
+
+vi.mock("@/lib/cloudinary-upload", () => ({
+  uploadImageToCloudinary: vi.fn(
+    async (input: {
+      context?: string;
+      transformations: {
+        rotation: number;
+        flipHorizontal: boolean;
+        flipVertical: boolean;
+        brightness: number;
+        contrast: number;
+        grayscale: number;
+        blur: number;
+      };
+    }) => {
+      const slotMatch = input.context?.match(/slot=(left|center|right)/);
+      const slotKey = slotMatch?.[1] ?? "center";
+
+      return {
+        asset: {
+          public_id: `upload-${slotKey}`,
+          secure_url: `https://res.cloudinary.com/test/image/upload/v1/${slotKey}.jpg`,
+          width: 1200,
+          height: 800,
+          bytes: 1234,
+          format: "jpg",
+          url: `https://res.cloudinary.com/test/image/upload/v1/${slotKey}.jpg`,
+        },
+        transformedUrl: `https://res.cloudinary.com/test/image/upload/v1/${slotKey}.jpg`,
+        transformations: input.transformations,
+      };
+    },
+  ),
+}));
 
 describe("App Component Routing", () => {
   it.each([
@@ -323,6 +358,83 @@ describe("App Component Routing", () => {
         ).toBeInTheDocument();
       });
     }
+  });
+
+  it("should send only checked uploaded slots to checkout", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/upload"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (!input) {
+      return;
+    }
+
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["left"], "left.jpg", { type: "image/jpeg" })],
+      },
+    });
+
+    await screen.findByRole("img", { name: "Preview" });
+
+    await user.click(screen.getByTestId("uploader-slot-dot-2"));
+
+    const editorInput = document.querySelector(
+      'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+    ) as HTMLInputElement | null;
+
+    expect(editorInput).toBeDefined();
+
+    if (editorInput) {
+      fireEvent.change(editorInput, {
+        target: {
+          files: [new File(["right"], "right.jpg", { type: "image/jpeg" })],
+        },
+      });
+    }
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+      ).toBeTruthy();
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: new RegExp(tr("checkout.orderSelectionButton")),
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: tr("checkout.orderSelectionCheckboxAria", {
+          slot: tr("upload.slotRight"),
+        }),
+      }),
+    );
+
+    await user.keyboard("{Escape}");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: tr("checkout.openCheckout"),
+      }),
+    );
+
+    await screen.findByRole("heading", { name: tr("checkout.title") });
+
+    expect(screen.getByText(tr("upload.slotCenter"))).toBeInTheDocument();
+    expect(screen.queryByText(tr("upload.slotRight"))).not.toBeInTheDocument();
   });
 
   it("should render home navigation link on about page", () => {

@@ -12,11 +12,20 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { t } from "@/locales/i18n";
+import { type UploadSlotKey } from "@/components/image-uploader";
+import {
+  FooterOrderPopover,
+  type FooterOrderRow,
+} from "@/components/footer-order-popover";
 
 interface FooterProps {
   onOpenLegalMenu: () => void;
   showCheckout?: boolean;
+  checkoutDisabled?: boolean;
   onCheckout?: () => void;
+  orderRows?: FooterOrderRow[];
+  checkedOrderSlotKeys?: Set<UploadSlotKey>;
+  onToggleOrderSlot?: (slotKey: UploadSlotKey) => void;
   showReset?: boolean;
   onReset?: () => void;
 }
@@ -24,7 +33,11 @@ interface FooterProps {
 export function Footer({
   onOpenLegalMenu,
   showCheckout = false,
+  checkoutDisabled = false,
   onCheckout,
+  orderRows = [],
+  checkedOrderSlotKeys = new Set(),
+  onToggleOrderSlot,
   showReset = false,
   onReset,
 }: FooterProps) {
@@ -80,12 +93,21 @@ export function Footer({
             ) : null}
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex items-center justify-center gap-2">
+            {showCheckout && onCheckout && onToggleOrderSlot ? (
+              <FooterOrderPopover
+                rows={orderRows}
+                checkedSlotKeys={checkedOrderSlotKeys}
+                onToggleSlot={onToggleOrderSlot}
+              />
+            ) : null}
+
             {showCheckout && onCheckout ? (
               <Button
                 size="sm"
                 className="h-9 gap-2 rounded-full px-4 text-xs font-semibold tracking-[0.01em] shadow-sm sm:text-sm"
                 onClick={onCheckout}
+                disabled={checkoutDisabled}
                 aria-label={t("checkout.openCheckout")}
               >
                 <ShoppingBag className="h-4 w-4" aria-hidden="true" />

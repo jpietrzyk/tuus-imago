@@ -261,7 +261,7 @@ describe("UploadPage preview tabs", () => {
   });
 
   it("renders uploaded slot links after footer-triggered batch upload action", async () => {
-    let uploadAction: (() => Promise<void>) | null = null;
+    let uploadAction: (() => Promise<unknown>) | null = null;
 
     render(
       <MemoryRouter>

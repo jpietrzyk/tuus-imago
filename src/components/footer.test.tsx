@@ -136,6 +136,98 @@ describe("Footer Component", () => {
     expect(onCheckout).toHaveBeenCalledTimes(1);
   });
 
+  it("should render order selection popover trigger when checkout is visible", () => {
+    render(
+      <MemoryRouter>
+        <Footer
+          onOpenLegalMenu={vi.fn()}
+          showCheckout
+          onCheckout={vi.fn()}
+          orderRows={[
+            {
+              slotKey: "left",
+              slotIndex: 0,
+              proportion: "3:2",
+              isUploaded: true,
+            },
+          ]}
+          checkedOrderSlotKeys={new Set(["left"])}
+          onToggleOrderSlot={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: new RegExp(tr("checkout.orderSelectionButton")),
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("1/1")).toBeInTheDocument();
+  });
+
+  it("should allow toggling slot selection from order popover", async () => {
+    const user = userEvent.setup();
+    const onToggleOrderSlot = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer
+          onOpenLegalMenu={vi.fn()}
+          showCheckout
+          onCheckout={vi.fn()}
+          orderRows={[
+            {
+              slotKey: "left",
+              slotIndex: 0,
+              proportion: "3:2",
+              isUploaded: true,
+            },
+          ]}
+          checkedOrderSlotKeys={new Set(["left"])}
+          onToggleOrderSlot={onToggleOrderSlot}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: new RegExp(tr("checkout.orderSelectionButton")),
+      }),
+    );
+
+    expect(
+      screen.getByText(tr("checkout.orderSelectionTotal")),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("200 zł").length).toBeGreaterThanOrEqual(1);
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: tr("checkout.orderSelectionCheckboxAria", {
+          slot: tr("upload.slotLeft"),
+        }),
+      }),
+    );
+
+    expect(onToggleOrderSlot).toHaveBeenCalledWith("left");
+  });
+
+  it("should disable checkout CTA when disabled flag is set", () => {
+    render(
+      <MemoryRouter>
+        <Footer
+          onOpenLegalMenu={vi.fn()}
+          showCheckout
+          checkoutDisabled
+          onCheckout={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: tr("checkout.openCheckout") }),
+    ).toBeDisabled();
+  });
+
   it("should not render reset CTA by default", () => {
     render(
       <MemoryRouter>

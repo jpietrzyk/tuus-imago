@@ -314,6 +314,16 @@ export interface Translations {
     canvasPrint: string;
     total: string;
     openCheckout: string;
+    orderSelectionButton: string;
+    orderSelectionTitle: string;
+    orderSelectionHint: string;
+    orderSelectionEmpty: string;
+    orderSelectionCheckboxAria: string;
+    orderSelectionProportion: string;
+    orderSelectionPrice: string;
+    orderSelectionTotal: string;
+    orderSelectionUploaded: string;
+    orderSelectionPendingUpload: string;
     placeOrder: string;
     requiredFields: string;
     errorName: string;

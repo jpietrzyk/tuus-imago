@@ -3,7 +3,9 @@ export type {
   BatchUploadSummary,
   ImageUploaderHandle,
   ImageTransformations,
+  OrderableSlotSummary,
   SelectedImageMetadata,
+  UploadSlotKey,
   UploadedSlotResult,
 } from "./image-uploader";
 

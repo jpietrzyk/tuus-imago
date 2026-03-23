@@ -3,6 +3,7 @@ import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import {
   ImageUploader,
   type ImageUploaderHandle,
+  type OrderableSlotSummary,
   type UploadedSlotResult,
 } from "@/components/image-uploader";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,10 @@ interface UploadPageProps {
   onResetAvailabilityChange?: (available: boolean) => void;
   onResetActionChange?: (action: (() => void) | null) => void;
   onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
-  onCheckoutWithUpload?: (action: (() => Promise<void>) | null) => void;
+  onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
+  onCheckoutWithUpload?:
+    | ((action: (() => Promise<UploadedSlotResult[]>) | null) => void)
+    | undefined;
   imageDebugDataEnabled?: boolean;
 }
 
@@ -44,6 +48,7 @@ export function UploadPage({
   onResetAvailabilityChange,
   onResetActionChange,
   onSuccessfulSlotsChange,
+  onOrderableSlotsChange,
   onCheckoutWithUpload,
   imageDebugDataEnabled = true,
 }: UploadPageProps = {}) {
@@ -265,7 +270,7 @@ export function UploadPage({
 
   const handleBatchUpload = useCallback(async () => {
     if (!uploaderRef.current) {
-      return;
+      return [];
     }
 
     setIsBatchUploading(true);
@@ -279,6 +284,11 @@ export function UploadPage({
       const summary = await uploaderRef.current.uploadFilledSlots();
       setUploadedSlots(summary.results);
 
+      const successfulResults = summary.results.filter(
+        (slot): slot is UploadedSlotResult & { transformedUrl: string } =>
+          !slot.error && typeof slot.transformedUrl === "string",
+      );
+
       if (summary.successCount > 0) {
         setIsSuccess(true);
         setTimeout(() => setIsSuccess(false), 3000);
@@ -287,10 +297,13 @@ export function UploadPage({
       if (summary.successCount === 0 && summary.failureCount > 0) {
         setUploadError(t("upload.batchUploadFailed"));
       }
+
+      return successfulResults;
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : t("upload.uploadFailed"),
       );
+      return [];
     } finally {
       setIsBatchUploading(false);
       setBatchUploadProgress(0);
@@ -364,6 +377,12 @@ export function UploadPage({
       onSuccessfulSlotsChange?.([]);
     };
   }, [onSuccessfulSlotsChange]);
+
+  useEffect(() => {
+    return () => {
+      onOrderableSlotsChange?.([]);
+    };
+  }, [onOrderableSlotsChange]);
 
   useEffect(() => {
     onCheckoutWithUpload?.(isUploadAvailable ? handleBatchUpload : null);
@@ -692,6 +711,7 @@ export function UploadPage({
                     onUploadSuccess={handleUploadSuccess}
                     onUploadError={handleUploadError}
                     onSelectionStateChange={setHasUploaderSelection}
+                    onOrderableSlotsChange={onOrderableSlotsChange}
                     onUploadProgress={handleUploadProgress}
                     showDebugData={imageDebugDataEnabled}
                     externalResetTrigger={uploaderResetVersion}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import bgProduction from "./assets/2.png";
 import { Footer } from "@/components/footer";
@@ -10,7 +10,11 @@ import {
 import { HomeUploadEntryPage } from "./pages/home-upload-entry";
 import { LandingPage } from "./pages/landing";
 import { UploadPage } from "./pages/upload";
-import { type UploadedSlotResult } from "@/components/image-uploader";
+import {
+  type OrderableSlotSummary,
+  type UploadSlotKey,
+  type UploadedSlotResult,
+} from "@/components/image-uploader";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
 import { CheckoutPage } from "./pages/checkout";
@@ -73,8 +77,14 @@ export function App() {
   const [successfulSlotsForCheckout, setSuccessfulSlotsForCheckout] = useState<
     UploadedSlotResult[]
   >([]);
+  const [orderableSlots, setOrderableSlots] = useState<OrderableSlotSummary[]>(
+    [],
+  );
+  const [orderSlotSelection, setOrderSlotSelection] = useState<
+    Partial<Record<UploadSlotKey, boolean>>
+  >({});
   const [onCheckoutWithUpload, setOnCheckoutWithUpload] = useState<
-    (() => Promise<void>) | null
+    (() => Promise<UploadedSlotResult[]>) | null
   >(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -92,7 +102,7 @@ export function App() {
   );
 
   const handleCheckoutWithUpload = useCallback(
-    (action: (() => Promise<void>) | null) => {
+    (action: (() => Promise<UploadedSlotResult[]>) | null) => {
       setOnCheckoutWithUpload(() => action);
     },
     [],
@@ -102,6 +112,66 @@ export function App() {
     location.pathname === "/upload" && isFooterCheckoutAvailable;
   const showFooterReset =
     location.pathname === "/upload" && isFooterResetAvailable;
+
+  const footerOrderRows = useMemo(
+    () =>
+      orderableSlots
+        .slice()
+        .sort((a, b) => a.slotIndex - b.slotIndex)
+        .map((slot) => {
+          const isUploaded = successfulSlotsForCheckout.some(
+            (uploadedSlot) => uploadedSlot.slotKey === slot.slotKey,
+          );
+
+          return {
+            slotKey: slot.slotKey,
+            slotIndex: slot.slotIndex,
+            proportion: slot.aspectRatio ?? slot.displayImageProportion,
+            isUploaded,
+          };
+        }),
+    [orderableSlots, successfulSlotsForCheckout],
+  );
+
+  const checkedOrderSlotKeys = useMemo(
+    () =>
+      new Set(
+        footerOrderRows
+          .filter((row) => orderSlotSelection[row.slotKey] ?? true)
+          .map((row) => row.slotKey),
+      ),
+    [footerOrderRows, orderSlotSelection],
+  );
+
+  const hasCheckedOrderSlots = useMemo(
+    () => footerOrderRows.some((row) => checkedOrderSlotKeys.has(row.slotKey)),
+    [checkedOrderSlotKeys, footerOrderRows],
+  );
+
+  useEffect(() => {
+    const activeSlotKeys = orderableSlots.map((slot) => slot.slotKey);
+
+    setOrderSlotSelection((previousSelection) => {
+      const nextSelection: Partial<Record<UploadSlotKey, boolean>> = {};
+
+      activeSlotKeys.forEach((slotKey) => {
+        nextSelection[slotKey] = previousSelection[slotKey] ?? true;
+      });
+
+      return nextSelection;
+    });
+  }, [orderableSlots]);
+
+  const toggleFooterOrderSlot = useCallback((slotKey: UploadSlotKey) => {
+    setOrderSlotSelection((previousSelection) => {
+      const currentValue = previousSelection[slotKey] ?? true;
+
+      return {
+        ...previousSelection,
+        [slotKey]: !currentValue,
+      };
+    });
+  }, []);
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
   const [useTestBackground, setUseTestBackground] = useState(false);
@@ -153,6 +223,7 @@ export function App() {
                 onResetAvailabilityChange={setIsFooterResetAvailable}
                 onResetActionChange={handleFooterResetActionChange}
                 onSuccessfulSlotsChange={setSuccessfulSlotsForCheckout}
+                onOrderableSlotsChange={setOrderableSlots}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
               />
@@ -174,14 +245,29 @@ export function App() {
       <Footer
         onOpenLegalMenu={() => openLegalSheet("legal")}
         showCheckout={showFooterCheckout}
+        checkoutDisabled={showFooterCheckout && !hasCheckedOrderSlots}
         onCheckout={async () => {
-          if (onCheckoutWithUpload) {
-            await onCheckoutWithUpload();
+          if (!hasCheckedOrderSlots) {
+            return;
           }
+
+          let slotsToCheckout = successfulSlotsForCheckout;
+
+          if (onCheckoutWithUpload) {
+            slotsToCheckout = await onCheckoutWithUpload();
+          }
+
           navigate("/checkout", {
-            state: { uploadedSlots: successfulSlotsForCheckout },
+            state: {
+              uploadedSlots: slotsToCheckout.filter((slot) =>
+                checkedOrderSlotKeys.has(slot.slotKey),
+              ),
+            },
           });
         }}
+        orderRows={footerOrderRows}
+        checkedOrderSlotKeys={checkedOrderSlotKeys}
+        onToggleOrderSlot={toggleFooterOrderSlot}
         showReset={showFooterReset}
         onReset={onFooterReset ?? undefined}
       />
