@@ -53,6 +53,34 @@ function hasActiveAiAdjustments(aiAdjustments: AiAdjustments | null): boolean {
   return aiAdjustments ? Object.values(aiAdjustments).some(Boolean) : false;
 }
 
+function applyCloudinaryTransformations(
+  url: string,
+  transformationParts: string[],
+): string {
+  if (transformationParts.length === 0) {
+    return url;
+  }
+
+  const urlParts = url.split("/upload/");
+  if (urlParts.length !== 2) {
+    return url;
+  }
+
+  return `${urlParts[0]}/upload/${transformationParts.join("/")}/${urlParts[1]}`;
+}
+
+export function getCloudinaryThumbnailUrl(
+  url: string,
+  width: number,
+  height: number,
+): string {
+  return applyCloudinaryTransformations(url, [
+    `c_fill,g_auto,h_${height},w_${width}`,
+    "f_auto",
+    "q_auto",
+  ]);
+}
+
 export function getTransformedPreviewUrl(
   secureUrl: string,
   trans: ImageTransformations | null,
@@ -132,10 +160,5 @@ export function getTransformedPreviewUrl(
     return secureUrl;
   }
 
-  const urlParts = secureUrl.split("/upload/");
-  if (urlParts.length !== 2) {
-    return secureUrl;
-  }
-
-  return `${urlParts[0]}/upload/${transformationParts.join("/")}/${urlParts[1]}`;
+  return applyCloudinaryTransformations(secureUrl, transformationParts);
 }

@@ -1,3 +1,4 @@
+import React, { forwardRef, useEffect, useImperativeHandle } from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -30,30 +31,75 @@ const mockTransformations: ImageTransformations = {
   blur: 0,
 };
 
+const mockBatchUploadResult = {
+  results: [
+    {
+      slotIndex: 0,
+      slotKey: "left" as const,
+      transformations: mockTransformations,
+      transformedUrl:
+        "https://res.cloudinary.com/demo/image/upload/e_brightness:10/v123/left.jpg",
+      publicId: "left",
+      secureUrl: "https://res.cloudinary.com/demo/image/upload/v123/left.jpg",
+    },
+    {
+      slotIndex: 1,
+      slotKey: "center" as const,
+      transformations: mockTransformations,
+      error: "Network error",
+    },
+  ],
+  successCount: 1,
+  failureCount: 1,
+  totalCount: 2,
+};
+
 let lastImageUploaderProps: { showDebugData?: boolean } | null = null;
 
 vi.mock("@/components/image-uploader", () => ({
-  ImageUploader: ({
-    onUploadSuccess,
-    showDebugData,
-  }: {
-    onUploadSuccess?: (
-      result: UploadResult,
-      transformations: ImageTransformations,
-    ) => void;
-    showDebugData?: boolean;
-  }) => {
-    lastImageUploaderProps = { showDebugData };
+  ImageUploader: forwardRef(
+    (
+      {
+        onUploadSuccess,
+        onSelectionStateChange,
+        showDebugData,
+      }: {
+        onUploadSuccess?: (
+          result: UploadResult,
+          transformations: ImageTransformations,
+        ) => void;
+        onSelectionStateChange?: (hasSelection: boolean) => void;
+        showDebugData?: boolean;
+      },
+      ref: React.ForwardedRef<{
+        uploadFilledSlots: () => Promise<typeof mockBatchUploadResult>;
+      }>,
+    ) => {
+      useEffect(() => {
+        lastImageUploaderProps = { showDebugData };
+      }, [showDebugData]);
 
-    return (
-      <button
-        type="button"
-        onClick={() => onUploadSuccess?.(mockUploadResult, mockTransformations)}
-      >
-        Mock successful upload
-      </button>
-    );
-  },
+      useImperativeHandle(ref, () => ({
+        uploadFilledSlots: async () => mockBatchUploadResult,
+      }));
+
+      return (
+        <div>
+          <button
+            type="button"
+            onClick={() =>
+              onUploadSuccess?.(mockUploadResult, mockTransformations)
+            }
+          >
+            Mock successful upload
+          </button>
+          <button type="button" onClick={() => onSelectionStateChange?.(true)}>
+            Mock selected slots
+          </button>
+        </div>
+      );
+    },
+  ),
 }));
 
 import { UploadPage } from "./upload";
@@ -212,5 +258,39 @@ describe("UploadPage preview tabs", () => {
     expect(lastImageUploaderProps).toEqual({
       showDebugData: false,
     });
+  });
+
+  it("renders uploaded slot links after footer-triggered batch upload action", async () => {
+    let uploadAction: (() => Promise<void>) | null = null;
+
+    render(
+      <MemoryRouter>
+        <UploadPage
+          onCheckoutWithUpload={(action) => {
+            uploadAction = action;
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /mock selected slots/i }),
+    );
+
+    expect(uploadAction).not.toBeNull();
+
+    await act(async () => {
+      await uploadAction?.();
+    });
+
+    expect(
+      screen.getByText(tr("upload.uploadedSlotsTitle")),
+    ).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.slotLeft"))).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.slotCenter"))).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: tr("upload.openUploadedImage") }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.slotUploadFailed"))).toBeInTheDocument();
   });
 });

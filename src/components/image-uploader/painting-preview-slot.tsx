@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/locales/i18n";
+import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
@@ -16,6 +17,10 @@ interface PaintingPreviewSlotProps {
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   previewFrameAspectRatio: number;
+  isUploadOverlayVisible?: boolean;
+  uploadProgress?: number;
+  uploadProgressLabel?: string;
+  uploadingSlotIndex?: number | null;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -32,6 +37,10 @@ export default function PaintingPreviewSlot({
   bestProportion,
   userSelectedProportion,
   previewFrameAspectRatio,
+  isUploadOverlayVisible = false,
+  uploadProgress = 0,
+  uploadProgressLabel,
+  uploadingSlotIndex = null,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -123,6 +132,16 @@ export default function PaintingPreviewSlot({
             {t("uploader.emptyCenterSlotPlaceholder")}
           </div>
         )}
+
+        <UploadProgressOverlay
+          isVisible={
+            isUploadOverlayVisible &&
+            !!selectedImage &&
+            activeSlotIndex === uploadingSlotIndex
+          }
+          progress={uploadProgress}
+          label={uploadProgressLabel}
+        />
       </div>
     </div>
   );

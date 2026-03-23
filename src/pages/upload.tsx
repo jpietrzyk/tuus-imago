@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
-import { ImageUploader } from "@/components/image-uploader";
+import {
+  ImageUploader,
+  type ImageUploaderHandle,
+  type UploadedSlotResult,
+} from "@/components/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   cloudinaryConfig,
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
-import { CheckCircle2, AlertCircle, Sliders } from "lucide-react";
+import { CheckCircle2, AlertCircle, ExternalLink, Sliders } from "lucide-react";
 import { t } from "@/locales/i18n";
 import {
   type ImageTransformations,
@@ -28,6 +32,8 @@ interface UploadPageProps {
   onCheckoutAvailabilityChange?: (available: boolean) => void;
   onResetAvailabilityChange?: (available: boolean) => void;
   onResetActionChange?: (action: (() => void) | null) => void;
+  onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
+  onCheckoutWithUpload?: (action: (() => Promise<void>) | null) => void;
   imageDebugDataEnabled?: boolean;
 }
 
@@ -37,12 +43,23 @@ export function UploadPage({
   onCheckoutAvailabilityChange,
   onResetAvailabilityChange,
   onResetActionChange,
+  onSuccessfulSlotsChange,
+  onCheckoutWithUpload,
   imageDebugDataEnabled = true,
 }: UploadPageProps = {}) {
+  const uploaderRef = useRef<ImageUploaderHandle | null>(null);
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
+  const [uploadedSlots, setUploadedSlots] = useState<UploadedSlotResult[]>([]);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isBatchUploading, setIsBatchUploading] = useState(false);
+  const [batchUploadProgress, setBatchUploadProgress] = useState(0);
+  const [uploadingSlotIndex, setUploadingSlotIndex] = useState<number | null>(
+    null,
+  );
+  const [uploadingSlotStep, setUploadingSlotStep] = useState(0);
+  const [uploadingSlotsTotal, setUploadingSlotsTotal] = useState(0);
   const [transformations, setTransformations] =
     useState<ImageTransformations | null>(null);
   const [aiAdjustments, setAiAdjustments] = useState<AiAdjustments>(
@@ -233,10 +250,58 @@ export function UploadPage({
     : (uploadedImage?.info.secure_url ?? null);
   const isOriginalPreview = !useAiPreview;
 
+  const successfulUploadedSlots = uploadedSlots.filter(
+    (slot) => !slot.error && !!slot.transformedUrl,
+  );
+
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
-  const isCheckoutAvailable = Boolean(uploadedImage || hasUploaderSelection);
+  const isUploadAvailable =
+    hasUploaderSelection &&
+    !isBatchUploading &&
+    successfulUploadedSlots.length === 0 &&
+    !uploadedImage;
+  const isCheckoutAvailable = Boolean(
+    uploadedImage || successfulUploadedSlots.length > 0 || hasUploaderSelection,
+  );
   const isResetAvailable = hasUploaderSelection;
+
+  const handleBatchUpload = useCallback(async () => {
+    if (!uploaderRef.current) {
+      return;
+    }
+
+    setIsBatchUploading(true);
+    setBatchUploadProgress(0);
+    setUploadingSlotIndex(null);
+    setUploadingSlotStep(0);
+    setUploadingSlotsTotal(0);
+    setUploadError(null);
+
+    try {
+      const summary = await uploaderRef.current.uploadFilledSlots();
+      setUploadedSlots(summary.results);
+
+      if (summary.successCount > 0) {
+        setIsSuccess(true);
+        setTimeout(() => setIsSuccess(false), 3000);
+      }
+
+      if (summary.successCount === 0 && summary.failureCount > 0) {
+        setUploadError(t("upload.batchUploadFailed"));
+      }
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : t("upload.uploadFailed"),
+      );
+    } finally {
+      setIsBatchUploading(false);
+      setBatchUploadProgress(0);
+      setUploadingSlotIndex(null);
+      setUploadingSlotStep(0);
+      setUploadingSlotsTotal(0);
+    }
+  }, []);
 
   const startPreviewReload = useCallback((reason: "preview" | "crop") => {
     setPreviewLoadingReason(reason);
@@ -244,6 +309,40 @@ export function UploadPage({
     setPreviewLoadProgress(0);
     setPreviewError(null);
   }, []);
+
+  const handleUploadProgress = useCallback(
+    (progress: {
+      currentSlotIndex: number;
+      slotIndex: number;
+      currentStep: number;
+      totalSlots: number;
+      currentSlotKey: string;
+      slotProgress: number;
+    }) => {
+      const boundedSlotProgress = Math.min(
+        Math.max(progress.slotProgress, 0),
+        1,
+      );
+      const progressPercent = Math.round(
+        ((progress.currentSlotIndex + boundedSlotProgress) /
+          progress.totalSlots) *
+          100,
+      );
+      setBatchUploadProgress(progressPercent);
+      setUploadingSlotIndex(progress.slotIndex);
+      setUploadingSlotStep(progress.currentStep);
+      setUploadingSlotsTotal(progress.totalSlots);
+    },
+    [],
+  );
+
+  const uploadProgressLabel =
+    uploadingSlotStep > 0 && uploadingSlotsTotal > 0
+      ? t("upload.uploadingSlotProgress", {
+          current: uploadingSlotStep,
+          total: uploadingSlotsTotal,
+        })
+      : t("upload.uploading");
 
   const toggleAiAdjustment = (adjustment: keyof AiAdjustments) => {
     if (useAiPreview) {
@@ -255,6 +354,27 @@ export function UploadPage({
       [adjustment]: !prev[adjustment],
     }));
   };
+
+  useEffect(() => {
+    const successful = uploadedSlots.filter(
+      (slot) => !slot.error && !!slot.transformedUrl,
+    );
+    onSuccessfulSlotsChange?.(successful);
+  }, [uploadedSlots, onSuccessfulSlotsChange]);
+
+  useEffect(() => {
+    return () => {
+      onSuccessfulSlotsChange?.([]);
+    };
+  }, [onSuccessfulSlotsChange]);
+
+  useEffect(() => {
+    onCheckoutWithUpload?.(isUploadAvailable ? handleBatchUpload : null);
+
+    return () => {
+      onCheckoutWithUpload?.(null);
+    };
+  }, [isUploadAvailable, handleBatchUpload, onCheckoutWithUpload]);
 
   useEffect(() => {
     onCheckoutAvailabilityChange?.(isCheckoutAvailable);
@@ -278,6 +398,9 @@ export function UploadPage({
       setHasUploaderSelection(false);
       setUploadError(null);
       setIsSuccess(false);
+      setUploadedSlots([]);
+      setIsBatchUploading(false);
+      setBatchUploadProgress(0);
       setTransformations(null);
       setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
       setUseAiPreview(true);
@@ -565,17 +688,96 @@ export function UploadPage({
 
             {/* Upload Widget */}
             {!uploadedImage && (
-              <div className="flex h-full min-h-0 flex-col items-center gap-4">
-                <ImageUploader
-                  onUploadSuccess={handleUploadSuccess}
-                  onUploadError={handleUploadError}
-                  onSelectionStateChange={setHasUploaderSelection}
-                  showDebugData={imageDebugDataEnabled}
-                  externalResetTrigger={uploaderResetVersion}
-                  skipCropStep
-                  defaultShowIcons
-                  className="w-full max-w-sm h-full py-6 text-lg font-semibold"
-                />
+              <div className="relative flex h-full min-h-0 w-full flex-col items-center gap-4">
+                <div className="relative h-full min-h-0 w-full">
+                  <ImageUploader
+                    ref={uploaderRef}
+                    onUploadSuccess={handleUploadSuccess}
+                    onUploadError={handleUploadError}
+                    onSelectionStateChange={setHasUploaderSelection}
+                    onUploadProgress={handleUploadProgress}
+                    showDebugData={imageDebugDataEnabled}
+                    externalResetTrigger={uploaderResetVersion}
+                    skipCropStep
+                    defaultShowIcons
+                    isUploadOverlayVisible={isBatchUploading}
+                    uploadProgress={batchUploadProgress}
+                    uploadProgressLabel={uploadProgressLabel}
+                    uploadingSlotIndex={uploadingSlotIndex}
+                    className="mx-auto h-full w-full max-w-sm py-6 text-lg font-semibold"
+                  />
+                </div>
+              </div>
+            )}
+
+            {uploadedSlots.length > 0 && (
+              <div className="space-y-3 rounded-xl border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur-sm">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {t("upload.uploadedSlotsTitle")}
+                  </p>
+                  <p className="text-xs text-slate-600">
+                    {successfulUploadedSlots.length === uploadedSlots.length
+                      ? t("upload.batchUploadSuccess")
+                      : t("upload.partialUploadSummary", {
+                          successCount: successfulUploadedSlots.length,
+                          totalCount: uploadedSlots.length,
+                        })}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {uploadedSlots.map((slot) => {
+                    const slotLabelKey =
+                      slot.slotKey === "left"
+                        ? "upload.slotLeft"
+                        : slot.slotKey === "right"
+                          ? "upload.slotRight"
+                          : "upload.slotCenter";
+
+                    return (
+                      <div
+                        key={`${slot.slotKey}-${slot.slotIndex}`}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-900">
+                            {t(slotLabelKey)}
+                          </p>
+                          <p className="truncate text-xs text-slate-600">
+                            {slot.error ?? slot.transformedUrl}
+                          </p>
+                        </div>
+
+                        {slot.transformedUrl ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="shrink-0"
+                            onClick={() =>
+                              window.open(
+                                slot.transformedUrl,
+                                "_blank",
+                                "noopener,noreferrer",
+                              )
+                            }
+                          >
+                            <ExternalLink
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
+                            {t("upload.openUploadedImage")}
+                          </Button>
+                        ) : (
+                          <span className="shrink-0 text-xs font-medium text-red-600">
+                            {t("upload.slotUploadFailed")}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

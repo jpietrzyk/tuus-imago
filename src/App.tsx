@@ -10,6 +10,7 @@ import {
 import { HomeUploadEntryPage } from "./pages/home-upload-entry";
 import { LandingPage } from "./pages/landing";
 import { UploadPage } from "./pages/upload";
+import { type UploadedSlotResult } from "@/components/image-uploader";
 import { AboutPage } from "./pages/about";
 import { LegalPage } from "./pages/legal";
 import { CheckoutPage } from "./pages/checkout";
@@ -69,6 +70,12 @@ export function App() {
     useState(false);
   const [isFooterResetAvailable, setIsFooterResetAvailable] = useState(false);
   const [onFooterReset, setOnFooterReset] = useState<(() => void) | null>(null);
+  const [successfulSlotsForCheckout, setSuccessfulSlotsForCheckout] = useState<
+    UploadedSlotResult[]
+  >([]);
+  const [onCheckoutWithUpload, setOnCheckoutWithUpload] = useState<
+    (() => Promise<void>) | null
+  >(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -80,6 +87,13 @@ export function App() {
   const handleFooterResetActionChange = useCallback(
     (action: (() => void) | null) => {
       setOnFooterReset(() => action);
+    },
+    [],
+  );
+
+  const handleCheckoutWithUpload = useCallback(
+    (action: (() => Promise<void>) | null) => {
+      setOnCheckoutWithUpload(() => action);
     },
     [],
   );
@@ -138,6 +152,8 @@ export function App() {
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onResetAvailabilityChange={setIsFooterResetAvailable}
                 onResetActionChange={handleFooterResetActionChange}
+                onSuccessfulSlotsChange={setSuccessfulSlotsForCheckout}
+                onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
               />
             }
@@ -158,7 +174,14 @@ export function App() {
       <Footer
         onOpenLegalMenu={() => openLegalSheet("legal")}
         showCheckout={showFooterCheckout}
-        onCheckout={() => navigate("/checkout")}
+        onCheckout={async () => {
+          if (onCheckoutWithUpload) {
+            await onCheckoutWithUpload();
+          }
+          navigate("/checkout", {
+            state: { uploadedSlots: successfulSlotsForCheckout },
+          });
+        }}
         showReset={showFooterReset}
         onReset={onFooterReset ?? undefined}
       />

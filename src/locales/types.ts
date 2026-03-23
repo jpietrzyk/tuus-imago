@@ -171,7 +171,12 @@ export interface Translations {
     success: string;
     error: string;
     uploadFailed: string;
+    batchUploadSuccess: string;
+    batchUploadFailed: string;
+    partialUploadSummary: string;
     dropFile: string;
+    uploading: string;
+    uploadingSlotProgress: string;
     clickToUpload: string;
     fileSupport: string;
     uploadedPhoto: string;
@@ -212,6 +217,12 @@ export interface Translations {
     previewOriginalActive: string;
     aiPreviewError: string;
     openPreviewUrl: string;
+    openUploadedImage: string;
+    uploadedSlotsTitle: string;
+    slotLeft: string;
+    slotCenter: string;
+    slotRight: string;
+    slotUploadFailed: string;
     usedCloudinaryTools: string;
     noCloudinaryTools: string;
   };
@@ -248,6 +259,10 @@ export interface Translations {
     removeImageSlot: string;
     clearSlot: string;
     emptyCenterSlotPlaceholder: string;
+    uploadSelectedSlots: string;
+    uploadSelectedSlotsConfirmTitle: string;
+    uploadSelectedSlotsConfirmDescription: string;
+    uploadSelectedSlotsConfirmAction: string;
     resetSlots: string;
     resetShort: string;
     splitSelectedImage: string;
@@ -288,6 +303,7 @@ export interface Translations {
     country: string;
     countryPlaceholder: string;
     orderSummary: string;
+    uploadedImages: string;
     enhancedPhoto: string;
     canvasPrint: string;
     total: string;

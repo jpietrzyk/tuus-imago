@@ -70,7 +70,7 @@ export function Footer({
                     <AlertDialogAction
                       variant="destructive"
                       onClick={onReset}
-                      className="w-full sm:w-auto h-auto min-h-9 whitespace-normal break-words text-center leading-tight"
+                      className="w-full sm:w-auto h-auto min-h-9 whitespace-normal wrap-break-word text-center leading-tight"
                     >
                       {t("uploader.resetSlotsConfirmAction")}
                     </AlertDialogAction>
