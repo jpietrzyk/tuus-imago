@@ -6,7 +6,8 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
-import { ImageUploader } from "./image-uploader";
+import { createRef } from "react";
+import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { t as tr } from "../locales/i18n";
@@ -1145,9 +1146,7 @@ describe("ImageUploader", () => {
         },
       });
 
-    const uploaderRef = {
-      current: null as null | { uploadFilledSlots: () => Promise<unknown> },
-    };
+    const uploaderRef = createRef<ImageUploaderHandle>();
     render(<ImageUploader ref={uploaderRef} />);
 
     const input = document.querySelector(
@@ -1270,9 +1269,7 @@ describe("ImageUploader", () => {
         },
       });
 
-    const uploaderRef = {
-      current: null as null | { uploadFilledSlots: () => Promise<unknown> },
-    };
+    const uploaderRef = createRef<ImageUploaderHandle>();
     render(<ImageUploader ref={uploaderRef} />);
 
     const input = document.querySelector(
