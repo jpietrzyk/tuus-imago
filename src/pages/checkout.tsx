@@ -17,6 +17,7 @@ import {
 import { t } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
+import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -30,6 +31,8 @@ export function CheckoutPage() {
     (slot): slot is UploadedCheckoutSlot =>
       !slot.error && typeof slot.transformedUrl === "string",
   );
+  const itemCount = uploadedSlots.length > 0 ? uploadedSlots.length : 1;
+  const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE;
 
   const slotLabel = (slotKey: UploadedSlotResult["slotKey"]): string => {
     if (slotKey === "left") return t("upload.slotLeft");
@@ -302,7 +305,9 @@ export function CheckoutPage() {
                       <span className="text-gray-900">
                         {t("checkout.total")}
                       </span>
-                      <span className="text-blue-600">€29.99</span>
+                      <span className="text-blue-600">
+                        {formatPrice(totalPrice)}
+                      </span>
                     </div>
                   </div>
                 </div>

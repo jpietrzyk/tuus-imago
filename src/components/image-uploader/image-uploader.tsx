@@ -63,6 +63,7 @@ interface ImageUploaderProps {
   onUploadError?: (error: string) => void;
   onImageMetadataChange?: (metadata: SelectedImageMetadata | null) => void;
   onSelectionStateChange?: (hasSelection: boolean) => void;
+  onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
   onUploadProgress?: (progress: {
     currentSlotIndex: number;
     slotIndex: number;
@@ -108,7 +109,14 @@ export interface SelectedImageItem {
   };
 }
 
-type UploadSlotKey = "left" | "center" | "right";
+export type UploadSlotKey = "left" | "center" | "right";
+
+export interface OrderableSlotSummary {
+  slotIndex: number;
+  slotKey: UploadSlotKey;
+  aspectRatio: string | null;
+  displayImageProportion: ImageDisplayProportion;
+}
 
 export interface UploadedSlotResult {
   slotIndex: number;
@@ -204,6 +212,7 @@ export const ImageUploader = forwardRef<
     onUploadError,
     onImageMetadataChange,
     onSelectionStateChange,
+    onOrderableSlotsChange,
     onUploadProgress,
     isUploadOverlayVisible = false,
     uploadProgress = 0,
@@ -1070,6 +1079,25 @@ export const ImageUploader = forwardRef<
   useEffect(() => {
     onSelectionStateChange?.(selectedImageCount > 0);
   }, [onSelectionStateChange, selectedImageCount]);
+
+  useEffect(() => {
+    onOrderableSlotsChange?.(
+      selectedImages.flatMap((image, slotIndex) => {
+        if (!image) {
+          return [];
+        }
+
+        return [
+          {
+            slotIndex,
+            slotKey: SLOT_KEYS[slotIndex] ?? "center",
+            aspectRatio: image.metadata?.aspectRatio ?? null,
+            displayImageProportion: image.displayImageProportion,
+          },
+        ];
+      }),
+    );
+  }, [onOrderableSlotsChange, selectedImages]);
 
   useEffect(() => {
     return () => {
