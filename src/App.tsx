@@ -26,6 +26,7 @@ import { ReturnsPage } from "./pages/returns";
 import { SecurityPage } from "./pages/security";
 import { ShippingPage } from "./pages/shipping";
 import { TermsPage } from "./pages/terms";
+import { CANVAS_PRINT_UNIT_PRICE } from "@/lib/pricing";
 
 interface DebugToggleProps {
   label: string;
@@ -128,6 +129,7 @@ export function App() {
             slotIndex: slot.slotIndex,
             proportion: slot.aspectRatio ?? slot.displayImageProportion,
             isUploaded,
+            unitPrice: CANVAS_PRINT_UNIT_PRICE,
           };
         }),
     [orderableSlots, successfulSlotsForCheckout],

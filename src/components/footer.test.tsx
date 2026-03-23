@@ -4,6 +4,13 @@ import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { Footer } from "./footer";
 import { tr } from "@/test/i18n-test";
+import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
+
+function hasExactTextContent(expectedText: string) {
+  return (_content: string, element: Element | null) =>
+    element?.textContent?.replace(/\s+/g, " ").trim() ===
+    expectedText.replace(/\s+/g, " ").trim();
+}
 
 describe("Footer Component", () => {
   it("should render the footer with copyright text", () => {
@@ -149,6 +156,7 @@ describe("Footer Component", () => {
               slotIndex: 0,
               proportion: "3:2",
               isUploaded: true,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -181,6 +189,7 @@ describe("Footer Component", () => {
               slotIndex: 0,
               proportion: "3:2",
               isUploaded: true,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -199,7 +208,9 @@ describe("Footer Component", () => {
       screen.getByText(tr("checkout.orderSelectionTotal")),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByText(tr("checkout.orderSelectionPrice")).length,
+      screen.getAllByText(
+        hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+      ).length,
     ).toBeGreaterThanOrEqual(1);
 
     await user.click(

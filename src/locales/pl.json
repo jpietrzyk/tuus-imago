@@ -324,7 +324,7 @@
     "orderSelectionEmpty": "Nie wybrano jeszcze żadnych obrazów.",
     "orderSelectionCheckboxAria": "Uwzględnij {slot} w zamówieniu",
     "orderSelectionProportion": "Proporcja",
-    "orderSelectionPrice": "200 zł",
+    "orderSelectionPrice": "{price}",
     "orderSelectionTotal": "Suma",
     "orderSelectionUploaded": "Gotowe",
     "orderSelectionPendingUpload": "Zostanie przesłane przy zamówieniu",

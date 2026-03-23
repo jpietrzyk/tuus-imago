@@ -7,12 +7,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import { type UploadSlotKey } from "@/components/image-uploader";
+import { formatPrice } from "@/lib/pricing";
 
 export interface FooterOrderRow {
   slotKey: UploadSlotKey;
   slotIndex: number;
   proportion: string;
   isUploaded: boolean;
+  unitPrice: number;
 }
 
 interface FooterOrderPopoverProps {
@@ -52,7 +54,7 @@ export function FooterOrderPopover({
       return sum;
     }
 
-    return sum + 200;
+    return sum + row.unitPrice;
   }, 0);
 
   return (
@@ -117,7 +119,11 @@ export function FooterOrderPopover({
                         {slotLabel(row.slotKey)}
                       </span>
                       <span className="text-xs font-semibold">
-                        {isChecked ? t("checkout.orderSelectionPrice") : "-"}
+                        {isChecked
+                          ? t("checkout.orderSelectionPrice", {
+                              price: formatPrice(row.unitPrice),
+                            })
+                          : "-"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -138,7 +144,7 @@ export function FooterOrderPopover({
 
             <div className="flex items-center justify-between border-t border-border/70 pt-2 text-xs font-semibold">
               <span>{t("checkout.orderSelectionTotal")}</span>
-              <span>{new Intl.NumberFormat(undefined, { style: "currency", currency: "PLN" }).format(totalPrice)}</span>
+              <span>{formatPrice(totalPrice)}</span>
             </div>
           </div>
         )}

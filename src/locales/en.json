@@ -324,7 +324,7 @@
     "orderSelectionEmpty": "No images selected yet.",
     "orderSelectionCheckboxAria": "Include {slot} in checkout",
     "orderSelectionProportion": "Proportion",
-    "orderSelectionPrice": "200 zł",
+    "orderSelectionPrice": "{price}",
     "orderSelectionTotal": "Total",
     "orderSelectionUploaded": "Ready",
     "orderSelectionPendingUpload": "Will upload on checkout",

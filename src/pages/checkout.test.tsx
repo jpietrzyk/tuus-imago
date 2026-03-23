@@ -5,6 +5,13 @@ import { CheckoutPage } from "./checkout";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { tr } from "@/test/i18n-test";
 import { type UploadedSlotResult } from "@/components/image-uploader";
+import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
+
+function hasExactTextContent(expectedText: string) {
+  return (_content: string, element: Element | null) =>
+    element?.textContent?.replace(/\s+/g, " ").trim() ===
+    expectedText.replace(/\s+/g, " ").trim();
+}
 
 describe("CheckoutPage", () => {
   beforeEach(() => {
@@ -105,7 +112,11 @@ describe("CheckoutPage", () => {
 
   it("renders total price", () => {
     renderWithRouter();
-    expect(screen.getByText("€29.99")).toBeDefined();
+    expect(
+      screen.getByText(
+        hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+      ),
+    ).toBeDefined();
   });
 
   it("renders place order button", () => {
@@ -249,5 +260,53 @@ describe("CheckoutPage", () => {
     renderWithRouter();
     expect(screen.getByText(tr("checkout.enhancedPhoto"))).toBeDefined();
     expect(screen.getByText(tr("checkout.canvasPrint"))).toBeDefined();
+  });
+
+  it("renders total based on uploaded slot count", () => {
+    const mockSlots: UploadedSlotResult[] = [
+      {
+        slotIndex: 0,
+        slotKey: "left",
+        transformations: {
+          brightness: 0,
+          contrast: 0,
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          grayscale: 0,
+          blur: 0,
+        },
+        transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+        publicId: "tuus-imago/left",
+        secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+      },
+      {
+        slotIndex: 2,
+        slotKey: "right",
+        transformations: {
+          brightness: 10,
+          contrast: 0,
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          grayscale: 0,
+          blur: 0,
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/right.jpg",
+        publicId: "tuus-imago/right",
+        secureUrl: "https://res.cloudinary.com/test/image/upload/right.jpg",
+      },
+    ];
+
+    renderWithSlots(mockSlots);
+
+    expect(
+      screen.getByText(
+        hasExactTextContent(
+          formatPrice(CANVAS_PRINT_UNIT_PRICE * mockSlots.length),
+        ),
+      ),
+    ).toBeDefined();
   });
 });
