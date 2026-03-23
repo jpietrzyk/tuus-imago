@@ -35,9 +35,7 @@ interface UploadPageProps {
   onResetActionChange?: (action: (() => void) | null) => void;
   onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
   onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
-  onCheckoutWithUpload?:
-    | ((action: (() => Promise<UploadedSlotResult[]>) | null) => void)
-    | undefined;
+  onCheckoutWithUpload?: (action: (() => Promise<UploadedSlotResult[]>) | null) => void;
   imageDebugDataEnabled?: boolean;
 }
 
