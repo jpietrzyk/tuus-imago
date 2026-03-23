@@ -11,6 +11,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { X } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
+import {
+  getTransformedPreviewUrl,
+  type AiAdjustments,
+} from "@/lib/image-transformations";
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
@@ -94,6 +98,13 @@ export interface SelectedImageItem {
   previewEffects: {
     brightness: number;
     contrast: number;
+    removeBackground?: boolean;
+    enhance?: boolean;
+  };
+  uploadedAsset?: {
+    publicId: string;
+    secureUrl: string;
+    sourceFingerprint: string;
   };
 }
 
@@ -103,6 +114,7 @@ export interface UploadedSlotResult {
   slotIndex: number;
   slotKey: UploadSlotKey;
   transformations: ImageTransformations;
+  aiAdjustments?: AiAdjustments;
   transformedUrl?: string;
   publicId?: string;
   secureUrl?: string;
@@ -136,6 +148,54 @@ function getUploadTransformations(
   };
 }
 
+function getAiAdjustments(image: SelectedImageItem): AiAdjustments | null {
+  if (!image.previewEffects.removeBackground && !image.previewEffects.enhance) {
+    return null;
+  }
+
+  return {
+    enhance: !!image.previewEffects.enhance,
+    removeBackground: !!image.previewEffects.removeBackground,
+    upscale: false,
+    restore: false,
+  };
+}
+
+function getFileSourceFingerprint(file: File): string {
+  return [
+    file.name,
+    String(file.size),
+    String(file.lastModified),
+    file.type,
+  ].join("::");
+}
+
+function getReusableUploadedAsset(image: SelectedImageItem) {
+  if (!image.uploadedAsset) {
+    return null;
+  }
+
+  return image.uploadedAsset.sourceFingerprint ===
+    getFileSourceFingerprint(image.file)
+    ? image.uploadedAsset
+    : null;
+}
+
+function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
+  const reusableUploadedAsset = getReusableUploadedAsset(image);
+
+  if (!reusableUploadedAsset) {
+    return image.previewUrl;
+  }
+
+  return getTransformedPreviewUrl(
+    reusableUploadedAsset.secureUrl,
+    null,
+    undefined,
+    getAiAdjustments(image),
+  );
+}
+
 export const ImageUploader = forwardRef<
   ImageUploaderHandle,
   ImageUploaderProps
@@ -160,6 +220,9 @@ export const ImageUploader = forwardRef<
     Array<SelectedImageItem | null>
   >(createEmptySelectionSlots);
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+  const [busyBackgroundUploadSlots, setBusyBackgroundUploadSlots] = useState<
+    Set<number>
+  >(() => new Set());
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -171,6 +234,7 @@ export const ImageUploader = forwardRef<
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     createEmptySelectionSlots(),
   );
+  const backgroundUploadPromisesRef = useRef(new Map<number, Promise<void>>());
 
   const selectedImageCount = selectedImages.filter(Boolean).length;
   const shouldShowUploaderDebugData = SHOW_UPLOADER_DEBUG && showDebugData;
@@ -206,6 +270,8 @@ export const ImageUploader = forwardRef<
         previewEffects: {
           brightness: 0,
           contrast: 0,
+          removeBackground: false,
+          enhance: false,
         },
       };
     },
@@ -384,12 +450,181 @@ export const ImageUploader = forwardRef<
     [updateActiveImage],
   );
 
+  const setSlotRemoveBackground = useCallback(
+    (slotIndex: number, enabled: boolean) => {
+      setSelectedImages((prevImages) => {
+        const image = prevImages[slotIndex];
+
+        if (!image) {
+          return prevImages;
+        }
+
+        if ((image.previewEffects.removeBackground ?? false) === enabled) {
+          return prevImages;
+        }
+
+        const nextImages = [...prevImages];
+        nextImages[slotIndex] = {
+          ...image,
+          previewEffects: {
+            ...image.previewEffects,
+            removeBackground: enabled,
+          },
+        };
+
+        return nextImages;
+      });
+    },
+    [],
+  );
+
+  const uploadSlotIfNeeded = useCallback(async (slotIndex: number) => {
+    const currentImage = selectedImagesRef.current[slotIndex];
+    if (!currentImage || getReusableUploadedAsset(currentImage)) {
+      return;
+    }
+
+    const existingUpload = backgroundUploadPromisesRef.current.get(slotIndex);
+    if (existingUpload) {
+      return existingUpload;
+    }
+
+    const uploadPromise = (async () => {
+      setBusyBackgroundUploadSlots((prevBusySlots) => {
+        if (prevBusySlots.has(slotIndex)) {
+          return prevBusySlots;
+        }
+
+        const nextBusySlots = new Set(prevBusySlots);
+        nextBusySlots.add(slotIndex);
+        return nextBusySlots;
+      });
+
+      try {
+        const slotKey = SLOT_KEYS[slotIndex] ?? "center";
+        const transformations = getUploadTransformations(currentImage);
+        const aiAdjustments = getAiAdjustments(currentImage);
+        const uploaded = await uploadImageToCloudinary({
+          file: currentImage.file,
+          transformations,
+          aiAdjustments,
+          context: `slot=${slotKey}`,
+        });
+
+        setSelectedImages((prevImages) => {
+          const image = prevImages[slotIndex];
+          if (!image || image.file !== currentImage.file) {
+            return prevImages;
+          }
+
+          const nextImages = [...prevImages];
+          nextImages[slotIndex] = {
+            ...image,
+            uploadedAsset: {
+              publicId: uploaded.asset.public_id,
+              secureUrl: uploaded.asset.secure_url,
+              sourceFingerprint: getFileSourceFingerprint(image.file),
+            },
+          };
+          return nextImages;
+        });
+      } finally {
+        backgroundUploadPromisesRef.current.delete(slotIndex);
+        setBusyBackgroundUploadSlots((prevBusySlots) => {
+          if (!prevBusySlots.has(slotIndex)) {
+            return prevBusySlots;
+          }
+
+          const nextBusySlots = new Set(prevBusySlots);
+          nextBusySlots.delete(slotIndex);
+          return nextBusySlots;
+        });
+      }
+    })();
+
+    backgroundUploadPromisesRef.current.set(slotIndex, uploadPromise);
+    return uploadPromise;
+  }, []);
+
+  const toggleActiveImageRemoveBackground = useCallback(
+    (enabled: boolean) => {
+      const slotIndex = activeImageIndexRef.current;
+      if (typeof slotIndex !== "number") {
+        return;
+      }
+
+      setSlotRemoveBackground(slotIndex, enabled);
+
+      if (!enabled) {
+        return;
+      }
+
+      void uploadSlotIfNeeded(slotIndex).catch((error) => {
+        setSlotRemoveBackground(slotIndex, false);
+        onUploadError?.(
+          error instanceof Error ? error.message : t("upload.uploadFailed"),
+        );
+      });
+    },
+    [onUploadError, setSlotRemoveBackground, uploadSlotIfNeeded],
+  );
+
+  const setSlotEnhance = useCallback((slotIndex: number, enabled: boolean) => {
+    setSelectedImages((prevImages) => {
+      const image = prevImages[slotIndex];
+
+      if (!image) {
+        return prevImages;
+      }
+
+      if ((image.previewEffects.enhance ?? false) === enabled) {
+        return prevImages;
+      }
+
+      const nextImages = [...prevImages];
+      nextImages[slotIndex] = {
+        ...image,
+        previewEffects: {
+          ...image.previewEffects,
+          enhance: enabled,
+        },
+      };
+
+      return nextImages;
+    });
+  }, []);
+
+  const toggleActiveImageEnhance = useCallback(
+    (enabled: boolean) => {
+      const slotIndex = activeImageIndexRef.current;
+      if (typeof slotIndex !== "number") {
+        return;
+      }
+
+      setSlotEnhance(slotIndex, enabled);
+
+      if (!enabled) {
+        return;
+      }
+
+      void uploadSlotIfNeeded(slotIndex).catch((error) => {
+        setSlotEnhance(slotIndex, false);
+        onUploadError?.(
+          error instanceof Error ? error.message : t("upload.uploadFailed"),
+        );
+      });
+    },
+    [onUploadError, setSlotEnhance, uploadSlotIfNeeded],
+  );
+
   const resetActiveImageEffects = useCallback(() => {
     updateActiveImage((image) => ({
       ...image,
       previewEffects: {
         brightness: 0,
         contrast: 0,
+        removeBackground: false,
+        enhance: false,
       },
     }));
   }, [updateActiveImage]);
@@ -609,6 +844,26 @@ export const ImageUploader = forwardRef<
         const { image, slotIndex } = filledSlots[i];
         const slotKey = SLOT_KEYS[slotIndex] ?? "center";
         const transformations = getUploadTransformations(image);
+        const aiAdjustments = getAiAdjustments(image);
+        const reusableUploadedAsset = getReusableUploadedAsset(image);
+
+        if (reusableUploadedAsset) {
+          results.push({
+            slotIndex,
+            slotKey,
+            transformations,
+            aiAdjustments: aiAdjustments ?? undefined,
+            transformedUrl: getTransformedPreviewUrl(
+              reusableUploadedAsset.secureUrl,
+              transformations,
+              undefined,
+              aiAdjustments,
+            ),
+            publicId: reusableUploadedAsset.publicId,
+            secureUrl: reusableUploadedAsset.secureUrl,
+          });
+          continue;
+        }
 
         // Emit progress
         onUploadProgress?.({
@@ -624,6 +879,7 @@ export const ImageUploader = forwardRef<
           const uploaded = await uploadImageToCloudinary({
             file: image.file,
             transformations,
+            aiAdjustments,
             context: `slot=${slotKey}|batch_id=${batchId}`,
             onUploadProgress: (slotProgressFraction) => {
               onUploadProgress?.({
@@ -641,9 +897,28 @@ export const ImageUploader = forwardRef<
             slotIndex,
             slotKey,
             transformations,
+            aiAdjustments: aiAdjustments ?? undefined,
             transformedUrl: uploaded.transformedUrl,
             publicId: uploaded.asset.public_id,
             secureUrl: uploaded.asset.secure_url,
+          });
+
+          setSelectedImages((prevImages) => {
+            const existingImage = prevImages[slotIndex];
+            if (!existingImage || existingImage.file !== image.file) {
+              return prevImages;
+            }
+
+            const nextImages = [...prevImages];
+            nextImages[slotIndex] = {
+              ...existingImage,
+              uploadedAsset: {
+                publicId: uploaded.asset.public_id,
+                secureUrl: uploaded.asset.secure_url,
+                sourceFingerprint: getFileSourceFingerprint(image.file),
+              },
+            };
+            return nextImages;
           });
         } catch (error) {
           const message =
@@ -879,6 +1154,9 @@ export const ImageUploader = forwardRef<
       <CardContent className="flex-1 flex flex-col space-y-5 overflow-hidden pb-5">
         <UploaderPreviewSlider
           activeImage={activeImage}
+          activeImagePreviewUrl={
+            activeImage ? getTransformedImagePreviewUrl(activeImage) : null
+          }
           activeImageIndex={activeImageIndex}
           selectedImageMetadata={selectedImageMetadata}
           bestProportion={bestDisplayImageProportion}
@@ -893,7 +1171,15 @@ export const ImageUploader = forwardRef<
           leftSlotIndex={leftSlotIndex}
           rightSlotIndex={rightSlotIndex}
           leftSlotImage={leftSlotImage}
+          leftSlotPreviewUrl={
+            leftSlotImage ? getTransformedImagePreviewUrl(leftSlotImage) : null
+          }
           rightSlotImage={rightSlotImage}
+          rightSlotPreviewUrl={
+            rightSlotImage
+              ? getTransformedImagePreviewUrl(rightSlotImage)
+              : null
+          }
           onSelectSlot={handlePreviewSlotSelect}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
@@ -915,9 +1201,19 @@ export const ImageUploader = forwardRef<
             }));
           }}
           onUpdateEffect={updateActiveImageEffect}
+          onToggleRemoveBackground={toggleActiveImageRemoveBackground}
+          onToggleEnhance={toggleActiveImageEnhance}
           onResetEffects={resetActiveImageEffects}
           activeImageEffects={activeImage?.previewEffects ?? null}
           canUpdateEffects={!!activeImage}
+          isRemoveBackgroundBusy={
+            typeof activeImageIndex === "number" &&
+            busyBackgroundUploadSlots.has(activeImageIndex)
+          }
+          isEnhanceBusy={
+            typeof activeImageIndex === "number" &&
+            busyBackgroundUploadSlots.has(activeImageIndex)
+          }
           coveragePercent={coveragePercent}
           selectedProportion={
             displayImageProportion === "square"

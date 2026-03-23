@@ -15,7 +15,9 @@
     "legalMenu": "Informacje prawne",
     "paymentsP24": "Płatności P24",
     "loading": "Ładowanie...",
-    "processing": "Przetwarzanie..."
+    "processing": "Przetwarzanie...",
+    "on": "Wł.",
+    "off": "Wył."
   },
   "legalMenu": {
     "title": "Informacje prawne i płatności",
@@ -244,6 +246,10 @@
     "previewEffectsTitle": "Efekty obrazu",
     "previewEffectsDescription": "Dostosuj efekty podglądu za pomocą suwaków",
     "previewEffectsButton": "Efekty",
+    "removeBackgroundDescription": "Automatycznie usuwa tło, pozostawiając tylko główny motyw.",
+    "enhanceDescription": "Poprawia ostrość, kolory i ogólną jakość zdjęcia.",
+    "canvasEffectsGroupTitle": "Efekty płótna",
+    "aiEffectsGroupTitle": "Efekty AI",
     "brightness": "Jasność",
     "contrast": "Kontrast",
     "effectsReset": "Resetuj efekty",

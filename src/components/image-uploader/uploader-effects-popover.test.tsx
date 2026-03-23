@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { UploaderEffectsPopover } from "./uploader-effects-popover";
 import { t } from "@/locales/i18n";
 
@@ -15,6 +15,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={onUpdateEffect}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={onResetEffects}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
@@ -32,6 +34,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={true}
@@ -48,6 +52,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
@@ -65,6 +71,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
@@ -84,6 +92,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
@@ -100,6 +110,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
@@ -117,6 +129,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={onUpdateEffect}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={vi.fn()}
         effects={{ brightness: 50, contrast: 0 }}
         disabled={false}
@@ -135,6 +149,8 @@ describe("UploaderEffectsPopover", () => {
     render(
       <UploaderEffectsPopover
         onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
         onResetEffects={onResetEffects}
         effects={{ brightness: 50, contrast: 0 }}
         disabled={false}
@@ -144,5 +160,32 @@ describe("UploaderEffectsPopover", () => {
     // Component is rendered with reset handler
     // In integration tests, clicking reset button calls onResetEffects
     expect(onResetEffects).toBeDefined();
+  });
+
+  it("calls onToggleRemoveBackground when switch is clicked", () => {
+    const onToggleRemoveBackground = vi.fn();
+
+    render(
+      <UploaderEffectsPopover
+        onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={onToggleRemoveBackground}
+        onToggleEnhance={vi.fn()}
+        onResetEffects={vi.fn()}
+        effects={{ brightness: 0, contrast: 0, removeBackground: false }}
+        disabled={false}
+      />,
+    );
+
+    const triggerButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.pointerDown(triggerButton);
+
+    const removeBackgroundSwitch = screen.getByRole("switch", {
+      name: t("upload.aiRemoveBackground"),
+    });
+    fireEvent.click(removeBackgroundSwitch);
+
+    expect(onToggleRemoveBackground).toHaveBeenCalledWith(true);
   });
 });

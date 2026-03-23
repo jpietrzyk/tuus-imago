@@ -11,7 +11,12 @@ vi.mock("./image-uploader/split-image-into-thirds", () => ({
 let latestToolsPanelProps: {
   slots: Array<SelectedImageItem | null>;
   activeSlotIndex: number | null;
-  activeImageEffects: { brightness: number; contrast: number } | null;
+  activeImageEffects: {
+    brightness: number;
+    contrast: number;
+    removeBackground?: boolean;
+    enhance?: boolean;
+  } | null;
   onUpdateEffect: (
     effectName: "brightness" | "contrast",
     value: number,
@@ -28,7 +33,12 @@ vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
   default: (props: {
     slots: Array<SelectedImageItem | null>;
     activeSlotIndex: number | null;
-    activeImageEffects: { brightness: number; contrast: number } | null;
+    activeImageEffects: {
+      brightness: number;
+      contrast: number;
+      removeBackground?: boolean;
+      enhance?: boolean;
+    } | null;
     onUpdateEffect: (
       effectName: "brightness" | "contrast",
       value: number,
@@ -109,10 +119,14 @@ describe("ImageUploader split effects regression", () => {
       expect(latestToolsPanelProps?.activeImageEffects).toEqual({
         brightness: 40,
         contrast: 0,
+        removeBackground: false,
+        enhance: false,
       });
       expect(latestToolsPanelProps?.slots[1]?.previewEffects).toEqual({
         brightness: 40,
         contrast: 0,
+        removeBackground: false,
+        enhance: false,
       });
     });
   });

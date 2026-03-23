@@ -11,26 +11,47 @@ import { Settings, RotateCcw, ChevronUp } from "lucide-react";
 import { t } from "@/locales/i18n";
 
 interface UploaderEffectsPopoverProps {
-  effects: { brightness: number; contrast: number } | null;
+  effects: {
+    brightness: number;
+    contrast: number;
+    removeBackground?: boolean;
+    enhance?: boolean;
+  } | null;
   onUpdateEffect: (
     effectName: "brightness" | "contrast",
     value: number,
   ) => void;
+  onToggleRemoveBackground: (enabled: boolean) => void;
+  onToggleEnhance: (enabled: boolean) => void;
   onResetEffects: () => void;
   disabled?: boolean;
+  isRemoveBackgroundBusy?: boolean;
+  isEnhanceBusy?: boolean;
 }
 
 export function UploaderEffectsPopover({
   effects,
   onUpdateEffect,
+  onToggleRemoveBackground,
+  onToggleEnhance,
   onResetEffects,
   disabled = false,
+  isRemoveBackgroundBusy = false,
+  isEnhanceBusy = false,
 }: UploaderEffectsPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const effectValues = effects || { brightness: 0, contrast: 0 };
+  const effectValues = effects || {
+    brightness: 0,
+    contrast: 0,
+    removeBackground: false,
+    enhance: false,
+  };
   const hasEffects =
-    effectValues.brightness !== 0 || effectValues.contrast !== 0;
+    effectValues.brightness !== 0 ||
+    effectValues.contrast !== 0 ||
+    !!effectValues.removeBackground ||
+    !!effectValues.enhance;
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -63,6 +84,10 @@ export function UploaderEffectsPopover({
         </div>
 
         <div className="space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("uploader.canvasEffectsGroupTitle")}
+          </p>
+
           {/* Brightness Control */}
           <div className="space-y-2">
             <Label className="flex items-center justify-between">
@@ -99,6 +124,68 @@ export function UploaderEffectsPopover({
               onChange={(value) => onUpdateEffect("contrast", value)}
               disabled={disabled}
             />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            {t("uploader.aiEffectsGroupTitle")}
+          </p>
+
+          <div className="space-y-2 rounded-md border border-border/70 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-1">
+                <Label>{t("upload.aiRemoveBackground")}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("uploader.removeBackgroundDescription")}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={effectValues.removeBackground ? "default" : "outline"}
+                role="switch"
+                aria-label={t("upload.aiRemoveBackground")}
+                aria-checked={!!effectValues.removeBackground}
+                disabled={disabled || isRemoveBackgroundBusy}
+                onClick={() =>
+                  onToggleRemoveBackground(!effectValues.removeBackground)
+                }
+              >
+                {isRemoveBackgroundBusy
+                  ? t("common.loading")
+                  : effectValues.removeBackground
+                    ? t("common.on")
+                    : t("common.off")}
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2 rounded-md border border-border/70 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-1">
+                <Label>{t("upload.aiEnhance")}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("uploader.enhanceDescription")}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={effectValues.enhance ? "default" : "outline"}
+                role="switch"
+                aria-label={t("upload.aiEnhance")}
+                aria-checked={!!effectValues.enhance}
+                disabled={disabled || isEnhanceBusy}
+                onClick={() => onToggleEnhance(!effectValues.enhance)}
+              >
+                {isEnhanceBusy
+                  ? t("common.loading")
+                  : effectValues.enhance
+                    ? t("common.on")
+                    : t("common.off")}
+              </Button>
+            </div>
           </div>
         </div>
 

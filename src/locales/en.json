@@ -15,7 +15,9 @@
     "legalMenu": "Legal",
     "paymentsP24": "Payments P24",
     "loading": "Loading...",
-    "processing": "Processing..."
+    "processing": "Processing...",
+    "on": "On",
+    "off": "Off"
   },
   "legalMenu": {
     "title": "Legal and Payments",
@@ -244,6 +246,10 @@
     "previewEffectsTitle": "Image Effects",
     "previewEffectsDescription": "Adjust preview effects with sliders",
     "previewEffectsButton": "Effects",
+    "removeBackgroundDescription": "Automatically removes the background, leaving only the main subject.",
+    "enhanceDescription": "Improves sharpness, color, and overall image quality.",
+    "canvasEffectsGroupTitle": "Canvas Effects",
+    "aiEffectsGroupTitle": "AI Effects",
     "brightness": "Brightness",
     "contrast": "Contrast",
     "effectsReset": "Reset Effects",

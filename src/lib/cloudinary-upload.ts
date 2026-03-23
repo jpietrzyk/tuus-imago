@@ -4,6 +4,7 @@ import {
 } from "@/lib/cloudinary";
 import {
   getTransformedPreviewUrl,
+  type AiAdjustments,
   type ImageTransformations,
 } from "@/lib/image-transformations";
 
@@ -30,6 +31,7 @@ export interface CloudinaryUploadedAsset {
 export interface CloudinaryDirectUploadInput {
   file: File;
   transformations: ImageTransformations;
+  aiAdjustments?: AiAdjustments | null;
   context?: string;
   signal?: AbortSignal;
   onUploadProgress?: (fraction: number) => void;
@@ -39,6 +41,7 @@ export interface CloudinaryDirectUploadResult {
   asset: CloudinaryUploadedAsset;
   transformedUrl: string;
   transformations: ImageTransformations;
+  aiAdjustments?: AiAdjustments;
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {
@@ -75,6 +78,7 @@ async function requestUploadSignature(
 export async function uploadImageToCloudinary({
   file,
   transformations,
+  aiAdjustments,
   context,
   signal,
   onUploadProgress,
@@ -201,7 +205,10 @@ export async function uploadImageToCloudinary({
     transformedUrl: getTransformedPreviewUrl(
       data.secure_url,
       transformations,
+      undefined,
+      aiAdjustments,
     ),
     transformations,
+    aiAdjustments: aiAdjustments ?? undefined,
   };
 }
