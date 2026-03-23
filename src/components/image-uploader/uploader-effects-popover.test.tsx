@@ -56,6 +56,9 @@ describe("UploaderEffectsPopover", () => {
 
     const settingsIcon = document.querySelector(".lucide-settings");
     expect(settingsIcon).toBeInTheDocument();
+
+    const chevronIcon = document.querySelector('[class*="lucide-chevron"]');
+    expect(chevronIcon).toBeInTheDocument();
   });
 
   it("renders button with aria-label from translations", () => {

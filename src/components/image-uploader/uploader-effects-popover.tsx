@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Settings, RotateCcw } from "lucide-react";
+import { Settings, RotateCcw, ChevronUp } from "lucide-react";
 import { t } from "@/locales/i18n";
 
 interface UploaderEffectsPopoverProps {
@@ -45,6 +45,7 @@ export function UploaderEffectsPopover({
           title={t("uploader.previewEffectsDescription")}
         >
           <Settings className="h-10 w-10" />
+          <ChevronUp className="ml-2 h-10 w-10" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
