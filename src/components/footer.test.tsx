@@ -198,7 +198,9 @@ describe("Footer Component", () => {
     expect(
       screen.getByText(tr("checkout.orderSelectionTotal")),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("200 zł").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText(tr("checkout.orderSelectionPrice")).length,
+    ).toBeGreaterThanOrEqual(1);
 
     await user.click(
       screen.getByRole("checkbox", {
