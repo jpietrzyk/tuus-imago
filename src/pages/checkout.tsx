@@ -6,6 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ShoppingBag,
   CheckCircle2,
   AlertCircle,
@@ -13,13 +20,65 @@ import {
   User,
   CreditCard,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
+import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
+
+type FormData = {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+};
+
+type FormErrors = Partial<Record<keyof FormData, string>>;
+type FormTouched = Partial<Record<keyof FormData, boolean>>;
+
+function validateField(
+  name: keyof FormData,
+  value: string,
+): string | undefined {
+  switch (name) {
+    case "name":
+      if (!value.trim()) return t("checkout.errorName");
+      break;
+    case "email":
+      if (!value.trim() || !/.+@.+\..+/.test(value.trim()))
+        return t("checkout.errorEmail");
+      break;
+    case "address":
+      if (!value.trim()) return t("checkout.errorAddress");
+      break;
+    case "city":
+      if (!value.trim()) return t("checkout.errorCity");
+      break;
+    case "postalCode":
+      if (!value.trim()) return t("checkout.errorPostalCode");
+      break;
+    case "country":
+      if (!value) return t("checkout.errorCountry");
+      break;
+  }
+  return undefined;
+}
+
+const REQUIRED_FIELDS: (keyof FormData)[] = [
+  "name",
+  "email",
+  "address",
+  "city",
+  "postalCode",
+  "country",
+];
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -40,59 +99,89 @@ export function CheckoutPage() {
     return t("upload.slotCenter");
   };
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: "",
+    email: "",
+    phone: "",
     address: "",
     city: "",
     postalCode: "",
     country: "",
   });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<FormTouched>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [genericError, setGenericError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const field = name as keyof FormData;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (touched[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const field = name as keyof FormData;
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
+  };
+
+  const handleCountryChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, country: value }));
+    if (touched.country) {
+      setErrors((prev) => ({
+        ...prev,
+        country: validateField("country", value),
+      }));
+    }
+  };
+
+  const handleCountryBlur = () => {
+    setTouched((prev) => ({ ...prev, country: true }));
+    setErrors((prev) => ({
+      ...prev,
+      country: validateField("country", formData.country),
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setGenericError(null);
 
-    // Basic validation
-    if (!formData.name.trim()) {
-      setError(t("checkout.errorName"));
-      return;
-    }
-    if (!formData.address.trim()) {
-      setError(t("checkout.errorAddress"));
-      return;
-    }
+    const allKeys = Object.keys(formData) as (keyof FormData)[];
+    const newErrors: FormErrors = {};
+    const newTouched: FormTouched = {};
+    allKeys.forEach((key) => {
+      newTouched[key] = true;
+      const err = validateField(key, formData[key]);
+      if (err) newErrors[key] = err;
+    });
+    setTouched(newTouched);
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     setIsSubmitting(true);
-
-    // Simulate checkout process
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      setIsSuccess(true);
-      // Redirect to home after 2 seconds
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      setOrderNumber(`ORD-${Date.now()}`);
     } catch {
-      setError(t("checkout.errorGeneric"));
+      setGenericError(t("checkout.errorGeneric"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isFormValid = formData.name.trim() && formData.address.trim();
+  const isFormValid = REQUIRED_FIELDS.every((f) => formData[f].trim());
+  const fieldError = (field: keyof FormData) =>
+    touched[field] && errors[field] ? errors[field] : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Back to Home Link */}
         <Link
           to="/"
           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
@@ -100,7 +189,6 @@ export function CheckoutPage() {
           {t("common.backToHome")}
         </Link>
 
-        {/* Page Header */}
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-2">
             <ShoppingBag className="h-10 w-10 text-blue-600" />
@@ -114,63 +202,146 @@ export function CheckoutPage() {
             <CardTitle>{t("checkout.shippingInformation")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {isSuccess ? (
+            {orderNumber !== null ? (
               <div className="py-12 text-center">
                 <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   {t("checkout.orderSuccessful")}
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 mb-2">
                   {t("checkout.orderSuccessMessage")}
                 </p>
-                <p className="text-sm text-gray-500 mt-4">
-                  {t("checkout.redirecting")}
+                <p className="text-sm text-gray-500 mb-6">
+                  {t("checkout.orderNumber")}:{" "}
+                  <span className="font-mono font-semibold">{orderNumber}</span>
                 </p>
+                <Button onClick={() => navigate("/")}>
+                  {t("checkout.continueShoppingButton")}
+                </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Error Message */}
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+                {genericError && (
+                  <div
+                    role="alert"
+                    className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200"
+                  >
                     <AlertCircle className="h-5 w-5 shrink-0" />
-                    <span className="font-medium">{error}</span>
+                    <span className="font-medium">{genericError}</span>
                   </div>
                 )}
 
                 {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <fieldset className="space-y-4">
+                  <legend className="text-lg font-semibold text-gray-900 flex items-center gap-2 w-full">
                     <User className="h-5 w-5 text-blue-600" />
                     {t("checkout.personalInformation")}
-                  </h3>
+                  </legend>
 
-                  {/* Name Field */}
                   <div className="space-y-2">
                     <Label htmlFor="name">{t("checkout.fullName")}</Label>
                     <Input
                       id="name"
                       name="name"
                       type="text"
+                      autoComplete="name"
                       placeholder={t("checkout.fullNamePlaceholder")}
                       value={formData.name}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       disabled={isSubmitting}
                       required
+                      aria-required="true"
+                      aria-invalid={!!fieldError("name")}
+                      aria-describedby={
+                        fieldError("name") ? "name-error" : undefined
+                      }
                       className="w-full"
                     />
+                    {fieldError("name") && (
+                      <p
+                        id="name-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("name")}
+                      </p>
+                    )}
                   </div>
-                </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{t("checkout.email")}</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder={t("checkout.emailPlaceholder")}
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      disabled={isSubmitting}
+                      required
+                      aria-required="true"
+                      aria-invalid={!!fieldError("email")}
+                      aria-describedby={
+                        fieldError("email") ? "email-error" : undefined
+                      }
+                      className="w-full"
+                    />
+                    {fieldError("email") && (
+                      <p
+                        id="email-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("email")}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">{t("checkout.phone")}</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder={t("checkout.phonePlaceholder")}
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      disabled={isSubmitting}
+                      aria-invalid={!!fieldError("phone")}
+                      aria-describedby={
+                        fieldError("phone") ? "phone-error" : undefined
+                      }
+                      className="w-full"
+                    />
+                    {fieldError("phone") && (
+                      <p
+                        id="phone-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("phone")}
+                      </p>
+                    )}
+                  </div>
+                </fieldset>
 
                 <Separator />
 
                 {/* Address Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <fieldset className="space-y-4">
+                  <legend className="text-lg font-semibold text-gray-900 flex items-center gap-2 w-full">
                     <MapPin className="h-5 w-5 text-blue-600" />
                     {t("checkout.addressInformation")}
-                  </h3>
+                  </legend>
 
-                  {/* Address Field */}
                   <div className="space-y-2">
                     <Label htmlFor="address">
                       {t("checkout.streetAddress")}
@@ -179,31 +350,64 @@ export function CheckoutPage() {
                       id="address"
                       name="address"
                       type="text"
+                      autoComplete="street-address"
                       placeholder={t("checkout.streetAddressPlaceholder")}
                       value={formData.address}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       disabled={isSubmitting}
                       required
+                      aria-required="true"
+                      aria-invalid={!!fieldError("address")}
+                      aria-describedby={
+                        fieldError("address") ? "address-error" : undefined
+                      }
                       className="w-full"
                     />
+                    {fieldError("address") && (
+                      <p
+                        id="address-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("address")}
+                      </p>
+                    )}
                   </div>
 
-                  {/* City Field */}
                   <div className="space-y-2">
                     <Label htmlFor="city">{t("checkout.city")}</Label>
                     <Input
                       id="city"
                       name="city"
                       type="text"
+                      autoComplete="address-level2"
                       placeholder={t("checkout.cityPlaceholder")}
                       value={formData.city}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       disabled={isSubmitting}
+                      required
+                      aria-required="true"
+                      aria-invalid={!!fieldError("city")}
+                      aria-describedby={
+                        fieldError("city") ? "city-error" : undefined
+                      }
                       className="w-full"
                     />
+                    {fieldError("city") && (
+                      <p
+                        id="city-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("city")}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Postal Code Field */}
                   <div className="space-y-2">
                     <Label htmlFor="postalCode">
                       {t("checkout.postalCode")}
@@ -212,29 +416,77 @@ export function CheckoutPage() {
                       id="postalCode"
                       name="postalCode"
                       type="text"
+                      autoComplete="postal-code"
                       placeholder={t("checkout.postalCodePlaceholder")}
                       value={formData.postalCode}
                       onChange={handleInputChange}
+                      onBlur={handleBlur}
                       disabled={isSubmitting}
+                      required
+                      aria-required="true"
+                      aria-invalid={!!fieldError("postalCode")}
+                      aria-describedby={
+                        fieldError("postalCode")
+                          ? "postalCode-error"
+                          : undefined
+                      }
                       className="w-full"
                     />
+                    {fieldError("postalCode") && (
+                      <p
+                        id="postalCode-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("postalCode")}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Country Field */}
                   <div className="space-y-2">
                     <Label htmlFor="country">{t("checkout.country")}</Label>
-                    <Input
-                      id="country"
-                      name="country"
-                      type="text"
-                      placeholder={t("checkout.countryPlaceholder")}
+                    <Select
                       value={formData.country}
-                      onChange={handleInputChange}
+                      onValueChange={handleCountryChange}
                       disabled={isSubmitting}
-                      className="w-full"
-                    />
+                      required
+                    >
+                      <SelectTrigger
+                        id="country"
+                        autoComplete="country"
+                        aria-required="true"
+                        aria-invalid={!!fieldError("country")}
+                        aria-describedby={
+                          fieldError("country") ? "country-error" : undefined
+                        }
+                        onBlur={handleCountryBlur}
+                        className="w-full"
+                      >
+                        <SelectValue
+                          placeholder={t("checkout.selectCountry")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SHIPPING_COUNTRIES.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {fieldError("country") && (
+                      <p
+                        id="country-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600"
+                      >
+                        {fieldError("country")}
+                      </p>
+                    )}
                   </div>
-                </div>
+                </fieldset>
 
                 <Separator />
 
@@ -320,7 +572,7 @@ export function CheckoutPage() {
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="animate-spin mr-2">⏳</span>
+                      <Loader2 className="animate-spin mr-2 h-5 w-5" />
                       {t("common.processing")}
                     </>
                   ) : (
@@ -330,8 +582,6 @@ export function CheckoutPage() {
                     </>
                   )}
                 </Button>
-
-                {/* Help Text */}
                 <p className="text-xs text-gray-500 text-center">
                   {t("checkout.requiredFields")}
                 </p>

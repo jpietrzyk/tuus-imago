@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  act,
+  fireEvent,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CheckoutPage } from "./checkout";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
@@ -40,6 +46,30 @@ describe("CheckoutPage", () => {
     );
   };
 
+  const fillRequiredFields = async () => {
+    await userEvent.type(
+      screen.getByLabelText(tr("checkout.fullName")),
+      "John Doe",
+    );
+    await userEvent.type(
+      screen.getByLabelText(tr("checkout.email")),
+      "john@example.com",
+    );
+    await userEvent.type(
+      screen.getByLabelText(tr("checkout.streetAddress")),
+      "123 Main Street",
+    );
+    await userEvent.type(screen.getByLabelText(tr("checkout.city")), "Warsaw");
+    await userEvent.type(
+      screen.getByLabelText(tr("checkout.postalCode")),
+      "00-001",
+    );
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(
+      await screen.findByRole("option", { name: "Poland" }),
+    );
+  };
+
   it("renders checkout page", () => {
     renderWithRouter();
     expect(screen.getByText(tr("checkout.title"))).toBeDefined();
@@ -68,6 +98,22 @@ describe("CheckoutPage", () => {
     expect(nameInput.hasAttribute("required")).toBe(true);
   });
 
+  it("renders email input field", () => {
+    renderWithRouter();
+    const emailInput = screen.getByLabelText(tr("checkout.email"));
+    expect(emailInput).toBeDefined();
+    expect(emailInput.getAttribute("type")).toBe("email");
+    expect(emailInput.hasAttribute("required")).toBe(true);
+  });
+
+  it("renders phone input field", () => {
+    renderWithRouter();
+    const phoneInput = screen.getByLabelText(tr("checkout.phone"));
+    expect(phoneInput).toBeDefined();
+    expect(phoneInput.getAttribute("type")).toBe("tel");
+    expect(phoneInput.hasAttribute("required")).toBe(false);
+  });
+
   it("renders address input field", () => {
     renderWithRouter();
     const addressInput = screen.getByLabelText(tr("checkout.streetAddress"));
@@ -90,11 +136,20 @@ describe("CheckoutPage", () => {
     expect(postalInput.getAttribute("type")).toBe("text");
   });
 
-  it("renders country input field", () => {
+  it("renders country select field", () => {
     renderWithRouter();
-    const countryInput = screen.getByLabelText(tr("checkout.country"));
-    expect(countryInput).toBeDefined();
-    expect(countryInput.getAttribute("type")).toBe("text");
+    expect(screen.getByText(tr("checkout.country"))).toBeDefined();
+    expect(screen.getByRole("combobox")).toBeDefined();
+  });
+
+  it("renders country select with EU/EEA options", async () => {
+    renderWithRouter();
+    await userEvent.click(screen.getByRole("combobox"));
+    expect(await screen.findByRole("option", { name: "Poland" })).toBeDefined();
+    expect(
+      await screen.findByRole("option", { name: "Germany" }),
+    ).toBeDefined();
+    expect(await screen.findByRole("option", { name: "Norway" })).toBeDefined();
   });
 
   it("renders address information section", () => {
@@ -132,25 +187,58 @@ describe("CheckoutPage", () => {
     const submitButton = screen.getByRole("button", {
       name: tr("checkout.placeOrder"),
     });
-    // Button should be disabled when form is empty
-    expect(submitButton).toBeDefined();
+    expect(submitButton.hasAttribute("disabled")).toBe(true);
   });
 
-  it("enables submit button when required fields are filled", async () => {
+  it("enables submit button when all required fields are filled", async () => {
     renderWithRouter();
-
-    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
-    const addressInput = screen.getByLabelText(tr("checkout.streetAddress"));
     const submitButton = screen.getByRole("button", {
       name: tr("checkout.placeOrder"),
     });
-
-    await userEvent.type(nameInput, "John Doe");
-    await userEvent.type(addressInput, "123 Main Street");
-
+    expect(submitButton.hasAttribute("disabled")).toBe(true);
+    await fillRequiredFields();
     await waitFor(() => {
-      // Button should exist and be enabled
-      expect(submitButton).toBeDefined();
+      expect(submitButton.hasAttribute("disabled")).toBe(false);
+    });
+  });
+
+  it("shows inline error on blur for empty required name field", async () => {
+    renderWithRouter();
+    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
+    await userEvent.click(nameInput);
+    await userEvent.tab();
+    expect(await screen.findByText(tr("checkout.errorName"))).toBeDefined();
+  });
+
+  it("shows inline error on blur for empty email field", async () => {
+    renderWithRouter();
+    const emailInput = screen.getByLabelText(tr("checkout.email"));
+    await userEvent.click(emailInput);
+    await userEvent.tab();
+    expect(await screen.findByText(tr("checkout.errorEmail"))).toBeDefined();
+  });
+
+  it("shows inline error on blur for invalid email format", async () => {
+    renderWithRouter();
+    const emailInput = screen.getByLabelText(tr("checkout.email"));
+    await userEvent.type(emailInput, "not-an-email");
+    await userEvent.tab();
+    expect(await screen.findByText(tr("checkout.errorEmail"))).toBeDefined();
+  });
+
+  it("shows all required field errors simultaneously on empty submit", async () => {
+    renderWithRouter();
+    const submitButton = screen.getByRole("button", {
+      name: tr("checkout.placeOrder"),
+    });
+    await userEvent.click(submitButton);
+    await waitFor(() => {
+      expect(screen.getByText(tr("checkout.errorName"))).toBeDefined();
+      expect(screen.getByText(tr("checkout.errorEmail"))).toBeDefined();
+      expect(screen.getByText(tr("checkout.errorAddress"))).toBeDefined();
+      expect(screen.getByText(tr("checkout.errorCity"))).toBeDefined();
+      expect(screen.getByText(tr("checkout.errorPostalCode"))).toBeDefined();
+      expect(screen.getByText(tr("checkout.errorCountry"))).toBeDefined();
     });
   });
 
@@ -167,26 +255,52 @@ describe("CheckoutPage", () => {
   it("disables inputs during submission", async () => {
     renderWithRouter();
 
+    await fillRequiredFields();
+
     const nameInput = screen.getByLabelText(tr("checkout.fullName"));
-    const addressInput = screen.getByLabelText(tr("checkout.streetAddress"));
-    const submitButton = screen.getByRole("button", {
-      name: tr("checkout.placeOrder"),
+    const emailInput = screen.getByLabelText(tr("checkout.email"));
+    const form = document.querySelector("form") as HTMLFormElement;
+
+    act(() => {
+      fireEvent.submit(form);
     });
 
-    await userEvent.type(nameInput, "John Doe");
-    await userEvent.type(addressInput, "123 Main Street");
-    await userEvent.click(submitButton);
-
-    await waitFor(() => {
-      // Inputs should have disabled attribute during submission
-      expect(nameInput.getAttribute("disabled")).toBe("");
-      expect(addressInput.getAttribute("disabled")).toBe("");
-    });
+    expect(nameInput.getAttribute("disabled")).toBe("");
+    expect(emailInput.getAttribute("disabled")).toBe("");
   });
 
   it("renders help text", () => {
     renderWithRouter();
     expect(screen.getByText(tr("checkout.requiredFields"))).toBeDefined();
+  });
+
+  it("shows success screen with order number after valid submission", async () => {
+    renderWithRouter();
+    await fillRequiredFields();
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+    await waitFor(() => {
+      expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
+      expect(
+        screen.getByText((content) => /ORD-\d+/.test(content)),
+      ).toBeDefined();
+    });
+  });
+
+  it("shows continue shopping button on success screen", async () => {
+    renderWithRouter();
+    await fillRequiredFields();
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: tr("checkout.continueShoppingButton"),
+        }),
+      ).toBeDefined();
+    });
   });
 
   it("renders uploaded slot images in order summary when passed via location state", () => {
