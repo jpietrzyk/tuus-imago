@@ -30,9 +30,18 @@ interface UploaderPreviewToolsPanelProps {
     effectName: "brightness" | "contrast",
     value: number,
   ) => void;
+  onToggleRemoveBackground: (enabled: boolean) => void;
+  onToggleEnhance: (enabled: boolean) => void;
   onResetEffects: () => void;
-  activeImageEffects: { brightness: number; contrast: number } | null;
+  activeImageEffects: {
+    brightness: number;
+    contrast: number;
+    removeBackground?: boolean;
+    enhance?: boolean;
+  } | null;
   canUpdateEffects: boolean;
+  isRemoveBackgroundBusy?: boolean;
+  isEnhanceBusy?: boolean;
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
   showCoverageDetails?: boolean;
@@ -47,9 +56,13 @@ export function UploaderPreviewToolsPanel({
   shouldConfirmSplit,
   onSelectProportion,
   onUpdateEffect,
+  onToggleRemoveBackground,
+  onToggleEnhance,
   onResetEffects,
   activeImageEffects,
   canUpdateEffects,
+  isRemoveBackgroundBusy = false,
+  isEnhanceBusy = false,
   coveragePercent,
   selectedProportion,
   showCoverageDetails = false,
@@ -114,8 +127,12 @@ export function UploaderPreviewToolsPanel({
         <UploaderEffectsPopover
           effects={activeImageEffects}
           onUpdateEffect={onUpdateEffect}
+          onToggleRemoveBackground={onToggleRemoveBackground}
+          onToggleEnhance={onToggleEnhance}
           onResetEffects={onResetEffects}
           disabled={!canUpdateEffects}
+          isRemoveBackgroundBusy={isRemoveBackgroundBusy}
+          isEnhanceBusy={isEnhanceBusy}
         />
       </div>
       <div className="col-start-3 flex justify-end">

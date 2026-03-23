@@ -1,11 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { ImageUploader } from "./image-uploader";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
+import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { t as tr } from "../locales/i18n";
 
 vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
+}));
+
+vi.mock("@/lib/cloudinary-upload", () => ({
+  uploadImageToCloudinary: vi.fn(),
 }));
 
 let mockImageWidth = 1200;
@@ -36,6 +47,7 @@ describe("ImageUploader", () => {
 
     vi.stubGlobal("fetch", vi.fn());
     vi.mocked(splitImageIntoVerticalThirdFiles).mockReset();
+    vi.mocked(uploadImageToCloudinary).mockReset();
   });
 
   it("splits active image into three slots after confirmation", async () => {
@@ -1059,5 +1071,268 @@ describe("ImageUploader", () => {
       expect(effectsButton).not.toBeDisabled();
       expect(effectsButton).toBeInTheDocument();
     }
+  });
+
+  it("forces fresh uploads after split by invalidating previous uploaded cache", async () => {
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+      lastModified: 101,
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "source-part-1.jpg", {
+        type: "image/jpeg",
+        lastModified: 201,
+      }),
+      new File(["center"], "source-part-2.jpg", {
+        type: "image/jpeg",
+        lastModified: 202,
+      }),
+      new File(["right"], "source-part-3.jpg", {
+        type: "image/jpeg",
+        lastModified: 203,
+      }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+
+    vi.mocked(uploadImageToCloudinary)
+      .mockResolvedValueOnce({
+        asset: {
+          public_id: "initial-upload",
+          secure_url:
+            "https://res.cloudinary.com/test/image/upload/v1/initial.jpg",
+          width: 1200,
+          height: 800,
+          bytes: 1234,
+          format: "jpg",
+          url: "https://res.cloudinary.com/test/image/upload/v1/initial.jpg",
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/e_background_removal/v1/initial.jpg",
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+      })
+      .mockResolvedValue({
+        asset: {
+          public_id: "split-upload",
+          secure_url:
+            "https://res.cloudinary.com/test/image/upload/v2/split.jpg",
+          width: 400,
+          height: 800,
+          bytes: 567,
+          format: "jpg",
+          url: "https://res.cloudinary.com/test/image/upload/v2/split.jpg",
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/e_background_removal/v2/split.jpg",
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+      });
+
+    const uploaderRef = {
+      current: null as null | { uploadFilledSlots: () => Promise<unknown> },
+    };
+    render(<ImageUploader ref={uploaderRef} />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (!input) {
+      return;
+    }
+
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = screen.getByRole("button", {
+      name: tr("uploader.previewEffectsButton"),
+    });
+    fireEvent.pointerDown(effectsButton);
+
+    const removeBackgroundSwitch = await screen.findByRole("switch", {
+      name: tr("upload.aiRemoveBackground"),
+    });
+    fireEvent.click(removeBackgroundSwitch);
+
+    await waitFor(() => {
+      expect(uploadImageToCloudinary).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByTestId("selected-image-preview-canvas"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    const splitButton = await screen.findByRole("button", {
+      name: tr("uploader.splitSelectedImage"),
+    });
+    fireEvent.click(splitButton);
+
+    await waitFor(() => {
+      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
+        previewUrl: expect.stringContaining("blob:"),
+        sourceFile,
+      });
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("uploader-slider-side-left").querySelector("img"),
+      ).toBeTruthy();
+      expect(
+        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+      ).toBeTruthy();
+    });
+
+    await act(async () => {
+      await uploaderRef.current?.uploadFilledSlots();
+    });
+
+    await waitFor(() => {
+      expect(uploadImageToCloudinary).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  it("reuses cached uploaded asset for unchanged slot and uploads fresh for new slot during checkout", async () => {
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+      lastModified: 101,
+    });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+      lastModified: 202,
+    });
+
+    vi.mocked(uploadImageToCloudinary)
+      .mockResolvedValueOnce({
+        asset: {
+          public_id: "cached-upload",
+          secure_url:
+            "https://res.cloudinary.com/test/image/upload/v1/cached.jpg",
+          width: 1200,
+          height: 800,
+          bytes: 1234,
+          format: "jpg",
+          url: "https://res.cloudinary.com/test/image/upload/v1/cached.jpg",
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/e_background_removal/v1/cached.jpg",
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+      })
+      .mockResolvedValue({
+        asset: {
+          public_id: "fresh-upload",
+          secure_url:
+            "https://res.cloudinary.com/test/image/upload/v2/fresh.jpg",
+          width: 1200,
+          height: 800,
+          bytes: 567,
+          format: "jpg",
+          url: "https://res.cloudinary.com/test/image/upload/v2/fresh.jpg",
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/v2/fresh.jpg",
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+      });
+
+    const uploaderRef = {
+      current: null as null | { uploadFilledSlots: () => Promise<unknown> },
+    };
+    render(<ImageUploader ref={uploaderRef} />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+    if (!input) {
+      return;
+    }
+
+    // Load first file and enable remove-background — triggers bg upload (call 1)
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = screen.getByRole("button", {
+      name: tr("uploader.previewEffectsButton"),
+    });
+    fireEvent.pointerDown(effectsButton);
+
+    const removeBackgroundSwitch = await screen.findByRole("switch", {
+      name: tr("upload.aiRemoveBackground"),
+    });
+    fireEvent.click(removeBackgroundSwitch);
+
+    // Wait for bg upload to complete and cloud preview to render
+    await waitFor(() => {
+      expect(uploadImageToCloudinary).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByTestId("selected-image-preview-canvas"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    // Add a second file to the right slot (no bg removal → no uploadedAsset)
+    fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+    const editorInput = document.querySelector(
+      'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+    ) as HTMLInputElement | null;
+
+    expect(editorInput).toBeDefined();
+    if (editorInput) {
+      fireEvent.change(editorInput, { target: { files: [secondFile] } });
+    }
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+      ).toBeTruthy();
+    });
+
+    // Checkout: center slot should reuse cached asset (no upload); right slot is fresh (call 2)
+    await act(async () => {
+      await uploaderRef.current?.uploadFilledSlots();
+    });
+
+    await waitFor(() => {
+      expect(uploadImageToCloudinary).toHaveBeenCalledTimes(2);
+    });
   });
 });

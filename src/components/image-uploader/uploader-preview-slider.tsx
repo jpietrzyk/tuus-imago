@@ -8,6 +8,7 @@ import type { ImageDisplayProportion } from "./image-proportion-calculator";
 
 interface UploaderPreviewSliderProps {
   activeImage: SelectedImageItem | null;
+  activeImagePreviewUrl?: string | null;
   activeImageIndex: number | null;
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
@@ -22,7 +23,9 @@ interface UploaderPreviewSliderProps {
   leftSlotIndex: number | null;
   rightSlotIndex: number | null;
   leftSlotImage: SelectedImageItem | null;
+  leftSlotPreviewUrl?: string | null;
   rightSlotImage: SelectedImageItem | null;
+  rightSlotPreviewUrl?: string | null;
   onSelectSlot: (index: number) => void;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
@@ -35,6 +38,7 @@ interface UploaderPreviewSliderProps {
 
 export default function UploaderPreviewSlider({
   activeImage,
+  activeImagePreviewUrl,
   activeImageIndex,
   selectedImageMetadata,
   bestProportion,
@@ -49,7 +53,9 @@ export default function UploaderPreviewSlider({
   leftSlotIndex,
   rightSlotIndex,
   leftSlotImage,
+  leftSlotPreviewUrl,
   rightSlotImage,
+  rightSlotPreviewUrl,
   onSelectSlot,
   onTouchStart,
   onTouchEnd,
@@ -64,6 +70,8 @@ export default function UploaderPreviewSlider({
         position="left"
         slotIndex={leftSlotIndex}
         image={leftSlotImage}
+        previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
+        useCloudPreview={!!leftSlotImage?.uploadedAsset}
         previewFrameAspectRatio={previewFrameAspectRatio}
         selectedProportion={userSelectedProportion}
         isNavigable={canMovePrevious}
@@ -76,6 +84,8 @@ export default function UploaderPreviewSlider({
 
       <PaintingPreviewSlot
         selectedImage={activeImage}
+        previewUrl={activeImagePreviewUrl ?? activeImage?.previewUrl ?? null}
+        useCloudPreview={!!activeImage?.uploadedAsset}
         activeSlotIndex={activeImageIndex}
         selectedImageMetadata={selectedImageMetadata}
         bestProportion={bestProportion}
@@ -94,6 +104,8 @@ export default function UploaderPreviewSlider({
         position="right"
         slotIndex={rightSlotIndex}
         image={rightSlotImage}
+        previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
+        useCloudPreview={!!rightSlotImage?.uploadedAsset}
         previewFrameAspectRatio={previewFrameAspectRatio}
         selectedProportion={userSelectedProportion}
         isNavigable={canMoveNext}

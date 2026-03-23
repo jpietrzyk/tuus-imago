@@ -8,6 +8,8 @@ interface SideSlotPreviewProps {
   position: "left" | "right";
   slotIndex: number | null;
   image: SelectedImageItem | null;
+  previewUrl?: string | null;
+  useCloudPreview?: boolean;
   previewFrameAspectRatio: number;
   selectedProportion: ImageDisplayProportion;
   isNavigable: boolean;
@@ -22,6 +24,8 @@ export default function SideSlotPreview({
   position,
   slotIndex,
   image,
+  previewUrl = null,
+  useCloudPreview = false,
   previewFrameAspectRatio,
   selectedProportion,
   isNavigable,
@@ -43,7 +47,7 @@ export default function SideSlotPreview({
 
   // Build CSS filter for preview effects
   const getEffectFilter = () => {
-    if (!image || !image.previewEffects) {
+    if (!image || !image.previewEffects || useCloudPreview) {
       return undefined;
     }
 
@@ -114,7 +118,7 @@ export default function SideSlotPreview({
         {image ? (
           <>
             <img
-              src={image.previewUrl}
+              src={previewUrl ?? image.previewUrl}
               alt={
                 typeof slotIndex === "number"
                   ? t("uploader.selectImageSlot", {

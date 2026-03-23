@@ -12,6 +12,8 @@ import type {
 
 interface PaintingPreviewSlotProps {
   selectedImage: SelectedImageItem | null;
+  previewUrl?: string | null;
+  useCloudPreview?: boolean;
   activeSlotIndex: number | null;
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
@@ -32,6 +34,8 @@ interface PaintingPreviewSlotProps {
 
 export default function PaintingPreviewSlot({
   selectedImage,
+  previewUrl = null,
+  useCloudPreview = false,
   activeSlotIndex,
   selectedImageMetadata,
   bestProportion,
@@ -86,7 +90,7 @@ export default function PaintingPreviewSlot({
   ]);
 
   usePreviewCanvasRender({
-    previewUrl: selectedImage?.previewUrl ?? null,
+    previewUrl: previewUrl ?? selectedImage?.previewUrl ?? null,
     canvasRef: previewCanvasRef,
     selectedImageMetadata,
     allowAutoSelectOptimalProportion:

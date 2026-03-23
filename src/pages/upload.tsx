@@ -257,10 +257,7 @@ export function UploadPage({
   const activeAiAdjustmentsCount =
     Object.values(aiAdjustments).filter(Boolean).length;
   const isUploadAvailable =
-    hasUploaderSelection &&
-    !isBatchUploading &&
-    successfulUploadedSlots.length === 0 &&
-    !uploadedImage;
+    hasUploaderSelection && !isBatchUploading && !uploadedImage;
   const isCheckoutAvailable = Boolean(
     uploadedImage || successfulUploadedSlots.length > 0 || hasUploaderSelection,
   );

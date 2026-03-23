@@ -54,6 +54,8 @@ const createProps = () => ({
   shouldConfirmSplit: false,
   onSelectProportion: vi.fn(),
   onUpdateEffect: vi.fn(),
+  onToggleRemoveBackground: vi.fn(),
+  onToggleEnhance: vi.fn(),
   onResetEffects: vi.fn(),
   activeImageEffects: { brightness: 0, contrast: 0 },
   canUpdateEffects: true,
