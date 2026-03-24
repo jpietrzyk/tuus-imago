@@ -12,6 +12,8 @@
     "security": "Bezpieczeństwo",
     "shipping": "Dostawa",
     "terms": "Warunki",
+    "payments": "Płatności",
+    "complaint": "Formularz reklamacji",
     "legalMenu": "Informacje prawne",
     "paymentsP24": "Płatności P24",
     "loading": "Ładowanie...",
@@ -336,6 +338,13 @@
     "orderSelectionTotal": "Suma",
     "orderSelectionUploaded": "Gotowe",
     "orderSelectionPendingUpload": "Zostanie przesłane przy zamówieniu",
+    "termsAccepted": "Akceptuję regulamin *",
+    "termsAcceptedError": "Musisz zaakceptować regulamin",
+    "privacyAccepted": "Akceptuję politykę prywatności *",
+    "privacyAcceptedError": "Musisz zaakceptować politykę prywatności",
+    "marketingConsent": "Wyrażam zgodę na otrzymywanie informacji marketingowych (opcjonalne)",
+    "termsLink": "regulamin",
+    "privacyLink": "politykę prywatności",
     "placeOrder": "Złóż zamówienie",
     "requiredFields": "* Pola wymagane. Twoje informacje będą używane tylko do celów wysyłki.",
     "errorName": "Proszę wprowadzić swoje imię i nazwisko",
@@ -346,7 +355,18 @@
     "errorCountry": "Proszę wybrać kraj",
     "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
     "orderNumber": "Numer zamówienia",
-    "continueShoppingButton": "Wróć do strony głównej"
+    "continueShoppingButton": "Wróć do strony głównej",
+    "consents": {
+      "title": "Zgody prawne",
+      "termsLabel": "Akceptuję",
+      "termsLink": "regulamin",
+      "privacyLink": "politykę prywatności",
+      "termsSuffix": "oraz wyrażam zgodę na przetwarzanie danych osobowych.",
+      "privacyLabel": "Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji zamówienia.",
+      "marketingLabel": "Wyrażam zgodę na otrzymywanie informacji marketingowych (opcjonalne)",
+      "termsAcceptedError": "Musisz zaakceptować regulamin",
+      "privacyAcceptedError": "Musisz wyrazić zgodę na przetwarzanie danych osobowych"
+    }
   },
   "consents": {
     "title": "Zgody",
@@ -386,27 +406,275 @@
     "subtitle": "Jak używamy ciasteczek na naszej stronie",
     "main": {
       "title": "Przegląd polityki ciasteczek",
-      "description": "Ta strona zawiera informacje o tym, jak używamy ciasteczek i podobnych technologii na naszej stronie. Szczegółowa treść zostanie dodana wkrótce."
+      "description": "Niniejsza Polityka ciasteczek wyjaśnia, czym są ciasteczka, jakie ich rodzaje używamy, dlaczego je stosujemy oraz jak możesz zarządzać swoimi preferencjami. Korzystając z naszej strony internetowej, wyrażasz zgodę na używanie ciasteczek zgodnie z tą polityką."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "whatAreCookies": {
+      "title": "Czym są ciasteczka",
+      "description": "Ciasteczka to małe pliki tekstowe przechowywane na Twoim komputerze lub urządzeniu mobilnym podczas odwiedzania strony internetowej. Pozwalają one stronie rozpoznać Twoje urządzenie i zapamiętać informacje o Twojej wizycie, takie jak preferowany język, dane logowania i inne ustawienia. Może to ułatwić kolejną wizytę i sprawić, że strona będzie bardziej użyteczna."
+    },
+    "types": {
+      "title": "Rodzaje ciasteczek, których używamy",
+      "necessary": {
+        "title": "Niezbędne ciasteczka",
+        "description": "Te ciasteczka są niezbędne do prawidłowego działania strony. Umożliwiają podstawowe funkcje, takie jak nawigacja, dostęp do bezpiecznych obszarów i zapamiętywanie Twoich preferencji. Strona nie może funkcjonować bez tych ciasteczek.",
+        "examples": "Ciasteczka sesyjne, ciasteczka uwierzytelniające, ciasteczka bezpieczeństwa"
+      },
+      "analytics": {
+        "title": "Ciasteczka analityczne",
+        "description": "Te ciasteczka pomagają nam zrozumieć, jak odwiedzający wchodzą w interakcję z naszą stroną, zbierając i raportując anonimowe informacje. Pomaga nam to poprawiać działanie strony i doświadczenie użytkownika.",
+        "examples": "Ciasteczka Google Analytics, czas trwania sesji, wizyty na stronie"
+      },
+      "functional": {
+        "title": "Ciasteczka funkcjonalne",
+        "description": "Te ciasteczka umożliwiają rozszerzone funkcje i personalizację, takie jak czat na żywo i filmy. Mogą być ustawione przez nas lub przez zewnętrznych dostawców, których usług używamy.",
+        "examples": "Preferencje czatu, ustawienia odtwarzania filmów"
+      },
+      "marketing": {
+        "title": "Ciasteczka marketingowe",
+        "description": "Te ciasteczka służą do śledzenia odwiedzających na różnych stronach w celu wyświetlania reklam, które są istotne i angażujące dla poszczególnych użytkowników. Te ciasteczka są ustawiane tylko za Twoją wyraźną zgodą.",
+        "examples": "Ciasteczka reklamowe, ciasteczka remarketingowe"
+      }
+    },
+    "thirdParty": {
+      "title": "Ciasteczka osób trzecich",
+      "description": "Korzystamy z usług zewnętrznych, które mogą również ustawiać ciasteczka na Twoim urządzeniu. Obejmują one:",
+      "googleAnalytics": "Google Analytics - do analizy ruchu na stronie",
+      "przelewy24": "Przelewy24 - do przetwarzania płatności",
+      "cloudinary": "Cloudinary - do przesyłania i przetwarzania obrazów",
+      "socialMedia": "Widgety mediów społecznościowych - do funkcji udostępniania"
+    },
+    "duration": {
+      "title": "Czas przechowywania ciasteczek",
+      "session": "Ciasteczka sesyjne - są usuwane po zamknięciu przeglądarki",
+      "persistent": "Ciasteczka trwałe - pozostają na Twoim urządzeniu przez określony czas (zazwyczaj do 12 miesięcy)"
+    },
+    "consent": {
+      "title": "Zgoda na ciasteczka",
+      "description": "Podczas pierwszej wizyty na naszej stronie zobaczysz baner ciasteczek, który pozwoli Ci zaakceptować lub odrzucić niezbędne ciasteczka. W każdej chwili możesz zmienić swoje preferencje, klikając link 'Ustawienia ciasteczek' w stopce.",
+      "withdraw": "Możesz wycofać swoją zgodę w dowolnym momencie, usuwając ciasteczka przeglądarki lub korzystając z naszych ustawień ciasteczek."
+    },
+    "manage": {
+      "title": "Zarządzanie ciasteczkami",
+      "description": "Możesz zarządzać preferencjami ciasteczek poprzez ustawienia przeglądarki internetowej. Większość przeglądarek pozwala na:",
+      "block": "Zablokowanie wszystkich ciasteczek",
+      "blockThirdParty": "Zablokowanie ciasteczek osób trzecich",
+      "delete": "Usunięcie istniejących ciasteczek",
+      "notify": "Powiadomienie o ustawieniu ciasteczek",
+      "note": "Uwaga: Wyłączenie niezbędnych ciasteczek może wpłynąć na funkcjonalność naszej strony."
+    },
+    "consequences": {
+      "title": "Konsekwencje wyłączenia ciasteczek",
+      "description": "Jeśli wyłączysz lub odrzucisz ciasteczka, niektóre części naszej strony mogą nie działać prawidłowo. Możesz nie mieć dostępu do niektórych funkcji, a niektóre usługi mogą nie działać zgodnie z przeznaczeniem. Niezbędne ciasteczka są wymagane do działania koszyka i procesu zamówienia."
+    },
+    "updates": {
+      "title": "Aktualizacje polityki",
+      "description": "Możemy aktualizować niniejszą Politykę ciasteczek od czasu do czasu, aby odzwierciedlić zmiany w naszych praktykach lub ze względów operacyjnych, prawnych lub regulacyjnych. Wszelkie zmiany zostaną zamieszczone na tej stronie, a data 'Ostatnia aktualizacja' zostanie zaktualizowana na dole."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "description": "Jeśli masz pytania dotyczące naszej Polityki ciasteczek, skontaktuj się z nami pod adresem biuro@car-folie.pl."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "privacy": {
     "title": "Polityka prywatności",
     "subtitle": "Jak chronimy Twoje dane osobowe",
     "main": {
-      "title": "Przegląd polityki prywatności",
-      "description": "Ta strona zawiera szczegółowe informacje o tym, jak zbieramy, używamy i chronimy Twoje dane osobowe. Szczegółowa treść zostanie dodana wkrótce."
+      "title": "Polityka prywatności - przegląd",
+      "description": "Niniejsza Polityka prywatności opisuje sposób zbierania, wykorzystywania i ochrony Twoich danych osobowych zgodnie z Rozporządzeniem o Ochronie Danych Osobowych (RODO) oraz polskimi przepisami o ochronie danych. Zobowiązujemy się do zapewnienia bezpieczeństwa i poufności Twoich danych osobowych."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "dataController": {
+      "title": "Administrator danych",
+      "description": "Administratorem Twoich danych osobowych jest:",
+      "name": "Nazwa firmy",
+      "nameValue": "Tuusimago",
+      "address": "Adres siedziby",
+      "addressValue": "32-400 Myślenice, ul. Wybickiego 48, Polska",
+      "email": "Adres e-mail",
+      "phone": "Telefon",
+      "phoneValue": "+48 570 603 695"
+    },
+    "typesOfData": {
+      "title": "Rodzaje zbieranych danych osobowych",
+      "description": "Zbieramy następujące rodzaje danych osobowych:",
+      "item1": "Dane identyfikacyjne (imię, nazwisko)",
+      "item2": "Dane kontaktowe (adres e-mail, numer telefonu, adres dostawy)",
+      "item3": "Dane finansowe (informacje o płatnościach, dane konta bankowego do zwrotów)",
+      "item4": "Dane transakcyjne (historia zamówień, zakupione produkty)",
+      "item5": "Dane techniczne (adres IP, typ przeglądarki, informacje o urządzeniu)",
+      "item6": "Dane komunikacyjne (korespondencja z działem obsługi klienta)"
+    },
+    "legalBasis": {
+      "title": "Podstawa prawna przetwarzania",
+      "description": "Przetwarzamy Twoje dane osobowe na podstawie następujących podstaw prawnych zgodnie z art. 6 RODO:",
+      "article1": "Art. 6 ust. 1 lit. b) - Wykonanie umowy",
+      "article1Text": "Przetwarzanie niezbędne do wykonania umowy, której stroną jesteś, np. realizacja zamówienia i dostawa.",
+      "article2": "Art. 6 ust. 1 lit. c) - Obowiązek prawny",
+      "article2Text": "Przetwarzanie niezbędne do wypełnienia obowiązku prawnego, np. wymogi podatkowe i księgowe.",
+      "article3": "Art. 6 ust. 1 lit. f) - Prawnie uzasadniony interes",
+      "article3Text": "Przetwarzanie niezbędne do realizacji naszego prawnie uzasadnionego interesu, np. doskonalenie usług i obsługi klienta."
+    },
+    "dataPurposes": {
+      "title": "Cele przetwarzania danych",
+      "description": "Wykorzystujemy Twoje dane osobowe w następujących celach:",
+      "item1": "Realizacja i obsługa zamówień",
+      "item2": "Dostawa towarów na wskazany adres",
+      "item3": "Przetwarzanie płatności przez Przelewy24",
+      "item4": "Obsługa klienta i obsługa zapytań",
+      "item5": "Komunikaty marketingowe (tylko za Twoją zgodą)"
+    },
+    "dataSharing": {
+      "title": "Udostępnianie danych",
+      "description": "Możemy udostępniać Twoje dane osobowe następującym podmiotom zewnętrznym:",
+      "partners": "Zaufani partnerzy:",
+      "partner1": "Przelewy24 - usługi przetwarzania płatności",
+      "partner2": "InPost - usługi kurierskie i dostaw",
+      "partner3": "Dostawcy hostingu - przechowywanie danych i infrastruktura",
+      "partner4": "Usługi księgowe - sprawozdawczość finansowa i zgodność podatkowa",
+      "noSale": "Nie sprzedajemy Twoich danych osobowych osobom trzecim."
+    },
+    "dataStorage": {
+      "title": "Okres przechowywania danych",
+      "description": "Przechowujemy Twoje dane osobowe tylko przez okres niezbędny do realizacji celów, w których zostały zebrane:",
+      "orderData": "Dane zamówień i transakcji",
+      "orderDataPeriod": "5 lat (wymogi podatkowe i księgowe)",
+      "financialData": "Dane finansowe i płatności",
+      "financialDataPeriod": "5 lat (wymogi podatkowe i księgowe)",
+      "marketingData": "Dane marketingowe (jeśli wyrażono zgodę)",
+      "marketingDataPeriod": "Do momentu wycofania zgody",
+      "analyticsData": "Dane analityczne i techniczne",
+      "analyticsDataPeriod": "2 lata"
+    },
+    "userRights": {
+      "title": "Twoje prawa wynikające z RODO",
+      "description": "Zgodnie z Rozporządzeniem o Ochronie Danych Osobowych przysługują Ci następujące prawa:",
+      "right1Title": "Prawo dostępu",
+      "right1Desc": "Możesz żądać kopii swoich danych osobowych oraz informacji o sposobie ich przetwarzania.",
+      "right2Title": "Prawo do sprostowania",
+      "right2Desc": "Możesz żądać poprawienia niedokładnych lub niekompletnych danych osobowych.",
+      "right3Title": "Prawo do usunięcia",
+      "right3Desc": "Możesz żądać usunięcia swoich danych osobowych, gdy nie ma podstawy prawnej do ich przetwarzania.",
+      "right4Title": "Prawo do ograniczenia",
+      "right4Desc": "Możesz żądać ograniczenia przetwarzania w określonych okolicznościach.",
+      "right5Title": "Prawo do przenoszenia",
+      "right5Desc": "Możesz żądać swoich danych w ustrukturyzowanym, powszechnie używanym formacie nadającym się do odczytu maszynowego.",
+      "right6Title": "Prawo do sprzeciwu",
+      "right6Desc": "Możesz wnieść sprzeciw wobec przetwarzania opartego na prawnie uzasadnionym interesie, w tym profilowaniu.",
+      "exercise": "Aby skorzystać z któregokolwiek z tych praw, skontaktuj się z nami pod adresem info@tuusimago.com"
+    },
+    "cookies": {
+      "title": "Polityka cookies",
+      "description": "Nasza strona internetowa wykorzystuje pliki cookies w celu zapewnienia prawidłowego działania i poprawy doświadczenia użytkownika.",
+      "necessaryTitle": "Niezbędne pliki cookies",
+      "necessaryDesc": "Niezbędne do prawidłowego działania strony. Te pliki umożliwiają podstawowe funkcje, takie jak nawigacja i dostęp do bezpiecznych obszarów.",
+      "analyticsTitle": "Pliki cookies analityczne",
+      "analyticsDesc": "Pomagają nam zrozumieć, jak odwiedzający korzystają z naszej strony, zbierając anonimowe informacje o wizytach i źródłach ruchu.",
+      "marketingTitle": "Pliki cookies marketingowe",
+      "marketingDesc": "Służą do śledzenia odwiedzających na różnych stronach w celu wyświetlania odpowiednich reklam. Te pliki cookies są ustawiane tylko za Twoją zgodą.",
+      "manage": "Możesz zarządzać preferencjami plików cookies poprzez ustawienia przeglądarki."
+    },
+    "dataSecurity": {
+      "title": "Bezpieczeństwo danych",
+      "description": "Wdrażamy odpowiednie środki techniczne i organizacyjne w celu ochrony Twoich danych osobowych:",
+      "item1": "Szyfrowanie SSL/TLS danych podczas transmisji",
+      "item2": "Bezpieczne serwery z kontrolą dostępu",
+      "item3": "Regularne audyty bezpieczeństwa i aktualizacje",
+      "item4": "Szkolenia pracowników z zakresu ochrony danych",
+      "item5": "Procedury reagowania na incydenty"
+    },
+    "children": {
+      "title": "Ochrona nieletnich",
+      "description": "Nasze usługi nie są przeznaczone dla dzieci poniżej 16 roku życia. Nie zbieramy świadomie danych osobowych od nieletnich bez zgody rodziców."
+    },
+    "changes": {
+      "title": "Zmiany w Polityce prywatności",
+      "description": "Możemy aktualizować niniejszą Politykę prywatności od czasu do czasu. Wszelkie zmiany zostaną opublikowane na tej stronie z zaktualizowaną datą rewizji. Zachęcamy do okresowego przeglądu polityki."
+    },
+    "contact": {
+      "title": "Dane kontaktowe",
+      "description": "W przypadku jakichkolwiek pytań dotyczących niniejszej Polityki prywatności lub realizacji Twoich praw w zakresie ochrony danych, prosimy o kontakt:",
+      "email": "Adres e-mail",
+      "phone": "Numer telefonu",
+      "phoneValue": "+48 570 603 695",
+      "responseTime": "Odpowiemy na Twoje zapytanie w ciągu 30 dni.",
+      "dpo": "W sprawach związanych z ochroną danych możesz się z nami skontaktować również pod adresem:",
+      "contactPage": "Strona kontaktowa"
+    },
+    "complaints": {
+      "title": "Prawo do wniesienia skargi",
+      "description": "Jeśli uważasz, że Twoje prawa w zakresie ochrony danych zostały naruszone, masz prawo wnieść skargę do Urzędu Ochrony Danych Osobowych (UODO)."
+    },
+    "lastUpdated": "Aktualizacja: marzec 2026"
   },
   "returns": {
     "title": "Zwroty i reklamacje",
     "subtitle": "Nasza polityka zwrotów i reklamacji",
     "main": {
-      "title": "Przegląd zwrotów i reklamacji",
-      "description": "Ta strona zawiera informacje o naszej polityce zwrotów i reklamacji. Szczegółowa treść zostanie dodana wkrótce."
+      "title": "Regulamin zwrotów i reklamacji",
+      "description": "Poniżej znajdują się szczegółowe informacje dotyczące procedury zwrotu towaru, składania reklamacji oraz przysługujących Ci praw jako konsumentowi."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "rightOfWithdrawal": {
+      "title": "Prawo odstąpienia od umowy",
+      "period": "Masz prawo odstąpić od umowy w terminie 14 dni od dnia otrzymania towaru bez podania przyczyny.",
+      "howTo": "Jak odstąpić od umowy:",
+      "step1": "Wypełnij formularz odstąpienia od umowy (dostępny na naszej stronie lub poproś o niego e-mailem)",
+      "step2": "Odeślij towar na adres: ul. Wybickiego 48, 32-400 Myślenice",
+      "step3": "Odeślij nam wypełniony formularz e-mailem na adres: returns@tuusimago.com",
+      "deadline": "Termin zachowany, jeśli odeślesz towar przed upływem 14 dni."
+    },
+    "returnCosts": {
+      "title": "Koszty zwrotu",
+      "whoPays": "W przypadku odstąpienia od umowy ponosisz bezpośrednie koszty zwrotu towaru.",
+      "condition": "Towar musi być zwrócony w stanie niezmienionym, w oryginalnym opakowaniu."
+    },
+    "refund": {
+      "title": "Zwrot pieniędzy",
+      "timeline": "Zwrot pieniędzy nastąpi w ciągu 14 dni od dnia otrzymania zwróconego towaru lub dostarczenia dowodu jego odesłania.",
+      "method": "Zwrot nastąpi tą samą metodą płatności, którą użyto przy zakupie.",
+      "delay": "Możemy wstrzymać się ze zwrotem pieniędzy do czasu otrzymania towaru lub do czasu dostarczenia dowodu jego odesłania."
+    },
+    "condition": {
+      "title": "Stan towaru",
+      "description": "Odpowiadasz za zmniejszenie wartości towaru wynikające z korzystania z niego w sposób inny niż było to konieczne do stwierdzenia charakteru, cech i funkcjonowania towaru."
+    },
+    "damaged": {
+      "title": "Reklamacja uszkodzonego lub wadliwego towaru",
+      "description": "Jeśli otrzymany towar jest uszkodzony lub wadliwy, masz prawo złożyć reklamację.",
+      "process": "Procedura reklamacji:",
+      "step1": "Skontaktuj się z nami e-mailem na adres: returns@tuusimago.com",
+      "step2": "Opisz problem i dołącz zdjęcia uszkodzenia",
+      "step3": "Rozpatrzymy reklamację w ciągu 14 dni",
+      "step4": "W przypadku uznania reklamacji wymienimy towar lub zwrócimy pieniądze",
+      "freeReturn": "W przypadku reklamacji towaru koszty odesłania pokrywamy my."
+    },
+    "complaintForm": {
+      "title": "Formularz reklamacji",
+      "description": "Możesz skorzystać z naszego formularza reklamacji dostępnego na stronie:",
+      "link": "Formularz reklamacji"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "address": "Adres do zwrotów i reklamacji:",
+      "street": "ul. Wybickiego 48",
+      "city": "32-400 Myślenice",
+      "phone": "Telefon:",
+      "phoneNumber": "570-603-695",
+      "email": "E-mail:",
+      "emailAddress": "returns@tuusimago.com",
+      "hours": "Godziny pracy: poniedziałek-piątek 9:00-17:00"
+    },
+    "nonReturnable": {
+      "title": "Wyłączenia",
+      "description": "Prawo odstąpienia od umowy nie przysługuje w przypadku:",
+      "item1": "Towarów wykonanych na indywidualne zamówienie (np. produkty spersonalizowane)",
+      "item2": "Towarów łatwo psujących się lub z krótkim terminem ważności",
+      "item3": "Towarów dostarczanych w zapieczętowanych opakowaniach, których nie można zwrócić ze względu na ochronę zdrowia lub higienę"
+    },
+    "legalBasis": {
+      "title": "Podstawa prawna",
+      "description": "Polityka zwrotów i reklamacji oparta jest na Ustawie o prawach konsumenta z dnia 30 maja 2014 r."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "security": {
     "title": "Bezpieczeństwo",
@@ -421,18 +689,306 @@
     "title": "Informacje o dostawie",
     "subtitle": "Jak dostarczamy Twoje zamówienia",
     "main": {
-      "title": "Przegląd dostawy",
-      "description": "Ta strona zawiera informacje o naszych metodach dostawy, czasach realizacji i kosztach. Szczegółowa treść zostanie dodana wkrótce."
+      "title": "Regulamin dostawy",
+      "description": "Poniżej znajdują się szczegółowe informacje dotyczące metod dostawy, kosztów, czasów realizacji oraz procedur postępowania w przypadku niedostarczonej przesyłki."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "carriers": {
+      "title": "Dostawcy usług",
+      "inpost": "InPost Paczkomaty"
+    },
+    "costs": {
+      "title": "Koszty dostawy",
+      "standard": "14,99 zł",
+      "standardLabel": "Standardowa przesyłka"
+    },
+    "timeframe": {
+      "title": "Czas realizacji",
+      "businessDays": "termin realizacji wynosi 2-4 dni robocze od momentu wysłania zamówienia",
+      "note": "Czas liczony od dnia nadania przesyłki przez kuriera."
+    },
+    "tracking": {
+      "title": "Śledzenie przesyłki",
+      "description": "Po wysłaniu zamówienia otrzymasz wiadomość e-mail z numerem przesyłki oraz linkiem do śledzenia jej statusu."
+    },
+    "failedDelivery": {
+      "title": "Postępowanie w przypadku niedostarczonej przesyłki",
+      "description": "W przypadku, gdy przesyłka nie zostanie dostarczona z powodu nieobecności odbiorcy lub podania błędnego adresu, kurier pozostawi zawiadomienie o próbie dostarczenia. Przesyłka zostanie przekazana do najbliższego punktu odbioru, gdzie będzie oczekiwać na odbiór przez 7 dni.",
+      "procedure": "Procedura odbioru z punktu: prosimy udać się do wskazanego punktu odbioru z dowodem osobistym. W przypadku odbioru przez osobę trzecią, wymagane jest pełnomocnictwo."
+    },
+    "noInternational": "Nie realizujemy wysyłek zagranicznych. Aktualnie dostawa dostępna jest tylko na terenie Polski.",
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "terms": {
     "title": "Warunki korzystania",
     "subtitle": "Warunki użytkowania naszych usług",
     "main": {
       "title": "Przegląd warunków korzystania",
-      "description": "Ta strona zawiera warunki korzystania z naszych usług. Szczegółowa treść zostanie dodana wkrótce."
+      "description": "Niniejsze Warunki korzystania (dalej: 'Warunki') określają zasady korzystania ze sklepu internetowego dostępnego pod adresem www.tuusimago.com (dalej: 'Sklep'). Sklep prowadzony jest przez Tuusimago z siedzibą pod adresem Myślenice, ul. Wybickiego 48, NIP: 3396629204, REGON: 275867303. Składając zamówienie w Sklepie, Klient akceptuje niniejsze Warunki w całości."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "scope": {
+      "title": "Zakres usług",
+      "description": "Sklep oferuje usługi druku spersonalizowanego, w tym wydruki zdjęć, wydruki na płótnie, plakaty oraz inne produkty personalizowane. Oferujemy również usługi oprawiania i dodatkowe opcje wykończenia."
+    },
+    "ordering": {
+      "title": "Proces składania zamówienia",
+      "step1": "Wybierz rodzaj i rozmiar produktu",
+      "step2": "Prześlij swoje zdjęcie lub grafikę",
+      "step3": "Wybierz opcje personalizacji (efekty, ramy itp.)",
+      "step4": "Dodaj do koszyka i przejdź do kasy",
+      "step5": "Wybierz metodę płatności i dostawy",
+      "step6": "Potwierdź zamówienie i dokonaj płatności"
+    },
+    "pricing": {
+      "title": "Ceny i płatności",
+      "description": "Wszystkie ceny podane w Sklepie są w polskich złotych (PLN) i zawierają VAT. Cena końcowa jest potwierdzana przed złożeniem zamówienia. Akceptujemy płatności przez Przelewy24 (BLIK, przelewy bankowe, karty) oraz inne metody wskazane na stronie płatności.",
+      "fees": "Dodatkowe opłaty mogą dotyczyć ekspresowej realizacji lub specjalnych opcji wykończenia. Zostaną one wyraźnie wskazane przed potwierdzeniem zamówienia."
+    },
+    "delivery": {
+      "title": "Warunki dostawy",
+      "description": "Dostawa realizowana jest za pośrednictwem paczkomatów InPost na terenie całej Polski. Standardowy koszt dostawy wynosi 14,99 zł. Czas dostawy to 2-4 dni robocze od nadania. Obecnie nie realizujemy wysyłek zagranicznych.",
+      "tracking": "Po nadaniu przesyłki Klienci otrzymują e-mail z numerem śledzenia."
+    },
+    "products": {
+      "title": "Produkty i jakość",
+      "description": "Używamy materiałów wysokiej jakości, w tym premium papieru fotograficznego, płótna i ramek. Produkty spersonalizowane są wykonywane według indywidualnych specyfikacji. Kolory mogą nieznacznie różnić się od wyświetlania na ekranie ze względu na kalibrację monitora."
+    },
+    "obligations": {
+      "title": "Obowiązki Klienta",
+      "description": "Klienci są zobowiązani do podawania prawidłowych informacji przy składaniu zamówień. Użytkownicy są odpowiedzialni za posiadanie praw do przesłanych grafik. Zabronione są treści naruszające prawa osób trzecich, treści nielegalne lub obraźliwe."
+    },
+    "intellectualProperty": {
+      "title": "Własność intelektualna",
+      "description": "Klient zachowuje własność przesłanych grafik. Przesyłając materiały, Klient udziela Sklepowi licencji na wykorzystanie grafik wyłącznie w celu realizacji zamówienia. Wszystkie treści, projekty i materiały Sklepu są chronione prawem autorskim i nie mogą być reprodukowane bez zgody."
+    },
+    "liability": {
+      "title": "Ograniczenie odpowiedzialności",
+      "description": "Sklep nie ponosi odpowiedzialności za opóźnienia spowodowane okolicznościami pozostającymi poza naszą kontrolą (force majeure). Nasza odpowiedzialność jest ograniczona do wartości zamówionego produktu. Nie odpowiadamy za szkody pośrednie lub utracone zyski."
+    },
+    "forceMajeure": {
+      "title": "Force majeure",
+      "description": "Żadna ze stron nie ponosi odpowiedzialności za niewykonanie zobowiązań z powodu okoliczności pozostających poza rozsądną kontrolą, w tym: klęski żywiołowe, wojna, strajki, działania rządowe, pandemie lub awarie infrastruktury."
+    },
+    "termination": {
+      "title": "Rozwiązanie umowy",
+      "description": "Klient może odstąpić od umowy w ciągu 14 dni bez podania przyczyn (Ustawa o prawach konsumenta). Produkty wykonane według indywidualnych specyfikacji nie podlegają zwrotowi, chyba że są wadliwe. Aby odstąpić od umowy, należy powiadomić nas pisemnie na adres biuro@car-folie.pl."
+    },
+    "disputeResolution": {
+      "title": "Rozstrzyganie sporów",
+      "description": "Wszelkie spory będą rozstrzygane przez polskie sądy powszechne właściwe dla miejsca zamieszkania Konsumenta. Konsumenci mogą również korzystać z pozasądowego rozstrzygania sporów poprzez platformę ODR UE (https://ec.europa.eu/consumers/odr/)."
+    },
+    "complaints": {
+      "title": "Rozpatrywanie reklamacji",
+      "description": "Reklamacje rozpatrujemy w ciągu 14 dni od otrzymania. Reklamacje można składać e-mailem na adres biuro@car-folie.pl lub poprzez formularz reklamacji na naszej stronie internetowej. Wadliwe produkty zostaną wymienione lub zwrócone."
+    },
+    "changes": {
+      "title": "Zmiany w Warunkach",
+      "description": "Zastrzegamy sobie prawo do modyfikacji niniejszych Warunków. Zmiany będą publikowane na stronie Sklepu z co najmniej 14-dniowym wyprzedzeniem przed wejściem w życie. Zamówienia złożone przed wejściem w życie zmian podlegają poprzednim Warunkom."
+    },
+    "applicableLaw": {
+      "title": "Prawo właściwe",
+      "description": "Niniejsze Warunki podlegają prawu polskiemu, w tym Kodeksowi cywilnemu, Ustawie o prawach konsumenta oraz RODO. W sprawach nieuregulowanych niniejszymi Warunkami stosuje się prawo polskie."
+    },
+    "consumerRights": {
+      "title": "Prawa konsumenta",
+      "description": "Konsumenci mają prawo do: odstąpienia od umowy w ciągu 14 dni, składania reklamacji, dostępu do danych osobowych, żądania sprostowania lub usunięcia danych, skarg do organu ochrony danych. Pełne informacje dostępne na www.uokik.gov.pl."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "description": "W sprawach dotyczących niniejszych Warunków prosimy o kontakt pod adresem biuro@car-folie.pl lub telefonicznie pod numerem 570-603-695."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
+  },
+  "payments": {
+    "title": "Płatności",
+    "subtitle": "Informacje o metodach płatności i bezpieczeństwie",
+    "methods": {
+      "title": "Metody płatności",
+      "blik": {
+        "label": "BLIK",
+        "description": "Szybka i bezpieczna metoda płatności mobilnej. Użyj aplikacji bankowej, aby sfinalizować płatność w kilka sekund.",
+        "step1": "Wybierz BLIK jako metodę płatności",
+        "step2": "Wprowadź 6-cyfrowy kod BLIK w aplikacji bankowej",
+        "step3": "Potwierdź płatność w aplikacji bankowej"
+      },
+      "transfer": {
+        "label": "Przelew tradycyjny",
+        "description": "Standardowy przelew bankowy dostępny w większości polskich banków. Płatność zostanie zaksięgowana po zaksięgowaniu środków.",
+        "step1": "Wybierz swój bank z listy",
+        "step2": "Zaloguj się do bankowości internetowej i potwierdź płatność"
+      },
+      "cards": {
+        "label": "Karty płatnicze",
+        "description": "Akceptujemy karty Visa, Mastercard, Maestro i inne. Płatności są przetwarzane bezpiecznie przez Przelewy24."
+      },
+      "installments": {
+        "label": "Raty",
+        "description": "Zapłać w ratach za pomocą PayPo lub Alior Raty. Dostępne dla zamówień powyżej 200 zł."
+      }
+    },
+    "processing": {
+      "title": "Przetwarzanie płatności",
+      "timeframe": {
+        "label": "Czas przetwarzania",
+        "description": "Płatności BLIK są przetwarzane natychmiast. Przelewy tradycyjne są księgowane w ciągu 1-2 dni roboczych."
+      },
+      "confirmation": {
+        "label": "Potwierdzenie zamówienia",
+        "description": "Po zaksięgowaniu płatności otrzymasz e-mail z potwierdzeniem zamówienia i numerem zamówienia."
+      }
+    },
+    "security": {
+      "title": "Bezpieczeństwo płatności",
+      "ssl": {
+        "label": "Szyfrowanie SSL",
+        "description": "Wszystkie transakcje są chronione przez szyfrowanie SSL/TLS, co zapewnia bezpieczeństwo Twoich danych."
+      },
+      "pci": {
+        "label": "Zgodność z PCI DSS",
+        "description": "Nasz operator płatności Przelewy24 jest zgodny ze standardem PCI DSS, co zapewnia najwyższy poziom bezpieczeństwa transakcji kartami."
+      },
+      "dataProtection": {
+        "label": "Ochrona danych",
+        "description": "Nie przechowujemy danych Twojej karty płatniczej. Wszystkie transakcje są przetwarzane przez Przelewy24."
+      }
+    },
+    "refunds": {
+      "title": "Zwroty płatności",
+      "process": {
+        "label": "Proces zwrotu",
+        "description": "Zwroty są przetwarzane przez Przelewy24 i zwracane na tę samą metodę płatności, której użyto przy zakupie."
+      },
+      "timeframe": {
+        "label": "Czas realizacji zwrotu",
+        "description": "Zwroty są przetwarzane w ciągu 14 dni roboczych od zatwierdzenia reklamacji."
+      },
+      "method": {
+        "label": "Metoda zwrotu",
+        "description": "Środki zostaną zwrócone na konto bankowe lub kartę używaną do płatności. Czas zaksięgowania zwrotu zależy od banku."
+      }
+    },
+    "failure": {
+      "title": "Nieudana płatność",
+      "reasons": {
+        "label": "Przyczyny nieudanej płatności",
+        "description": "Płatność może zostać odrzucona z powodu niewystarczających środków, błędnych danych karty, przekroczenia limitu lub problemów z połączeniem internetowym."
+      },
+      "action": {
+        "label": "Co zrobić?",
+        "description": "Sprawdź swoje dane i saldo, a następnie spróbuj ponownie. Jeśli problem się powtarza, skontaktuj się z nami lub swoim bankiem."
+      }
+    },
+    "p24": {
+      "title": "Informacje o Przelewy24",
+      "description": "Płatności są przetwarzane przez Przelewy24 - lidera polskiego rynku płatności internetowych. Kliknij poniżej, aby zapoznać się z regulaminem i polityką prywatności Przelewy24.",
+      "terms": "Regulamin Przelewy24",
+      "privacy": "Polityka prywatności Przelewy24"
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
+  },
+  "complaint": {
+    "title": "Formularz reklamacji",
+    "subtitle": "Złóż reklamację dotyczącą zamówienia",
+    "info": {
+      "title": "Informacje o reklamacjach",
+      "deadline": {
+        "label": "Termin składania reklamacji",
+        "description": "Reklamacje można składać w ciągu 14 dni od otrzymania produktu zgodnie z polskim prawem konsumenckim."
+      },
+      "responseTime": {
+        "label": "Czas odpowiedzi",
+        "description": "Odpowiemy na Twoją reklamację w ciągu 14 dni roboczych od daty jej otrzymania."
+      },
+      "requiredDocs": {
+        "label": "Wymagane dokumenty",
+        "description": "Do rozpatrzenia reklamacji wymagane są: numer zamówienia, zdjęcie produktu, opis problemu i dowód zakupu."
+      }
+    },
+    "form": {
+      "title": "Formularz reklamacji",
+      "customerInfo": {
+        "title": "Dane klienta"
+      },
+      "name": {
+        "label": "Imię i nazwisko",
+        "placeholder": "Wprowadź imię i nazwisko"
+      },
+      "email": {
+        "label": "Adres e-mail",
+        "placeholder": "Wprowadź adres e-mail"
+      },
+      "phone": {
+        "label": "Numer telefonu",
+        "placeholder": "+48 123 456 789"
+      },
+      "address": {
+        "label": "Adres",
+        "placeholder": "Wprowadź adres"
+      },
+      "orderInfo": {
+        "title": "Dane zamówienia"
+      },
+      "orderNumber": {
+        "label": "Numer zamówienia",
+        "placeholder": "Wprowadź numer zamówienia"
+      },
+      "orderDate": {
+        "label": "Data zamówienia"
+      },
+      "productInfo": {
+        "title": "Informacje o produkcie"
+      },
+      "product": {
+        "label": "Nazwa produktu",
+        "placeholder": "Wprowadź nazwę produktu"
+      },
+      "details": {
+        "title": "Szczegóły reklamacji"
+      },
+      "type": {
+        "label": "Typ reklamacji",
+        "select": "Wybierz typ reklamacji",
+        "damaged": "Produkt uszkodzony",
+        "defective": "Produkt wadliwy",
+        "wrong": "Błędny produkt",
+        "missing": "Brakujący produkt",
+        "quality": "Niezadowalająca jakość",
+        "other": "Inny problem"
+      },
+      "description": {
+        "label": "Opis problemu",
+        "placeholder": "Szczegółowo opisz problem..."
+      },
+      "resolution": {
+        "label": "Oczekiwane rozwiązanie",
+        "placeholder": "Jak chcesz, abyśmy rozwiązali ten problem?"
+      },
+      "photos": {
+        "title": "Zdjęcia produktu",
+        "description": "Dołącz wyraźne zdjęcia pokazujące uszkodzenie lub wadę. Maksymalnie 5 zdjęć, do 5 MB każde.",
+        "upload": "Wybierz zdjęcia"
+      },
+      "consent": {
+        "label": "Zgadzam się na przetwarzanie moich danych osobowych w celu rozpatrzenia reklamacji zgodnie z Polityką Prywatności. *"
+      },
+      "submit": "Wyślij reklamację"
+    },
+    "contact": {
+      "title": "Kontakt w sprawie reklamacji",
+      "description": "Możesz również skontaktować się z nami telefonicznie lub e-mailowo w sprawie reklamacji.",
+      "email": {
+        "label": "E-mail"
+      },
+      "phone": {
+        "label": "Telefon"
+      },
+      "address": {
+        "label": "Adres"
+      }
+    },
+    "hours": {
+      "title": "Godziny obsługi reklamacji",
+      "description": "Obsługa reklamacji jest dostępna od poniedziałku do piątku, w godzinach 9:00 - 17:00 CET."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   }
 }

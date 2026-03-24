@@ -73,12 +73,15 @@ describe("LegalNavigationSheet", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders payment section with coming soon items", () => {
+  it("renders payment section with links", () => {
     renderSheet();
 
-    expect(screen.getByText(tr("legalMenu.p24Terms"))).toBeInTheDocument();
-    expect(screen.getByText(tr("legalMenu.p24Privacy"))).toBeInTheDocument();
-    expect(screen.getAllByText(tr("legalMenu.comingSoon"))).toHaveLength(2);
+    // Payment section should have the payments link
+    expect(
+      screen.getByRole("link", { name: tr("common.payments") }),
+    ).toBeInTheDocument();
+    // And the payment intro text
+    expect(screen.getByText(tr("legalMenu.paymentIntro"))).toBeInTheDocument();
   });
 
   it("renders section navigation buttons", () => {

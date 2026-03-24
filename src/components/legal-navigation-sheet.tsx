@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import {
+  AlertCircle,
   BadgeDollarSign,
   Building2,
   CheckCircle,
@@ -42,6 +43,11 @@ const legalLinks = [
   { to: "/security", labelKey: "common.security", icon: Lock },
   { to: "/returns", labelKey: "common.returns", icon: RotateCcw },
   { to: "/shipping", labelKey: "common.shipping", icon: Truck },
+  { to: "/complaint", labelKey: "common.complaint", icon: AlertCircle },
+] as const;
+
+const paymentLinks = [
+  { to: "/payments", labelKey: "common.payments", icon: BadgeDollarSign },
 ] as const;
 
 const companyLinks = [
@@ -156,7 +162,32 @@ export function LegalNavigationSheet({
               {t("legalMenu.paymentIntro")}
             </p>
             <div className="grid gap-2">
-              <div className="flex items-center justify-between rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-700">
+              {paymentLinks.map(({ to, labelKey, icon: Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => onOpenChange(false)}
+                  className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <span className="flex items-center gap-2">
+                    <Icon
+                      className="h-4 w-4 text-blue-600"
+                      aria-hidden="true"
+                    />
+                    {t(labelKey)}
+                  </span>
+                  <ChevronRight
+                    className="h-3.5 w-3.5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                </Link>
+              ))}
+              <a
+                href="https://www.przelewy24.pl/regulamin"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
                 <span className="flex items-center gap-2">
                   <BadgeDollarSign
                     className="h-4 w-4 text-blue-600"
@@ -164,11 +195,17 @@ export function LegalNavigationSheet({
                   />
                   {t("legalMenu.p24Terms")}
                 </span>
-                <span className="text-xs text-gray-500">
-                  {t("legalMenu.comingSoon")}
-                </span>
-              </div>
-              <div className="flex items-center justify-between rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-700">
+                <ChevronRight
+                  className="h-3.5 w-3.5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </a>
+              <a
+                href="https://www.przelewy24.pl/polityka-prywatnosci"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
                 <span className="flex items-center gap-2">
                   <BadgeDollarSign
                     className="h-4 w-4 text-blue-600"
@@ -176,10 +213,11 @@ export function LegalNavigationSheet({
                   />
                   {t("legalMenu.p24Privacy")}
                 </span>
-                <span className="text-xs text-gray-500">
-                  {t("legalMenu.comingSoon")}
-                </span>
-              </div>
+                <ChevronRight
+                  className="h-3.5 w-3.5 text-gray-400"
+                  aria-hidden="true"
+                />
+              </a>
             </div>
           </section>
 

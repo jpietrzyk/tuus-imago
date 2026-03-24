@@ -84,6 +84,15 @@ describe("CheckoutPage", () => {
       screen.getByLabelText(tr("checkout.postalCode")),
       "00-001",
     );
+    // Check the consent checkboxes required for form validation
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
   };
 
   it("renders checkout page", () => {
@@ -320,6 +329,15 @@ describe("CheckoutPage", () => {
           .value,
       ).toBe("Jane Doe");
     });
+    // Check consent checkboxes before submitting
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
     await userEvent.click(
       screen.getByRole("button", { name: tr("checkout.placeOrder") }),
     );
@@ -343,6 +361,15 @@ describe("CheckoutPage", () => {
           .value,
       ).toBe("Jane Doe");
     });
+    // Check consent checkboxes before submitting
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
     await userEvent.click(
       screen.getByRole("button", { name: tr("checkout.placeOrder") }),
     );

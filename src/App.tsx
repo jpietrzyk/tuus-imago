@@ -26,6 +26,8 @@ import { ReturnsPage } from "./pages/returns";
 import { SecurityPage } from "./pages/security";
 import { ShippingPage } from "./pages/shipping";
 import { TermsPage } from "./pages/terms";
+import { PaymentsPage } from "./pages/payments";
+import { ComplaintPage } from "./pages/complaint";
 import { CANVAS_PRINT_UNIT_PRICE } from "@/lib/pricing";
 
 interface DebugToggleProps {
@@ -242,6 +244,8 @@ export function App() {
           <Route path="/security" element={<SecurityPage />} />
           <Route path="/shipping" element={<ShippingPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/payments" element={<PaymentsPage />} />
+          <Route path="/complaint" element={<ComplaintPage />} />
         </Routes>
       </main>
       <Footer
