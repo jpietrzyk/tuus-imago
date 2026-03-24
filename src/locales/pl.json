@@ -355,7 +355,18 @@
     "errorCountry": "Proszę wybrać kraj",
     "errorGeneric": "Coś poszło nie tak. Spróbuj ponownie.",
     "orderNumber": "Numer zamówienia",
-    "continueShoppingButton": "Wróć do strony głównej"
+    "continueShoppingButton": "Wróć do strony głównej",
+    "consents": {
+      "title": "Zgody prawne",
+      "termsLabel": "Akceptuję",
+      "termsLink": "regulamin",
+      "privacyLink": "politykę prywatności",
+      "termsSuffix": "oraz wyrażam zgodę na przetwarzanie danych osobowych.",
+      "privacyLabel": "Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji zamówienia.",
+      "marketingLabel": "Wyrażam zgodę na otrzymywanie informacji marketingowych (opcjonalne)",
+      "termsAcceptedError": "Musisz zaakceptować regulamin",
+      "privacyAcceptedError": "Musisz wyrazić zgodę na przetwarzanie danych osobowych"
+    }
   },
   "consents": {
     "title": "Zgody",
