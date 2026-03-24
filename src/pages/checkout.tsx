@@ -53,6 +53,77 @@ type FormData = {
 type FormErrors = Partial<Record<keyof FormData, string>>;
 type FormTouched = Partial<Record<keyof FormData, boolean>>;
 
+/**
+ * Renders the order summary section showing ordered images and total price
+ */
+function OrderSummary({
+  uploadedSlots,
+  totalPrice,
+  slotLabel,
+}: {
+  uploadedSlots: UploadedCheckoutSlot[];
+  totalPrice: number;
+  slotLabel: (slotKey: UploadedSlotResult["slotKey"]) => string;
+}): React.ReactNode {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <CreditCard className="h-5 w-5 text-blue-600" />
+        {t("checkout.orderSummary")}
+      </h3>
+      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+        {uploadedSlots.length > 0 ? (
+          <>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              {t("checkout.uploadedImages")}
+            </p>
+            {uploadedSlots.map((slot) => (
+              <div key={slot.slotKey} className="flex items-center gap-3 py-1">
+                <img
+                  src={getCloudinaryThumbnailUrl(slot.transformedUrl, 48, 48)}
+                  alt={slotLabel(slot.slotKey)}
+                  className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800">
+                    {slotLabel(slot.slotKey)}
+                  </p>
+                </div>
+                <a
+                  href={slot.transformedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 text-blue-600 hover:text-blue-800"
+                  aria-label={t("upload.openUploadedImage")}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <span className="text-gray-700">
+                {t("checkout.enhancedPhoto")}
+              </span>
+              <span className="font-semibold text-gray-900">1x</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-700">{t("checkout.canvasPrint")}</span>
+              <span className="font-semibold text-gray-900">1x</span>
+            </div>
+          </>
+        )}
+        <div className="flex justify-between text-lg font-bold border-t pt-2">
+          <span className="text-gray-900">{t("checkout.total")}</span>
+          <span className="text-blue-600">{formatPrice(totalPrice)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function validateField(
   name: keyof FormData,
   value: string,
@@ -247,6 +318,15 @@ export function CheckoutPage() {
             {t("checkout.title")}
           </h1>
           <p className="text-lg text-gray-600">{t("checkout.subtitle")}</p>
+        </div>
+
+        {/* Order Summary */}
+        <div className="mb-8 max-w-2xl mx-auto">
+          <OrderSummary
+            uploadedSlots={uploadedSlots}
+            totalPrice={totalPrice}
+            slotLabel={slotLabel}
+          />
         </div>
 
         <Card className="max-w-2xl mx-auto">
@@ -539,82 +619,6 @@ export function CheckoutPage() {
                   </div>
                 </fieldset>
 
-                <Separator />
-
-                {/* Order Summary */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
-                    {t("checkout.orderSummary")}
-                  </h3>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                    {uploadedSlots.length > 0 ? (
-                      <>
-                        <p className="text-sm font-medium text-gray-700 mb-2">
-                          {t("checkout.uploadedImages")}
-                        </p>
-                        {uploadedSlots.map((slot) => (
-                          <div
-                            key={slot.slotKey}
-                            className="flex items-center gap-3 py-1"
-                          >
-                            <img
-                              src={getCloudinaryThumbnailUrl(
-                                slot.transformedUrl,
-                                48,
-                                48,
-                              )}
-                              alt={slotLabel(slot.slotKey)}
-                              className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-800">
-                                {slotLabel(slot.slotKey)}
-                              </p>
-                            </div>
-                            <a
-                              href={slot.transformedUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 text-blue-600 hover:text-blue-800"
-                              aria-label={t("upload.openUploadedImage")}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </a>
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">
-                            {t("checkout.enhancedPhoto")}
-                          </span>
-                          <span className="font-semibold text-gray-900">
-                            1x
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-700">
-                            {t("checkout.canvasPrint")}
-                          </span>
-                          <span className="font-semibold text-gray-900">
-                            1x
-                          </span>
-                        </div>
-                      </>
-                    )}
-                    <div className="flex justify-between text-lg font-bold border-t pt-2">
-                      <span className="text-gray-900">
-                        {t("checkout.total")}
-                      </span>
-                      <span className="text-blue-600">
-                        {formatPrice(totalPrice)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Submit Button */}
                 <Button
                   type="submit"
@@ -636,6 +640,18 @@ export function CheckoutPage() {
                 <p className="text-xs text-gray-500 text-center">
                   {t("checkout.requiredFields")}
                 </p>
+
+                {/* Mobile-only compact total reminder */}
+                <div className="md:hidden pt-4 border-t">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">
+                      {t("checkout.total")}
+                    </span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {formatPrice(totalPrice)}
+                    </span>
+                  </div>
+                </div>
               </form>
             )}
           </CardContent>
