@@ -77,10 +77,7 @@ function OrderSummary({
               {t("checkout.uploadedImages")}
             </p>
             {uploadedSlots.map((slot) => (
-              <div
-                key={slot.slotKey}
-                className="flex items-center gap-3 py-1"
-              >
+              <div key={slot.slotKey} className="flex items-center gap-3 py-1">
                 <img
                   src={slot.transformedUrl}
                   alt={slotLabel(slot.slotKey)}
@@ -109,27 +106,17 @@ function OrderSummary({
               <span className="text-gray-700">
                 {t("checkout.enhancedPhoto")}
               </span>
-              <span className="font-semibold text-gray-900">
-                1x
-              </span>
+              <span className="font-semibold text-gray-900">1x</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-700">
-                {t("checkout.canvasPrint")}
-              </span>
-              <span className="font-semibold text-gray-900">
-                1x
-              </span>
+              <span className="text-gray-700">{t("checkout.canvasPrint")}</span>
+              <span className="font-semibold text-gray-900">1x</span>
             </div>
           </>
         )}
         <div className="flex justify-between text-lg font-bold border-t pt-2">
-          <span className="text-gray-900">
-            {t("checkout.total")}
-          </span>
-          <span className="text-blue-600">
-            {formatPrice(totalPrice)}
-          </span>
+          <span className="text-gray-900">{t("checkout.total")}</span>
+          <span className="text-blue-600">{formatPrice(totalPrice)}</span>
         </div>
       </div>
     </div>

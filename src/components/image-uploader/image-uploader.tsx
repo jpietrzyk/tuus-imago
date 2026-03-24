@@ -909,7 +909,9 @@ export const ImageUploader = forwardRef<
   const uploadFilledSlots =
     useCallback(async (): Promise<BatchUploadSummary> => {
       // Wait for any pending background uploads (from toggle enhance/removeBackground) to complete
-      const pendingPromises = Array.from(backgroundUploadPromisesRef.current.values());
+      const pendingPromises = Array.from(
+        backgroundUploadPromisesRef.current.values(),
+      );
       if (pendingPromises.length > 0) {
         await Promise.all(pendingPromises);
       }
