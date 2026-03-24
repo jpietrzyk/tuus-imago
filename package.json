@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "preview": "vite preview",
-    "db:migrate:dev": "pnpm dlx supabase db push",
+    "db:migrate:dev": "bash ./scripts/supabase-migrate.sh",
     "db:migrate:deploy": "bash ./scripts/supabase-migrate.sh"
   },
   "dependencies": {
