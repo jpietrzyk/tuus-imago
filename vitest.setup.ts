@@ -24,6 +24,29 @@ if (typeof globalWithResizeObserver.ResizeObserver === "undefined") {
   };
 }
 
+// Radix Select relies on pointer-capture APIs that are missing in jsdom.
+if (typeof Element !== "undefined") {
+  const elementProto = Element.prototype as Element & {
+    hasPointerCapture?: (pointerId: number) => boolean;
+    setPointerCapture?: (pointerId: number) => void;
+    releasePointerCapture?: (pointerId: number) => void;
+    scrollIntoView?: (arg?: boolean | ScrollIntoViewOptions) => void;
+  };
+
+  if (typeof elementProto.hasPointerCapture !== "function") {
+    elementProto.hasPointerCapture = () => false;
+  }
+  if (typeof elementProto.setPointerCapture !== "function") {
+    elementProto.setPointerCapture = () => {};
+  }
+  if (typeof elementProto.releasePointerCapture !== "function") {
+    elementProto.releasePointerCapture = () => {};
+  }
+  if (typeof elementProto.scrollIntoView !== "function") {
+    elementProto.scrollIntoView = () => {};
+  }
+}
+
 // Simple polyfill for HTMLCanvasElement in jsdom to suppress warnings
 if (typeof window.HTMLCanvasElement !== "function") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

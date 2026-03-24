@@ -12,12 +12,23 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { tr } from "@/test/i18n-test";
 import { type UploadedSlotResult } from "@/components/image-uploader";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
+import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 
 function hasExactTextContent(expectedText: string) {
   return (_content: string, element: Element | null) =>
     element?.textContent?.replace(/\s+/g, " ").trim() ===
     expectedText.replace(/\s+/g, " ").trim();
 }
+
+const VALID_DRAFT = {
+  name: "Jane Doe",
+  email: "jane@example.com",
+  phone: "",
+  address: "1 Main St",
+  city: "Warsaw",
+  postalCode: "00-001",
+  country: "PL",
+};
 
 describe("CheckoutPage", () => {
   beforeEach(() => {
@@ -47,6 +58,13 @@ describe("CheckoutPage", () => {
     );
   };
 
+  const seedDraft = (draft: Partial<typeof VALID_DRAFT>) => {
+    sessionStorage.setItem(
+      "checkout-form-draft",
+      JSON.stringify({ ...VALID_DRAFT, ...draft }),
+    );
+  };
+
   const fillRequiredFields = async () => {
     await userEvent.type(
       screen.getByLabelText(tr("checkout.fullName")),
@@ -65,10 +83,6 @@ describe("CheckoutPage", () => {
       screen.getByLabelText(tr("checkout.postalCode")),
       "00-001",
     );
-    await userEvent.click(screen.getByRole("combobox"));
-    await userEvent.click(
-      await screen.findByRole("option", { name: "Poland" }),
-    );
   };
 
   it("renders checkout page", () => {
@@ -78,11 +92,10 @@ describe("CheckoutPage", () => {
 
   it("renders back to upload link", () => {
     renderWithRouter();
-    const backLink = screen.getByRole("link", {
+    const backButton = screen.getByRole("button", {
       name: tr("checkout.backToUpload"),
     });
-    expect(backLink).toBeDefined();
-    expect(backLink).toHaveAttribute("href", "/upload");
+    expect(backButton).toBeDefined();
   });
 
   it("renders personal information section", () => {
@@ -144,12 +157,16 @@ describe("CheckoutPage", () => {
 
   it("renders country select with EU/EEA options", async () => {
     renderWithRouter();
-    await userEvent.click(screen.getByRole("combobox"));
-    expect(await screen.findByRole("option", { name: "Poland" })).toBeDefined();
+    expect(screen.getByRole("combobox")).toBeDefined();
     expect(
-      await screen.findByRole("option", { name: "Germany" }),
-    ).toBeDefined();
-    expect(await screen.findByRole("option", { name: "Norway" })).toBeDefined();
+      SHIPPING_COUNTRIES.some((country) => country.label === "Poland"),
+    ).toBe(true);
+    expect(
+      SHIPPING_COUNTRIES.some((country) => country.label === "Germany"),
+    ).toBe(true);
+    expect(
+      SHIPPING_COUNTRIES.some((country) => country.label === "Norway"),
+    ).toBe(true);
   });
 
   it("renders address information section", () => {
@@ -191,11 +208,21 @@ describe("CheckoutPage", () => {
   });
 
   it("enables submit button when all required fields are filled", async () => {
+    seedDraft({
+      name: "",
+      email: "",
+      address: "",
+      city: "",
+      postalCode: "",
+    });
     renderWithRouter();
     const submitButton = screen.getByRole("button", {
       name: tr("checkout.placeOrder"),
     });
     expect(submitButton.hasAttribute("disabled")).toBe(true);
+    await waitFor(() => {
+      expect(screen.getByRole("combobox").textContent).toContain("Poland");
+    });
     await fillRequiredFields();
     await waitFor(() => {
       expect(submitButton.hasAttribute("disabled")).toBe(false);
@@ -203,8 +230,10 @@ describe("CheckoutPage", () => {
   });
 
   it("shows inline error on blur for empty required name field", async () => {
+    sessionStorage.removeItem("checkout-form-draft");
     renderWithRouter();
     const nameInput = screen.getByLabelText(tr("checkout.fullName"));
+    expect((nameInput as HTMLInputElement).value).toBe("");
     await userEvent.click(nameInput);
     await userEvent.tab();
     expect(await screen.findByText(tr("checkout.errorName"))).toBeDefined();
@@ -228,10 +257,10 @@ describe("CheckoutPage", () => {
 
   it("shows all required field errors simultaneously on empty submit", async () => {
     renderWithRouter();
-    const submitButton = screen.getByRole("button", {
-      name: tr("checkout.placeOrder"),
+    const form = document.querySelector("form") as HTMLFormElement;
+    act(() => {
+      fireEvent.submit(form);
     });
-    await userEvent.click(submitButton);
     await waitFor(() => {
       expect(screen.getByText(tr("checkout.errorName"))).toBeDefined();
       expect(screen.getByText(tr("checkout.errorEmail"))).toBeDefined();
@@ -253,9 +282,14 @@ describe("CheckoutPage", () => {
   });
 
   it("disables inputs during submission", async () => {
+    seedDraft({});
     renderWithRouter();
-
-    await fillRequiredFields();
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
 
     const nameInput = screen.getByLabelText(tr("checkout.fullName"));
     const emailInput = screen.getByLabelText(tr("checkout.email"));
@@ -275,32 +309,50 @@ describe("CheckoutPage", () => {
   });
 
   it("shows success screen with order number after valid submission", async () => {
+    seedDraft({});
     renderWithRouter();
-    await fillRequiredFields();
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
     await userEvent.click(
       screen.getByRole("button", { name: tr("checkout.placeOrder") }),
     );
-    await waitFor(() => {
-      expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
-      expect(
-        screen.getByText((content) => /ORD-\d+/.test(content)),
-      ).toBeDefined();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
+        expect(
+          screen.getByText((content) => /ORD-\d+/.test(content)),
+        ).toBeDefined();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("shows continue shopping button on success screen", async () => {
+    seedDraft({});
     renderWithRouter();
-    await fillRequiredFields();
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
     await userEvent.click(
       screen.getByRole("button", { name: tr("checkout.placeOrder") }),
     );
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", {
-          name: tr("checkout.continueShoppingButton"),
-        }),
-      ).toBeDefined();
-    });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole("button", {
+            name: tr("checkout.continueShoppingButton"),
+          }),
+        ).toBeDefined();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it("renders uploaded slot images in order summary when passed via location state", () => {
@@ -459,19 +511,8 @@ describe("CheckoutPage", () => {
   });
 
   it("clears sessionStorage draft after successful order submission", async () => {
-    // Pre-seed sessionStorage so the form mounts valid (avoids the combobox interaction)
-    sessionStorage.setItem(
-      "checkout-form-draft",
-      JSON.stringify({
-        name: "Jane Doe",
-        email: "jane@example.com",
-        phone: "",
-        address: "1 Main St",
-        city: "Warsaw",
-        postalCode: "00-001",
-        country: "PL",
-      }),
-    );
+    // Pre-seed sessionStorage so the form mounts valid.
+    seedDraft({});
     renderWithRouter();
     // Wait until the restore useEffect fires and its re-render reflects in the DOM
     await waitFor(

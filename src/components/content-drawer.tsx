@@ -3,6 +3,7 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
@@ -39,6 +40,9 @@ export function ContentDrawer({
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-blue-600" />
             <DrawerTitle className="text-xl font-bold">{title}</DrawerTitle>
+            <DrawerDescription className="sr-only">
+              {`${title} drawer content`}
+            </DrawerDescription>
           </div>
           <DrawerClose asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
