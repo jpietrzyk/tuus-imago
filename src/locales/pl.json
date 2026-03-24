@@ -646,9 +646,80 @@
     "subtitle": "Warunki użytkowania naszych usług",
     "main": {
       "title": "Przegląd warunków korzystania",
-      "description": "Ta strona zawiera warunki korzystania z naszych usług. Szczegółowa treść zostanie dodana wkrótce."
+      "description": "Niniejsze Warunki korzystania (dalej: 'Warunki') określają zasady korzystania ze sklepu internetowego dostępnego pod adresem www.tuusimago.com (dalej: 'Sklep'). Sklep prowadzony jest przez [PLACEHOLDER: Nazwa firmy] z siedzibą pod adresem [PLACEHOLDER: Adres], NIP: [PLACEHOLDER: NIP], REGON: [PLACEHOLDER: REGON]. Składając zamówienie w Sklepie, Klient akceptuje niniejsze Warunki w całości."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "scope": {
+      "title": "Zakres usług",
+      "description": "Sklep oferuje usługi druku spersonalizowanego, w tym wydruki zdjęć, wydruki na płótnie, plakaty oraz inne produkty personalizowane. Oferujemy również usługi oprawiania i dodatkowe opcje wykończenia."
+    },
+    "ordering": {
+      "title": "Proces składania zamówienia",
+      "step1": "Wybierz rodzaj i rozmiar produktu",
+      "step2": "Prześlij swoje zdjęcie lub grafikę",
+      "step3": "Wybierz opcje personalizacji (efekty, ramy itp.)",
+      "step4": "Dodaj do koszyka i przejdź do kasy",
+      "step5": "Wybierz metodę płatności i dostawy",
+      "step6": "Potwierdź zamówienie i dokonaj płatności"
+    },
+    "pricing": {
+      "title": "Ceny i płatności",
+      "description": "Wszystkie ceny podane w Sklepie są w polskich złotych (PLN) i zawierają VAT. Cena końcowa jest potwierdzana przed złożeniem zamówienia. Akceptujemy płatności przez Przelewy24 (BLIK, przelewy bankowe, karty) oraz inne metody wskazane na stronie płatności.",
+      "fees": "Dodatkowe opłaty mogą dotyczyć ekspresowej realizacji lub specjalnych opcji wykończenia. Zostaną one wyraźnie wskazane przed potwierdzeniem zamówienia."
+    },
+    "delivery": {
+      "title": "Warunki dostawy",
+      "description": "Dostawa realizowana jest za pośrednictwem paczkomatów InPost na terenie całej Polski. Standardowy koszt dostawy wynosi 14,99 zł. Czas dostawy to 2-4 dni robocze od nadania. Obecnie nie realizujemy wysyłek zagranicznych.",
+      "tracking": "Po nadaniu przesyłki Klienci otrzymują e-mail z numerem śledzenia."
+    },
+    "products": {
+      "title": "Produkty i jakość",
+      "description": "Używamy materiałów wysokiej jakości, w tym premium papieru fotograficznego, płótna i ramek. Produkty spersonalizowane są wykonywane według indywidualnych specyfikacji. Kolory mogą nieznacznie różnić się od wyświetlania na ekranie ze względu na kalibrację monitora."
+    },
+    "obligations": {
+      "title": "Obowiązki Klienta",
+      "description": "Klienci są zobowiązani do podawania prawidłowych informacji przy składaniu zamówień. Użytkownicy są odpowiedzialni za posiadanie praw do przesłanych grafik. Zabronione są treści naruszające prawa osób trzecich, treści nielegalne lub obraźliwe."
+    },
+    "intellectualProperty": {
+      "title": "Własność intelektualna",
+      "description": "Klient zachowuje własność przesłanych grafik. Przesyłając materiały, Klient udziela Sklepowi licencji na wykorzystanie grafik wyłącznie w celu realizacji zamówienia. Wszystkie treści, projekty i materiały Sklepu są chronione prawem autorskim i nie mogą być reprodukowane bez zgody."
+    },
+    "liability": {
+      "title": "Ograniczenie odpowiedzialności",
+      "description": "Sklep nie ponosi odpowiedzialności za opóźnienia spowodowane okolicznościami pozostającymi poza naszą kontrolą (force majeure). Nasza odpowiedzialność jest ograniczona do wartości zamówionego produktu. Nie odpowiadamy za szkody pośrednie lub utracone zyski."
+    },
+    "forceMajeure": {
+      "title": "Force majeure",
+      "description": "Żadna ze stron nie ponosi odpowiedzialności za niewykonanie zobowiązań z powodu okoliczności pozostających poza rozsądną kontrolą, w tym: klęski żywiołowe, wojna, strajki, działania rządowe, pandemie lub awarie infrastruktury."
+    },
+    "termination": {
+      "title": "Rozwiązanie umowy",
+      "description": "Klient może odstąpić od umowy w ciągu 14 dni bez podania przyczyn (Ustawa o prawach konsumenta). Produkty wykonane według indywidualnych specyfikacji nie podlegają zwrotowi, chyba że są wadliwe. Aby odstąpić od umowy, należy powiadomić nas pisemnie na adres [PLACEHOLDER: e-mail kontaktowy]."
+    },
+    "disputeResolution": {
+      "title": "Rozstrzyganie sporów",
+      "description": "Wszelkie spory będą rozstrzygane przez polskie sądy powszechne właściwe dla miejsca zamieszkania Konsumenta. Konsumenci mogą również korzystać z pozasądowego rozstrzygania sporów poprzez platformę ODR UE (https://ec.europa.eu/consumers/odr/)."
+    },
+    "complaints": {
+      "title": "Rozpatrywanie reklamacji",
+      "description": "Reklamacje rozpatrujemy w ciągu 14 dni od otrzymania. Reklamacje można składać e-mailem na adres [PLACEHOLDER: e-mail do reklamacji] lub poprzez formularz reklamacji na naszej stronie internetowej. Wadliwe produkty zostaną wymienione lub zwrócone."
+    },
+    "changes": {
+      "title": "Zmiany w Warunkach",
+      "description": "Zastrzegamy sobie prawo do modyfikacji niniejszych Warunków. Zmiany będą publikowane na stronie Sklepu z co najmniej 14-dniowym wyprzedzeniem przed wejściem w życie. Zamówienia złożone przed wejściem w życie zmian podlegają poprzednim Warunkom."
+    },
+    "applicableLaw": {
+      "title": "Prawo właściwe",
+      "description": "Niniejsze Warunki podlegają prawu polskiemu, w tym Kodeksowi cywilnemu, Ustawie o prawach konsumenta oraz RODO. W sprawach nieuregulowanych niniejszymi Warunkami stosuje się prawo polskie."
+    },
+    "consumerRights": {
+      "title": "Prawa konsumenta",
+      "description": "Konsumenci mają prawo do: odstąpienia od umowy w ciągu 14 dni, składania reklamacji, dostępu do danych osobowych, żądania sprostowania lub usunięcia danych, skarg do organu ochrony danych. Pełne informacje dostępne na www.uokik.gov.pl."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "description": "W sprawach dotyczących niniejszych Warunków prosimy o kontakt pod adresem [PLACEHOLDER: e-mail kontaktowy] lub telefonicznie pod numerem [PLACEHOLDER: numer telefonu]."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "payments": {
     "title": "Płatności",

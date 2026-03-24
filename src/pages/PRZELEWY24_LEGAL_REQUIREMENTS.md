@@ -117,31 +117,31 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 ---
 
 ### 6. Terms and Conditions (Regulamin)
-**Status**: ⚠️ INCOMPLETE - `src/pages/terms.tsx` exists but only has placeholder
+**Status**: ✅ COMPLETE - `src/pages/terms.tsx` created with full content
 
 **Required Content**:
-- [ ] Service scope and description
-- [ ] Ordering process
-- [ ] Pricing and payment terms
-- [ ] Delivery terms
-- [ ] Product specifications and quality
-- [ ] User obligations
-- [ ] Intellectual property rights
-- [ ] Limitation of liability
-- [ ] Force majeure clause
-- [ ] Contract termination
-- [ ] Dispute resolution (court jurisdiction)
-- [ ] Complaint handling procedure
-- [ ] Changes to terms
-- [ ] Applicable law (Polish law)
-- [ ] Consumer rights (Ustawa o prawach konsumenta)
+- [x] Service scope and description
+- [x] Ordering process
+- [x] Pricing and payment terms
+- [x] Delivery terms
+- [x] Product specifications and quality
+- [x] User obligations
+- [x] Intellectual property rights
+- [x] Limitation of liability
+- [x] Force majeure clause
+- [x] Contract termination
+- [x] Dispute resolution (court jurisdiction)
+- [x] Complaint handling procedure
+- [x] Changes to terms
+- [x] Applicable law (Polish law)
+- [x] Consumer rights (Ustawa o prawach konsumenta)
 
-**Information Needed**:
-- Company legal name
-- NIP (Tax Identification Number)
-- REGON (Statistical Number)
-- Court jurisdiction
-- Detailed service scope
+**Information Provided**:
+- Service scope: Custom printing services (photos, canvas, posters, framing)
+- Ordering process: 6-step process
+- Pricing: PLN including VAT, Przelewy24 methods
+- Delivery: InPost, 14.99 PLN, 2-4 business days
+- Consumer rights: 14-day withdrawal, complaint handling
 
 ---
 
@@ -238,7 +238,7 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 ## FOOTER REQUIREMENTS
 
 The footer must include links to:
-- [x] Terms and Conditions (Regulamin)
+- [x] Terms and Conditions (Regulamin) - ✅ Created
 - [x] Privacy Policy (Polityka prywatności)
 - [x] Cookie Policy (Polityka cookies)
 - [x] Returns & Complaints (Reklamacje i zwroty)
@@ -378,12 +378,12 @@ Translation keys needed in `src/locales/`:
 
 ### Phase 1: Critical (Required for Przelewy24 activation)
 1. ✅ Company information gathering
-2. ⚠️ Complete Privacy Policy (GDPR compliant)
-3. ⚠️ Complete Terms and Conditions
+2. ✅ Complete Privacy Policy (GDPR compliant)
+3. ✅ Complete Terms and Conditions
 4. ✅ Create Payment Terms page (payments.tsx)
 5. ✅ Create Complaint Form page (complaint.tsx)
 6. ⚠️ Add legal checkboxes to checkout
-7. ⚠️ Polish translations for all legal pages
+7. ✅ Polish translations for all legal pages
 
 ### Phase 2: Important (Consumer protection)
 8. ✅ Complete Returns & Complaints page
@@ -464,7 +464,7 @@ Translation keys needed in `src/locales/`:
 ---
 
 **Last Updated**: 2026-03-24
-**Status**: ✅ COMPLETE - payments.tsx, complaint.tsx, shipping.tsx and returns.tsx created with full translations in both EN and PL
+**Status**: ✅ COMPLETE - payments.tsx, complaint.tsx, shipping.tsx, returns.tsx, privacy.tsx and terms.tsx created with full translations in both EN and PL
 
 ---
 
@@ -474,19 +474,19 @@ Translation keys needed in `src/locales/`:
 2. **complaint.tsx** - Created with full form (customer info, order details, product info, description)
 3. **shipping.tsx** - Created with InPost carrier, 14.99 PLN cost, 2-4 business days, failed delivery procedures
 4. **returns.tsx** - Created with full content (14-day withdrawal, return process, contact info: Myślenice, Wybickiego 48, tel: 570-603-695, returns@tuusimago.com)
-5. **Polish translations (pl.json)** - All payment, complaint, shipping and returns translations complete
-6. **English translations (en.json)** - All payment, complaint, shipping and returns translations complete
-5. **shipping.tsx** - Created with full content (InPost carrier, costs, timeframes, failed delivery info)
-6. **returns.tsx** - Created with full content (14-day withdrawal, return process, contact info)
+5. **privacy.tsx** - Created with full GDPR-compliant content
+6. **terms.tsx** - Created with full content (scope, ordering, pricing, delivery, products, obligations, IP, liability, force majeure, termination, disputes, complaints, changes, applicable law, consumer rights)
+7. **Polish translations (pl.json)** - All payment, complaint, shipping, returns, privacy, terms translations complete
+8. **English translations (en.json)** - All payment, complaint, shipping, returns, privacy, terms translations complete
 
 ---
 
 ## ⚠️ STILL NEEDS BUSINESS INFO
 
 The following pages have structure but need actual business details filled in:
-- privacy.tsx - Company name, DPO, data retention periods
-- terms.tsx - Company details, NIP, REGON, jurisdiction
+- ~~terms.tsx~~ - ✅ COMPLETE - Full content with scope, ordering, pricing, delivery, liability, consumer rights
 - ~~returns.tsx~~ - ✅ COMPLETE - Return address, period, costs, contact info added
 - ~~shipping.tsx~~ - ✅ COMPLETE - Carriers, pricing, timeframes added
 - cookies.tsx - Cookie list, third-party providers
 - contact.tsx - Company registration numbers
+- checkout.tsx - Legal checkboxes (terms, privacy, marketing consent)

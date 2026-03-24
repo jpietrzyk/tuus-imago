@@ -657,9 +657,80 @@
     "subtitle": "Terms of use for our services",
     "main": {
       "title": "Terms and Conditions Overview",
-      "description": "This page contains the terms and conditions for using our services. Detailed content will be added soon."
+      "description": "These Terms and Conditions (hereinafter: 'Terms') define the rules for using the online store available at www.tuusimago.com (hereinafter: 'Store'). The Store is operated by [PLACEHOLDER: Company Name] with registered office at [PLACEHOLDER: Address], NIP: [PLACEHOLDER: NIP], REGON: [PLACEHOLDER: REGON]. By placing an order in the Store, the Customer accepts these Terms in full."
     },
-    "lastUpdated": "Last updated: February 2025"
+    "scope": {
+      "title": "Scope of Services",
+      "description": "The Store offers custom printing services, including photo prints, canvas prints, posters, and other personalized products. We also offer framing services and additional finishing options."
+    },
+    "ordering": {
+      "title": "Ordering Process",
+      "step1": "Select the product type and size",
+      "step2": "Upload your image or photo",
+      "step3": "Choose customization options (effects, frames, etc.)",
+      "step4": "Add to cart and proceed to checkout",
+      "step5": "Select payment and delivery methods",
+      "step6": "Confirm the order and make payment"
+    },
+    "pricing": {
+      "title": "Pricing and Payment",
+      "description": "All prices displayed in the Store are in Polish Złoty (PLN) and include VAT. The final price is confirmed before placing the order. We accept payments through Przelewy24 (BLIK, bank transfers, cards) and other methods indicated on the payment page.",
+      "fees": "Additional fees may apply for express processing or special finishing options. These will be clearly indicated before order confirmation."
+    },
+    "delivery": {
+      "title": "Delivery Terms",
+      "description": "Delivery is carried out via InPost parcel lockers across Poland. Standard delivery cost is 14.99 PLN. Delivery time is 2-4 business days from dispatch. We do not currently offer international shipping.",
+      "tracking": "After dispatch, Customers receive an email with tracking number."
+    },
+    "products": {
+      "title": "Products and Quality",
+      "description": "We use high-quality materials including premium photo paper, canvas, and frames. Custom products are made to individual specifications. Colors may slightly differ from screen display due to monitor calibration."
+    },
+    "obligations": {
+      "title": "Customer Obligations",
+      "description": "Customers must provide accurate information when placing orders. Users are responsible for ensuring they have the right to use uploaded images. Prohibited content includes materials infringing third-party rights, illegal content, or offensive materials."
+    },
+    "intellectualProperty": {
+      "title": "Intellectual Property",
+      "description": "The Customer retains ownership of uploaded images. By uploading, the Customer grants the Store a license to use images solely for order fulfillment. All Store content, designs, and materials are protected by copyright and may not be reproduced without permission."
+    },
+    "liability": {
+      "title": "Limitation of Liability",
+      "description": "The Store is not liable for delays caused by circumstances beyond our control (force majeure). Our liability is limited to the value of the ordered product. We are not responsible for indirect damages or lost profits."
+    },
+    "forceMajeure": {
+      "title": "Force Majeure",
+      "description": "Neither party shall be liable for failure to perform obligations due to circumstances beyond reasonable control, including: natural disasters, war, strikes, government actions, pandemics, or infrastructure failures."
+    },
+    "termination": {
+      "title": "Contract Termination",
+      "description": "The Customer may withdraw from the contract within 14 days without giving reasons (Consumer Rights Act). Custom products made to individual specifications are not eligible for return unless defective. To withdraw, notify us in writing at [PLACEHOLDER: contact email]."
+    },
+    "disputeResolution": {
+      "title": "Dispute Resolution",
+      "description": "Any disputes will be resolved by Polish common courts having jurisdiction over the Consumer's place of residence. Consumers may also use out-of-court dispute resolution through the EU ODR platform (https://ec.europa.eu/consumers/odr/)."
+    },
+    "complaints": {
+      "title": "Complaint Handling",
+      "description": "We handle complaints within 14 days from receipt. Complaints can be submitted via email at [PLACEHOLDER: complaint email] or through the complaint form on our website. Defective products will be replaced or refunded."
+    },
+    "changes": {
+      "title": "Changes to Terms",
+      "description": "We reserve the right to modify these Terms. Changes will be posted on the Store website with at least 14 days notice before taking effect. Orders placed before changes take effect are governed by the previous Terms."
+    },
+    "applicableLaw": {
+      "title": "Applicable Law",
+      "description": "These Terms are governed by Polish law, including the Civil Code, Consumer Rights Act (Ustawa o prawach konsumenta), and GDPR. In matters not covered by these Terms, Polish law applies."
+    },
+    "consumerRights": {
+      "title": "Consumer Rights",
+      "description": "Consumers have the right to: withdraw from contract within 14 days, file complaints, access personal data, request data correction or deletion, lodge complaints with data protection authority. Full information available at www.uokik.gov.pl."
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "For questions about these Terms, contact us at [PLACEHOLDER: contact email] or by phone at [PLACEHOLDER: phone number]."
+    },
+    "lastUpdated": "Last updated: March 2025"
   },
   "payments": {
     "title": "Payments",

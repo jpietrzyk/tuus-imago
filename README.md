@@ -2,6 +2,37 @@
 
 Tuus Imago front page
 
+## Legal Pages (Przelewy24.pl Requirements)
+
+This section documents the legal pages required for Przelewy24.pl payment integration compliance.
+
+### Completed Pages
+
+| Page | File | Status | Description |
+|------|------|--------|-------------|
+| Payment Terms | `src/pages/payments.tsx` | ✅ Complete | BLIK, bank transfer, cards, installments, Przelewy24 info |
+| Shipping | `src/pages/shipping.tsx` | ✅ Complete | InPost, 14.99 PLN, 2-4 business days, no international |
+| Returns & Complaints | `src/pages/returns.tsx` | ✅ Complete | 14-day withdrawal, return process, contact info |
+| Complaint Form | `src/pages/complaint.tsx` | ✅ Complete | Full form with customer info, order details, photo upload |
+| Privacy Policy | `src/pages/privacy.tsx` | ✅ Complete | GDPR compliant, data processing, rights |
+| Terms and Conditions | `src/pages/terms.tsx` | ✅ Complete | Full terms with scope, ordering, pricing, liability, consumer rights |
+
+### Pages Still Needed
+
+| Page | File | Status | Required Info |
+|------|------|--------|---------------|
+| Cookie Policy | `src/pages/cookies.tsx` | ⚠️ Placeholder | Cookie list, third-party providers |
+| Company Information | `src/pages/contact.tsx` | ⚠️ Partial | NIP, REGON, KRS, bank details, VAT ID |
+| Checkout Checkboxes | `src/pages/checkout.tsx` | ⚠️ Missing | Terms/privacy/marketing checkboxes |
+
+### Placeholders
+
+Some pages contain `[PLACEHOLDER: ...]` markers for business-specific values that need to be filled:
+- Company name, address, NIP, REGON
+- Contact email and phone number
+- Complaint email
+- Bank account details
+
 ## Cloudinary setup (required for upload)
 
 This app uploads directly from browser to Cloudinary using a **signed upload** flow via Netlify Functions.
