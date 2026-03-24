@@ -12,6 +12,8 @@
     "security": "Bezpieczeństwo",
     "shipping": "Dostawa",
     "terms": "Warunki",
+    "payments": "Płatności",
+    "complaint": "Formularz reklamacji",
     "legalMenu": "Informacje prawne",
     "paymentsP24": "Płatności P24",
     "loading": "Ładowanie...",
@@ -336,6 +338,13 @@
     "orderSelectionTotal": "Suma",
     "orderSelectionUploaded": "Gotowe",
     "orderSelectionPendingUpload": "Zostanie przesłane przy zamówieniu",
+    "termsAccepted": "Akceptuję regulamin *",
+    "termsAcceptedError": "Musisz zaakceptować regulamin",
+    "privacyAccepted": "Akceptuję politykę prywatności *",
+    "privacyAcceptedError": "Musisz zaakceptować politykę prywatności",
+    "marketingConsent": "Wyrażam zgodę na otrzymywanie informacji marketingowych (opcjonalne)",
+    "termsLink": "regulamin",
+    "privacyLink": "politykę prywatności",
     "placeOrder": "Złóż zamówienie",
     "requiredFields": "* Pola wymagane. Twoje informacje będą używane tylko do celów wysyłki.",
     "errorName": "Proszę wprowadzić swoje imię i nazwisko",
@@ -421,10 +430,34 @@
     "title": "Informacje o dostawie",
     "subtitle": "Jak dostarczamy Twoje zamówienia",
     "main": {
-      "title": "Przegląd dostawy",
-      "description": "Ta strona zawiera informacje o naszych metodach dostawy, czasach realizacji i kosztach. Szczegółowa treść zostanie dodana wkrótce."
+      "title": "Regulamin dostawy",
+      "description": "Poniżej znajdują się szczegółowe informacje dotyczące metod dostawy, kosztów, czasów realizacji oraz procedur postępowania w przypadku niedostarczonej przesyłki."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "carriers": {
+      "title": "Dostawcy usług",
+      "inpost": "InPost Paczkomaty"
+    },
+    "costs": {
+      "title": "Koszty dostawy",
+      "standard": "14,99 zł",
+      "standardLabel": "Standardowa przesyłka"
+    },
+    "timeframe": {
+      "title": "Czas realizacji",
+      "businessDays": "termin realizacji wynosi 2-4 dni robocze od momentu wysłania zamówienia",
+      "note": "Czas liczony od dnia nadania przesyłki przez kuriera."
+    },
+    "tracking": {
+      "title": "Śledzenie przesyłki",
+      "description": "Po wysłaniu zamówienia otrzymasz wiadomość e-mail z numerem przesyłki oraz linkiem do śledzenia jej statusu."
+    },
+    "failedDelivery": {
+      "title": "Postępowanie w przypadku niedostarczonej przesyłki",
+      "description": "W przypadku, gdy przesyłka nie zostanie dostarczona z powodu nieobecności odbiorcy lub podania błędnego adresu, kurier pozostawi zawiadomienie o próbie dostarczenia. Przesyłka zostanie przekazana do najbliższego punktu odbioru, gdzie będzie oczekiwać na odbiór przez 7 dni.",
+      "procedure": "Procedura odbioru z punktu: prosimy udać się do wskazanego punktu odbioru z dowodem osobistym. W przypadku odbioru przez osobę trzecią, wymagane jest pełnomocnictwo."
+    },
+    "noInternational": "Nie realizujemy wysyłek zagranicznych. Aktualnie dostawa dostępna jest tylko na terenie Polski.",
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "terms": {
     "title": "Warunki korzystania",
@@ -434,5 +467,198 @@
       "description": "Ta strona zawiera warunki korzystania z naszych usług. Szczegółowa treść zostanie dodana wkrótce."
     },
     "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+  },
+  "payments": {
+    "title": "Płatności",
+    "subtitle": "Informacje o metodach płatności i bezpieczeństwie",
+    "methods": {
+      "title": "Metody płatności",
+      "blik": {
+        "label": "BLIK",
+        "description": "Szybka i bezpieczna metoda płatności mobilnej. Użyj aplikacji bankowej, aby sfinalizować płatność w kilka sekund.",
+        "step1": "Wybierz BLIK jako metodę płatności",
+        "step2": "Wprowadź 6-cyfrowy kod BLIK w aplikacji bankowej",
+        "step3": "Potwierdź płatność w aplikacji bankowej"
+      },
+      "transfer": {
+        "label": "Przelew tradycyjny",
+        "description": "Standardowy przelew bankowy dostępny w większości polskich banków. Płatność zostanie zaksięgowana po zaksięgowaniu środków.",
+        "step1": "Wybierz swój bank z listy",
+        "step2": "Zaloguj się do bankowości internetowej i potwierdź płatność"
+      },
+      "cards": {
+        "label": "Karty płatnicze",
+        "description": "Akceptujemy karty Visa, Mastercard, Maestro i inne. Płatności są przetwarzane bezpiecznie przez Przelewy24."
+      },
+      "installments": {
+        "label": "Raty",
+        "description": "Zapłać w ratach za pomocą PayPo lub Alior Raty. Dostępne dla zamówień powyżej 200 zł."
+      }
+    },
+    "processing": {
+      "title": "Przetwarzanie płatności",
+      "timeframe": {
+        "label": "Czas przetwarzania",
+        "description": "Płatności BLIK są przetwarzane natychmiast. Przelewy tradycyjne są księgowane w ciągu 1-2 dni roboczych."
+      },
+      "confirmation": {
+        "label": "Potwierdzenie zamówienia",
+        "description": "Po zaksięgowaniu płatności otrzymasz e-mail z potwierdzeniem zamówienia i numerem zamówienia."
+      }
+    },
+    "security": {
+      "title": "Bezpieczeństwo płatności",
+      "ssl": {
+        "label": "Szyfrowanie SSL",
+        "description": "Wszystkie transakcje są chronione przez szyfrowanie SSL/TLS, co zapewnia bezpieczeństwo Twoich danych."
+      },
+      "pci": {
+        "label": "Zgodność z PCI DSS",
+        "description": "Nasz operator płatności Przelewy24 jest zgodny ze standardem PCI DSS, co zapewnia najwyższy poziom bezpieczeństwa transakcji kartami."
+      },
+      "dataProtection": {
+        "label": "Ochrona danych",
+        "description": "Nie przechowujemy danych Twojej karty płatniczej. Wszystkie transakcje są przetwarzane przez Przelewy24."
+      }
+    },
+    "refunds": {
+      "title": "Zwroty płatności",
+      "process": {
+        "label": "Proces zwrotu",
+        "description": "Zwroty są przetwarzane przez Przelewy24 i zwracane na tę samą metodę płatności, której użyto przy zakupie."
+      },
+      "timeframe": {
+        "label": "Czas realizacji zwrotu",
+        "description": "Zwroty są przetwarzane w ciągu 14 dni roboczych od zatwierdzenia reklamacji."
+      },
+      "method": {
+        "label": "Metoda zwrotu",
+        "description": "Środki zostaną zwrócone na konto bankowe lub kartę używaną do płatności. Czas zaksięgowania zwrotu zależy od banku."
+      }
+    },
+    "failure": {
+      "title": "Nieudana płatność",
+      "reasons": {
+        "label": "Przyczyny nieudanej płatności",
+        "description": "Płatność może zostać odrzucona z powodu niewystarczających środków, błędnych danych karty, przekroczenia limitu lub problemów z połączeniem internetowym."
+      },
+      "action": {
+        "label": "Co zrobić?",
+        "description": "Sprawdź swoje dane i saldo, a następnie spróbuj ponownie. Jeśli problem się powtarza, skontaktuj się z nami lub swoim bankiem."
+      }
+    },
+    "p24": {
+      "title": "Informacje o Przelewy24",
+      "description": "Płatności są przetwarzane przez Przelewy24 - lidera polskiego rynku płatności internetowych. Kliknij poniżej, aby zapoznać się z regulaminem i polityką prywatności Przelewy24.",
+      "terms": "Regulamin Przelewy24",
+      "privacy": "Polityka prywatności Przelewy24"
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
+  },
+  "complaint": {
+    "title": "Formularz reklamacji",
+    "subtitle": "Złóż reklamację dotyczącą zamówienia",
+    "info": {
+      "title": "Informacje o reklamacjach",
+      "deadline": {
+        "label": "Termin składania reklamacji",
+        "description": "Reklamacje można składać w ciągu 14 dni od otrzymania produktu zgodnie z polskim prawem konsumenckim."
+      },
+      "responseTime": {
+        "label": "Czas odpowiedzi",
+        "description": "Odpowiemy na Twoją reklamację w ciągu 14 dni roboczych od daty jej otrzymania."
+      },
+      "requiredDocs": {
+        "label": "Wymagane dokumenty",
+        "description": "Do rozpatrzenia reklamacji wymagane są: numer zamówienia, zdjęcie produktu, opis problemu i dowód zakupu."
+      }
+    },
+    "form": {
+      "title": "Formularz reklamacji",
+      "customerInfo": {
+        "title": "Dane klienta"
+      },
+      "name": {
+        "label": "Imię i nazwisko",
+        "placeholder": "Wprowadź imię i nazwisko"
+      },
+      "email": {
+        "label": "Adres e-mail",
+        "placeholder": "Wprowadź adres e-mail"
+      },
+      "phone": {
+        "label": "Numer telefonu",
+        "placeholder": "+48 123 456 789"
+      },
+      "address": {
+        "label": "Adres",
+        "placeholder": "Wprowadź adres"
+      },
+      "orderInfo": {
+        "title": "Dane zamówienia"
+      },
+      "orderNumber": {
+        "label": "Numer zamówienia",
+        "placeholder": "Wprowadź numer zamówienia"
+      },
+      "orderDate": {
+        "label": "Data zamówienia"
+      },
+      "productInfo": {
+        "title": "Informacje o produkcie"
+      },
+      "product": {
+        "label": "Nazwa produktu",
+        "placeholder": "Wprowadź nazwę produktu"
+      },
+      "details": {
+        "title": "Szczegóły reklamacji"
+      },
+      "type": {
+        "label": "Typ reklamacji",
+        "select": "Wybierz typ reklamacji",
+        "damaged": "Produkt uszkodzony",
+        "defective": "Produkt wadliwy",
+        "wrong": "Błędny produkt",
+        "missing": "Brakujący produkt",
+        "quality": "Niezadowalająca jakość",
+        "other": "Inny problem"
+      },
+      "description": {
+        "label": "Opis problemu",
+        "placeholder": "Szczegółowo opisz problem..."
+      },
+      "resolution": {
+        "label": "Oczekiwane rozwiązanie",
+        "placeholder": "Jak chcesz, abyśmy rozwiązali ten problem?"
+      },
+      "photos": {
+        "title": "Zdjęcia produktu",
+        "description": "Dołącz wyraźne zdjęcia pokazujące uszkodzenie lub wadę. Maksymalnie 5 zdjęć, do 5 MB każde.",
+        "upload": "Wybierz zdjęcia"
+      },
+      "consent": {
+        "label": "Zgadzam się na przetwarzanie moich danych osobowych w celu rozpatrzenia reklamacji zgodnie z Polityką Prywatności. *"
+      },
+      "submit": "Wyślij reklamację"
+    },
+    "contact": {
+      "title": "Kontakt w sprawie reklamacji",
+      "description": "Możesz również skontaktować się z nami telefonicznie lub e-mailowo w sprawie reklamacji.",
+      "email": {
+        "label": "E-mail"
+      },
+      "phone": {
+        "label": "Telefon"
+      },
+      "address": {
+        "label": "Adres"
+      }
+    },
+    "hours": {
+      "title": "Godziny obsługi reklamacji",
+      "description": "Obsługa reklamacji jest dostępna od poniedziałku do piątku, w godzinach 9:00 - 17:00 CET."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   }
 }

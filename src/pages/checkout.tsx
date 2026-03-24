@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +48,9 @@ type FormData = {
   city: string;
   postalCode: string;
   country: string;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  marketingConsent: boolean;
 };
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
@@ -126,27 +129,41 @@ function OrderSummary({
 
 function validateField(
   name: keyof FormData,
-  value: string,
+  value: string | boolean,
 ): string | undefined {
   switch (name) {
     case "name":
-      if (!value.trim()) return t("checkout.errorName");
+      if (typeof value === "string" && !value.trim())
+        return t("checkout.errorName");
       break;
     case "email":
-      if (!value.trim() || !/.+@.+\..+/.test(value.trim()))
+      if (
+        typeof value === "string" &&
+        (!value.trim() || !/.+@.+\..+/.test(value.trim()))
+      )
         return t("checkout.errorEmail");
       break;
     case "address":
-      if (!value.trim()) return t("checkout.errorAddress");
+      if (typeof value === "string" && !value.trim())
+        return t("checkout.errorAddress");
       break;
     case "city":
-      if (!value.trim()) return t("checkout.errorCity");
+      if (typeof value === "string" && !value.trim())
+        return t("checkout.errorCity");
       break;
     case "postalCode":
-      if (!value.trim()) return t("checkout.errorPostalCode");
+      if (typeof value === "string" && !value.trim())
+        return t("checkout.errorPostalCode");
       break;
     case "country":
-      if (!value) return t("checkout.errorCountry");
+      if (typeof value === "string" && !value)
+        return t("checkout.errorCountry");
+      break;
+    case "termsAccepted":
+      if (value !== true) return t("checkout.termsAcceptedError");
+      break;
+    case "privacyAccepted":
+      if (value !== true) return t("checkout.privacyAcceptedError");
       break;
   }
   return undefined;
@@ -159,6 +176,8 @@ const REQUIRED_FIELDS: (keyof FormData)[] = [
   "city",
   "postalCode",
   "country",
+  "termsAccepted",
+  "privacyAccepted",
 ];
 
 export function CheckoutPage() {
@@ -195,6 +214,9 @@ export function CheckoutPage() {
       city: "",
       postalCode: "",
       country: "",
+      termsAccepted: false,
+      privacyAccepted: false,
+      marketingConsent: false,
     };
   });
 
@@ -270,7 +292,10 @@ export function CheckoutPage() {
     }
   };
 
-  const isFormValid = REQUIRED_FIELDS.every((f) => formData[f].trim());
+  const isFormValid = REQUIRED_FIELDS.every((f) => {
+    const value = formData[f];
+    return typeof value === "string" ? value.trim() : value === true;
+  });
   const fieldError = (field: keyof FormData) =>
     touched[field] && errors[field] ? errors[field] : undefined;
 
@@ -616,6 +641,123 @@ export function CheckoutPage() {
                         {fieldError("country")}
                       </p>
                     )}
+                  </div>
+                </fieldset>
+
+                {/* Przelewy24 Legal Consents - Required */}
+                <fieldset className="space-y-3">
+                  <legend className="text-lg font-semibold text-gray-900 flex items-center gap-2 w-full">
+                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                    {t("checkout.consents.title")}
+                  </legend>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <input
+                        id="termsAccepted"
+                        name="termsAccepted"
+                        type="checkbox"
+                        checked={formData.termsAccepted}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            termsAccepted: e.target.checked,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                        required
+                        aria-required="true"
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                      />
+                      <label
+                        htmlFor="termsAccepted"
+                        className="text-sm text-gray-700 leading-relaxed"
+                      >
+                        {t("checkout.consents.termsLabel")}{" "}
+                        <Link
+                          to="/terms"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {t("checkout.consents.termsLink")}
+                        </Link>
+                        ,{" "}
+                        <Link
+                          to="/privacy"
+                          className="text-blue-600 hover:underline"
+                        >
+                          {t("checkout.consents.privacyLink")}
+                        </Link>
+                        {t("checkout.consents.termsSuffix")}
+                      </label>
+                    </div>
+                    {fieldError("termsAccepted") && (
+                      <p
+                        id="termsAccepted-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600 ml-7"
+                      >
+                        {fieldError("termsAccepted")}
+                      </p>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <input
+                        id="privacyAccepted"
+                        name="privacyAccepted"
+                        type="checkbox"
+                        checked={formData.privacyAccepted}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            privacyAccepted: e.target.checked,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                        required
+                        aria-required="true"
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                      />
+                      <label
+                        htmlFor="privacyAccepted"
+                        className="text-sm text-gray-700 leading-relaxed"
+                      >
+                        {t("checkout.consents.privacyLabel")}
+                      </label>
+                    </div>
+                    {fieldError("privacyAccepted") && (
+                      <p
+                        id="privacyAccepted-error"
+                        role="alert"
+                        aria-live="polite"
+                        className="text-sm text-red-600 ml-7"
+                      >
+                        {fieldError("privacyAccepted")}
+                      </p>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <input
+                        id="marketingConsent"
+                        name="marketingConsent"
+                        type="checkbox"
+                        checked={formData.marketingConsent}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            marketingConsent: e.target.checked,
+                          }))
+                        }
+                        disabled={isSubmitting}
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                      />
+                      <label
+                        htmlFor="marketingConsent"
+                        className="text-sm text-gray-700 leading-relaxed"
+                      >
+                        {t("checkout.consents.marketingLabel")}
+                      </label>
+                    </div>
                   </div>
                 </fieldset>
 

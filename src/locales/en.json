@@ -12,6 +12,8 @@
     "security": "Security",
     "shipping": "Shipping",
     "terms": "Terms",
+    "payments": "Payments",
+    "complaint": "Complaint Form",
     "legalMenu": "Legal",
     "paymentsP24": "Payments P24",
     "loading": "Loading...",
@@ -336,6 +338,13 @@
     "orderSelectionTotal": "Total",
     "orderSelectionUploaded": "Ready",
     "orderSelectionPendingUpload": "Will upload on checkout",
+    "termsAccepted": "I accept the terms and conditions *",
+    "termsAcceptedError": "You must accept the terms and conditions",
+    "privacyAccepted": "I accept the privacy policy *",
+    "privacyAcceptedError": "You must accept the privacy policy",
+    "marketingConsent": "I consent to receive marketing information (optional)",
+    "termsLink": "terms and conditions",
+    "privacyLink": "privacy policy",
     "placeOrder": "Place Order",
     "requiredFields": "* Required fields. Your information will be used for shipping purposes only.",
     "errorName": "Please enter your full name",
@@ -346,7 +355,18 @@
     "errorCountry": "Please select a country",
     "errorGeneric": "Something went wrong. Please try again.",
     "orderNumber": "Order number",
-    "continueShoppingButton": "Back to Home"
+    "continueShoppingButton": "Back to Home",
+    "consents": {
+      "title": "Legal Consents",
+      "termsLabel": "I accept",
+      "termsLink": "terms and conditions",
+      "privacyLink": "privacy policy",
+      "termsSuffix": "and consent to the processing of personal data.",
+      "privacyLabel": "I consent to the processing of my personal data for order fulfillment.",
+      "marketingLabel": "I consent to receiving marketing information (optional)",
+      "termsAcceptedError": "You must accept the terms and conditions",
+      "privacyAcceptedError": "You must consent to the processing of personal data"
+    }
   },
   "consents": {
     "title": "Consents",
@@ -421,10 +441,34 @@
     "title": "Shipping Information",
     "subtitle": "How we deliver your orders",
     "main": {
-      "title": "Shipping Overview",
-      "description": "This page contains information about our shipping methods, delivery times, and costs. Detailed content will be added soon."
+      "title": "Delivery Terms",
+      "description": "Below you will find detailed information about our delivery methods, costs, processing times, and procedures for handling undelivered shipments."
     },
-    "lastUpdated": "Last updated: February 2025"
+    "carriers": {
+      "title": "Delivery Providers",
+      "inpost": "InPost Parcel Lockers"
+    },
+    "costs": {
+      "title": "Delivery Costs",
+      "standard": "14.99 PLN",
+      "standardLabel": "Standard delivery"
+    },
+    "timeframe": {
+      "title": "Processing Time",
+      "businessDays": "Delivery time is 2-4 business days from the moment the order is dispatched",
+      "note": "Time is calculated from the day the shipment is handed over to the courier."
+    },
+    "tracking": {
+      "title": "Shipment Tracking",
+      "description": "After your order is dispatched, you will receive an email with the tracking number and a link to monitor the shipment status."
+    },
+    "failedDelivery": {
+      "title": "Procedure for Undelivered Shipments",
+      "description": "If the shipment cannot be delivered due to the recipient's absence or incorrect address, the courier will leave a notification about the delivery attempt. The shipment will be transferred to the nearest pickup point where it will be held for 7 days.",
+      "procedure": "Pickup procedure: please visit the indicated pickup point with a valid ID. If someone else is collecting on your behalf, a power of attorney is required."
+    },
+    "noInternational": "We do not currently offer international shipping. Delivery is currently available only within Poland.",
+    "lastUpdated": "Last updated: March 2025"
   },
   "terms": {
     "title": "Terms and Conditions",
@@ -434,5 +478,198 @@
       "description": "This page contains the terms and conditions for using our services. Detailed content will be added soon."
     },
     "lastUpdated": "Last updated: February 2025"
+  },
+  "payments": {
+    "title": "Payments",
+    "subtitle": "Information about payment methods and security",
+    "methods": {
+      "title": "Payment Methods",
+      "blik": {
+        "label": "BLIK",
+        "description": "Fast and secure mobile payment method. Use your banking app to complete the payment in seconds.",
+        "step1": "Select BLIK as your payment method",
+        "step2": "Enter the 6-digit BLIK code in your banking app",
+        "step3": "Confirm the payment in your banking app"
+      },
+      "transfer": {
+        "label": "Traditional Bank Transfer",
+        "description": "Standard bank transfer available in most Polish banks. Payment will be processed after funds are credited.",
+        "step1": "Select your bank from the list",
+        "step2": "Log in to online banking and confirm the payment"
+      },
+      "cards": {
+        "label": "Payment Cards",
+        "description": "We accept Visa, Mastercard, Maestro and other cards. Payments are processed securely through Przelewy24."
+      },
+      "installments": {
+        "label": "Installments",
+        "description": "Pay in installments using PayPo or Alior Raty. Available for orders above 200 PLN."
+      }
+    },
+    "processing": {
+      "title": "Payment Processing",
+      "timeframe": {
+        "label": "Processing Time",
+        "description": "BLIK payments are processed instantly. Traditional transfers are credited within 1-2 business days."
+      },
+      "confirmation": {
+        "label": "Order Confirmation",
+        "description": "After payment is credited, you will receive an email with order confirmation and order number."
+      }
+    },
+    "security": {
+      "title": "Payment Security",
+      "ssl": {
+        "label": "SSL Encryption",
+        "description": "All transactions are protected by SSL/TLS encryption, ensuring the security of your data."
+      },
+      "pci": {
+        "label": "PCI DSS Compliance",
+        "description": "Our payment processor Przelewy24 is PCI DSS compliant, providing the highest level of card transaction security."
+      },
+      "dataProtection": {
+        "label": "Data Protection",
+        "description": "We do not store your card payment data. All transactions are processed through Przelewy24."
+      }
+    },
+    "refunds": {
+      "title": "Payment Refunds",
+      "process": {
+        "label": "Refund Process",
+        "description": "Refunds are processed through Przelewy24 and returned to the same payment method used for purchase."
+      },
+      "timeframe": {
+        "label": "Refund Processing Time",
+        "description": "Refunds are processed within 14 business days from complaint approval."
+      },
+      "method": {
+        "label": "Refund Method",
+        "description": "Funds will be returned to the bank account or card used for payment. Credit time depends on your bank."
+      }
+    },
+    "failure": {
+      "title": "Failed Payment",
+      "reasons": {
+        "label": "Reasons for Failed Payment",
+        "description": "Payment may be rejected due to insufficient funds, incorrect card data, limit exceeded, or internet connection issues."
+      },
+      "action": {
+        "label": "What to Do?",
+        "description": "Check your data and balance, then try again. If the problem persists, contact us or your bank."
+      }
+    },
+    "p24": {
+      "title": "About Przelewy24",
+      "description": "Payments are processed by Przelewy24 - the leader of the Polish online payment market. Click below to read Przelewy24 terms and privacy policy.",
+      "terms": "Przelewy24 Terms of Service",
+      "privacy": "Przelewy24 Privacy Policy"
+    },
+    "lastUpdated": "Last updated: March 2025"
+  },
+  "complaint": {
+    "title": "Complaint Form",
+    "subtitle": "Submit a complaint regarding your order",
+    "info": {
+      "title": "Complaint Information",
+      "deadline": {
+        "label": "Complaint Submission Deadline",
+        "description": "Complaints can be submitted within 14 days of receiving the product according to Polish consumer law."
+      },
+      "responseTime": {
+        "label": "Response Time",
+        "description": "We will respond to your complaint within 14 business days from the date of receipt."
+      },
+      "requiredDocs": {
+        "label": "Required Documents",
+        "description": "To process the complaint, the following are required: order number, product photo, problem description, and proof of purchase."
+      }
+    },
+    "form": {
+      "title": "Complaint Form",
+      "customerInfo": {
+        "title": "Customer Information"
+      },
+      "name": {
+        "label": "Full Name",
+        "placeholder": "Enter your full name"
+      },
+      "email": {
+        "label": "Email Address",
+        "placeholder": "Enter your email address"
+      },
+      "phone": {
+        "label": "Phone Number",
+        "placeholder": "+48 123 456 789"
+      },
+      "address": {
+        "label": "Address",
+        "placeholder": "Enter your address"
+      },
+      "orderInfo": {
+        "title": "Order Information"
+      },
+      "orderNumber": {
+        "label": "Order Number",
+        "placeholder": "Enter your order number"
+      },
+      "orderDate": {
+        "label": "Order Date"
+      },
+      "productInfo": {
+        "title": "Product Information"
+      },
+      "product": {
+        "label": "Product Name",
+        "placeholder": "Enter product name"
+      },
+      "details": {
+        "title": "Complaint Details"
+      },
+      "type": {
+        "label": "Complaint Type",
+        "select": "Select complaint type",
+        "damaged": "Product damaged",
+        "defective": "Product defective",
+        "wrong": "Wrong product",
+        "missing": "Missing product",
+        "quality": "Unsatisfactory quality",
+        "other": "Other issue"
+      },
+      "description": {
+        "label": "Problem Description",
+        "placeholder": "Describe the problem in detail..."
+      },
+      "resolution": {
+        "label": "Expected Resolution",
+        "placeholder": "How would you like us to resolve this?"
+      },
+      "photos": {
+        "title": "Product Photos",
+        "description": "Attach clear photos showing the damage or defect. Maximum 5 photos, up to 5 MB each.",
+        "upload": "Select photos"
+      },
+      "consent": {
+        "label": "I agree to the processing of my personal data for complaint processing in accordance with the Privacy Policy. *"
+      },
+      "submit": "Submit Complaint"
+    },
+    "contact": {
+      "title": "Complaint Contact",
+      "description": "You can also contact us by phone or email regarding complaints.",
+      "email": {
+        "label": "Email"
+      },
+      "phone": {
+        "label": "Phone"
+      },
+      "address": {
+        "label": "Address"
+      }
+    },
+    "hours": {
+      "title": "Complaint Service Hours",
+      "description": "Complaint service is available Monday to Friday, 9:00 AM - 5:00 PM CET."
+    },
+    "lastUpdated": "Last updated: March 2025"
   }
 }
