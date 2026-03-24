@@ -91,3 +91,28 @@ For signed uploads or admin operations, use a backend endpoint that signs reques
 - If you see `Missing CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET in server environment`, verify you did not use `VITE_` (or `VITTE_`) prefix for function secrets.
 - Frontend reads only: `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`.
 - Netlify Function reads only: `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+
+## Supabase migrations
+
+### Run migrations from local dev
+
+Use:
+
+- `pnpm db:migrate:dev`
+
+This runs `supabase db push` and applies files from `supabase/migrations` to the linked project.
+
+### Deployment migration action
+
+Repository includes GitHub Action [ .github/workflows/supabase-migrate.yml ](.github/workflows/supabase-migrate.yml) that runs on:
+
+- Push to `main` when `supabase/migrations/**` changes
+- Manual `workflow_dispatch`
+
+Required GitHub repository secrets:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_DB_PASSWORD`
+
+The action executes `pnpm db:migrate:deploy`, which links the Supabase project and runs `supabase db push --linked`.

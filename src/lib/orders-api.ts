@@ -1,0 +1,63 @@
+import { type UploadedSlotResult } from "@/components/image-uploader";
+
+export interface CheckoutCustomerInput {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  marketingConsent: boolean;
+}
+
+export type UploadedCheckoutSlot = UploadedSlotResult & {
+  transformedUrl: string;
+};
+
+export interface CreateOrderRequest {
+  customer: CheckoutCustomerInput;
+  uploadedSlots: UploadedCheckoutSlot[];
+  idempotencyKey: string;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  orderNumber: string;
+  status: string;
+}
+
+type ErrorResponse = {
+  error?: string;
+};
+
+async function parseJsonResponse<T>(response: Response): Promise<T> {
+  const data = (await response.json()) as T;
+  return data;
+}
+
+export async function createOrder(
+  payload: CreateOrderRequest,
+  signal?: AbortSignal,
+): Promise<CreateOrderResponse> {
+  const response = await fetch("/.netlify/functions/create-order", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    signal,
+  });
+
+  const data = await parseJsonResponse<CreateOrderResponse | ErrorResponse>(
+    response,
+  );
+
+  if (!response.ok || "error" in data) {
+    throw new Error(data.error ?? "Could not create order.");
+  }
+
+  return data;
+}

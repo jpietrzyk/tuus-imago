@@ -33,7 +33,22 @@ const VALID_DRAFT = {
 
 describe("CheckoutPage", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn());
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            orderId: "order-1",
+            orderNumber: "TI-2026-000001",
+            status: "pending_payment",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      ),
+    );
     sessionStorage.clear();
   });
 
@@ -344,9 +359,7 @@ describe("CheckoutPage", () => {
     await waitFor(
       () => {
         expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
-        expect(
-          screen.getByText((content) => /ORD-\d+/.test(content)),
-        ).toBeDefined();
+        expect(screen.getByText("TI-2026-000001")).toBeDefined();
       },
       { timeout: 3000 },
     );
@@ -574,5 +587,50 @@ describe("CheckoutPage", () => {
       { timeout: 5000 },
     );
     expect(sessionStorage.getItem("checkout-form-draft")).toBeNull();
+  });
+
+  it("keeps sessionStorage draft and shows an error when order API fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: "Could not create order." }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+
+    seedDraft({});
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Could not create order.",
+      );
+    });
+
+    const saved = sessionStorage.getItem("checkout-form-draft");
+    expect(saved).not.toBeNull();
+    expect(screen.queryByText(tr("checkout.orderSuccessful"))).toBeNull();
   });
 });

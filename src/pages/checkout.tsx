@@ -37,6 +37,7 @@ import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
+import { createOrder } from "@/lib/orders-api";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -55,6 +56,19 @@ type FormData = {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 type FormTouched = Partial<Record<keyof FormData, boolean>>;
+
+const ORDER_SUBMISSION_KEY_STORAGE = "checkout-order-submission-key";
+
+function generateOrderSubmissionKey(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `fallback-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 /**
  * Renders the order summary section showing ordered images and total price
@@ -225,6 +239,20 @@ export function CheckoutPage() {
   }, [formData]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<FormTouched>({});
+  const [submissionKey, setSubmissionKey] = useState<string>(() => {
+    try {
+      const existing = sessionStorage.getItem(ORDER_SUBMISSION_KEY_STORAGE);
+      if (existing && existing.trim().length > 0) {
+        return existing;
+      }
+
+      const nextKey = generateOrderSubmissionKey();
+      sessionStorage.setItem(ORDER_SUBMISSION_KEY_STORAGE, nextKey);
+      return nextKey;
+    } catch {
+      return generateOrderSubmissionKey();
+    }
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [genericError, setGenericError] = useState<string | null>(null);
@@ -282,11 +310,21 @@ export function CheckoutPage() {
 
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const orderResponse = await createOrder({
+        customer: formData,
+        uploadedSlots,
+        idempotencyKey: submissionKey,
+      });
       sessionStorage.removeItem("checkout-form-draft");
-      setOrderNumber(`ORD-${Date.now()}`);
-    } catch {
-      setGenericError(t("checkout.errorGeneric"));
+      sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
+      setSubmissionKey(generateOrderSubmissionKey());
+      setOrderNumber(orderResponse.orderNumber);
+    } catch (error) {
+      setGenericError(
+        error instanceof Error && error.message
+          ? error.message
+          : t("checkout.errorGeneric"),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -298,6 +336,14 @@ export function CheckoutPage() {
   });
   const fieldError = (field: keyof FormData) =>
     touched[field] && errors[field] ? errors[field] : undefined;
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(ORDER_SUBMISSION_KEY_STORAGE, submissionKey);
+    } catch {
+      // Ignore storage errors; request still carries in-memory key.
+    }
+  }, [submissionKey]);
 
   return (
     <div className="min-h-screen bg-gray-50">
