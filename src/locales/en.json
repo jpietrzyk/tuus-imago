@@ -415,9 +415,130 @@
     "subtitle": "How we protect your personal data",
     "main": {
       "title": "Privacy Policy Overview",
-      "description": "This page contains detailed information about how we collect, use, and protect your personal data. Detailed content will be added soon."
+      "description": "This Privacy Policy describes how we collect, use, and protect your personal data in accordance with the General Data Protection Regulation (GDPR) and Polish data protection laws. We are committed to ensuring the security and privacy of your personal information."
     },
-    "lastUpdated": "Last updated: February 2025"
+    "dataController": {
+      "title": "Data Controller",
+      "description": "The data controller responsible for processing your personal data is:",
+      "name": "Company Name",
+      "nameValue": "Tuus Imago [Company Name]",
+      "address": "Registered Address",
+      "addressValue": "32-400 Myślenice, Wybickiego 48, Poland",
+      "email": "Email",
+      "phone": "Phone",
+      "phoneValue": "+48 570 603 695"
+    },
+    "typesOfData": {
+      "title": "Types of Personal Data We Collect",
+      "description": "We collect the following types of personal data:",
+      "item1": "Identity data (name, surname)",
+      "item2": "Contact data (email address, phone number, delivery address)",
+      "item3": "Financial data (payment information, bank account details for refunds)",
+      "item4": "Transaction data (order history, purchased products)",
+      "item5": "Technical data (IP address, browser type, device information)",
+      "item6": "Communication data (customer service correspondence)"
+    },
+    "legalBasis": {
+      "title": "Legal Basis for Processing",
+      "description": "We process your personal data based on the following legal grounds under Article 6 of the GDPR:",
+      "article1": "Article 6(1)(b) - Contract Performance",
+      "article1Text": "Processing necessary for the performance of a contract to which you are a party, such as processing your order and delivery.",
+      "article2": "Article 6(1)(c) - Legal Obligation",
+      "article2Text": "Processing necessary for compliance with a legal obligation to which we are subject, such as tax and accounting requirements.",
+      "article3": "Article 6(1)(f) - Legitimate Interest",
+      "article3Text": "Processing necessary for our legitimate interests, such as improving our services and customer experience."
+    },
+    "dataPurposes": {
+      "title": "Purposes of Data Processing",
+      "description": "We use your personal data for the following purposes:",
+      "item1": "Order processing and fulfillment",
+      "item2": "Delivery of goods to your specified address",
+      "item3": "Payment processing through Przelewy24",
+      "item4": "Customer service and handling inquiries",
+      "item5": "Marketing communications (only with your consent)"
+    },
+    "dataSharing": {
+      "title": "Sharing Your Data",
+      "description": "We may share your personal data with the following third parties:",
+      "partners": "Trusted Partners:",
+      "partner1": "Przelewy24 - Payment processing services",
+      "partner2": "InPost - Delivery and courier services",
+      "partner3": "Hosting providers - Data storage and infrastructure",
+      "partner4": "Accounting services - Financial reporting and tax compliance",
+      "noSale": "We do not sell your personal data to third parties."
+    },
+    "dataStorage": {
+      "title": "Data Retention Period",
+      "description": "We store your personal data only for the period necessary for the purposes for which it was collected:",
+      "orderData": "Order and transaction data",
+      "orderDataPeriod": "5 years (tax and accounting requirements)",
+      "financialData": "Financial and payment data",
+      "financialDataPeriod": "5 years (tax and accounting requirements)",
+      "marketingData": "Marketing data (if consent given)",
+      "marketingDataPeriod": "Until consent is withdrawn",
+      "analyticsData": "Analytics and technical data",
+      "analyticsDataPeriod": "2 years"
+    },
+    "userRights": {
+      "title": "Your Rights Under GDPR",
+      "description": "Under the General Data Protection Regulation, you have the following rights:",
+      "right1Title": "Right to Access",
+      "right1Desc": "You can request a copy of your personal data and information about how we process it.",
+      "right2Title": "Right to Rectification",
+      "right2Desc": "You can request correction of inaccurate or incomplete personal data.",
+      "right3Title": "Right to Erasure",
+      "right3Desc": "You can request deletion of your personal data when there is no legal basis for its processing.",
+      "right4Title": "Right to Restriction",
+      "right4Desc": "You can request restriction of processing in certain circumstances.",
+      "right5Title": "Right to Data Portability",
+      "right5Desc": "You can request your data in a structured, commonly used, machine-readable format.",
+      "right6Title": "Right to Object",
+      "right6Desc": "You can object to processing based on legitimate interest, including profiling.",
+      "exercise": "To exercise any of these rights, please contact us at info@tuusimago.com"
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "description": "Our website uses cookies to ensure proper functioning and improve user experience.",
+      "necessaryTitle": "Necessary Cookies",
+      "necessaryDesc": "Essential for the website to function properly. These cookies enable basic features like page navigation and access to secure areas.",
+      "analyticsTitle": "Analytics Cookies",
+      "analyticsDesc": "Help us understand how visitors interact with our website by collecting anonymous information about page visits and traffic sources.",
+      "marketingTitle": "Marketing Cookies",
+      "marketingDesc": "Used to track visitors across websites to display relevant advertisements. These cookies are only set with your consent.",
+      "manage": "You can manage cookie preferences through your browser settings."
+    },
+    "dataSecurity": {
+      "title": "Data Security",
+      "description": "We implement appropriate technical and organizational measures to protect your personal data:",
+      "item1": "SSL/TLS encryption for data in transit",
+      "item2": "Secure servers with access controls",
+      "item3": "Regular security audits and updates",
+      "item4": "Employee data protection training",
+      "item5": "Incident response procedures"
+    },
+    "children": {
+      "title": "Protection of Minors",
+      "description": "Our services are not intended for children under 16 years of age. We do not knowingly collect personal data from minors without parental consent."
+    },
+    "changes": {
+      "title": "Changes to Privacy Policy",
+      "description": "We may update this Privacy Policy from time to time. Any changes will be posted on this page with an updated revision date. We encourage you to review this policy periodically."
+    },
+    "contact": {
+      "title": "Contact Information",
+      "description": "For any questions about this Privacy Policy or to exercise your data protection rights, please contact us:",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "phoneValue": "+48 570 603 695",
+      "responseTime": "We will respond to your request within 30 days.",
+      "dpo": "For matters related to data protection, you can also contact us at:",
+      "contactPage": "Contact Page"
+    },
+    "complaints": {
+      "title": "Right to Lodge a Complaint",
+      "description": "If you believe your data protection rights have been violated, you have the right to lodge a complaint with the Polish Data Protection Office (UODO)."
+    },
+    "lastUpdated": "Last updated: March 2026"
   },
   "returns": {
     "title": "Returns & Refunds",

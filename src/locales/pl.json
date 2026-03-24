@@ -403,10 +403,131 @@
     "title": "Polityka prywatności",
     "subtitle": "Jak chronimy Twoje dane osobowe",
     "main": {
-      "title": "Przegląd polityki prywatności",
-      "description": "Ta strona zawiera szczegółowe informacje o tym, jak zbieramy, używamy i chronimy Twoje dane osobowe. Szczegółowa treść zostanie dodana wkrótce."
+      "title": "Polityka prywatności - przegląd",
+      "description": "Niniejsza Polityka prywatności opisuje sposób zbierania, wykorzystywania i ochrony Twoich danych osobowych zgodnie z Rozporządzeniem o Ochronie Danych Osobowych (RODO) oraz polskimi przepisami o ochronie danych. Zobowiązujemy się do zapewnienia bezpieczeństwa i poufności Twoich danych osobowych."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "dataController": {
+      "title": "Administrator danych",
+      "description": "Administratorem Twoich danych osobowych jest:",
+      "name": "Nazwa firmy",
+      "nameValue": "Tuus Imago [Nazwa firmy]",
+      "address": "Adres siedziby",
+      "addressValue": "32-400 Myślenice, ul. Wybickiego 48, Polska",
+      "email": "Adres e-mail",
+      "phone": "Telefon",
+      "phoneValue": "+48 570 603 695"
+    },
+    "typesOfData": {
+      "title": "Rodzaje zbieranych danych osobowych",
+      "description": "Zbieramy następujące rodzaje danych osobowych:",
+      "item1": "Dane identyfikacyjne (imię, nazwisko)",
+      "item2": "Dane kontaktowe (adres e-mail, numer telefonu, adres dostawy)",
+      "item3": "Dane finansowe (informacje o płatnościach, dane konta bankowego do zwrotów)",
+      "item4": "Dane transakcyjne (historia zamówień, zakupione produkty)",
+      "item5": "Dane techniczne (adres IP, typ przeglądarki, informacje o urządzeniu)",
+      "item6": "Dane komunikacyjne (korespondencja z działem obsługi klienta)"
+    },
+    "legalBasis": {
+      "title": "Podstawa prawna przetwarzania",
+      "description": "Przetwarzamy Twoje dane osobowe na podstawie następujących podstaw prawnych zgodnie z art. 6 RODO:",
+      "article1": "Art. 6 ust. 1 lit. b) - Wykonanie umowy",
+      "article1Text": "Przetwarzanie niezbędne do wykonania umowy, której stroną jesteś, np. realizacja zamówienia i dostawa.",
+      "article2": "Art. 6 ust. 1 lit. c) - Obowiązek prawny",
+      "article2Text": "Przetwarzanie niezbędne do wypełnienia obowiązku prawnego, np. wymogi podatkowe i księgowe.",
+      "article3": "Art. 6 ust. 1 lit. f) - Prawnie uzasadniony interes",
+      "article3Text": "Przetwarzanie niezbędne do realizacji naszego prawnie uzasadnionego interesu, np. doskonalenie usług i obsługi klienta."
+    },
+    "dataPurposes": {
+      "title": "Cele przetwarzania danych",
+      "description": "Wykorzystujemy Twoje dane osobowe w następujących celach:",
+      "item1": "Realizacja i obsługa zamówień",
+      "item2": "Dostawa towarów na wskazany adres",
+      "item3": "Przetwarzanie płatności przez Przelewy24",
+      "item4": "Obsługa klienta i obsługa zapytań",
+      "item5": "Komunikaty marketingowe (tylko za Twoją zgodą)"
+    },
+    "dataSharing": {
+      "title": "Udostępnianie danych",
+      "description": "Możemy udostępniać Twoje dane osobowe następującym podmiotom zewnętrznym:",
+      "partners": "Zaufani partnerzy:",
+      "partner1": "Przelewy24 - usługi przetwarzania płatności",
+      "partner2": "InPost - usługi kurierskie i dostaw",
+      "partner3": "Dostawcy hostingu - przechowywanie danych i infrastruktura",
+      "partner4": "Usługi księgowe - sprawozdawczość finansowa i zgodność podatkowa",
+      "noSale": "Nie sprzedajemy Twoich danych osobowych osobom trzecim."
+    },
+    "dataStorage": {
+      "title": "Okres przechowywania danych",
+      "description": "Przechowujemy Twoje dane osobowe tylko przez okres niezbędny do realizacji celów, w których zostały zebrane:",
+      "orderData": "Dane zamówień i transakcji",
+      "orderDataPeriod": "5 lat (wymogi podatkowe i księgowe)",
+      "financialData": "Dane finansowe i płatności",
+      "financialDataPeriod": "5 lat (wymogi podatkowe i księgowe)",
+      "marketingData": "Dane marketingowe (jeśli wyrażono zgodę)",
+      "marketingDataPeriod": "Do momentu wycofania zgody",
+      "analyticsData": "Dane analityczne i techniczne",
+      "analyticsDataPeriod": "2 lata"
+    },
+    "userRights": {
+      "title": "Twoje prawa wynikające z RODO",
+      "description": "Zgodnie z Rozporządzeniem o Ochronie Danych Osobowych przysługują Ci następujące prawa:",
+      "right1Title": "Prawo dostępu",
+      "right1Desc": "Możesz żądać kopii swoich danych osobowych oraz informacji o sposobie ich przetwarzania.",
+      "right2Title": "Prawo do sprostowania",
+      "right2Desc": "Możesz żądać poprawienia niedokładnych lub niekompletnych danych osobowych.",
+      "right3Title": "Prawo do usunięcia",
+      "right3Desc": "Możesz żądać usunięcia swoich danych osobowych, gdy nie ma podstawy prawnej do ich przetwarzania.",
+      "right4Title": "Prawo do ograniczenia",
+      "right4Desc": "Możesz żądać ograniczenia przetwarzania w określonych okolicznościach.",
+      "right5Title": "Prawo do przenoszenia",
+      "right5Desc": "Możesz żądać swoich danych w ustrukturyzowanym, powszechnie używanym formacie nadającym się do odczytu maszynowego.",
+      "right6Title": "Prawo do sprzeciwu",
+      "right6Desc": "Możesz wnieść sprzeciw wobec przetwarzania opartego na prawnie uzasadnionym interesie, w tym profilowaniu.",
+      "exercise": "Aby skorzystać z któregokolwiek z tych praw, skontaktuj się z nami pod adresem info@tuusimago.com"
+    },
+    "cookies": {
+      "title": "Polityka cookies",
+      "description": "Nasza strona internetowa wykorzystuje pliki cookies w celu zapewnienia prawidłowego działania i poprawy doświadczenia użytkownika.",
+      "necessaryTitle": "Niezbędne pliki cookies",
+      "necessaryDesc": "Niezbędne do prawidłowego działania strony. Te pliki umożliwiają podstawowe funkcje, takie jak nawigacja i dostęp do bezpiecznych obszarów.",
+      "analyticsTitle": "Pliki cookies analityczne",
+      "analyticsDesc": "Pomagają nam zrozumieć, jak odwiedzający korzystają z naszej strony, zbierając anonimowe informacje o wizytach i źródłach ruchu.",
+      "marketingTitle": "Pliki cookies marketingowe",
+      "marketingDesc": "Służą do śledzenia odwiedzających na różnych stronach w celu wyświetlania odpowiednich reklam. Te pliki cookies są ustawiane tylko za Twoją zgodą.",
+      "manage": "Możesz zarządzać preferencjami plików cookies poprzez ustawienia przeglądarki."
+    },
+    "dataSecurity": {
+      "title": "Bezpieczeństwo danych",
+      "description": "Wdrażamy odpowiednie środki techniczne i organizacyjne w celu ochrony Twoich danych osobowych:",
+      "item1": "Szyfrowanie SSL/TLS danych podczas transmisji",
+      "item2": "Bezpieczne serwery z kontrolą dostępu",
+      "item3": "Regularne audyty bezpieczeństwa i aktualizacje",
+      "item4": "Szkolenia pracowników z zakresu ochrony danych",
+      "item5": "Procedury reagowania na incydenty"
+    },
+    "children": {
+      "title": "Ochrona nieletnich",
+      "description": "Nasze usługi nie są przeznaczone dla dzieci poniżej 16 roku życia. Nie zbieramy świadomie danych osobowych od nieletnich bez zgody rodziców."
+    },
+    "changes": {
+      "title": "Zmiany w Polityce prywatności",
+      "description": "Możemy aktualizować niniejszą Politykę prywatności od czasu do czasu. Wszelkie zmiany zostaną opublikowane na tej stronie z zaktualizowaną datą rewizji. Zachęcamy do okresowego przeglądu polityki."
+    },
+    "contact": {
+      "title": "Dane kontaktowe",
+      "description": "W przypadku jakichkolwiek pytań dotyczących niniejszej Polityki prywatności lub realizacji Twoich praw w zakresie ochrony danych, prosimy o kontakt:",
+      "email": "Adres e-mail",
+      "phone": "Numer telefonu",
+      "phoneValue": "+48 570 603 695",
+      "responseTime": "Odpowiemy na Twoje zapytanie w ciągu 30 dni.",
+      "dpo": "W sprawach związanych z ochroną danych możesz się z nami skontaktować również pod adresem:",
+      "contactPage": "Strona kontaktowa"
+    },
+    "complaints": {
+      "title": "Prawo do wniesienia skargi",
+      "description": "Jeśli uważasz, że Twoje prawa w zakresie ochrony danych zostały naruszone, masz prawo wnieść skargę do Urzędu Ochrony Danych Osobowych (UODO)."
+    },
+    "lastUpdated": "Aktualizacja: marzec 2026"
   },
   "returns": {
     "title": "Zwroty i reklamacje",
