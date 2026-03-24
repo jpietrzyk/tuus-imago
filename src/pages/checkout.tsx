@@ -506,7 +506,6 @@ export function CheckoutPage() {
                     >
                       <SelectTrigger
                         id="country"
-                        autoComplete="country"
                         aria-required="true"
                         aria-invalid={!!fieldError("country")}
                         aria-describedby={
