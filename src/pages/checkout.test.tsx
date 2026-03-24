@@ -469,7 +469,7 @@ describe("CheckoutPage", () => {
         address: "1 Main St",
         city: "Warsaw",
         postalCode: "00-001",
-        country: "Poland",
+        country: "PL",
       }),
     );
     renderWithRouter();

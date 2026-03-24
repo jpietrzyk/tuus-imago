@@ -247,6 +247,17 @@ function buildRestoredSelectedImages(
   return images;
 }
 
+/**
+ * Derives the active image index from a restored/built image array.
+ * Returns the first non-null slot index, or null if no slots are filled.
+ */
+function getInitialActiveIndexFromImages(
+  images: Array<SelectedImageItem | null>,
+): number | null {
+  const filledIndex = images.findIndex((image) => image !== null);
+  return filledIndex >= 0 ? filledIndex : null;
+}
+
 export const ImageUploader = forwardRef<
   ImageUploaderHandle,
   ImageUploaderProps
@@ -276,10 +287,13 @@ export const ImageUploader = forwardRef<
       ? buildRestoredSelectedImages(initialSlots)
       : createEmptySelectionSlots(),
   );
-  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(() =>
-    initialSlots?.length
-      ? (initialSlots.find((s) => s.slotIndex >= 0)?.slotIndex ?? null)
-      : null,
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(
+    () => {
+      const images = initialSlots?.length
+        ? buildRestoredSelectedImages(initialSlots)
+        : createEmptySelectionSlots();
+      return getInitialActiveIndexFromImages(images);
+    },
   );
   const [busyBackgroundUploadSlots, setBusyBackgroundUploadSlots] = useState<
     Set<number>
@@ -291,10 +305,14 @@ export const ImageUploader = forwardRef<
   const lastExternalResetTriggerRef = useRef<number | undefined>(
     externalResetTrigger,
   );
+  const computeInitialActiveIndex = () => {
+    const images = initialSlots?.length
+      ? buildRestoredSelectedImages(initialSlots)
+      : createEmptySelectionSlots();
+    return getInitialActiveIndexFromImages(images);
+  };
   const activeImageIndexRef = useRef<number | null>(
-    initialSlots?.length
-      ? (initialSlots.find((s) => s.slotIndex >= 0)?.slotIndex ?? null)
-      : null,
+    computeInitialActiveIndex(),
   );
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
     initialSlots?.length

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   AlertDialog,
@@ -109,15 +109,27 @@ export function CheckoutPage() {
     return t("upload.slotCenter");
   };
 
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    postalCode: "",
-    country: "",
+  const [formData, setFormData] = useState<FormData>(() => {
+    try {
+      const saved = sessionStorage.getItem("checkout-form-draft");
+      if (saved) return JSON.parse(saved) as FormData;
+    } catch {
+      // ignore malformed data
+    }
+    return {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      postalCode: "",
+      country: "",
+    };
   });
+
+  useEffect(() => {
+    sessionStorage.setItem("checkout-form-draft", JSON.stringify(formData));
+  }, [formData]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<FormTouched>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -178,6 +190,7 @@ export function CheckoutPage() {
     setIsSubmitting(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
+      sessionStorage.removeItem("checkout-form-draft");
       setOrderNumber(`ORD-${Date.now()}`);
     } catch {
       setGenericError(t("checkout.errorGeneric"));
