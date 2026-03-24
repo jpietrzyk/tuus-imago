@@ -179,16 +179,18 @@ describe("CheckoutPage", () => {
     expect(screen.getByText(tr("checkout.orderSummary"))).toBeDefined();
     expect(screen.getByText(tr("checkout.enhancedPhoto"))).toBeDefined();
     expect(screen.getByText(tr("checkout.canvasPrint"))).toBeDefined();
-    expect(screen.getByText(tr("checkout.total"))).toBeDefined();
+    // Use getAllByText since "total" text now appears in both main summary and mobile compact
+    const totalElements = screen.getAllByText(tr("checkout.total"));
+    expect(totalElements.length).toBeGreaterThan(0);
   });
 
   it("renders total price", () => {
     renderWithRouter();
-    expect(
-      screen.getByText(
-        hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
-      ),
-    ).toBeDefined();
+    // Use getAllByText since price appears in multiple places now
+    const priceElements = screen.getAllByText(
+      hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+    );
+    expect(priceElements.length).toBeGreaterThan(0);
   });
 
   it("renders place order button", () => {
@@ -400,13 +402,14 @@ describe("CheckoutPage", () => {
 
     const images = screen.getAllByRole("img");
     expect(images.length).toBeGreaterThanOrEqual(2);
+    // Thumbnails now use transformedUrl directly (preserving AI effects)
     expect(images[0]).toHaveAttribute(
       "src",
-      "https://res.cloudinary.com/test/image/upload/c_fill,g_auto,h_48,w_48/f_auto/q_auto/left.jpg",
+      "https://res.cloudinary.com/test/image/upload/left.jpg",
     );
     expect(images[1]).toHaveAttribute(
       "src",
-      "https://res.cloudinary.com/test/image/upload/c_fill,g_auto,h_48,w_48/f_auto/q_auto/right.jpg",
+      "https://res.cloudinary.com/test/image/upload/right.jpg",
     );
 
     const imageLinks = screen.getAllByRole("link", {
@@ -467,13 +470,13 @@ describe("CheckoutPage", () => {
 
     renderWithSlots(mockSlots);
 
-    expect(
-      screen.getByText(
-        hasExactTextContent(
-          formatPrice(CANVAS_PRINT_UNIT_PRICE * mockSlots.length),
-        ),
+    // Use getAllByText since price appears in multiple places (main summary + mobile compact)
+    const priceElements = screen.getAllByText(
+      hasExactTextContent(
+        formatPrice(CANVAS_PRINT_UNIT_PRICE * mockSlots.length),
       ),
-    ).toBeDefined();
+    );
+    expect(priceElements.length).toBeGreaterThan(0);
   });
 
   it("persists form data to sessionStorage on input change", async () => {
