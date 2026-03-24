@@ -423,10 +423,71 @@
     "title": "Returns & Refunds",
     "subtitle": "Our return and refund policy",
     "main": {
-      "title": "Returns & Refunds Overview",
-      "description": "This page contains information about our return and refund policy. Detailed content will be added soon."
+      "title": "Returns and Complaints Policy",
+      "description": "Below you will find detailed information about our return procedures, complaint process, and your consumer rights."
     },
-    "lastUpdated": "Last updated: February 2025"
+    "rightOfWithdrawal": {
+      "title": "Right of Withdrawal",
+      "period": "You have the right to withdraw from the contract within 14 days from the day you received the goods without giving any reason.",
+      "howTo": "How to withdraw from the contract:",
+      "step1": "Complete the withdrawal form (available on our website or request it by email)",
+      "step2": "Send the goods to the address: ul. Wybickiego 48, 32-400 Myślenice",
+      "step3": "Send us the completed form by email to: returns@tuusimago.com",
+      "deadline": "The deadline is met if you send the goods before the 14 days have passed."
+    },
+    "returnCosts": {
+      "title": "Return Costs",
+      "whoPays": "In case of withdrawal from the contract, you bear the direct costs of returning the goods.",
+      "condition": "The goods must be returned in their original condition and packaging."
+    },
+    "refund": {
+      "title": "Refund",
+      "timeline": "The refund will be processed within 14 days from the day we receive the returned goods or proof of their dispatch.",
+      "method": "The refund will be made using the same payment method that was used for the purchase.",
+      "delay": "We may withhold the refund until we receive the goods or until you provide proof of their dispatch."
+    },
+    "condition": {
+      "title": "Condition of Goods",
+      "description": "You are responsible for any diminution in the value of the goods resulting from handling them beyond what is necessary to determine their nature, characteristics, and functioning."
+    },
+    "damaged": {
+      "title": "Complaint for Damaged or Defective Goods",
+      "description": "If the goods you received are damaged or defective, you have the right to file a complaint.",
+      "process": "Complaint procedure:",
+      "step1": "Contact us by email at: returns@tuusimago.com",
+      "step2": "Describe the problem and attach photos of the damage",
+      "step3": "We will process your complaint within 14 days",
+      "step4": "If the complaint is approved, we will replace the goods or refund your money",
+      "freeReturn": "In case of a complaint, we cover the return shipping costs."
+    },
+    "complaintForm": {
+      "title": "Complaint Form",
+      "description": "You can use our complaint form available on the website:",
+      "link": "Complaint Form"
+    },
+    "contact": {
+      "title": "Contact",
+      "address": "Address for returns and complaints:",
+      "street": "ul. Wybickiego 48",
+      "city": "32-400 Myślenice",
+      "phone": "Phone:",
+      "phoneNumber": "570-603-695",
+      "email": "Email:",
+      "emailAddress": "returns@tuusimago.com",
+      "hours": "Business hours: Monday-Friday 9:00-17:00"
+    },
+    "nonReturnable": {
+      "title": "Exclusions",
+      "description": "The right of withdrawal does not apply to:",
+      "item1": "Goods made to individual order (e.g., personalized products)",
+      "item2": "Perishable goods or goods with short shelf life",
+      "item3": "Goods delivered in sealed packaging that cannot be returned for health or hygiene reasons"
+    },
+    "legalBasis": {
+      "title": "Legal Basis",
+      "description": "The returns and complaints policy is based on the Consumer Rights Act of May 30, 2014."
+    },
+    "lastUpdated": "Last updated: March 2025"
   },
   "security": {
     "title": "Security",

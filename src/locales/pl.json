@@ -412,10 +412,71 @@
     "title": "Zwroty i reklamacje",
     "subtitle": "Nasza polityka zwrotów i reklamacji",
     "main": {
-      "title": "Przegląd zwrotów i reklamacji",
-      "description": "Ta strona zawiera informacje o naszej polityce zwrotów i reklamacji. Szczegółowa treść zostanie dodana wkrótce."
+      "title": "Regulamin zwrotów i reklamacji",
+      "description": "Poniżej znajdują się szczegółowe informacje dotyczące procedury zwrotu towaru, składania reklamacji oraz przysługujących Ci praw jako konsumentowi."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "rightOfWithdrawal": {
+      "title": "Prawo odstąpienia od umowy",
+      "period": "Masz prawo odstąpić od umowy w terminie 14 dni od dnia otrzymania towaru bez podania przyczyny.",
+      "howTo": "Jak odstąpić od umowy:",
+      "step1": "Wypełnij formularz odstąpienia od umowy (dostępny na naszej stronie lub poproś o niego e-mailem)",
+      "step2": "Odeślij towar na adres: ul. Wybickiego 48, 32-400 Myślenice",
+      "step3": "Odeślij nam wypełniony formularz e-mailem na adres: returns@tuusimago.com",
+      "deadline": "Termin zachowany, jeśli odeślesz towar przed upływem 14 dni."
+    },
+    "returnCosts": {
+      "title": "Koszty zwrotu",
+      "whoPays": "W przypadku odstąpienia od umowy ponosisz bezpośrednie koszty zwrotu towaru.",
+      "condition": "Towar musi być zwrócony w stanie niezmienionym, w oryginalnym opakowaniu."
+    },
+    "refund": {
+      "title": "Zwrot pieniędzy",
+      "timeline": "Zwrot pieniędzy nastąpi w ciągu 14 dni od dnia otrzymania zwróconego towaru lub dostarczenia dowodu jego odesłania.",
+      "method": "Zwrot nastąpi tą samą metodą płatności, którą użyto przy zakupie.",
+      "delay": "Możemy wstrzymać się ze zwrotem pieniędzy do czasu otrzymania towaru lub do czasu dostarczenia dowodu jego odesłania."
+    },
+    "condition": {
+      "title": "Stan towaru",
+      "description": "Odpowiadasz za zmniejszenie wartości towaru wynikające z korzystania z niego w sposób inny niż było to konieczne do stwierdzenia charakteru, cech i funkcjonowania towaru."
+    },
+    "damaged": {
+      "title": "Reklamacja uszkodzonego lub wadliwego towaru",
+      "description": "Jeśli otrzymany towar jest uszkodzony lub wadliwy, masz prawo złożyć reklamację.",
+      "process": "Procedura reklamacji:",
+      "step1": "Skontaktuj się z nami e-mailem na adres: returns@tuusimago.com",
+      "step2": "Opisz problem i dołącz zdjęcia uszkodzenia",
+      "step3": "Rozpatrzymy reklamację w ciągu 14 dni",
+      "step4": "W przypadku uznania reklamacji wymienimy towar lub zwrócimy pieniądze",
+      "freeReturn": "W przypadku reklamacji towaru koszty odesłania pokrywamy my."
+    },
+    "complaintForm": {
+      "title": "Formularz reklamacji",
+      "description": "Możesz skorzystać z naszego formularza reklamacji dostępnego na stronie:",
+      "link": "Formularz reklamacji"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "address": "Adres do zwrotów i reklamacji:",
+      "street": "ul. Wybickiego 48",
+      "city": "32-400 Myślenice",
+      "phone": "Telefon:",
+      "phoneNumber": "570-603-695",
+      "email": "E-mail:",
+      "emailAddress": "returns@tuusimago.com",
+      "hours": "Godziny pracy: poniedziałek-piątek 9:00-17:00"
+    },
+    "nonReturnable": {
+      "title": "Wyłączenia",
+      "description": "Prawo odstąpienia od umowy nie przysługuje w przypadku:",
+      "item1": "Towarów wykonanych na indywidualne zamówienie (np. produkty spersonalizowane)",
+      "item2": "Towarów łatwo psujących się lub z krótkim terminem ważności",
+      "item3": "Towarów dostarczanych w zapieczętowanych opakowaniach, których nie można zwrócić ze względu na ochronę zdrowia lub higienę"
+    },
+    "legalBasis": {
+      "title": "Podstawa prawna",
+      "description": "Polityka zwrotów i reklamacji oparta jest na Ustawie o prawach konsumenta z dnia 30 maja 2014 r."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "security": {
     "title": "Bezpieczeństwo",

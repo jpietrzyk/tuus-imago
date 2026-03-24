@@ -48,26 +48,27 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 ---
 
 ### 3. Returns and Complaints Policy (Reklamacje i zwroty)
-**Status**: ⚠️ INCOMPLETE - `src/pages/returns.tsx` exists but only has placeholder
+**Status**: ✅ COMPLETE - `src/pages/returns.tsx` created with full content
 
 **Required Content**:
-- [ ] Return eligibility period (typically 14 days for EU)
-- [ ] Return process steps
-- [ ] Return shipping costs (who pays)
-- [ ] Refund methods and timeline
-- [ ] Complaint submission process
-- [ ] Required documentation (photos, proof of purchase)
-- [ ] Damaged/defective product procedures
-- [ ] Non-returnable items
-- [ ] Contact for returns
+- [x] Return eligibility period (typically 14 days for EU)
+- [x] Return process steps
+- [x] Return shipping costs (who pays)
+- [x] Refund methods and timeline
+- [x] Complaint submission process
+- [x] Required documentation (photos, proof of purchase)
+- [x] Damaged/defective product procedures
+- [x] Non-returnable items
+- [x] Contact for returns
 - [ ] RMA (Return Merchandise Authorization) process
 
-**Information Needed**:
-- Return period (days)
-- Return address
-- Who pays return shipping
-- Refund processing time
-- Complaint form or email
+**Information Provided**:
+- Return period: 14 days
+- Return address: Myślenice, ul. Wybickiego 48
+- Return costs: Customer bears direct costs
+- Refund timeline: 14 days
+- Contact email: returns@tuusimago.com
+- Phone: 570-603-695
 
 ---
 
@@ -385,7 +386,7 @@ Translation keys needed in `src/locales/`:
 7. ⚠️ Polish translations for all legal pages
 
 ### Phase 2: Important (Consumer protection)
-8. ⚠️ Complete Returns & Complaints page
+8. ✅ Complete Returns & Complaints page
 9. ✅ Complete Shipping page
 10. ⚠️ Complete Cookie Policy
 11. ⚠️ Create Withdrawal Form template
@@ -463,7 +464,7 @@ Translation keys needed in `src/locales/`:
 ---
 
 **Last Updated**: 2026-03-24
-**Status**: ✅ COMPLETE - payments.tsx and complaint.tsx created with full translations in both EN and PL
+**Status**: ✅ COMPLETE - payments.tsx, complaint.tsx, shipping.tsx and returns.tsx created with full translations in both EN and PL
 
 ---
 
@@ -471,9 +472,12 @@ Translation keys needed in `src/locales/`:
 
 1. **payments.tsx** - Created with full content (BLIK, transfer, cards, Przelewy24 info)
 2. **complaint.tsx** - Created with full form (customer info, order details, product info, description)
-3. **Polish translations (pl.json)** - All payment and complaint translations complete
-4. **English translations (en.json)** - All payment and complaint translations complete
+3. **shipping.tsx** - Created with InPost carrier, 14.99 PLN cost, 2-4 business days, failed delivery procedures
+4. **returns.tsx** - Created with full content (14-day withdrawal, return process, contact info: Myślenice, Wybickiego 48, tel: 570-603-695, returns@tuusimago.com)
+5. **Polish translations (pl.json)** - All payment, complaint, shipping and returns translations complete
+6. **English translations (en.json)** - All payment, complaint, shipping and returns translations complete
 5. **shipping.tsx** - Created with full content (InPost carrier, costs, timeframes, failed delivery info)
+6. **returns.tsx** - Created with full content (14-day withdrawal, return process, contact info)
 
 ---
 
@@ -482,7 +486,7 @@ Translation keys needed in `src/locales/`:
 The following pages have structure but need actual business details filled in:
 - privacy.tsx - Company name, DPO, data retention periods
 - terms.tsx - Company details, NIP, REGON, jurisdiction
-- returns.tsx - Return address, period, costs
+- ~~returns.tsx~~ - ✅ COMPLETE - Return address, period, costs, contact info added
 - ~~shipping.tsx~~ - ✅ COMPLETE - Carriers, pricing, timeframes added
 - cookies.tsx - Cookie list, third-party providers
 - contact.tsx - Company registration numbers
