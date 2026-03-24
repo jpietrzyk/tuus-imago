@@ -11,6 +11,7 @@ import { CheckoutPage } from "./checkout";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { tr } from "@/test/i18n-test";
 import { type UploadedSlotResult } from "@/components/image-uploader";
+import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 
@@ -181,7 +182,7 @@ describe("CheckoutPage", () => {
     expect(screen.getByText(tr("checkout.canvasPrint"))).toBeDefined();
     // Use getAllByText since "total" text now appears in both main summary and mobile compact
     const totalElements = screen.getAllByText(tr("checkout.total"));
-    expect(totalElements.length).toBeGreaterThan(0);
+    expect(totalElements).toHaveLength(2);
   });
 
   it("renders total price", () => {
@@ -190,7 +191,7 @@ describe("CheckoutPage", () => {
     const priceElements = screen.getAllByText(
       hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
     );
-    expect(priceElements.length).toBeGreaterThan(0);
+    expect(priceElements.length).toBe(2);
   });
 
   it("renders place order button", () => {
@@ -402,14 +403,22 @@ describe("CheckoutPage", () => {
 
     const images = screen.getAllByRole("img");
     expect(images.length).toBeGreaterThanOrEqual(2);
-    // Thumbnails now use transformedUrl directly (preserving AI effects)
+    // Thumbnails should use optimized Cloudinary renditions while preserving transforms.
     expect(images[0]).toHaveAttribute(
       "src",
-      "https://res.cloudinary.com/test/image/upload/left.jpg",
+      getCloudinaryThumbnailUrl(
+        "https://res.cloudinary.com/test/image/upload/left.jpg",
+        48,
+        48,
+      ),
     );
     expect(images[1]).toHaveAttribute(
       "src",
-      "https://res.cloudinary.com/test/image/upload/right.jpg",
+      getCloudinaryThumbnailUrl(
+        "https://res.cloudinary.com/test/image/upload/right.jpg",
+        48,
+        48,
+      ),
     );
 
     const imageLinks = screen.getAllByRole("link", {
@@ -476,7 +485,7 @@ describe("CheckoutPage", () => {
         formatPrice(CANVAS_PRINT_UNIT_PRICE * mockSlots.length),
       ),
     );
-    expect(priceElements.length).toBeGreaterThan(0);
+    expect(priceElements.length).toBe(2);
   });
 
   it("persists form data to sessionStorage on input change", async () => {

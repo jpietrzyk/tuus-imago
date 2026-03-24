@@ -913,7 +913,7 @@ export const ImageUploader = forwardRef<
         backgroundUploadPromisesRef.current.values(),
       );
       if (pendingPromises.length > 0) {
-        await Promise.all(pendingPromises);
+        await Promise.allSettled(pendingPromises);
       }
 
       const filledSlots = selectedImagesRef.current.flatMap(

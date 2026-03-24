@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
+import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 
@@ -79,7 +80,7 @@ function OrderSummary({
             {uploadedSlots.map((slot) => (
               <div key={slot.slotKey} className="flex items-center gap-3 py-1">
                 <img
-                  src={slot.transformedUrl}
+                  src={getCloudinaryThumbnailUrl(slot.transformedUrl, 48, 48)}
                   alt={slotLabel(slot.slotKey)}
                   className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
                 />
