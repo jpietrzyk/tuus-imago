@@ -395,9 +395,75 @@
     "subtitle": "Jak używamy ciasteczek na naszej stronie",
     "main": {
       "title": "Przegląd polityki ciasteczek",
-      "description": "Ta strona zawiera informacje o tym, jak używamy ciasteczek i podobnych technologii na naszej stronie. Szczegółowa treść zostanie dodana wkrótce."
+      "description": "Niniejsza Polityka ciasteczek wyjaśnia, czym są ciasteczka, jakie ich rodzaje używamy, dlaczego je stosujemy oraz jak możesz zarządzać swoimi preferencjami. Korzystając z naszej strony internetowej, wyrażasz zgodę na używanie ciasteczek zgodnie z tą polityką."
     },
-    "lastUpdated": "Ostatnia aktualizacja: luty 2025"
+    "whatAreCookies": {
+      "title": "Czym są ciasteczka",
+      "description": "Ciasteczka to małe pliki tekstowe przechowywane na Twoim komputerze lub urządzeniu mobilnym podczas odwiedzania strony internetowej. Pozwalają one stronie rozpoznać Twoje urządzenie i zapamiętać informacje o Twojej wizycie, takie jak preferowany język, dane logowania i inne ustawienia. Może to ułatwić kolejną wizytę i sprawić, że strona będzie bardziej użyteczna."
+    },
+    "types": {
+      "title": "Rodzaje ciasteczek, których używamy",
+      "necessary": {
+        "title": "Niezbędne ciasteczka",
+        "description": "Te ciasteczka są niezbędne do prawidłowego działania strony. Umożliwiają podstawowe funkcje, takie jak nawigacja, dostęp do bezpiecznych obszarów i zapamiętywanie Twoich preferencji. Strona nie może funkcjonować bez tych ciasteczek.",
+        "examples": "Ciasteczka sesyjne, ciasteczka uwierzytelniające, ciasteczka bezpieczeństwa"
+      },
+      "analytics": {
+        "title": "Ciasteczka analityczne",
+        "description": "Te ciasteczka pomagają nam zrozumieć, jak odwiedzający wchodzą w interakcję z naszą stroną, zbierając i raportując anonimowe informacje. Pomaga nam to poprawiać działanie strony i doświadczenie użytkownika.",
+        "examples": "Ciasteczka Google Analytics, czas trwania sesji, wizyty na stronie"
+      },
+      "functional": {
+        "title": "Ciasteczka funkcjonalne",
+        "description": "Te ciasteczka umożliwiają rozszerzone funkcje i personalizację, takie jak czat na żywo i filmy. Mogą być ustawione przez nas lub przez zewnętrznych dostawców, których usług używamy.",
+        "examples": "Preferencje czatu, ustawienia odtwarzania filmów"
+      },
+      "marketing": {
+        "title": "Ciasteczka marketingowe",
+        "description": "Te ciasteczka służą do śledzenia odwiedzających na różnych stronach w celu wyświetlania reklam, które są istotne i angażujące dla poszczególnych użytkowników. Te ciasteczka są ustawiane tylko za Twoją wyraźną zgodą.",
+        "examples": "Ciasteczka reklamowe, ciasteczka remarketingowe"
+      }
+    },
+    "thirdParty": {
+      "title": "Ciasteczka osób trzecich",
+      "description": "Korzystamy z usług zewnętrznych, które mogą również ustawiać ciasteczka na Twoim urządzeniu. Obejmują one:",
+      "googleAnalytics": "Google Analytics - do analizy ruchu na stronie",
+      "przelewy24": "Przelewy24 - do przetwarzania płatności",
+      "cloudinary": "Cloudinary - do przesyłania i przetwarzania obrazów",
+      "socialMedia": "Widgety mediów społecznościowych - do funkcji udostępniania"
+    },
+    "duration": {
+      "title": "Czas przechowywania ciasteczek",
+      "session": "Ciasteczka sesyjne - są usuwane po zamknięciu przeglądarki",
+      "persistent": "Ciasteczka trwałe - pozostają na Twoim urządzeniu przez określony czas (zazwyczaj do 12 miesięcy)"
+    },
+    "consent": {
+      "title": "Zgoda na ciasteczka",
+      "description": "Podczas pierwszej wizyty na naszej stronie zobaczysz baner ciasteczek, który pozwoli Ci zaakceptować lub odrzucić niezbędne ciasteczka. W każdej chwili możesz zmienić swoje preferencje, klikając link 'Ustawienia ciasteczek' w stopce.",
+      "withdraw": "Możesz wycofać swoją zgodę w dowolnym momencie, usuwając ciasteczka przeglądarki lub korzystając z naszych ustawień ciasteczek."
+    },
+    "manage": {
+      "title": "Zarządzanie ciasteczkami",
+      "description": "Możesz zarządzać preferencjami ciasteczek poprzez ustawienia przeglądarki internetowej. Większość przeglądarek pozwala na:",
+      "block": "Zablokowanie wszystkich ciasteczek",
+      "blockThirdParty": "Zablokowanie ciasteczek osób trzecich",
+      "delete": "Usunięcie istniejących ciasteczek",
+      "notify": "Powiadomienie o ustawieniu ciasteczek",
+      "note": "Uwaga: Wyłączenie niezbędnych ciasteczek może wpłynąć na funkcjonalność naszej strony."
+    },
+    "consequences": {
+      "title": "Konsekwencje wyłączenia ciasteczek",
+      "description": "Jeśli wyłączysz lub odrzucisz ciasteczka, niektóre części naszej strony mogą nie działać prawidłowo. Możesz nie mieć dostępu do niektórych funkcji, a niektóre usługi mogą nie działać zgodnie z przeznaczeniem. Niezbędne ciasteczka są wymagane do działania koszyka i procesu zamówienia."
+    },
+    "updates": {
+      "title": "Aktualizacje polityki",
+      "description": "Możemy aktualizować niniejszą Politykę ciasteczek od czasu do czasu, aby odzwierciedlić zmiany w naszych praktykach lub ze względów operacyjnych, prawnych lub regulacyjnych. Wszelkie zmiany zostaną zamieszczone na tej stronie, a data 'Ostatnia aktualizacja' zostanie zaktualizowana na dole."
+    },
+    "contact": {
+      "title": "Kontakt",
+      "description": "Jeśli masz pytania dotyczące naszej Polityki ciasteczek, skontaktuj się z nami pod adresem biuro@car-folie.pl."
+    },
+    "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },
   "privacy": {
     "title": "Polityka prywatności",
@@ -410,7 +476,7 @@
       "title": "Administrator danych",
       "description": "Administratorem Twoich danych osobowych jest:",
       "name": "Nazwa firmy",
-      "nameValue": "Tuus Imago [Nazwa firmy]",
+      "nameValue": "Tuusimago",
       "address": "Adres siedziby",
       "addressValue": "32-400 Myślenice, ul. Wybickiego 48, Polska",
       "email": "Adres e-mail",
@@ -646,7 +712,7 @@
     "subtitle": "Warunki użytkowania naszych usług",
     "main": {
       "title": "Przegląd warunków korzystania",
-      "description": "Niniejsze Warunki korzystania (dalej: 'Warunki') określają zasady korzystania ze sklepu internetowego dostępnego pod adresem www.tuusimago.com (dalej: 'Sklep'). Sklep prowadzony jest przez [PLACEHOLDER: Nazwa firmy] z siedzibą pod adresem [PLACEHOLDER: Adres], NIP: [PLACEHOLDER: NIP], REGON: [PLACEHOLDER: REGON]. Składając zamówienie w Sklepie, Klient akceptuje niniejsze Warunki w całości."
+      "description": "Niniejsze Warunki korzystania (dalej: 'Warunki') określają zasady korzystania ze sklepu internetowego dostępnego pod adresem www.tuusimago.com (dalej: 'Sklep'). Sklep prowadzony jest przez Tuusimago z siedzibą pod adresem Myślenice, ul. Wybickiego 48, NIP: 3396629204, REGON: 275867303. Składając zamówienie w Sklepie, Klient akceptuje niniejsze Warunki w całości."
     },
     "scope": {
       "title": "Zakres usług",
@@ -693,7 +759,7 @@
     },
     "termination": {
       "title": "Rozwiązanie umowy",
-      "description": "Klient może odstąpić od umowy w ciągu 14 dni bez podania przyczyn (Ustawa o prawach konsumenta). Produkty wykonane według indywidualnych specyfikacji nie podlegają zwrotowi, chyba że są wadliwe. Aby odstąpić od umowy, należy powiadomić nas pisemnie na adres [PLACEHOLDER: e-mail kontaktowy]."
+      "description": "Klient może odstąpić od umowy w ciągu 14 dni bez podania przyczyn (Ustawa o prawach konsumenta). Produkty wykonane według indywidualnych specyfikacji nie podlegają zwrotowi, chyba że są wadliwe. Aby odstąpić od umowy, należy powiadomić nas pisemnie na adres biuro@car-folie.pl."
     },
     "disputeResolution": {
       "title": "Rozstrzyganie sporów",
@@ -701,7 +767,7 @@
     },
     "complaints": {
       "title": "Rozpatrywanie reklamacji",
-      "description": "Reklamacje rozpatrujemy w ciągu 14 dni od otrzymania. Reklamacje można składać e-mailem na adres [PLACEHOLDER: e-mail do reklamacji] lub poprzez formularz reklamacji na naszej stronie internetowej. Wadliwe produkty zostaną wymienione lub zwrócone."
+      "description": "Reklamacje rozpatrujemy w ciągu 14 dni od otrzymania. Reklamacje można składać e-mailem na adres biuro@car-folie.pl lub poprzez formularz reklamacji na naszej stronie internetowej. Wadliwe produkty zostaną wymienione lub zwrócone."
     },
     "changes": {
       "title": "Zmiany w Warunkach",
@@ -717,7 +783,7 @@
     },
     "contact": {
       "title": "Kontakt",
-      "description": "W sprawach dotyczących niniejszych Warunków prosimy o kontakt pod adresem [PLACEHOLDER: e-mail kontaktowy] lub telefonicznie pod numerem [PLACEHOLDER: numer telefonu]."
+      "description": "W sprawach dotyczących niniejszych Warunków prosimy o kontakt pod adresem biuro@car-folie.pl lub telefonicznie pod numerem 570-603-695."
     },
     "lastUpdated": "Ostatnia aktualizacja: marzec 2025"
   },

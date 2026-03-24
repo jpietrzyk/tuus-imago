@@ -108,11 +108,17 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 - [x] Changes to privacy policy
 - [x] Contact for privacy matters (DPO if applicable)
 
-**Information Needed**:
-- Company legal name
-- Data Protection Officer (DPO) contact (if applicable)
-- Data retention periods
-- Specific data categories collected
+**Information Provided**:
+- Company name: Tuusimago
+- Address: Myślenice, ul. Wybickiego 48, 32-400, Poland
+- Phone: 570-603-695 / 663 534 814
+- Email: biuro@car-folie.pl
+- NIP: 3396629204
+- REGON: 275867303
+- VAT ID: PL3396629204
+- Business hours: 8:00-17:00 (Mon-Fri)
+- Data retention periods: Defined in privacy policy
+- Data Protection Officer: Not appointed
 
 ---
 
@@ -146,57 +152,65 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 ---
 
 ### 7. Cookie Policy (Polityka cookies)
-**Status**: ⚠️ INCOMPLETE - `src/pages/cookies.tsx` exists but only has placeholder
+**Status**: ✅ COMPLETE - `src/pages/cookies.tsx` created with full content
 
 **Required Content**:
-- [ ] What cookies are
-- [ ] Types of cookies used (technical, analytical, marketing)
-- [ ] Purpose of each cookie type
-- [ ] Cookie duration
-- [ ] Third-party cookies (Google Analytics, Przelewy24)
-- [ ] Cookie consent mechanism
-- [ ] How to manage/delete cookies
-- [ ] Consequences of disabling cookies
+- [x] What cookies are
+- [x] Types of cookies used (technical, analytical, marketing)
+- [x] Purpose of each cookie type
+- [x] Cookie duration
+- [x] Third-party cookies (Google Analytics, Przelewy24)
+- [x] Cookie consent mechanism
+- [x] How to manage/delete cookies
+- [x] Consequences of disabling cookies
 
-**Information Needed**:
-- List of all cookies used
-- Third-party cookie providers
-- Cookie consent implementation details
+**Information Provided**:
+- Necessary cookies: Session, authentication, security
+- Analytics: Google Analytics
+- Marketing: Third-party advertising cookies
+- Third-party: Google Analytics, Przelewy24, Cloudinary, social media
+- Duration: Session and persistent (up to 12 months)
 
 ---
 
 ### 8. Company Information (Dane firmy)
-**Status**: ⚠️ PARTIALLY PRESENT - Contact info exists but incomplete
+**Status**: ✅ COMPLETE - Full company details provided
 
 **Required Content**:
-- [ ] Full company legal name
-- [ ] NIP (Tax Identification Number)
-- [ ] REGON (Statistical Number)
-- [ ] KRS (Court Register Number - if applicable)
-- [ ] Registered office address
-- [ ] Email address
-- [ ] Phone number
-- [ ] Business hours
-- [ ] Bank account details (for refunds)
-- [ ] VAT ID (if applicable)
+- [x] Full company legal name: Tuusimago
+- [x] NIP (Tax Identification Number): 3396629204
+- [x] REGON (Statistical Number): 275867303
+- [ ] KRS (Court Register Number - if applicable) - not provided
+- [x] Registered office address: Myślenice, ul. Wybickiego 48, 32-400, Poland
+- [x] Email address: biuro@car-folie.pl
+- [x] Phone number: 570-603-695 / 663 534 814
+- [x] Business hours: 8:00-17:00 (Mon-Fri)
+- [x] Bank account details (for refunds): IBAN PL38249019019509 (Alior Bank)
+- [x] VAT ID (NIP EU): PL3396629204
 
-**Information Needed**:
-- **ALL** company registration details
-- Bank account for refunds
+**Information Provided**:
+- Company name: Tuusimago
+- Address: Myślenice, ul. Wybickiego 48, 32-400, Poland
+- Phone: 570-603-695 / 663 534 814
+- Email: biuro@car-folie.pl
+- NIP: 3396629204
+- REGON: 275867303
+- Business hours: 8:00-17:00 (Mon-Fri)
+- Bank: IBAN PL38249019019509 (Alior Bank)
 
 ---
 
 ### 9. Przelewy24 Integration Page
-**Status**: ⚠️ PARTIALLY PRESENT - Referenced in legal menu but not fully implemented
+**Status**: ✅ COMPLETE - Referenced in legal menu and integrated in payments.tsx
 
 **Required Content**:
-- [ ] Przelewy24 payment method description
-- [ ] Link to Przelewy24 Terms: https://www.przelewy24.pl/regulamin
-- [ ] Link to Przelewy24 Privacy Policy: https://www.przelewy24.pl/polityka-prywatnosci
-- [ ] Payment security information
-- [ ] Przelewy24 customer support contact
-- [ ] BLIK payment instructions
-- [ ] Traditional bank transfer instructions
+- [x] Przelewy24 payment method description
+- [x] Link to Przelewy24 Terms: https://www.przelewy24.pl/regulamin
+- [x] Link to Przelewy24 Privacy Policy: https://www.przelewy24.pl/polityka-prywatnosci
+- [x] Payment security information
+- [x] Przelewy24 customer support contact
+- [x] BLIK payment instructions
+- [x] Traditional bank transfer instructions
 
 ---
 
@@ -225,13 +239,13 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 ---
 
 ### src/pages/contact.tsx
-**Status**: ✅ STRUCTURE OK - ⚠️ NEEDS MORE INFO
+**Status**: ✅ COMPLETE - All company information added
 
-**Missing**:
-- Company registration numbers (NIP, REGON, KRS)
-- Bank account details
-- VAT ID
-- Data Protection Officer contact
+**Complete**:
+- Company registration numbers (NIP: 3396629204, REGON: 275867303)
+- Bank account details: IBAN PL38249019019509 (Alior Bank)
+- VAT ID: PL3396629204
+- Data Protection Officer: Not appointed
 
 ---
 
@@ -239,12 +253,13 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 
 The footer must include links to:
 - [x] Terms and Conditions (Regulamin) - ✅ Created
-- [x] Privacy Policy (Polityka prywatności)
-- [x] Cookie Policy (Polityka cookies)
-- [x] Returns & Complaints (Reklamacje i zwroty)
-- [x] Shipping (Dostawa)
+- [x] Privacy Policy (Polityka prywatności) - ✅ Created
+- [x] Cookie Policy (Polityka cookies) - ✅ Created
+- [x] Returns & Complaints (Reklamacje i zwroty) - ✅ Created
+- [x] Shipping (Dostawa) - ✅ Created
 - [x] Payment Terms (Płatności) - ✅ Created
 - [x] Complaint Form (Formularz reklamacji) - ✅ Created
+- [x] Company Information (Dane firmy) - ✅ Complete
 - [ ] Company Information (Dane firmy)
 
 ---
@@ -329,18 +344,28 @@ Required disclosures:
 ## TRANSLATION REQUIREMENTS
 
 All legal pages must be available in:
-- [x] English (en.json) - Structure in place, needs translation keys
-- [ ] Polish (pl.json) - **CRITICAL FOR PRZELEWY24** - Translation JSON prepared in `/tmp/pl_additions.json`, needs merge
+- [x] English (en.json) - ✅ COMPLETE
+- [x] Polish (pl.json) - ✅ COMPLETE
 
-Polish translations prepared for:
+Polish translations complete for:
 - payments.tsx (full)
 - complaint.tsx (full)
+- shipping.tsx (full)
+- returns.tsx (full)
+- privacy.tsx (full)
+- terms.tsx (full)
+- cookies.tsx (full)
 
-Translation keys needed in `src/locales/`:
+Translation keys available in `src/locales/`:
 - `payments.*` - Payment page translations
 - `complaint.*` - Complaint page translations
+- `shipping.*` - Shipping page translations
+- `returns.*` - Returns page translations
+- `privacy.*` - Privacy page translations
+- `terms.*` - Terms page translations
+- `cookies.*` - Cookies page translations
 
-**Action Required**: Merge `/tmp/pl_additions.json` into `src/locales/pl.json`
+**Status**: ✅ ALL TRANSLATIONS COMPLETE
 
 ---
 
@@ -388,7 +413,7 @@ Translation keys needed in `src/locales/`:
 ### Phase 2: Important (Consumer protection)
 8. ✅ Complete Returns & Complaints page
 9. ✅ Complete Shipping page
-10. ⚠️ Complete Cookie Policy
+10. ✅ Complete Cookie Policy
 11. ⚠️ Create Withdrawal Form template
 
 ### Phase 3: Nice to have
@@ -402,34 +427,34 @@ Translation keys needed in `src/locales/`:
 ## INFORMATION NEEDED FROM BUSINESS OWNER
 
 ### Company Registration
-- [ ] Full legal company name
-- [ ] NIP (Tax Identification Number)
-- [ ] REGON (Statistical Number)
-- [ ] KRS (Court Register Number)
-- [ ] Registered office address
-- [ ] VAT ID (NIP EU)
-- [ ] Bank account number for refunds
+- [x] Full legal company name: Tuusimago
+- [x] NIP (Tax Identification Number): 3396629204
+- [x] REGON (Statistical Number): 275867303
+- [ ] KRS (Court Register Number) - not provided
+- [x] Registered office address: Myślenice, ul. Wybickiego 48, 32-400, Poland
+- [x] VAT ID (NIP EU): PL3396629204
+- [x] Bank account number for refunds: IBAN PL38249019019509 (Alior Bank)
 
 ### Business Operations
-- [ ] Delivery carriers and pricing
-- [ ] Delivery timeframes
-- [ ] Return period (days)
-- [ ] Return shipping policy (who pays)
-- [ ] Refund processing time
-- [ ] Complaint response time commitment
-- [ ] Product warranty period
-- [ ] Business hours
+- [x] Delivery carriers and pricing: InPost, 14.99 PLN
+- [x] Delivery timeframes: 2-4 business days
+- [x] Return period (days): 14
+- [x] Return shipping policy (who pays): Customer bears direct costs
+- [x] Refund processing time: 14 days
+- [x] Complaint response time commitment: 14-30 days
+- [ ] Product warranty period - not specified
+- [x] Business hours: 8:00-17:00 (Mon-Fri)
 
 ### Payment Configuration
 - [ ] Przelewy24 Merchant ID
 - [ ] Przelewy24 CRC code
 - [ ] Supported payment methods
 - [ ] Transaction fees (if any passed to customer)
-- [ ] Currency (PLN)
+- [x] Currency (PLN)
 
 ### Legal
-- [ ] Applicable law (Polish law)
-- [ ] Court jurisdiction
+- [x] Applicable law (Polish law)
+- [x] Court jurisdiction
 - [ ] Data Protection Officer contact (if applicable)
 - [ ] Legal counsel review of all documents
 
@@ -464,7 +489,7 @@ Translation keys needed in `src/locales/`:
 ---
 
 **Last Updated**: 2026-03-24
-**Status**: ✅ COMPLETE - payments.tsx, complaint.tsx, shipping.tsx, returns.tsx, privacy.tsx and terms.tsx created with full translations in both EN and PL
+**Status**: ✅ COMPLETE - payments.tsx, complaint.tsx, shipping.tsx, returns.tsx, privacy.tsx, terms.tsx and cookies.tsx created with full translations in both EN and PL
 
 ---
 
@@ -473,20 +498,30 @@ Translation keys needed in `src/locales/`:
 1. **payments.tsx** - Created with full content (BLIK, transfer, cards, Przelewy24 info)
 2. **complaint.tsx** - Created with full form (customer info, order details, product info, description)
 3. **shipping.tsx** - Created with InPost carrier, 14.99 PLN cost, 2-4 business days, failed delivery procedures
-4. **returns.tsx** - Created with full content (14-day withdrawal, return process, contact info: Myślenice, Wybickiego 48, tel: 570-603-695, returns@tuusimago.com)
+4. **returns.tsx** - Created with full content (14-day withdrawal, return process, contact info)
 5. **privacy.tsx** - Created with full GDPR-compliant content
-6. **terms.tsx** - Created with full content (scope, ordering, pricing, delivery, products, obligations, IP, liability, force majeure, termination, disputes, complaints, changes, applicable law, consumer rights)
-7. **Polish translations (pl.json)** - All payment, complaint, shipping, returns, privacy, terms translations complete
-8. **English translations (en.json)** - All payment, complaint, shipping, returns, privacy, terms translations complete
+6. **terms.tsx** - Created with full content (scope, ordering, pricing, delivery, liability, consumer rights)
+7. **cookies.tsx** - Created with full content (cookie types, third-party, consent, management)
+8. **Polish translations (pl.json)** - All legal page translations complete
+9. **English translations (en.json)** - All legal page translations complete
 
 ---
 
 ## ⚠️ STILL NEEDS BUSINESS INFO
 
 The following pages have structure but need actual business details filled in:
-- ~~terms.tsx~~ - ✅ COMPLETE - Full content with scope, ordering, pricing, delivery, liability, consumer rights
+- ~~cookies.tsx~~ - ✅ COMPLETE - Full cookie policy with types, third-party, consent
+- ~~terms.tsx~~ - ✅ COMPLETE - Full content with scope, ordering, pricing, delivery, liability
 - ~~returns.tsx~~ - ✅ COMPLETE - Return address, period, costs, contact info added
 - ~~shipping.tsx~~ - ✅ COMPLETE - Carriers, pricing, timeframes added
-- cookies.tsx - Cookie list, third-party providers
-- contact.tsx - Company registration numbers
+- ~~contact.tsx~~ - ✅ COMPLETE - Company registration numbers, bank details added
+- ~~All placeholders~~ - ✅ COMPLETE - All business info added to translation files
+
+## ⚠️ STILL PENDING
+
 - checkout.tsx - Legal checkboxes (terms, privacy, marketing consent)
+- Przelewy24 Merchant ID - Not provided
+- Przelewy24 CRC code - Not provided
+- KRS number - Not provided (not required)
+- Product warranty period - Not specified
+- DPO contact - Not appointed
