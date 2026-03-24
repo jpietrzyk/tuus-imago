@@ -294,11 +294,14 @@ export interface Translations {
     subtitle: string;
     orderSuccessful: string;
     orderSuccessMessage: string;
-    redirecting: string;
     shippingInformation: string;
     personalInformation: string;
     fullName: string;
     fullNamePlaceholder: string;
+    email: string;
+    emailPlaceholder: string;
+    phone: string;
+    phonePlaceholder: string;
     addressInformation: string;
     streetAddress: string;
     streetAddressPlaceholder: string;
@@ -307,7 +310,7 @@ export interface Translations {
     postalCode: string;
     postalCodePlaceholder: string;
     country: string;
-    countryPlaceholder: string;
+    selectCountry: string;
     orderSummary: string;
     uploadedImages: string;
     enhancedPhoto: string;
@@ -327,8 +330,19 @@ export interface Translations {
     placeOrder: string;
     requiredFields: string;
     errorName: string;
+    errorEmail: string;
     errorAddress: string;
+    errorCity: string;
+    errorPostalCode: string;
+    errorCountry: string;
     errorGeneric: string;
+    orderNumber: string;
+    continueShoppingButton: string;
+    backToUpload: string;
+    backToUploadDialogTitle: string;
+    backToUploadDialogDescription: string;
+    backToUploadDialogConfirm: string;
+    backToUploadDialogCancel: string;
   };
 }
 

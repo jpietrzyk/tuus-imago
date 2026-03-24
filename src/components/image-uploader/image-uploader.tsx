@@ -79,6 +79,7 @@ interface ImageUploaderProps {
   className?: string;
   skipCropStep?: boolean;
   defaultShowIcons?: boolean;
+  initialSlots?: UploadedSlotResult[];
   externalResetTrigger?: number;
   showDebugData?: boolean;
 }
@@ -183,6 +184,11 @@ function getReusableUploadedAsset(image: SelectedImageItem) {
     return null;
   }
 
+  // Empty fingerprint marks a restored slot — always reusable
+  if (image.uploadedAsset.sourceFingerprint === "") {
+    return image.uploadedAsset;
+  }
+
   return image.uploadedAsset.sourceFingerprint ===
     getFileSourceFingerprint(image.file)
     ? image.uploadedAsset
@@ -196,12 +202,60 @@ function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
     return image.previewUrl;
   }
 
+  // Restored slots use previewUrl which is already the transformedUrl
+  if (reusableUploadedAsset.sourceFingerprint === "") {
+    return image.previewUrl;
+  }
+
   return getTransformedPreviewUrl(
     reusableUploadedAsset.secureUrl,
     null,
     undefined,
     getAiAdjustments(image),
   );
+}
+
+const RESTORED_DUMMY_FILE = new File([], "restored.jpg", {
+  type: "image/jpeg",
+});
+
+function buildRestoredSelectedImages(
+  slots: UploadedSlotResult[],
+): Array<SelectedImageItem | null> {
+  const images = createEmptySelectionSlots();
+  for (const slot of slots) {
+    if (!slot.secureUrl || !slot.transformedUrl) continue;
+    if (slot.slotIndex < 0 || slot.slotIndex >= MAX_SELECTED_IMAGES) continue;
+    images[slot.slotIndex] = {
+      file: RESTORED_DUMMY_FILE,
+      previewUrl: slot.transformedUrl,
+      metadata: null,
+      displayImageProportion: "horizontal",
+      previewEffects: {
+        brightness: 0,
+        contrast: 0,
+        removeBackground: false,
+        enhance: false,
+      },
+      uploadedAsset: {
+        publicId: slot.publicId ?? "",
+        secureUrl: slot.secureUrl,
+        sourceFingerprint: "", // empty = always reusable (restored slot)
+      },
+    };
+  }
+  return images;
+}
+
+/**
+ * Derives the active image index from a restored/built image array.
+ * Returns the first non-null slot index, or null if no slots are filled.
+ */
+function getInitialActiveIndexFromImages(
+  images: Array<SelectedImageItem | null>,
+): number | null {
+  const filledIndex = images.findIndex((image) => image !== null);
+  return filledIndex >= 0 ? filledIndex : null;
 }
 
 export const ImageUploader = forwardRef<
@@ -222,13 +276,25 @@ export const ImageUploader = forwardRef<
     defaultShowIcons = false,
     externalResetTrigger,
     showDebugData = true,
+    initialSlots,
   }: ImageUploaderProps,
   ref,
 ) {
   const [selectedImages, setSelectedImages] = useState<
     Array<SelectedImageItem | null>
-  >(createEmptySelectionSlots);
-  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
+  >(() =>
+    initialSlots?.length
+      ? buildRestoredSelectedImages(initialSlots)
+      : createEmptySelectionSlots(),
+  );
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(
+    () => {
+      const images = initialSlots?.length
+        ? buildRestoredSelectedImages(initialSlots)
+        : createEmptySelectionSlots();
+      return getInitialActiveIndexFromImages(images);
+    },
+  );
   const [busyBackgroundUploadSlots, setBusyBackgroundUploadSlots] = useState<
     Set<number>
   >(() => new Set());
@@ -239,9 +305,19 @@ export const ImageUploader = forwardRef<
   const lastExternalResetTriggerRef = useRef<number | undefined>(
     externalResetTrigger,
   );
-  const activeImageIndexRef = useRef<number | null>(null);
+  const computeInitialActiveIndex = () => {
+    const images = initialSlots?.length
+      ? buildRestoredSelectedImages(initialSlots)
+      : createEmptySelectionSlots();
+    return getInitialActiveIndexFromImages(images);
+  };
+  const activeImageIndexRef = useRef<number | null>(
+    computeInitialActiveIndex(),
+  );
   const selectedImagesRef = useRef<Array<SelectedImageItem | null>>(
-    createEmptySelectionSlots(),
+    initialSlots?.length
+      ? buildRestoredSelectedImages(initialSlots)
+      : createEmptySelectionSlots(),
   );
   const backgroundUploadPromisesRef = useRef(new Map<number, Promise<void>>());
 

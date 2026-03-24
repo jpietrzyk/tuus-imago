@@ -18,6 +18,7 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
@@ -92,7 +93,9 @@ export function LegalNavigationSheet({
               </Button>
             </DrawerClose>
           </div>
-          <p className="text-sm text-gray-600">{t("legalMenu.subtitle")}</p>
+          <DrawerDescription className="text-sm text-gray-600">
+            {t("legalMenu.subtitle")}
+          </DrawerDescription>
         </DrawerHeader>
 
         <div className="overflow-y-auto px-4 pb-6 pt-4 space-y-6">
