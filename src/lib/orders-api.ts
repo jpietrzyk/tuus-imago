@@ -63,10 +63,10 @@ export async function createOrder(
   );
 
   if (!response.ok || "error" in data) {
-    throw new Error(data.error ?? "Could not create order.");
+    throw new Error((data as ErrorResponse).error ?? "Could not create order.");
   }
 
-  return data;
+  return data as CreateOrderResponse;
 }
 
 export async function createP24Session(
@@ -95,5 +95,5 @@ export async function createP24Session(
     );
   }
 
-  return data;
+  return data as CreateP24SessionResponse;
 }

@@ -163,7 +163,7 @@ describe("CheckoutPage", () => {
       value: {
         ...originalDescriptor?.value,
         set href(url: string) {
-          locationHrefSpy(url);
+          (locationHrefSpy as (url: string) => void)(url);
         },
       },
       writable: true,
