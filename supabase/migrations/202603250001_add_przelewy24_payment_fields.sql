@@ -18,17 +18,8 @@ create index if not exists orders_payment_order_id_idx
 on public.orders(payment_order_id)
 where payment_order_id is not null;
 
-do $$
-begin
-  if exists (
-    select 1
-    from pg_constraint
-    where conname = 'order_status_history_status_type_check'
-  ) then
-    alter table public.order_status_history
-    drop constraint order_status_history_status_type_check;
-  end if;
-end $$;
+alter table public.order_status_history
+drop constraint if exists order_status_history_status_type_check;
 
 alter table public.order_status_history
 add constraint order_status_history_status_type_check
