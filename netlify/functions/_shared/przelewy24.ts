@@ -143,5 +143,12 @@ export async function parseP24Response<T>(response: Response): Promise<T | null>
     return null;
   }
 
-  return JSON.parse(text) as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    console.error("[przelewy24] Non-JSON response:", text.substring(0, 500));
+    throw new Error(
+      `Przelewy24 returned non-JSON response (status ${response.status}).`,
+    );
+  }
 }

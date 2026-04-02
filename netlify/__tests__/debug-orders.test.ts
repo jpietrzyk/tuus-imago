@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
-import { handler } from "./debug-orders";
+import { handler } from "../functions/debug-orders";
 import {
   createSelectInOrder,
   createSelectOrderLimit,

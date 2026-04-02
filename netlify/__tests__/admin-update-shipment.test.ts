@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
-import { handler } from "./admin-update-shipment";
+import { handler } from "../functions/admin-update-shipment";
 import {
   createSelectEqMaybeSingle,
   createUpdateEqSelectSingle,

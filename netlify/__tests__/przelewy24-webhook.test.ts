@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
-import { handler } from "./przelewy24-webhook";
+import { handler } from "../functions/przelewy24-webhook";
 import {
   buildNotificationSign,
   buildVerifySign,
-} from "./_shared/przelewy24";
+} from "../functions/_shared/przelewy24";
 import {
   createSelectEqMaybeSingle,
   createUpdateEq,

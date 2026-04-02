@@ -119,9 +119,10 @@ export const handler = async (event: NetlifyEvent) => {
     .maybeSingle<OrderRow>();
 
   if (orderError) {
+    console.error("[create-przelewy24-session] Order load error:", orderError.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Could not load order for payment." }),
+      body: JSON.stringify({ error: "Could not load order for payment.", details: orderError.message }),
     };
   }
 
@@ -195,7 +196,18 @@ export const handler = async (event: NetlifyEvent) => {
     body: JSON.stringify(registerPayload),
   });
 
-  const registerData = await parseP24Response<P24RegisterResponse>(registerResponse);
+  let registerData: P24RegisterResponse | null;
+
+  try {
+    registerData = await parseP24Response<P24RegisterResponse>(registerResponse);
+  } catch (err) {
+    return {
+      statusCode: 502,
+      body: JSON.stringify({
+        error: err instanceof Error ? err.message : "Could not register Przelewy24 transaction.",
+      }),
+    };
+  }
   const token = registerData?.data?.token;
 
   if (!registerResponse.ok || !token) {
