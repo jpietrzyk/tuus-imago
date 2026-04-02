@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, Link } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +31,15 @@ import {
   CreditCard,
   ExternalLink,
   Loader2,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
-import { t } from "@/locales/i18n";
+import { t, getCurrentLanguage } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
-import { createOrder } from "@/lib/orders-api";
+import { createOrder, createP24Session } from "@/lib/orders-api";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -58,6 +60,7 @@ type FormErrors = Partial<Record<keyof FormData, string>>;
 type FormTouched = Partial<Record<keyof FormData, boolean>>;
 
 const ORDER_SUBMISSION_KEY_STORAGE = "checkout-order-submission-key";
+const PENDING_ORDER_ID_STORAGE = "checkout-pending-order-id";
 
 function generateOrderSubmissionKey(): string {
   if (
@@ -255,8 +258,14 @@ export function CheckoutPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [p24Error, setP24Error] = useState<string | null>(null);
   const [genericError, setGenericError] = useState<string | null>(null);
   const [isBackDialogOpen, setIsBackDialogOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const paymentReturn = searchParams.get("payment") === "return";
+  const returnOrderId = searchParams.get("orderId");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -295,6 +304,7 @@ export function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGenericError(null);
+    setP24Error(null);
 
     const allKeys = Object.keys(formData) as (keyof FormData)[];
     const newErrors: FormErrors = {};
@@ -315,10 +325,37 @@ export function CheckoutPage() {
         uploadedSlots,
         idempotencyKey: submissionKey,
       });
-      sessionStorage.removeItem("checkout-form-draft");
-      sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
-      setSubmissionKey(generateOrderSubmissionKey());
+
+      sessionStorage.setItem(
+        PENDING_ORDER_ID_STORAGE,
+        orderResponse.orderId,
+      );
       setOrderNumber(orderResponse.orderNumber);
+      setPendingOrderId(orderResponse.orderId);
+
+      try {
+        setIsRedirecting(true);
+        const p24Response = await createP24Session({
+          orderId: orderResponse.orderId,
+          language: getCurrentLanguage(),
+        });
+
+        sessionStorage.removeItem("checkout-form-draft");
+        sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
+        sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
+        setSubmissionKey(generateOrderSubmissionKey());
+
+        window.location.href = p24Response.redirectUrl;
+      } catch (p24Err) {
+        setIsRedirecting(false);
+        setP24Error(
+          p24Err instanceof Error && p24Err.message
+            ? p24Err.message
+            : t("checkout.paymentSessionError"),
+        );
+        sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
+        setSubmissionKey(generateOrderSubmissionKey());
+      }
     } catch (error) {
       setGenericError(
         error instanceof Error && error.message
@@ -327,6 +364,29 @@ export function CheckoutPage() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleRetryPayment = async () => {
+    if (!pendingOrderId) return;
+    setP24Error(null);
+    setIsRedirecting(true);
+    try {
+      const p24Response = await createP24Session({
+        orderId: pendingOrderId,
+        language: getCurrentLanguage(),
+      });
+      sessionStorage.removeItem("checkout-form-draft");
+      sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
+      sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
+      window.location.href = p24Response.redirectUrl;
+    } catch (p24Err) {
+      setIsRedirecting(false);
+      setP24Error(
+        p24Err instanceof Error && p24Err.message
+          ? p24Err.message
+          : t("checkout.paymentSessionError"),
+      );
     }
   };
 
@@ -405,22 +465,66 @@ export function CheckoutPage() {
             <CardTitle>{t("checkout.shippingInformation")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {orderNumber !== null ? (
+            {paymentReturn ? (
               <div className="py-12 text-center">
-                <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                <Clock className="h-16 w-16 text-blue-600 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {t("checkout.orderSuccessful")}
+                  {t("checkout.paymentPendingTitle")}
+                </h2>
+                <p className="text-gray-600 mb-4">
+                  {t("checkout.paymentPendingMessage")}
+                </p>
+                {returnOrderId && (
+                  <p className="text-sm text-gray-500 mb-6">
+                    {t("checkout.orderNumber")}:{" "}
+                    <span className="font-mono font-semibold">
+                      {returnOrderId}
+                    </span>
+                  </p>
+                )}
+                <Button onClick={() => navigate("/")}>
+                  {t("checkout.backToHomeButton")}
+                </Button>
+              </div>
+            ) : isRedirecting ? (
+              <div className="py-12 text-center">
+                <Loader2 className="h-16 w-16 text-blue-600 mx-auto mb-4 animate-spin" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {t("checkout.redirectingToPayment")}
+                </h2>
+                {orderNumber && (
+                  <p className="text-sm text-gray-500">
+                    {t("checkout.orderNumber")}:{" "}
+                    <span className="font-mono font-semibold">
+                      {orderNumber}
+                    </span>
+                  </p>
+                )}
+              </div>
+            ) : p24Error && orderNumber ? (
+              <div className="py-12 text-center">
+                <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  {t("checkout.paymentRetryTitle")}
                 </h2>
                 <p className="text-gray-600 mb-2">
-                  {t("checkout.orderSuccessMessage")}
+                  {t("checkout.paymentRetryMessage")}
                 </p>
+                <p className="text-sm text-red-600 mb-2">{p24Error}</p>
                 <p className="text-sm text-gray-500 mb-6">
                   {t("checkout.orderNumber")}:{" "}
-                  <span className="font-mono font-semibold">{orderNumber}</span>
+                  <span className="font-mono font-semibold">
+                    {orderNumber}
+                  </span>
                 </p>
-                <Button onClick={() => navigate("/")}>
-                  {t("checkout.continueShoppingButton")}
-                </Button>
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={handleRetryPayment}>
+                    {t("checkout.paymentRetryButton")}
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/")}>
+                    {t("checkout.backToHomeButton")}
+                  </Button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6" noValidate>

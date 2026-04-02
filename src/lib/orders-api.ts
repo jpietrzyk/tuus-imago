@@ -33,6 +33,13 @@ type ErrorResponse = {
   error?: string;
 };
 
+export interface CreateP24SessionResponse {
+  orderId: string;
+  orderNumber: string;
+  paymentSessionId: string;
+  redirectUrl: string;
+}
+
 async function parseJsonResponse<T>(response: Response): Promise<T> {
   const data = (await response.json()) as T;
   return data;
@@ -57,6 +64,35 @@ export async function createOrder(
 
   if (!response.ok || "error" in data) {
     throw new Error(data.error ?? "Could not create order.");
+  }
+
+  return data;
+}
+
+export async function createP24Session(
+  payload: { orderId: string; language?: string },
+  signal?: AbortSignal,
+): Promise<CreateP24SessionResponse> {
+  const response = await fetch(
+    "/.netlify/functions/create-przelewy24-session",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal,
+    },
+  );
+
+  const data = await parseJsonResponse<
+    CreateP24SessionResponse | ErrorResponse
+  >(response);
+
+  if (!response.ok || "error" in data) {
+    throw new Error(
+      (data as ErrorResponse).error ?? "Could not create payment session.",
+    );
   }
 
   return data;

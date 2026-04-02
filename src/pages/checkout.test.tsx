@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   render,
   screen,
@@ -31,25 +31,59 @@ const VALID_DRAFT = {
   country: "PL",
 };
 
-describe("CheckoutPage", () => {
-  beforeEach(() => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            orderId: "order-1",
-            orderNumber: "TI-2026-000001",
-            status: "pending_payment",
-          }),
-          {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          },
-        ),
-      ),
+const ORDER_RESPONSE = {
+  orderId: "order-1",
+  orderNumber: "TI-2026-000001",
+  status: "pending_payment",
+};
+
+const P24_SESSION_RESPONSE = {
+  orderId: "order-1",
+  orderNumber: "TI-2026-000001",
+  paymentSessionId: "session-1",
+  redirectUrl: "https://sandbox.przelewy24.pl/trnRequest/token-abc",
+};
+
+function createFetchMock(
+  orderResponse = ORDER_RESPONSE,
+  p24Response = P24_SESSION_RESPONSE,
+) {
+  return vi.fn((url: string) => {
+    if (url.includes("create-order")) {
+      return Promise.resolve(
+        new Response(JSON.stringify(orderResponse), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    if (url.includes("create-przelewy24-session")) {
+      return Promise.resolve(
+        new Response(JSON.stringify(p24Response), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    return Promise.resolve(
+      new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      }),
     );
+  });
+}
+
+describe("CheckoutPage", () => {
+  let locationHrefSpy: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", createFetchMock());
     sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   const renderWithRouter = () => {
@@ -67,6 +101,16 @@ describe("CheckoutPage", () => {
       <MemoryRouter
         initialEntries={[{ pathname: "/checkout", state: { uploadedSlots } }]}
       >
+        <Routes>
+          <Route path="/checkout" element={<CheckoutPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+  };
+
+  const renderWithSearchParams = (search: string) => {
+    return render(
+      <MemoryRouter initialEntries={[`/checkout${search}`]}>
         <Routes>
           <Route path="/checkout" element={<CheckoutPage />} />
         </Routes>
@@ -99,7 +143,6 @@ describe("CheckoutPage", () => {
       screen.getByLabelText(tr("checkout.postalCode")),
       "00-001",
     );
-    // Check the consent checkboxes required for form validation
     const termsCheckbox = document.getElementById(
       "termsAccepted",
     ) as HTMLInputElement;
@@ -108,6 +151,25 @@ describe("CheckoutPage", () => {
     ) as HTMLInputElement;
     if (termsCheckbox) await userEvent.click(termsCheckbox);
     if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+  };
+
+  const stubLocationHref = () => {
+    locationHrefSpy = vi.fn();
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "location",
+    );
+    Object.defineProperty(window, "location", {
+      value: {
+        ...originalDescriptor?.value,
+        set href(url: string) {
+          locationHrefSpy(url);
+        },
+      },
+      writable: true,
+      configurable: true,
+    });
+    return locationHrefSpy;
   };
 
   it("renders checkout page", () => {
@@ -204,14 +266,12 @@ describe("CheckoutPage", () => {
     expect(screen.getByText(tr("checkout.orderSummary"))).toBeDefined();
     expect(screen.getByText(tr("checkout.enhancedPhoto"))).toBeDefined();
     expect(screen.getByText(tr("checkout.canvasPrint"))).toBeDefined();
-    // Use getAllByText since "total" text now appears in both main summary and mobile compact
     const totalElements = screen.getAllByText(tr("checkout.total"));
     expect(totalElements).toHaveLength(2);
   });
 
   it("renders total price", () => {
     renderWithRouter();
-    // Use getAllByText since price appears in multiple places now
     const priceElements = screen.getAllByText(
       hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
     );
@@ -308,94 +368,9 @@ describe("CheckoutPage", () => {
     expect(screen.getByText(tr("checkout.streetAddress"))).toBeDefined();
   });
 
-  it("disables inputs during submission", async () => {
-    seedDraft({});
-    renderWithRouter();
-    await waitFor(() => {
-      expect(
-        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
-          .value,
-      ).toBe("Jane Doe");
-    });
-
-    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
-    const emailInput = screen.getByLabelText(tr("checkout.email"));
-    const form = document.querySelector("form") as HTMLFormElement;
-
-    act(() => {
-      fireEvent.submit(form);
-    });
-
-    expect(nameInput.getAttribute("disabled")).toBe("");
-    expect(emailInput.getAttribute("disabled")).toBe("");
-  });
-
   it("renders help text", () => {
     renderWithRouter();
     expect(screen.getByText(tr("checkout.requiredFields"))).toBeDefined();
-  });
-
-  it("shows success screen with order number after valid submission", async () => {
-    seedDraft({});
-    renderWithRouter();
-    await waitFor(() => {
-      expect(
-        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
-          .value,
-      ).toBe("Jane Doe");
-    });
-    // Check consent checkboxes before submitting
-    const termsCheckbox = document.getElementById(
-      "termsAccepted",
-    ) as HTMLInputElement;
-    const privacyCheckbox = document.getElementById(
-      "privacyAccepted",
-    ) as HTMLInputElement;
-    if (termsCheckbox) await userEvent.click(termsCheckbox);
-    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
-    await userEvent.click(
-      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
-    );
-    await waitFor(
-      () => {
-        expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
-        expect(screen.getByText("TI-2026-000001")).toBeDefined();
-      },
-      { timeout: 3000 },
-    );
-  });
-
-  it("shows continue shopping button on success screen", async () => {
-    seedDraft({});
-    renderWithRouter();
-    await waitFor(() => {
-      expect(
-        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
-          .value,
-      ).toBe("Jane Doe");
-    });
-    // Check consent checkboxes before submitting
-    const termsCheckbox = document.getElementById(
-      "termsAccepted",
-    ) as HTMLInputElement;
-    const privacyCheckbox = document.getElementById(
-      "privacyAccepted",
-    ) as HTMLInputElement;
-    if (termsCheckbox) await userEvent.click(termsCheckbox);
-    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
-    await userEvent.click(
-      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
-    );
-    await waitFor(
-      () => {
-        expect(
-          screen.getByRole("button", {
-            name: tr("checkout.continueShoppingButton"),
-          }),
-        ).toBeDefined();
-      },
-      { timeout: 3000 },
-    );
   });
 
   it("renders uploaded slot images in order summary when passed via location state", () => {
@@ -443,7 +418,6 @@ describe("CheckoutPage", () => {
 
     const images = screen.getAllByRole("img");
     expect(images.length).toBeGreaterThanOrEqual(2);
-    // Thumbnails should use optimized Cloudinary renditions while preserving transforms.
     expect(images[0]).toHaveAttribute(
       "src",
       getCloudinaryThumbnailUrl(
@@ -519,7 +493,6 @@ describe("CheckoutPage", () => {
 
     renderWithSlots(mockSlots);
 
-    // Use getAllByText since price appears in multiple places (main summary + mobile compact)
     const priceElements = screen.getAllByText(
       hasExactTextContent(
         formatPrice(CANVAS_PRINT_UNIT_PRICE * mockSlots.length),
@@ -562,11 +535,69 @@ describe("CheckoutPage", () => {
     });
   });
 
-  it("clears sessionStorage draft after successful order submission", async () => {
-    // Pre-seed sessionStorage so the form mounts valid.
+  it("disables inputs during submission", async () => {
     seedDraft({});
     renderWithRouter();
-    // Wait until the restore useEffect fires and its re-render reflects in the DOM
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+
+    const nameInput = screen.getByLabelText(tr("checkout.fullName"));
+    const emailInput = screen.getByLabelText(tr("checkout.email"));
+    const form = document.querySelector("form") as HTMLFormElement;
+
+    act(() => {
+      fireEvent.submit(form);
+    });
+
+    expect(nameInput.getAttribute("disabled")).toBe("");
+    expect(emailInput.getAttribute("disabled")).toBe("");
+  });
+
+  it("shows redirecting screen with order number after valid submission", async () => {
+    const hrefSpy = stubLocationHref();
+    seedDraft({});
+    renderWithRouter();
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(tr("checkout.redirectingToPayment")),
+        ).toBeDefined();
+        expect(screen.getByText("TI-2026-000001")).toBeDefined();
+      },
+      { timeout: 3000 },
+    );
+    await waitFor(() => {
+      expect(hrefSpy).toHaveBeenCalledWith(
+        "https://sandbox.przelewy24.pl/trnRequest/token-abc",
+      );
+    });
+  });
+
+  it("clears sessionStorage draft after successful P24 session creation", async () => {
+    stubLocationHref();
+    seedDraft({});
+    renderWithRouter();
     await waitFor(
       () => {
         expect(
@@ -576,13 +607,14 @@ describe("CheckoutPage", () => {
       },
       { timeout: 3000 },
     );
-    // Submit the form directly (formData is now fully restored, form is valid)
     act(() => {
       fireEvent.submit(document.querySelector("form") as HTMLFormElement);
     });
     await waitFor(
       () => {
-        expect(screen.getByText(tr("checkout.orderSuccessful"))).toBeDefined();
+        expect(
+          screen.getByText(tr("checkout.redirectingToPayment")),
+        ).toBeDefined();
       },
       { timeout: 5000 },
     );
@@ -631,6 +663,199 @@ describe("CheckoutPage", () => {
 
     const saved = sessionStorage.getItem("checkout-form-draft");
     expect(saved).not.toBeNull();
-    expect(screen.queryByText(tr("checkout.orderSuccessful"))).toBeNull();
+    expect(
+      screen.queryByText(tr("checkout.redirectingToPayment")),
+    ).toBeNull();
+  });
+
+  it("shows retry screen when P24 session creation fails after order is created", async () => {
+    vi.stubGlobal(
+      "fetch",
+      createFetchMock(ORDER_RESPONSE, undefined).mockImplementation(
+        (url: string) => {
+          if (url.includes("create-order")) {
+            return Promise.resolve(
+              new Response(JSON.stringify(ORDER_RESPONSE), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              }),
+            );
+          }
+          if (url.includes("create-przelewy24-session")) {
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({
+                  error: "Could not register Przelewy24 transaction.",
+                }),
+                {
+                  status: 502,
+                  headers: { "Content-Type": "application/json" },
+                },
+              ),
+            );
+          }
+          return Promise.resolve(new Response(null, { status: 404 }));
+        },
+      ),
+    );
+
+    seedDraft({});
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(tr("checkout.paymentRetryTitle")),
+        ).toBeDefined();
+        expect(screen.getByText("TI-2026-000001")).toBeDefined();
+        expect(
+          screen.getByRole("button", {
+            name: tr("checkout.paymentRetryButton"),
+          }),
+        ).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+  });
+
+  it("shows payment pending screen when returning from P24 with payment=return", () => {
+    renderWithSearchParams(
+      "?payment=return&orderId=550e8400-e29b-41d4-a716-446655440000",
+    );
+
+    expect(
+      screen.getByText(tr("checkout.paymentPendingTitle")),
+    ).toBeDefined();
+    expect(
+      screen.getByText(tr("checkout.paymentPendingMessage")),
+    ).toBeDefined();
+    expect(
+      screen.getByText("550e8400-e29b-41d4-a716-446655440000"),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: tr("checkout.backToHomeButton") }),
+    ).toBeDefined();
+  });
+
+  it("does not show order form when on payment return page", () => {
+    renderWithSearchParams("?payment=return&orderId=order-123");
+
+    expect(screen.queryByLabelText(tr("checkout.fullName"))).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.placeOrder") }),
+    ).toBeNull();
+  });
+
+  it("stores pending order ID in sessionStorage when P24 session fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      createFetchMock(ORDER_RESPONSE, undefined).mockImplementation(
+        (url: string) => {
+          if (url.includes("create-order")) {
+            return Promise.resolve(
+              new Response(JSON.stringify(ORDER_RESPONSE), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              }),
+            );
+          }
+          if (url.includes("create-przelewy24-session")) {
+            return Promise.resolve(
+              new Response(
+                JSON.stringify({
+                  error: "Could not register Przelewy24 transaction.",
+                }),
+                {
+                  status: 502,
+                  headers: { "Content-Type": "application/json" },
+                },
+              ),
+            );
+          }
+          return Promise.resolve(new Response(null, { status: 404 }));
+        },
+      ),
+    );
+
+    seedDraft({});
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+
+    await waitFor(
+      () => {
+        expect(
+          screen.getByText(tr("checkout.paymentRetryTitle")),
+        ).toBeDefined();
+      },
+      { timeout: 5000 },
+    );
+
+    expect(sessionStorage.getItem("checkout-pending-order-id")).toBe("order-1");
+  });
+
+  it("clears pending order ID from sessionStorage after successful P24 redirect", async () => {
+    stubLocationHref();
+    seedDraft({});
+    renderWithRouter();
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+    await waitFor(() => {
+      expect(locationHrefSpy).toHaveBeenCalled();
+    }, { timeout: 3000 });
+    expect(sessionStorage.getItem("checkout-pending-order-id")).toBeNull();
   });
 });
