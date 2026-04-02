@@ -57,7 +57,7 @@ describe("debug-orders handler", () => {
   });
 
   it("returns recent orders with grouped items and history", async () => {
-    const { select: ordersSelect, limit: ordersLimit } = createSelectOrderLimit({
+    const { select: ordersSelect } = createSelectOrderLimit({
       data: [
         {
           id: "order-1",
@@ -76,7 +76,7 @@ describe("debug-orders handler", () => {
       ],
       error: null,
     });
-    const { select: itemsSelect, order: itemsOrder } = createSelectInOrder({
+    const { select: itemsSelect } = createSelectInOrder({
       data: [
         {
           order_id: "order-1",
@@ -88,7 +88,7 @@ describe("debug-orders handler", () => {
       ],
       error: null,
     });
-    const { select: historySelect, order: historyOrder } = createSelectInOrder({
+    const { select: historySelect } = createSelectInOrder({
       data: [
         {
           order_id: "order-1",
