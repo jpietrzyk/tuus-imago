@@ -91,3 +91,137 @@ For signed uploads or admin operations, use a backend endpoint that signs reques
 - If you see `Missing CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET in server environment`, verify you did not use `VITE_` (or `VITTE_`) prefix for function secrets.
 - Frontend reads only: `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`.
 - Netlify Function reads only: `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+
+## Supabase migrations
+
+### Run migrations from local dev
+
+Use:
+
+- `pnpm db:migrate:dev`
+
+This links the configured project and runs `supabase db push --linked`.
+The script automatically loads `.env.local` and `.env` (if present), so you can store local migration variables there.
+
+Required shell env vars for local run:
+
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_DB_PASSWORD`
+
+`SUPABASE_DB_PASSWORD` must be your Postgres database password (not `SUPABASE_SECRET_KEY` / `sb_secret_*`).
+
+Example:
+
+```bash
+export SUPABASE_PROJECT_REF=bwwtoitwhkalbmlgxfgf
+export SUPABASE_DB_PASSWORD=your_database_password
+pnpm db:migrate:dev
+```
+
+### Deployment migration action
+
+Repository runs migrations as part of [.github/workflows/run-checks.yml](.github/workflows/run-checks.yml):
+
+- Job order: tests -> lint -> migrate
+- Migrate job runs only on `main`
+- Migrate job runs only when `supabase/migrations/**` changed in the push
+
+Required GitHub repository secrets:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_PROJECT_REF`
+- `SUPABASE_DB_PASSWORD`
+
+The migration step executes `pnpm db:migrate:deploy`, which links the Supabase project and runs `supabase db push --linked`.
+
+## Admin shipment update endpoint
+
+The repository includes an admin-only Netlify function for shipment operations:
+
+- Path: `/.netlify/functions/admin-update-shipment`
+- Method: `POST`
+- Auth header: `x-admin-token: <ADMIN_SHIPMENT_TOKEN>`
+
+Shipment status helper endpoint:
+
+- Path: `/.netlify/functions/admin-shipment-options?orderId=<ORDER_UUID>`
+- Method: `GET`
+- Auth header: `x-admin-token: <ADMIN_SHIPMENT_TOKEN>`
+- Returns current shipment status and allowed next statuses for that order
+
+Required server env:
+
+- `ADMIN_SHIPMENT_TOKEN`
+
+Request body:
+
+- `orderId`: order UUID
+- `shipmentStatus`: one of `pending_fulfillment`, `in_transit`, `delivered`, `failed_delivery`, `returned`
+- `trackingNumber`: optional tracking value
+- `note`: optional history note
+
+Behavior:
+
+- Validates shipment status transitions
+- Updates `orders.shipment_status` and `orders.tracking_number`
+- Appends `order_status_history` shipment event entry
+
+## Przelewy24 payment backend slice
+
+The repository now includes the first backend-only Przelewy24 integration slice:
+
+- `/.netlify/functions/create-przelewy24-session`
+- `/.netlify/functions/przelewy24-webhook`
+
+Current behavior:
+
+- Loads an existing order from Supabase
+- Registers a Przelewy24 transaction via `transaction/register`
+- Stores payment session fields on `orders`
+- Verifies asynchronous notifications via `transaction/verify`
+- Marks orders as paid after successful verification
+- Appends `payment` and `order` entries into `order_status_history`
+
+Required server env:
+
+- `SITE_URL`
+- `P24_MERCHANT_ID`
+- `P24_POS_ID`
+- `P24_CRC`
+- `P24_API_KEY`
+- `P24_API_BASE_URL`
+
+Optional server env:
+
+- `P24_STATUS_URL`
+
+Suggested values:
+
+- Sandbox API: `https://sandbox.przelewy24.pl/api/v1`
+- Production API: `https://secure.przelewy24.pl/api/v1`
+
+Session creation endpoint:
+
+- Path: `/.netlify/functions/create-przelewy24-session`
+- Method: `POST`
+- Body: `{ "orderId": "<ORDER_UUID>", "language": "pl" | "en" }`
+- Response: `orderId`, `orderNumber`, `paymentSessionId`, `redirectUrl`
+
+Webhook endpoint:
+
+- Path: `/.netlify/functions/przelewy24-webhook`
+- Method: `POST`
+- Called by Przelewy24 with transaction notification JSON
+- Verifies Przelewy24 signature first, then confirms the payment via `transaction/verify`
+
+Database changes:
+
+- New migration: `supabase/migrations/202603250001_add_przelewy24_payment_fields.sql`
+- Adds payment tracking fields to `orders`
+- Extends `order_status_history.status_type` with `payment`
+
+Test coverage:
+
+- `netlify/functions/create-przelewy24-session.test.ts`
+- `netlify/functions/przelewy24-webhook.test.ts`
+- Shared Supabase test helper: `netlify/functions/test-utils/supabase-mocks.ts`
