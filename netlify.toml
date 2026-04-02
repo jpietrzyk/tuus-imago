@@ -1,0 +1,5 @@
+[build]
+  functions = "netlify/functions"
+
+[functions]
+  excluded_files = "**/*.test.ts"
