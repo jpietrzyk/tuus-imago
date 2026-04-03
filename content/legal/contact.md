@@ -9,6 +9,9 @@ lastUpdated: 2025-02-01
 
 ## Informacje kontaktowe
 
+### Car-folie.pl Adrian Uniszyn
+- **NIP:** 6811882876
+- **REGON:** 120769615
 - **E-mail:** info@tuusimago.com
 - **Telefon:** 570-603-695
 - **Adres:** ul. Wybickiego 48, 32-400 Myślenice
