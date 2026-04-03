@@ -19,7 +19,7 @@ Masz prawo odstąpić od umowy w terminie 14 dni od dnia otrzymania towaru bez p
 
 1. Wypełnij formularz odstąpienia od umowy (dostępny na naszej stronie lub poproś o niego e-mailem)
 2. Odeślij towar na adres: ul. Wybickiego 48, 32-400 Myślenice
-3. Odeślij nam wypełniony formularz e-mailem na adres: returns@tuusimago.com
+3. Odeślij nam wypełniony formularz e-mailem na adres: info@tuusimago.com
 
 Termin zachowany, jeśli odeślesz towar przed upływem 14 dni.
 
@@ -43,16 +43,37 @@ Odpowiadasz za zmniejszenie wartości towaru wynikające z korzystania z niego w
 
 ## Reklamacja uszkodzonego lub wadliwego towaru
 
-Jeśli otrzymany towar jest uszkodzony lub wadliwy, masz prawo złożyć reklamację.
+Jeśli otrzymany towar jest uszkodzony lub wadliwy, masz prawo złożyć reklamację na podstawie Ustawy o prawach konsumenta z dnia 30 maja 2014 r. (Dz.U. 2014 poz. 827 ze zm.), w szczególności art. 43a–43f, oraz przepisów Kodeksu cywilnego dotyczących rękojmi (art. 556–576 K.c.).
 
-**Procedura reklamacji:**
+### Uprawnienia konsumenta (art. 43a–43f)
 
-1. Skontaktuj się z nami e-mailem na adres: returns@tuusimago.com
+Zgodnie z art. 43a ust. 1 Ustawy o prawach konsumenta, jeżeli produkt ma wadę, konsument może złożyć oświadczenie o żądaniu:
+
+1. **Naprawy** — usunięcie wady produktu
+2. **Wymiany** — dostarczenie produktu wolnego od wad
+3. **Obniżenia ceny** — proporcjonalne obniżenie ceny za produkt wadliwy
+4. **Odstąpienia od umowy** — zwrot produktu i zwrot ceny, jeśli wada jest istotna
+
+Sprzedawca może odmówić wymiany lub naprawy, gdy są one niemożliwe lub wymagają nadmiernych kosztów (art. 43c ust. 1). W takim przypadku konsument ma prawo żądać obniżenia ceny lub odstąpienia od umowy.
+
+### Procedura reklamacji
+
+1. Skontaktuj się z nami e-mailem na adres: info@tuusimago.com
 2. Opisz problem i dołącz zdjęcia uszkodzenia
-3. Rozpatrzymy reklamację w ciągu 14 dni
-4. W przypadku uznania reklamacji wymienimy towar lub zwrócimy pieniądze
+3. Rozpatrzymy reklamację w ciągu 14 dni od daty otrzymania
+4. O wyniku rozpatrzenia informujemy na piśmie lub innym trwałym nośniku
+
+Jeśli konsument żąda naprawy lub wymiany, a sprzedawca nie ustosunkuje się do żądania w terminie 14 dni, uznaje się, że sprzedawca uznał żądanie za uzasadnione (art. 43c ust. 3).
 
 W przypadku reklamacji towaru koszty odesłania pokrywamy my.
+
+### Pozasądowe rozstrzyganie sporów
+
+W przypadku braku satysfakcjonującego rozpatrzenia reklamacji, konsument ma prawo skorzystać z pozasądowych metod rozstrzygania sporów:
+
+- **Platforma ODR UE** — elektroniczne rozstrzyganie sporów konsumenckich: https://ec.europa.eu/consumers/odr/
+- **Wojewódzki Inspektorat Inspekcji Handlowej (WIIH)** — właściwy dla miejsca wykonywania działalności przez sprzedawcę
+- **UOKiK** — Urząd Ochrony Konkurencji i Konsumentów: www.uokik.gov.pl
 
 ## Formularz reklamacji
 
@@ -62,10 +83,11 @@ Możesz skorzystać z naszego formularza reklamacji dostępnego na stronie: [For
 
 **Adres do zwrotów i reklamacji:**
 
+- Car-folie.pl Adrian Uniszyn
 - ul. Wybickiego 48
 - 32-400 Myślenice
 - **Telefon:** 570-603-695
-- **E-mail:** returns@tuusimago.com
+- **E-mail:** info@tuusimago.com
 
 Godziny pracy: poniedziałek-piątek 9:00-17:00
 

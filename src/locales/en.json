@@ -21,7 +21,13 @@
     "on": "On",
     "off": "Off",
     "contentNotFound": "Content not found",
-    "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory."
+    "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory.",
+    "footerCompany": "Car-folie.pl Adrian Uniszyn | NIP: 6811882876 | REGON: 120769615",
+    "footerCompanyName": "Car-folie.pl Adrian Uniszyn",
+    "footerCompanyAddress": "ul. Wybickiego 48, 32-400 Myślenice",
+    "footerCompanyPhone": "570-603-695",
+    "footerCompanyEmail": "info@tuusimago.com",
+    "footerContactLink": "contact details"
   },
   "legalMenu": {
     "title": "Legal and Payments",

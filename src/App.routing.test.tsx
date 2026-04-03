@@ -177,9 +177,7 @@ describe("App Component Routing", () => {
 
     // Footer should be on home page
     expect(
-      screen.getByText(
-        tr("common.copyright", { year: new Date().getFullYear() }),
-      ),
+      screen.getByText(/Car-folie\.pl Adrian Uniszyn/),
     ).toBeInTheDocument();
 
     // Footer should also be on /about route
@@ -189,9 +187,7 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(
-        tr("common.copyright", { year: new Date().getFullYear() }),
-      ),
+      screen.getByText(/Car-folie\.pl Adrian Uniszyn/),
     ).toBeInTheDocument();
 
     // Footer should also be on /legal route
@@ -201,9 +197,7 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(
-        tr("common.copyright", { year: new Date().getFullYear() }),
-      ),
+      screen.getByText(/Car-folie\.pl Adrian Uniszyn/),
     ).toBeInTheDocument();
   });
 

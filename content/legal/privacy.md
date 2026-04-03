@@ -15,10 +15,12 @@ Niniejsza Polityka prywatności opisuje sposób zbierania, wykorzystywania i och
 
 Administratorem Twoich danych osobowych jest:
 
-- **Nazwa firmy:** Tuusimago
-- **Adres siedziby:** 32-400 Myślenice, ul. Wybickiego 48, Polska
+- **Nazwa firmy:** Car-folie.pl Adrian Uniszyn
+- **NIP:** 6811882876
+- **REGON:** 120769615
+- **Adres siedziby:** ul. Wybickiego 48, 32-400 Myślenice
 - **Adres e-mail:** info@tuusimago.com
-- **Telefon:** +48 570 603 695
+- **Telefon:** 570-603-695
 
 ## Rodzaje zbieranych danych osobowych
 
@@ -126,7 +128,7 @@ Możemy aktualizować niniejszą Politykę prywatności od czasu do czasu. Wszel
 W przypadku jakichkolwiek pytań dotyczących niniejszej Polityki prywatności lub realizacji Twoich praw w zakresie ochrony danych, prosimy o kontakt:
 
 - **Adres e-mail:** info@tuusimago.com
-- **Numer telefonu:** +48 570 603 695
+- **Numer telefonu:** 570-603-695
 
 Odpowiemy na Twoje zapytanie w ciągu 30 dni.
 

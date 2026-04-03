@@ -20,7 +20,8 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/© \d{4} Tuus Imago/i)).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago/)).toBeInTheDocument();
+    expect(screen.getByText(tr("common.footerContactLink"))).toBeInTheDocument();
   });
 
   it("should render legal CTA button", () => {
