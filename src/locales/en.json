@@ -22,7 +22,7 @@
     "off": "Off",
     "contentNotFound": "Content not found",
     "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory.",
-    "footerContactLink": "contact details"
+    "footerContactLink": "Contact"
   },
   "legalMenu": {
     "title": "Legal and Payments",

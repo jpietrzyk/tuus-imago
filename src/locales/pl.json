@@ -22,7 +22,7 @@
     "off": "Wył.",
     "contentNotFound": "Nie znaleziono treści",
     "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/.",
-    "footerContactLink": "dane kontaktowe"
+    "footerContactLink": "Kontakt"
   },
   "legalMenu": {
     "title": "Informacje prawne i płatności",
