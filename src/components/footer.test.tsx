@@ -20,7 +20,8 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Car-folie\.pl Adrian Uniszyn/)).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago/)).toBeInTheDocument();
+    expect(screen.getByText(tr("common.footerContactLink"))).toBeInTheDocument();
   });
 
   it("should render legal CTA button", () => {

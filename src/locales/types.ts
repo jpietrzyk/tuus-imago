@@ -26,6 +26,7 @@ export interface Translations {
     footerCompanyAddress: string;
     footerCompanyPhone: string;
     footerCompanyEmail: string;
+    footerContactLink: string;
   };
   legalMenu: {
     title: string;
