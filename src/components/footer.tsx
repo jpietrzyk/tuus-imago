@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { RotateCcw, Scale, ShoppingBag, TriangleAlert } from "lucide-react";
+import { Mail, RotateCcw, Scale, ShoppingBag, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -47,12 +47,7 @@ export function Footer({
       <div className="w-full h-full px-4 sm:px-6 lg:px-8">
         <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="text-xs sm:text-sm text-gray-500">
-              © TuusImago ·{" "}
-              <Link to="/contact" className="underline hover:text-gray-700">
-                {t("common.footerContactLink")}
-              </Link>
-            </div>
+            <div className="text-xs sm:text-sm text-gray-500">© TuusImago</div>
 
             {showReset && onReset ? (
               <AlertDialog>
@@ -120,7 +115,19 @@ export function Footer({
             ) : null}
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-1 sm:gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              asChild
+              className="h-9 rounded-full px-3 text-xs sm:text-sm font-semibold text-blue-600 border-blue-200 hover:bg-blue-50"
+            >
+              <Link to="/contact" aria-label={t("common.footerContactLink")}>
+                <Mail className="h-4 w-4" aria-hidden="true" />
+                {t("common.footerContactLink")}
+              </Link>
+            </Button>
+
             <Button
               size="sm"
               variant="ghost"
