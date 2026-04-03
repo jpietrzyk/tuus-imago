@@ -1,6 +1,6 @@
 import { AlertCircle, Upload } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { LegalPageLayout } from "@/components/legal-page-layout"
+import { ContentPageShell } from "@/components/content-page-shell"
 import { getPageBySlug } from "@/lib/content-loader"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -10,15 +10,9 @@ import { t } from "@/locales/i18n"
 
 export function ComplaintPage() {
   const page = getPageBySlug("complaint")
-  if (!page) return null
 
   return (
-    <LegalPageLayout
-      title={page.title}
-      subtitle={page.subtitle}
-      lastUpdated={page.lastUpdated}
-      markdownContent={page.body}
-    >
+    <ContentPageShell page={page}>
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-blue-600" />
@@ -222,6 +216,6 @@ export function ComplaintPage() {
           </Button>
         </form>
       </section>
-    </LegalPageLayout>
+    </ContentPageShell>
   )
 }

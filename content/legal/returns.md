@@ -1,7 +1,6 @@
 ---
 title: "Zwroty i reklamacje"
 subtitle: "Nasza polityka zwrotów i reklamacji"
-slug: "returns"
 icon: "RotateCcw"
 menuSection: "legal"
 menuOrder: 7

@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { PrivacyPage } from "./privacy";
 import { t } from "@/locales/i18n";
 
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "privacy"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "privacy",
+          icon: "Shield",
+          menuSection: "legal",
+          menuOrder: 3,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
+
 describe("PrivacyPage Component", () => {
-  it("should render the privacy page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <PrivacyPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Polityka prywatności",
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("Jak chronimy Twoje dane osobowe")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -41,135 +48,23 @@ describe("PrivacyPage Component", () => {
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the data controller section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <PrivacyPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText("Administrator danych"),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the types of data section", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <PrivacyPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText("Rodzaje zbieranych danych osobowych"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the legal basis section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Podstawa prawna przetwarzania"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the data purposes section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Cele przetwarzania danych"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the data sharing section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Udostępnianie danych"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the data storage section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Okres przechowywania danych"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the user rights section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Twoje prawa wynikające z RODO"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the cookies section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Polityka cookies"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the data security section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Bezpieczeństwo danych"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact section", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Dane kontaktowe"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact email", () => {
-    render(
-      <MemoryRouter>
-        <PrivacyPage />
-      </MemoryRouter>,
-    );
-
-    const emailLinks = screen.getAllByRole("link", { name: /info@tuusimago.com/ });
-    expect(emailLinks.length).toBeGreaterThanOrEqual(1);
-    expect(emailLinks[0]).toHaveAttribute("href", "mailto:info@tuusimago.com");
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

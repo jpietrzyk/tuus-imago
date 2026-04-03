@@ -57,20 +57,23 @@ const rawModules = import.meta.glob("/content/legal/*.md", {
   import: "default",
 }) as Record<string, string>;
 
+export function createLegalPageData(path: string, raw: string): LegalPageData {
+  const { frontmatter, body } = parseFrontmatter(raw);
+
+  return {
+    title: String(frontmatter.title ?? ""),
+    subtitle: String(frontmatter.subtitle ?? ""),
+    slug: slugFromPath(path),
+    icon: String(frontmatter.icon ?? "FileText"),
+    menuSection: (frontmatter.menuSection as MenuSection) ?? "legal",
+    menuOrder: Number(frontmatter.menuOrder ?? 99),
+    lastUpdated: String(frontmatter.lastUpdated ?? ""),
+    body,
+  };
+}
+
 const allPages: LegalPageData[] = Object.entries(rawModules)
-  .map(([path, raw]) => {
-    const { frontmatter, body } = parseFrontmatter(raw);
-    return {
-      title: String(frontmatter.title ?? ""),
-      subtitle: String(frontmatter.subtitle ?? ""),
-      slug: String(frontmatter.slug ?? slugFromPath(path)),
-      icon: String(frontmatter.icon ?? "FileText"),
-      menuSection: (frontmatter.menuSection as MenuSection) ?? "legal",
-      menuOrder: Number(frontmatter.menuOrder ?? 99),
-      lastUpdated: String(frontmatter.lastUpdated ?? ""),
-      body,
-    };
-  })
+  .map(([path, raw]) => createLegalPageData(path, raw))
   .sort((a, b) => a.menuOrder - b.menuOrder);
 
 export function getPageBySlug(slug: string): LegalPageData | undefined {

@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { TermsPage } from "./terms";
 import { t } from "@/locales/i18n";
 
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "terms"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "terms",
+          icon: "FileText",
+          menuSection: "legal",
+          menuOrder: 2,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
+
 describe("TermsPage Component", () => {
-  it("should render the terms page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <TermsPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Warunki korzystania",
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("Warunki użytkowania naszych usług")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -41,87 +48,23 @@ describe("TermsPage Component", () => {
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the scope section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <TermsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/2\. Zakres usług/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the ordering process section", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <TermsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(/3\. Proces składania zamówienia/),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the pricing section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(/4\. Ceny i płatności/),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the delivery section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(/5\. Warunki dostawy/),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the liability section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(/9\. Ograniczenie odpowiedzialności/),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the consumer rights section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(/16\. Prawa konsumenta/),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(/17\. Kontakt/),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

@@ -1,7 +1,6 @@
 ---
 title: "Polityka ciasteczek"
 subtitle: "Jak używamy ciasteczek na naszej stronie"
-slug: "cookies"
 icon: "Cookie"
 menuSection: "legal"
 menuOrder: 4

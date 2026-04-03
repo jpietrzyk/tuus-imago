@@ -1,7 +1,6 @@
 ---
 title: "Formularz reklamacji"
 subtitle: "Złóż reklamację dotyczącą zamówienia"
-slug: "complaint"
 icon: "AlertCircle"
 menuSection: "legal"
 menuOrder: 9

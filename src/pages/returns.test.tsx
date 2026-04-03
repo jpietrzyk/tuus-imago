@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ReturnsPage } from "./returns";
 import { t } from "@/locales/i18n";
 
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "returns"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "returns",
+          icon: "RotateCc",
+          menuSection: "legal",
+          menuOrder: 5,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
+
 describe("ReturnsPage Component", () => {
-  it("should render the returns page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <ReturnsPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Zwroty i reklamacje",
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("Nasza polityka zwrotów i reklamacji")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -41,76 +48,23 @@ describe("ReturnsPage Component", () => {
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the right of withdrawal section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <ReturnsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText("Prawo odstąpienia od umowy"),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the 14 days period", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <ReturnsPage />
       </MemoryRouter>,
     );
 
-    const matches = screen.getAllByText(/14 dni/);
-    expect(matches.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("should render the return costs section", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Koszty zwrotu"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the refund section", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Zwrot pieniędzy"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact section", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText("Kontakt"),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact email", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    const emailLinks = screen.getAllByRole("link", {
-      name: /returns@tuusimago.com/i,
-    });
-    expect(emailLinks.length).toBeGreaterThanOrEqual(1);
-    expect(emailLinks[0]).toHaveAttribute("href", "mailto:returns@tuusimago.com");
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

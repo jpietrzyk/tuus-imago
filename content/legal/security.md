@@ -1,7 +1,6 @@
 ---
 title: "Bezpieczeństwo"
 subtitle: "Jak chronimy Twoje informacje"
-slug: "security"
 icon: "Lock"
 menuSection: "legal"
 menuOrder: 6

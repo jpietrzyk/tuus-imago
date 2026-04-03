@@ -1,7 +1,6 @@
 ---
 title: "Płatności"
 subtitle: "Informacje o metodach płatności i bezpieczeństwie"
-slug: "payments"
 icon: "BadgeDollarSign"
 menuSection: "payments"
 menuOrder: 1

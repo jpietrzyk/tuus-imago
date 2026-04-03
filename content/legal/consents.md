@@ -1,7 +1,6 @@
 ---
 title: "Zgody"
 subtitle: "Zgody użytkownika i uprawnienia"
-slug: "consents"
 icon: "CheckCircle"
 menuSection: "legal"
 menuOrder: 5

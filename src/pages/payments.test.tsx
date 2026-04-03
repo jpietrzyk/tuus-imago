@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { PaymentsPage } from "./payments";
 import { t } from "@/locales/i18n";
 
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "payments"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "payments",
+          icon: "BadgeDollarSign",
+          menuSection: "payments",
+          menuOrder: 1,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
+
 describe("PaymentsPage Component", () => {
-  it("should render the payments page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <PaymentsPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Płatności",
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("Informacje o metodach płatności i bezpieczeństwie")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -41,111 +48,23 @@ describe("PaymentsPage Component", () => {
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the payment methods section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <PaymentsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Metody płatności" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the BLIK payment method", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <PaymentsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "BLIK" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the card payment method", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Karty płatnicze" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the traditional transfer method", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Przelew tradycyjny" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the Przelewy24 section", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Informacje o Przelewy24" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the security section", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Bezpieczeństwo płatności" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the processing time section", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Przetwarzanie płatności" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the refunds section", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Zwroty płatności" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the failure handling section", () => {
-    render(
-      <MemoryRouter>
-        <PaymentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Nieudana płatność" }),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

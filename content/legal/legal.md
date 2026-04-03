@@ -1,7 +1,6 @@
 ---
 title: "Informacje prawne"
 subtitle: "Polityka prywatności i warunki korzystania z usług"
-slug: "legal"
 icon: "FileText"
 menuSection: "legal"
 menuOrder: 1

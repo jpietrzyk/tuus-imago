@@ -19,7 +19,9 @@
     "loading": "Loading...",
     "processing": "Processing...",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "contentNotFound": "Content not found",
+    "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory."
   },
   "legalMenu": {
     "title": "Legal and Payments",

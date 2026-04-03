@@ -1,7 +1,6 @@
 ---
 title: "Warunki korzystania"
 subtitle: "Warunki użytkowania naszych usług"
-slug: "terms"
 icon: "FileText"
 menuSection: "legal"
 menuOrder: 2

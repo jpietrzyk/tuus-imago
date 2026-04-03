@@ -1,7 +1,6 @@
 ---
 title: "O nas"
 subtitle: "Dowiedz się więcej o Tuus Imago i naszej misji"
-slug: "about"
 icon: "Building2"
 menuSection: "company"
 menuOrder: 1

@@ -1,7 +1,6 @@
 ---
 title: "Kontakt"
 subtitle: "Skontaktuj się z naszym zespołem"
-slug: "contact"
 icon: "Mail"
 menuSection: "company"
 menuOrder: 2

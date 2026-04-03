@@ -19,6 +19,8 @@ export interface Translations {
     on: string;
     off: string;
     complaint: string;
+    contentNotFound: string;
+    contentNotFoundHint: string;
   };
   legalMenu: {
     title: string;

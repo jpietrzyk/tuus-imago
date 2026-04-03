@@ -1,7 +1,6 @@
 ---
 title: "Informacje o dostawie"
 subtitle: "Jak dostarczamy Twoje zamówienia"
-slug: "shipping"
 icon: "Truck"
 menuSection: "legal"
 menuOrder: 8

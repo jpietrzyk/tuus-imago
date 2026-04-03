@@ -1,7 +1,6 @@
 ---
 title: "Polityka prywatności"
 subtitle: "Jak chronimy Twoje dane osobowe"
-slug: "privacy"
 icon: "Shield"
 menuSection: "legal"
 menuOrder: 3

@@ -33,6 +33,21 @@ Some pages contain `[PLACEHOLDER: ...]` markers for business-specific values tha
 - Complaint email
 - Bank account details
 
+### Managing Legal Pages via CMS
+
+Legal pages are stored as Markdown files in [content/legal/](content/legal/) and edited via Decap CMS (Netlify CMS).
+
+**Important: slug is derived from filename, not editable**
+
+The `slug` field determines the page URL (e.g., `terms.md` → `/terms`). It is **automatically calculated from the filename** and cannot be edited in CMS. This ensures routing remains valid and prevents accidentally breaking page links.
+
+**If you need to move or rename a page:**
+1. Rename the file in the repository (e.g., `terms.md` → `policies.md`)
+2. Update any code that references the old slug (routing, links, tests)
+3. Commit both changes together
+
+The CMS will always respect the filename-based slug, ignoring any stale `slug` value in the frontmatter.
+
 ## Cloudinary setup (required for upload)
 
 This app uploads directly from browser to Cloudinary using a **signed upload** flow via Netlify Functions.

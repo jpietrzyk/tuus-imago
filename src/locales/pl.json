@@ -19,7 +19,9 @@
     "loading": "Ładowanie...",
     "processing": "Przetwarzanie...",
     "on": "Wł.",
-    "off": "Wył."
+    "off": "Wył.",
+    "contentNotFound": "Nie znaleziono treści",
+    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/."
   },
   "legalMenu": {
     "title": "Informacje prawne i płatności",
