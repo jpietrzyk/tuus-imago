@@ -177,7 +177,7 @@ describe("App Component Routing", () => {
 
     // Footer should be on home page
     expect(
-      screen.getByText(/Car-folie\.pl Adrian Uniszyn/),
+      screen.getByText(/TuusImago/),
     ).toBeInTheDocument();
 
     // Footer should also be on /about route
@@ -187,7 +187,7 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(/Car-folie\.pl Adrian Uniszyn/),
+      screen.getByText(/TuusImago/),
     ).toBeInTheDocument();
 
     // Footer should also be on /legal route
@@ -197,7 +197,7 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByText(/Car-folie\.pl Adrian Uniszyn/),
+      screen.getByText(/TuusImago/),
     ).toBeInTheDocument();
   });
 
