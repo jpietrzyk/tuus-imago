@@ -82,4 +82,4 @@ Możemy aktualizować niniejszą Politykę ciasteczek od czasu do czasu, aby odz
 
 ## Kontakt
 
-Jeśli masz pytania dotyczące naszej Polityki ciasteczek, skontaktuj się z nami pod adresem biuro@car-folie.pl.
+Jeśli masz pytania dotyczące naszej Polityki ciasteczek, skontaktuj się z nami pod adresem info@tuusimago.com.

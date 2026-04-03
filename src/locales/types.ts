@@ -21,6 +21,7 @@ export interface Translations {
     complaint: string;
     contentNotFound: string;
     contentNotFoundHint: string;
+    footerContactLink: string;
   };
   legalMenu: {
     title: string;

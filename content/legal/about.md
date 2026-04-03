@@ -35,5 +35,12 @@ Założona w 2024 roku, Tuus Imago powstała z pasji do fotografii i wizji udost
 Masz pytania lub chcesz się dowiedzieć więcej? Chętnie usłyszymy od Ciebie!
 
 * **E-mail:** [info@tuusimago.com](mailto:info@tuusimago.com)
-* **Telefon:** +48 570 603 695
+* **Telefon:** 570-603-695
 * **Adres:** ul. Wybickiego 48, 32-400 Myślenice
+
+## Dane firmy
+
+* **Nazwa firmy:** Car-folie.pl Adrian Uniszyn
+* **NIP:** 6811882876
+* **REGON:** 120769615
+* **Adres siedziby:** ul. Wybickiego 48, 32-400 Myślenice

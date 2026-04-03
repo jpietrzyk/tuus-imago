@@ -21,7 +21,8 @@
     "on": "On",
     "off": "Off",
     "contentNotFound": "Content not found",
-    "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory."
+    "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory.",
+    "footerContactLink": "contact details"
   },
   "legalMenu": {
     "title": "Legal and Payments",
@@ -283,7 +284,7 @@
       },
       "responseTime": {
         "label": "Response Time",
-        "description": "We will respond to your complaint within 14 business days from the date of receipt."
+        "description": "We will respond to your complaint within 14 days from the date of receipt."
       },
       "requiredDocs": {
         "label": "Required Documents",

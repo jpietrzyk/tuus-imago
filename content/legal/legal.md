@@ -28,7 +28,7 @@ Korzystając z naszych usług, zgadzasz się na następujące warunki.
 
 **Własność treści:** Zachowujesz pełną własność wszystkich przesłanych zdjęć. Tuus Imago otrzymuje ograniczoną licencję do przetwarzania i dostarczania Twoich zdjęć.
 
-**Polityka zwrotów:** Zwroty są dostępne w ciągu 30 dni od dostawy, jeśli jakość produktu nie spełnia naszych standardów.
+**Polityka zwrotów:** Zwroty są dostępne w ciągu 14 dni od dostawy, zgodnie z Ustawą o prawach konsumenta.
 
 **Ograniczenie odpowiedzialności:** Nie ponosimy odpowiedzialności za żadne szkody wynikające z korzystania z naszych usług poza ceną zakupu Twojego zamówienia.
 
@@ -36,6 +36,6 @@ Korzystając z naszych usług, zgadzasz się na następujące warunki.
 
 W razie jakichkolwiek pytań dotyczących naszej polityki prywatności lub warunków korzystania z usług, prosimy o kontakt:
 
-- **E-mail:** [support@tuusimago.com](mailto:support@tuusimago.com)
-- **Telefon:** +48 123 456 789
-- **Adres:** 123 Innovation Street, Warsaw, Poland
+- **E-mail:** [info@tuusimago.com](mailto:info@tuusimago.com)
+- **Telefon:** 570-603-695
+- **Adres:** ul. Wybickiego 48, 32-400 Myślenice

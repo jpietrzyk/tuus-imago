@@ -21,7 +21,8 @@
     "on": "Wł.",
     "off": "Wył.",
     "contentNotFound": "Nie znaleziono treści",
-    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/."
+    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/.",
+    "footerContactLink": "dane kontaktowe"
   },
   "legalMenu": {
     "title": "Informacje prawne i płatności",
@@ -283,7 +284,7 @@
       },
       "responseTime": {
         "label": "Czas odpowiedzi",
-        "description": "Odpowiemy na Twoją reklamację w ciągu 14 dni roboczych od daty jej otrzymania."
+        "description": "Odpowiemy na Twoją reklamację w ciągu 14 dni od daty jej otrzymania."
       },
       "requiredDocs": {
         "label": "Wymagane dokumenty",
