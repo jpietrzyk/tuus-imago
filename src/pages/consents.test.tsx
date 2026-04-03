@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ConsentsPage } from "./consents";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("ConsentsPage Component", () => {
   it("should render the consents page title", () => {
@@ -13,7 +13,7 @@ describe("ConsentsPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("consents.title"),
+      "Zgody",
     );
   });
 
@@ -24,7 +24,7 @@ describe("ConsentsPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("consents.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Zgody użytkownika i uprawnienia")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,13 +35,13 @@ describe("ConsentsPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the main section title", () => {
+  it("should render the main section heading", () => {
     render(
       <MemoryRouter>
         <ConsentsPage />
@@ -49,7 +49,7 @@ describe("ConsentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("consents.main.title") }),
+      screen.getByRole("heading", { name: "Przegląd zgód" }),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("ConsentsPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("consents.main.description")),
+      screen.getByText(/Ta strona zawiera informacje o zgodach/),
     ).toBeInTheDocument();
   });
 
@@ -72,6 +72,6 @@ describe("ConsentsPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("consents.lastUpdated"))).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja: 2025-02-01/)).toBeInTheDocument();
   });
 });

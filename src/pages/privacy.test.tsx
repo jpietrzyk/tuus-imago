@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { PrivacyPage } from "./privacy";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("PrivacyPage Component", () => {
   it("should render the privacy page title", () => {
@@ -13,7 +13,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("privacy.title"),
+      "Polityka prywatności",
     );
   });
 
@@ -24,7 +24,7 @@ describe("PrivacyPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("privacy.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Jak chronimy Twoje dane osobowe")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,7 +35,7 @@ describe("PrivacyPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.dataController.title") }),
+      screen.getByText("Administrator danych"),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.typesOfData.title") }),
+      screen.getByText("Rodzaje zbieranych danych osobowych"),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.legalBasis.title") }),
+      screen.getByText("Podstawa prawna przetwarzania"),
     ).toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.dataPurposes.title") }),
+      screen.getByText("Cele przetwarzania danych"),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.dataSharing.title") }),
+      screen.getByText("Udostępnianie danych"),
     ).toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.dataStorage.title") }),
+      screen.getByText("Okres przechowywania danych"),
     ).toBeInTheDocument();
   });
 
@@ -121,7 +121,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.userRights.title") }),
+      screen.getByText("Twoje prawa wynikające z RODO"),
     ).toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.cookies.title") }),
+      screen.getByText("Polityka cookies"),
     ).toBeInTheDocument();
   });
 
@@ -145,7 +145,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.dataSecurity.title") }),
+      screen.getByText("Bezpieczeństwo danych"),
     ).toBeInTheDocument();
   });
 
@@ -157,7 +157,7 @@ describe("PrivacyPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("privacy.contact.title") }),
+      screen.getByText("Dane kontaktowe"),
     ).toBeInTheDocument();
   });
 
@@ -168,7 +168,8 @@ describe("PrivacyPage Component", () => {
       </MemoryRouter>,
     );
 
-    // Email is rendered as text, not a link
-    expect(screen.getByText(tr("privacy.contact.email"))).toBeInTheDocument();
+    const emailLinks = screen.getAllByRole("link", { name: /info@tuusimago.com/ });
+    expect(emailLinks.length).toBeGreaterThanOrEqual(1);
+    expect(emailLinks[0]).toHaveAttribute("href", "mailto:info@tuusimago.com");
   });
 });

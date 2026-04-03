@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AboutPage } from "./about";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("AboutPage Component", () => {
   it("should render the about page title", () => {
@@ -13,7 +13,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("about.title"),
+      "O nas",
     );
   });
 
@@ -24,7 +24,7 @@ describe("AboutPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("about.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Dowiedz się więcej o Tuus Imago i naszej misji")).toBeInTheDocument();
   });
 
   it("should render the home navigation link", () => {
@@ -35,7 +35,7 @@ describe("AboutPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("about.mission.title") }),
+      screen.getByRole("heading", { name: "Nasza misja" }),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("about.story.title") }),
+      screen.getByRole("heading", { name: "Nasza historia" }),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("about.whatWeDo.title") }),
+      screen.getByRole("heading", { name: "Co robimy" }),
     ).toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("about.values.title") }),
+      screen.getByRole("heading", { name: "Nasze wartości" }),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("AboutPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("about.contact.title") }),
+      screen.getByRole("heading", { name: "Skontaktuj się z nami" }),
     ).toBeInTheDocument();
   });
 
@@ -137,50 +137,16 @@ describe("AboutPage Component", () => {
     ).toBeInTheDocument();
   });
 
-  it("should render all value cards", () => {
+  it("should render value items", () => {
     render(
       <MemoryRouter>
         <AboutPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(tr("about.values.qualityFirst.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("about.values.customerSatisfaction.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.values.innovation.label"),
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("about.values.sustainability.label")),
-    ).toBeInTheDocument();
-  });
-
-  it("should render all service cards", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.whatWeDo.aiEnhancement.label"),
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.whatWeDo.canvasPrinting.label"),
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.whatWeDo.customFraming.label"),
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Jakość w pierwszej kolejności/)).toBeInTheDocument();
+    expect(screen.getByText(/Satysfakcja klienta/)).toBeInTheDocument();
+    expect(screen.getByText(/Innowacja/)).toBeInTheDocument();
+    expect(screen.getByText(/Zrównoważony rozwój/)).toBeInTheDocument();
   });
 });

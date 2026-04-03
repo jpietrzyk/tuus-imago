@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { TermsPage } from "./terms";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("TermsPage Component", () => {
   it("should render the terms page title", () => {
@@ -13,7 +13,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("terms.title"),
+      "Warunki korzystania",
     );
   });
 
@@ -24,7 +24,7 @@ describe("TermsPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("terms.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Warunki użytkowania naszych usług")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,7 +35,7 @@ describe("TermsPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.scope.title") }),
+      screen.getByText(/2\. Zakres usług/),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.ordering.title") }),
+      screen.getByText(/3\. Proces składania zamówienia/),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.pricing.title") }),
+      screen.getByText(/4\. Ceny i płatności/),
     ).toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.delivery.title") }),
+      screen.getByText(/5\. Warunki dostawy/),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.liability.title") }),
+      screen.getByText(/9\. Ograniczenie odpowiedzialności/),
     ).toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.consumerRights.title") }),
+      screen.getByText(/16\. Prawa konsumenta/),
     ).toBeInTheDocument();
   });
 
@@ -121,7 +121,7 @@ describe("TermsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("terms.contact.title") }),
+      screen.getByText(/17\. Kontakt/),
     ).toBeInTheDocument();
   });
 });

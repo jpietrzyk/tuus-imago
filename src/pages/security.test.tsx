@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { SecurityPage } from "./security";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("SecurityPage Component", () => {
   it("should render the security page title", () => {
@@ -13,7 +13,7 @@ describe("SecurityPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("security.title"),
+      "Bezpieczeństwo",
     );
   });
 
@@ -24,7 +24,7 @@ describe("SecurityPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("security.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Jak chronimy Twoje informacje")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,13 +35,13 @@ describe("SecurityPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the main section title", () => {
+  it("should render the main section heading", () => {
     render(
       <MemoryRouter>
         <SecurityPage />
@@ -49,7 +49,7 @@ describe("SecurityPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("security.main.title") }),
+      screen.getByRole("heading", { name: "Przegląd bezpieczeństwa" }),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("SecurityPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("security.main.description")),
+      screen.getByText(/Ta strona zawiera informacje o środkach bezpieczeństwa/),
     ).toBeInTheDocument();
   });
 
@@ -72,6 +72,6 @@ describe("SecurityPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("security.lastUpdated"))).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja: 2025-02-01/)).toBeInTheDocument();
   });
 });

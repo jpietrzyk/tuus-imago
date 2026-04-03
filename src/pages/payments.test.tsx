@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { PaymentsPage } from "./payments";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("PaymentsPage Component", () => {
   it("should render the payments page title", () => {
@@ -13,7 +13,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("payments.title"),
+      "Płatności",
     );
   });
 
@@ -24,7 +24,7 @@ describe("PaymentsPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("payments.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Informacje o metodach płatności i bezpieczeństwie")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,7 +35,7 @@ describe("PaymentsPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("payments.methods.title") }),
+      screen.getByRole("heading", { name: "Metody płatności" }),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("payments.methods.blik.label")),
+      screen.getByRole("heading", { name: "BLIK" }),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("payments.methods.cards.label")),
+      screen.getByRole("heading", { name: "Karty płatnicze" }),
     ).toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("payments.methods.transfer.label")),
+      screen.getByRole("heading", { name: "Przelew tradycyjny" }),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("payments.p24.title") }),
+      screen.getByRole("heading", { name: "Informacje o Przelewy24" }),
     ).toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("payments.security.title") }),
+      screen.getByRole("heading", { name: "Bezpieczeństwo płatności" }),
     ).toBeInTheDocument();
   });
 
@@ -121,7 +121,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("payments.processing.title") }),
+      screen.getByRole("heading", { name: "Przetwarzanie płatności" }),
     ).toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("payments.refunds.title") }),
+      screen.getByRole("heading", { name: "Zwroty płatności" }),
     ).toBeInTheDocument();
   });
 
@@ -145,7 +145,7 @@ describe("PaymentsPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("payments.failure.title") }),
+      screen.getByRole("heading", { name: "Nieudana płatność" }),
     ).toBeInTheDocument();
   });
 });

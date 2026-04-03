@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { CookiesPage } from "./cookies";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("CookiesPage Component", () => {
   it("should render the cookies page title", () => {
@@ -13,7 +13,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("cookies.title"),
+      "Polityka ciasteczek",
     );
   });
 
@@ -24,7 +24,7 @@ describe("CookiesPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("cookies.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Jak używamy ciasteczek na naszej stronie")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,7 +35,7 @@ describe("CookiesPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("cookies.whatAreCookies.title") }),
+      screen.getByRole("heading", { name: "Czym są ciasteczka" }),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("cookies.types.title") }),
+      screen.getByRole("heading", { name: "Rodzaje ciasteczek, których używamy" }),
     ).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("cookies.types.necessary.title")),
+      screen.getByRole("heading", { name: "Niezbędne ciasteczka" }),
     ).toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("cookies.types.analytics.title")),
+      screen.getByRole("heading", { name: "Ciasteczka analityczne" }),
     ).toBeInTheDocument();
   });
 
@@ -97,7 +97,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("cookies.thirdParty.title") }),
+      screen.getByRole("heading", { name: "Ciasteczka osób trzecich" }),
     ).toBeInTheDocument();
   });
 
@@ -109,7 +109,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("cookies.consent.title") }),
+      screen.getByRole("heading", { name: "Zgoda na ciasteczka" }),
     ).toBeInTheDocument();
   });
 
@@ -121,7 +121,7 @@ describe("CookiesPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("cookies.manage.title") }),
+      screen.getByRole("heading", { name: "Zarządzanie ciasteczkami" }),
     ).toBeInTheDocument();
   });
 });

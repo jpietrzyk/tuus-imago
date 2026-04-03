@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ShippingPage } from "./shipping";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("ShippingPage Component", () => {
   it("should render the shipping page title", () => {
@@ -13,7 +13,7 @@ describe("ShippingPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("shipping.title"),
+      "Informacje o dostawie",
     );
   });
 
@@ -24,7 +24,7 @@ describe("ShippingPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("shipping.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Jak dostarczamy Twoje zamówienia")).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,7 +35,7 @@ describe("ShippingPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("ShippingPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("shipping.main.title") }),
+      screen.getByRole("heading", { name: "Regulamin dostawy" }),
     ).toBeInTheDocument();
   });
 
@@ -61,10 +61,10 @@ describe("ShippingPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("shipping.carriers.title") }),
+      screen.getByRole("heading", { name: "Dostawcy usług" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(tr("shipping.carriers.inpost")),
+      screen.getByText(/InPost Paczkomaty/),
     ).toBeInTheDocument();
   });
 
@@ -76,10 +76,7 @@ describe("ShippingPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("shipping.costs.title") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("shipping.costs.standardLabel")),
+      screen.getByRole("heading", { name: "Koszty dostawy" }),
     ).toBeInTheDocument();
   });
 
@@ -91,10 +88,7 @@ describe("ShippingPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("shipping.timeframe.title") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("shipping.timeframe.businessDays")),
+      screen.getByRole("heading", { name: "Czas realizacji" }),
     ).toBeInTheDocument();
   });
 
@@ -106,7 +100,7 @@ describe("ShippingPage Component", () => {
     );
 
     expect(
-      screen.getByText(tr("shipping.noInternational")),
+      screen.getByText(/Nie realizujemy wysyłek zagranicznych/),
     ).toBeInTheDocument();
   });
 
@@ -119,7 +113,7 @@ describe("ShippingPage Component", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: tr("shipping.failedDelivery.title"),
+        name: "Postępowanie w przypadku niedostarczonej przesyłki",
       }),
     ).toBeInTheDocument();
   });

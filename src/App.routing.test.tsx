@@ -43,17 +43,17 @@ vi.mock("@/lib/cloudinary-upload", () => ({
 
 describe("App Component Routing", () => {
   it.each([
-    ["/consents", "consents.title"],
-    ["/contact", "contact.title"],
-    ["/cookies", "cookies.title"],
-    ["/privacy", "privacy.title"],
-    ["/returns", "returns.title"],
-    ["/security", "security.title"],
-    ["/shipping", "shipping.title"],
-    ["/terms", "terms.title"],
+    ["/consents", "Zgody"],
+    ["/contact", "Kontakt"],
+    ["/cookies", "Polityka ciasteczek"],
+    ["/privacy", "Polityka prywatności"],
+    ["/returns", "Zwroty i reklamacje"],
+    ["/security", "Bezpieczeństwo"],
+    ["/shipping", "Informacje o dostawie"],
+    ["/terms", "Warunki korzystania"],
   ])(
     "should render legal route %s without runtime errors",
-    (route, titleKey) => {
+    (route, title) => {
       render(
         <MemoryRouter initialEntries={[route]}>
           <App />
@@ -61,7 +61,7 @@ describe("App Component Routing", () => {
       );
 
       expect(
-        screen.getByRole("heading", { name: tr(titleKey) }),
+        screen.getByRole("heading", { name: title }),
       ).toBeInTheDocument();
       expect(
         screen.getByRole("link", { name: tr("common.backToHome") }),
@@ -112,7 +112,7 @@ describe("App Component Routing", () => {
 
     // Check for about page elements
     expect(
-      screen.getByRole("heading", { name: tr("about.title") }),
+      screen.getByRole("heading", { name: "O nas" }),
     ).toBeInTheDocument();
   });
 
@@ -125,7 +125,7 @@ describe("App Component Routing", () => {
 
     // Check for legal page elements
     expect(
-      screen.getByRole("heading", { name: tr("legal.title") }),
+      screen.getByRole("heading", { name: "Informacje prawne" }),
     ).toBeInTheDocument();
   });
 

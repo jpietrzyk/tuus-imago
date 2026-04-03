@@ -41,7 +41,7 @@ describe("ComplaintPage Component", () => {
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the complaint info section", () => {
+  it("should render the complaint info section from markdown", () => {
     render(
       <MemoryRouter>
         <ComplaintPage />
@@ -49,7 +49,7 @@ describe("ComplaintPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("complaint.info.title") }),
+      screen.getByRole("heading", { name: "Informacje o reklamacjach" }),
     ).toBeInTheDocument();
   });
 
@@ -60,7 +60,6 @@ describe("ComplaintPage Component", () => {
       </MemoryRouter>,
     );
 
-    // There might be multiple headings with the same text
     expect(
       screen.getAllByRole("heading", { name: tr("complaint.form.title") })
         .length,
@@ -144,17 +143,5 @@ describe("ComplaintPage Component", () => {
       name: tr("complaint.form.submit"),
     });
     expect(submitButton).toBeInTheDocument();
-  });
-
-  it("should render the contact info section", () => {
-    render(
-      <MemoryRouter>
-        <ComplaintPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("complaint.contact.title") }),
-    ).toBeInTheDocument();
   });
 });

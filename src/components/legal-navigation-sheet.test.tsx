@@ -37,28 +37,28 @@ describe("LegalNavigationSheet", () => {
     renderSheet();
 
     expect(
-      screen.getByRole("link", { name: tr("common.legalAndPrivacy") }),
+      screen.getByRole("link", { name: "Informacje prawne" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.privacy") }),
+      screen.getByRole("link", { name: "Polityka prywatności" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.terms") }),
+      screen.getByRole("link", { name: "Warunki korzystania" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.cookies") }),
+      screen.getByRole("link", { name: "Polityka ciasteczek" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.consents") }),
+      screen.getByRole("link", { name: "Zgody" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.security") }),
+      screen.getByRole("link", { name: "Bezpieczeństwo" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.returns") }),
+      screen.getByRole("link", { name: "Zwroty i reklamacje" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.shipping") }),
+      screen.getByRole("link", { name: "Informacje o dostawie" }),
     ).toBeInTheDocument();
   });
 
@@ -66,21 +66,19 @@ describe("LegalNavigationSheet", () => {
     renderSheet();
 
     expect(
-      screen.getByRole("link", { name: tr("common.aboutUs") }),
+      screen.getByRole("link", { name: "O nas" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: tr("common.contact") }),
+      screen.getByRole("link", { name: "Kontakt" }),
     ).toBeInTheDocument();
   });
 
   it("renders payment section with links", () => {
     renderSheet();
 
-    // Payment section should have the payments link
     expect(
-      screen.getByRole("link", { name: tr("common.payments") }),
+      screen.getByRole("link", { name: "Płatności" }),
     ).toBeInTheDocument();
-    // And the payment intro text
     expect(screen.getByText(tr("legalMenu.paymentIntro"))).toBeInTheDocument();
   });
 
@@ -110,7 +108,7 @@ describe("LegalNavigationSheet", () => {
     const onOpenChange = vi.fn();
     renderSheet({ onOpenChange });
 
-    fireEvent.click(screen.getByRole("link", { name: tr("common.privacy") }));
+    fireEvent.click(screen.getByRole("link", { name: "Polityka prywatności" }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
@@ -119,7 +117,7 @@ describe("LegalNavigationSheet", () => {
     const onOpenChange = vi.fn();
     renderSheet({ onOpenChange });
 
-    fireEvent.click(screen.getByRole("link", { name: tr("common.aboutUs") }));
+    fireEvent.click(screen.getByRole("link", { name: "O nas" }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
@@ -152,13 +150,13 @@ describe("LegalNavigationSheet", () => {
     renderSheet();
 
     expect(
-      screen.getByRole("link", { name: tr("common.privacy") }),
+      screen.getByRole("link", { name: "Polityka prywatności" }),
     ).toHaveAttribute("href", "/privacy");
     expect(
-      screen.getByRole("link", { name: tr("common.terms") }),
+      screen.getByRole("link", { name: "Warunki korzystania" }),
     ).toHaveAttribute("href", "/terms");
     expect(
-      screen.getByRole("link", { name: tr("common.cookies") }),
+      screen.getByRole("link", { name: "Polityka ciasteczek" }),
     ).toHaveAttribute("href", "/cookies");
   });
 
@@ -166,10 +164,10 @@ describe("LegalNavigationSheet", () => {
     renderSheet();
 
     expect(
-      screen.getByRole("link", { name: tr("common.aboutUs") }),
+      screen.getByRole("link", { name: "O nas" }),
     ).toHaveAttribute("href", "/about");
     expect(
-      screen.getByRole("link", { name: tr("common.contact") }),
+      screen.getByRole("link", { name: "Kontakt" }),
     ).toHaveAttribute("href", "/contact");
   });
 });

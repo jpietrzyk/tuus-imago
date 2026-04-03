@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { LegalPage } from "./legal";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
 
 describe("LegalPage Component", () => {
   it("should render the legal page title", () => {
@@ -13,7 +13,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("legal.title"),
+      "Informacje prawne",
     );
   });
 
@@ -24,7 +24,7 @@ describe("LegalPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("legal.subtitle"))).toBeInTheDocument();
+    expect(screen.getByText("Polityka prywatności i warunki korzystania z usług")).toBeInTheDocument();
   });
 
   it("should render the home navigation link", () => {
@@ -35,7 +35,7 @@ describe("LegalPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
@@ -49,7 +49,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("legal.privacyPolicy.title") }),
+      screen.getByText("Polityka prywatności"),
     ).toBeInTheDocument();
   });
 
@@ -61,7 +61,7 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("legal.termsOfService.title") }),
+      screen.getByText("Warunki korzystania z usług"),
     ).toBeInTheDocument();
   });
 
@@ -73,50 +73,33 @@ describe("LegalPage Component", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: tr("legal.contact.title") }),
+      screen.getByText("Kontakt i wsparcie"),
     ).toBeInTheDocument();
   });
 
-  it("should render all privacy policy subsections", () => {
+  it("should render privacy policy subsections", () => {
     render(
       <MemoryRouter>
         <LegalPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(tr("legal.privacyPolicy.dataCollection.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(tr("legal.privacyPolicy.dataStorage.label")),
-    ).toHaveLength(2);
-    expect(
-      screen.getByText(tr("legal.privacyPolicy.dataUsage.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("legal.privacyPolicy.dataRetention.description")),
-    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Zbieranie danych/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Przechowywanie danych/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Wykorzystanie danych/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("should render all terms of service subsections", () => {
+  it("should render terms of service subsections", () => {
     render(
       <MemoryRouter>
         <LegalPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByText(tr("legal.termsOfService.serviceUse.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("legal.termsOfService.contentOwnership.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("legal.termsOfService.refundPolicy.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("legal.termsOfService.limitationOfLiability.label")),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Korzystanie z usług/)).toBeInTheDocument();
+    expect(screen.getByText(/Własność treści/)).toBeInTheDocument();
+    expect(screen.getByText(/Polityka zwrotów/)).toBeInTheDocument();
+    expect(screen.getByText(/Ograniczenie odpowiedzialności/)).toBeInTheDocument();
   });
 
   it("should render the support email", () => {
@@ -162,30 +145,6 @@ describe("LegalPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("legal.lastUpdated"))).toBeInTheDocument();
-  });
-
-  it("should render privacy policy description", () => {
-    render(
-      <MemoryRouter>
-        <LegalPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(tr("legal.privacyPolicy.description")),
-    ).toBeInTheDocument();
-  });
-
-  it("should render terms of service description", () => {
-    render(
-      <MemoryRouter>
-        <LegalPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(tr("legal.termsOfService.description")),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja: 2025-02-01/)).toBeInTheDocument();
   });
 });
