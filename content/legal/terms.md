@@ -75,7 +75,7 @@ Reklamacje rozpatrywane są na podstawie Ustawy o prawach konsumenta z dnia 30 m
 Reklamacje można składać:
 
 - e-mailem na adres info@tuusimago.com
-- poprzez formularz reklamacji dostępny na naszej stronie internetowej pod adresem /legal/complaint
+- poprzez [formularz reklamacji](/complaint) dostępny na naszej stronie internetowej
 - pisemnie na adres: ul. Wybickiego 48, 32-400 Myślenice
 
 ### Wymagane informacje

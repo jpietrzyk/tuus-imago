@@ -46,9 +46,15 @@ export function Footer({
       <div className="w-full h-full px-4 sm:px-6 lg:px-8">
         <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="truncate text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-              {t("common.footerCompany")}
-            </div>
+            <address className="text-[0.65rem] sm:text-xs leading-snug text-gray-500 not-italic whitespace-normal break-all">
+              <span className="font-medium">{t("common.footerCompanyName")}</span>{" "}
+              <span className="hidden sm:inline">| </span><br className="sm:hidden" />
+              {t("common.footerCompanyAddress")}{" "}
+              <span className="hidden sm:inline">| </span><br className="sm:hidden" />
+              {t("common.footerCompanyPhone")}{" "}
+              <span className="hidden sm:inline">| </span><br className="sm:hidden" />
+              {t("common.footerCompanyEmail")}
+            </address>
 
             {showReset && onReset ? (
               <AlertDialog>

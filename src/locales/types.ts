@@ -22,6 +22,10 @@ export interface Translations {
     contentNotFound: string;
     contentNotFoundHint: string;
     footerCompany: string;
+    footerCompanyName: string;
+    footerCompanyAddress: string;
+    footerCompanyPhone: string;
+    footerCompanyEmail: string;
   };
   legalMenu: {
     title: string;
