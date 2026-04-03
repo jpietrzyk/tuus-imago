@@ -22,7 +22,6 @@
     "off": "Off",
     "contentNotFound": "Content not found",
     "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory.",
-    "footerCompany": "Car-folie.pl Adrian Uniszyn | NIP: 6811882876 | REGON: 120769615",
     "footerContactLink": "contact details"
   },
   "legalMenu": {
