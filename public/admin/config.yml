@@ -53,6 +53,10 @@ collections:
         widget: datetime
         format: YYYY-MM-DD
         date_format: DD.MM.YYYY
+      - name: lang
+        label: Język
+        widget: hidden
+        default: pl
       - name: body
         label: Treść
         widget: markdown
