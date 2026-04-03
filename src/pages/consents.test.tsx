@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ConsentsPage } from "./consents";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
+
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "consents"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "consents",
+          icon: "CheckCircle",
+          menuSection: "legal",
+          menuOrder: 8,
+          lastUpdated: "2025-02-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
 
 describe("ConsentsPage Component", () => {
-  it("should render the consents page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <ConsentsPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("consents.title"),
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <ConsentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("consents.subtitle"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,34 +42,10 @@ describe("ConsentsPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
-  });
-
-  it("should render the main section title", () => {
-    render(
-      <MemoryRouter>
-        <ConsentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("consents.main.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the main section description", () => {
-    render(
-      <MemoryRouter>
-        <ConsentsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(tr("consents.main.description")),
-    ).toBeInTheDocument();
   });
 
   it("should render the last updated text", () => {
@@ -72,6 +55,16 @@ describe("ConsentsPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(tr("consents.lastUpdated"))).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
+  });
+
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <ConsentsPage />
+      </MemoryRouter>,
+    );
+
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

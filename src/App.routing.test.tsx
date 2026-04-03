@@ -6,6 +6,41 @@ import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "./App";
 import { tr } from "@/test/i18n-test";
+import type { LegalPageData } from "@/lib/content-loader";
+
+const fixturePage = (overrides?: Partial<LegalPageData>): LegalPageData => ({
+  title: "Test Page Title",
+  subtitle: "Test subtitle",
+  slug: "test",
+  icon: "FileText",
+  menuSection: "legal",
+  menuOrder: 1,
+  lastUpdated: "2025-01-01",
+  body: "Test body content",
+  ...overrides,
+});
+
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) => {
+    const pages: Record<string, ReturnType<typeof fixturePage>> = {
+      consents: fixturePage({ slug: "consents" }),
+      contact: fixturePage({ slug: "contact" }),
+      cookies: fixturePage({ slug: "cookies" }),
+      privacy: fixturePage({ slug: "privacy" }),
+      returns: fixturePage({ slug: "returns" }),
+      security: fixturePage({ slug: "security" }),
+      shipping: fixturePage({ slug: "shipping" }),
+      terms: fixturePage({ slug: "terms" }),
+      about: fixturePage({ slug: "about" }),
+      legal: fixturePage({ slug: "legal" }),
+      complaint: fixturePage({ slug: "complaint" }),
+      payments: fixturePage({ slug: "payments" }),
+    };
+    return pages[slug];
+  }),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
 
 vi.mock("@/lib/cloudinary-upload", () => ({
   uploadImageToCloudinary: vi.fn(
@@ -43,17 +78,17 @@ vi.mock("@/lib/cloudinary-upload", () => ({
 
 describe("App Component Routing", () => {
   it.each([
-    ["/consents", "consents.title"],
-    ["/contact", "contact.title"],
-    ["/cookies", "cookies.title"],
-    ["/privacy", "privacy.title"],
-    ["/returns", "returns.title"],
-    ["/security", "security.title"],
-    ["/shipping", "shipping.title"],
-    ["/terms", "terms.title"],
+    "/consents",
+    "/contact",
+    "/cookies",
+    "/privacy",
+    "/returns",
+    "/security",
+    "/shipping",
+    "/terms",
   ])(
     "should render legal route %s without runtime errors",
-    (route, titleKey) => {
+    (route) => {
       render(
         <MemoryRouter initialEntries={[route]}>
           <App />
@@ -61,11 +96,11 @@ describe("App Component Routing", () => {
       );
 
       expect(
-        screen.getByRole("heading", { name: tr(titleKey) }),
-      ).toBeInTheDocument();
-      expect(
         screen.getByRole("link", { name: tr("common.backToHome") }),
       ).toHaveAttribute("href", "/");
+      expect(
+        screen.getByRole("heading", { level: 1 }),
+      ).toBeInTheDocument();
     },
   );
 
@@ -110,9 +145,11 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    // Check for about page elements
     expect(
-      screen.getByRole("heading", { name: tr("about.title") }),
+      screen.getByRole("link", { name: tr("common.backToHome") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1 }),
     ).toBeInTheDocument();
   });
 
@@ -123,9 +160,11 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    // Check for legal page elements
     expect(
-      screen.getByRole("heading", { name: tr("legal.title") }),
+      screen.getByRole("link", { name: tr("common.backToHome") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1 }),
     ).toBeInTheDocument();
   });
 

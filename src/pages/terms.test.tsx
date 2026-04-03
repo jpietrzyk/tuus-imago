@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { TermsPage } from "./terms";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
+
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "terms"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "terms",
+          icon: "FileText",
+          menuSection: "legal",
+          menuOrder: 2,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
 
 describe("TermsPage Component", () => {
-  it("should render the terms page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <TermsPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("terms.title"),
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("terms.subtitle"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,93 +42,29 @@ describe("TermsPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the scope section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <TermsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: tr("terms.scope.title") }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the ordering process section", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <TermsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: tr("terms.ordering.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the pricing section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("terms.pricing.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the delivery section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("terms.delivery.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the liability section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("terms.liability.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the consumer rights section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("terms.consumerRights.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact section", () => {
-    render(
-      <MemoryRouter>
-        <TermsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("terms.contact.title") }),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

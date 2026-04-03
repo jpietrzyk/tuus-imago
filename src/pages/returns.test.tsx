@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ReturnsPage } from "./returns";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
+
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "returns"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "returns",
+          icon: "RotateCc",
+          menuSection: "legal",
+          menuOrder: 5,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
 
 describe("ReturnsPage Component", () => {
-  it("should render the returns page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <ReturnsPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("returns.title"),
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("returns.subtitle"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,84 +42,29 @@ describe("ReturnsPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the right of withdrawal section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <ReturnsPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", {
-        name: tr("returns.rightOfWithdrawal.title"),
-      }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the right of withdrawal period description", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <ReturnsPage />
       </MemoryRouter>,
     );
 
-    // The page mentions 14 days in the withdrawal section
-    expect(screen.getAllByText(/14 dni/i).length).toBeGreaterThan(0);
-  });
-
-  it("should render the return costs section", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("returns.returnCosts.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the refund section", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("returns.refund.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact section", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("returns.contact.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact email", () => {
-    render(
-      <MemoryRouter>
-        <ReturnsPage />
-      </MemoryRouter>,
-    );
-
-    const emailLink = screen.getByRole("link", {
-      name: tr("returns.contact.emailAddress"),
-    });
-    expect(emailLink).toBeInTheDocument();
-    expect(emailLink).toHaveAttribute("href", "mailto:returns@tuusimago.com");
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

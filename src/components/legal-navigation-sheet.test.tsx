@@ -4,6 +4,31 @@ import { MemoryRouter } from "react-router-dom";
 import { LegalNavigationSheet } from "./legal-navigation-sheet";
 import { tr } from "@/test/i18n-test";
 
+const legalPages = [
+  { title: "Legal Page A", slug: "legal-a", icon: "FileText", menuSection: "legal", menuOrder: 1 },
+  { title: "Legal Page B", slug: "legal-b", icon: "Shield", menuSection: "legal", menuOrder: 2 },
+];
+
+const paymentPages = [
+  { title: "Payment Page A", slug: "pay-a", icon: "BadgeDollarSign", menuSection: "payments", menuOrder: 1 },
+];
+
+const companyPages = [
+  { title: "Company Page A", slug: "comp-a", icon: "Building2", menuSection: "company", menuOrder: 1 },
+  { title: "Company Page B", slug: "comp-b", icon: "Mail", menuSection: "company", menuOrder: 2 },
+];
+
+vi.mock("@/lib/content-loader", () => ({
+  getPagesBySection: vi.fn((section: string) => {
+    if (section === "legal") return legalPages;
+    if (section === "payments") return paymentPages;
+    if (section === "company") return companyPages;
+    return [];
+  }),
+  getPageBySlug: vi.fn(() => undefined),
+  getAllPages: vi.fn(() => []),
+}));
+
 function renderSheet(
   props: Partial<Parameters<typeof LegalNavigationSheet>[0]> = {},
 ) {
@@ -33,54 +58,43 @@ describe("LegalNavigationSheet", () => {
     expect(screen.queryByText(tr("legalMenu.title"))).not.toBeInTheDocument();
   });
 
-  it("renders all legal section links", () => {
+  it("renders links for all legal section pages", () => {
     renderSheet();
 
-    expect(
-      screen.getByRole("link", { name: tr("common.legalAndPrivacy") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.privacy") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.terms") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.cookies") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.consents") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.security") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.returns") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.shipping") }),
-    ).toBeInTheDocument();
+    const legalLinks = legalPages.map((p) =>
+      screen.getByRole("link", { name: p.title }),
+    );
+    expect(legalLinks).toHaveLength(legalPages.length);
+    legalPages.forEach((page) => {
+      expect(
+        screen.getByRole("link", { name: page.title }),
+      ).toHaveAttribute("href", `/${page.slug}`);
+    });
   });
 
-  it("renders all company section links", () => {
+  it("renders links for all company section pages", () => {
     renderSheet();
 
-    expect(
-      screen.getByRole("link", { name: tr("common.aboutUs") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: tr("common.contact") }),
-    ).toBeInTheDocument();
+    companyPages.forEach((page) => {
+      expect(
+        screen.getByRole("link", { name: page.title }),
+      ).toHaveAttribute("href", `/${page.slug}`);
+    });
   });
 
-  it("renders payment section with links", () => {
+  it("renders links for all payment section pages", () => {
     renderSheet();
 
-    // Payment section should have the payments link
-    expect(
-      screen.getByRole("link", { name: tr("common.payments") }),
-    ).toBeInTheDocument();
-    // And the payment intro text
+    paymentPages.forEach((page) => {
+      expect(
+        screen.getByRole("link", { name: page.title }),
+      ).toHaveAttribute("href", `/${page.slug}`);
+    });
+  });
+
+  it("renders payment intro text", () => {
+    renderSheet();
+
     expect(screen.getByText(tr("legalMenu.paymentIntro"))).toBeInTheDocument();
   });
 
@@ -110,7 +124,7 @@ describe("LegalNavigationSheet", () => {
     const onOpenChange = vi.fn();
     renderSheet({ onOpenChange });
 
-    fireEvent.click(screen.getByRole("link", { name: tr("common.privacy") }));
+    fireEvent.click(screen.getByRole("link", { name: legalPages[0].title }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
@@ -119,7 +133,7 @@ describe("LegalNavigationSheet", () => {
     const onOpenChange = vi.fn();
     renderSheet({ onOpenChange });
 
-    fireEvent.click(screen.getByRole("link", { name: tr("common.aboutUs") }));
+    fireEvent.click(screen.getByRole("link", { name: companyPages[0].title }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
@@ -140,36 +154,5 @@ describe("LegalNavigationSheet", () => {
       name: tr("common.paymentsP24"),
     });
     expect(paymentsButton.className).toMatch(/secondary/);
-  });
-
-  it("renders the payment intro text", () => {
-    renderSheet();
-
-    expect(screen.getByText(tr("legalMenu.paymentIntro"))).toBeInTheDocument();
-  });
-
-  it("legal links point to correct routes", () => {
-    renderSheet();
-
-    expect(
-      screen.getByRole("link", { name: tr("common.privacy") }),
-    ).toHaveAttribute("href", "/privacy");
-    expect(
-      screen.getByRole("link", { name: tr("common.terms") }),
-    ).toHaveAttribute("href", "/terms");
-    expect(
-      screen.getByRole("link", { name: tr("common.cookies") }),
-    ).toHaveAttribute("href", "/cookies");
-  });
-
-  it("company links point to correct routes", () => {
-    renderSheet();
-
-    expect(
-      screen.getByRole("link", { name: tr("common.aboutUs") }),
-    ).toHaveAttribute("href", "/about");
-    expect(
-      screen.getByRole("link", { name: tr("common.contact") }),
-    ).toHaveAttribute("href", "/contact");
   });
 });

@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ComplaintPage } from "./complaint";
 import { tr } from "@/test/i18n-test";
 
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "complaint"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "complaint",
+          icon: "AlertCircle",
+          menuSection: "legal",
+          menuOrder: 10,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
+
 describe("ComplaintPage Component", () => {
-  it("should render the complaint page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <ComplaintPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("complaint.title"),
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <ComplaintPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("complaint.subtitle"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -41,18 +48,6 @@ describe("ComplaintPage Component", () => {
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the complaint info section", () => {
-    render(
-      <MemoryRouter>
-        <ComplaintPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("complaint.info.title") }),
-    ).toBeInTheDocument();
-  });
-
   it("should render the complaint form section", () => {
     render(
       <MemoryRouter>
@@ -60,7 +55,6 @@ describe("ComplaintPage Component", () => {
       </MemoryRouter>,
     );
 
-    // There might be multiple headings with the same text
     expect(
       screen.getAllByRole("heading", { name: tr("complaint.form.title") })
         .length,
@@ -144,17 +138,5 @@ describe("ComplaintPage Component", () => {
       name: tr("complaint.form.submit"),
     });
     expect(submitButton).toBeInTheDocument();
-  });
-
-  it("should render the contact info section", () => {
-    render(
-      <MemoryRouter>
-        <ComplaintPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("complaint.contact.title") }),
-    ).toBeInTheDocument();
   });
 });

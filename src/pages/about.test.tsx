@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AboutPage } from "./about";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
+
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "about"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "about",
+          icon: "Building2",
+          menuSection: "company",
+          menuOrder: 1,
+          lastUpdated: "2025-02-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
 
 describe("AboutPage Component", () => {
-  it("should render the about page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <AboutPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("about.title"),
-    );
-  });
-
-  it("should render the page description", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("about.subtitle"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the home navigation link", () => {
@@ -35,152 +42,29 @@ describe("AboutPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the mission section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <AboutPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: tr("about.mission.title") }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the story section", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <AboutPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: tr("about.story.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the what-we-do section", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("about.whatWeDo.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the values section", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("about.values.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact section", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("about.contact.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the contact email", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    const emailLink = screen.getByRole("link", {
-      name: /info@tuusimago.com/i,
-    });
-    expect(emailLink).toBeInTheDocument();
-    expect(emailLink).toHaveAttribute("href", "mailto:info@tuusimago.com");
-  });
-
-  it("should render the contact phone number", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(/\+48 123 456 789/)).toBeInTheDocument();
-  });
-
-  it("should render the contact address", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(/123 Innovation Street, Warsaw, Poland/),
-    ).toBeInTheDocument();
-  });
-
-  it("should render all value cards", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(tr("about.values.qualityFirst.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("about.values.customerSatisfaction.label")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.values.innovation.label"),
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(tr("about.values.sustainability.label")),
-    ).toBeInTheDocument();
-  });
-
-  it("should render all service cards", () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.whatWeDo.aiEnhancement.label"),
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.whatWeDo.canvasPrinting.label"),
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        name: tr("about.whatWeDo.customFraming.label"),
-      }),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

@@ -1,30 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { CookiesPage } from "./cookies";
-import { tr } from "@/test/i18n-test";
+import { t } from "@/locales/i18n";
+
+vi.mock("@/lib/content-loader", () => ({
+  getPageBySlug: vi.fn((slug: string) =>
+    slug === "cookies"
+      ? {
+          title: "Test Title",
+          subtitle: "Test Subtitle",
+          slug: "cookies",
+          icon: "Cookie",
+          menuSection: "legal",
+          menuOrder: 4,
+          lastUpdated: "2025-03-01",
+          body: "## Section One\n\n## Section Two",
+        }
+      : undefined,
+  ),
+  getAllPages: vi.fn(() => []),
+  getPagesBySection: vi.fn(() => []),
+}));
 
 describe("CookiesPage Component", () => {
-  it("should render the cookies page title", () => {
+  it("should render the page heading", () => {
     render(
       <MemoryRouter>
         <CookiesPage />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      tr("cookies.title"),
-    );
-  });
-
-  it("should render the page subtitle", () => {
-    render(
-      <MemoryRouter>
-        <CookiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText(tr("cookies.subtitle"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render the back to home link", () => {
@@ -35,93 +42,29 @@ describe("CookiesPage Component", () => {
     );
 
     const backLink = screen.getByRole("link", {
-      name: tr("common.backToHome"),
+      name: t("common.backToHome"),
     });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute("href", "/");
   });
 
-  it("should render the what are cookies section", () => {
+  it("should render the last updated text", () => {
     render(
       <MemoryRouter>
         <CookiesPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: tr("cookies.whatAreCookies.title") }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
   });
 
-  it("should render the types of cookies section", () => {
-    render(
+  it("should render markdown content in prose container", () => {
+    const { container } = render(
       <MemoryRouter>
         <CookiesPage />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("heading", { name: tr("cookies.types.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the necessary cookies info", () => {
-    render(
-      <MemoryRouter>
-        <CookiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(tr("cookies.types.necessary.title")),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the analytics cookies info", () => {
-    render(
-      <MemoryRouter>
-        <CookiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByText(tr("cookies.types.analytics.title")),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the third party cookies section", () => {
-    render(
-      <MemoryRouter>
-        <CookiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("cookies.thirdParty.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the consent section", () => {
-    render(
-      <MemoryRouter>
-        <CookiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("cookies.consent.title") }),
-    ).toBeInTheDocument();
-  });
-
-  it("should render the managing cookies section", () => {
-    render(
-      <MemoryRouter>
-        <CookiesPage />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: tr("cookies.manage.title") }),
-    ).toBeInTheDocument();
+    expect(container.querySelector(".legal-markdown")).toBeInTheDocument();
   });
 });

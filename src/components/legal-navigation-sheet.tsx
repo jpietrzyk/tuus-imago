@@ -13,6 +13,7 @@ import {
   Shield,
   Truck,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -25,6 +26,21 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
+import { getPagesBySection } from "@/lib/content-loader";
+
+const iconMap: Record<string, LucideIcon> = {
+  FileText,
+  Shield,
+  Cookie,
+  CheckCircle,
+  Lock,
+  RotateCcw,
+  Truck,
+  AlertCircle,
+  BadgeDollarSign,
+  Building2,
+  Mail,
+};
 
 export type LegalMenuSection = "legal" | "payments";
 
@@ -33,27 +49,6 @@ interface LegalNavigationSheetProps {
   onOpenChange: (open: boolean) => void;
   activeSection: LegalMenuSection;
 }
-
-const legalLinks = [
-  { to: "/legal", labelKey: "common.legalAndPrivacy", icon: FileText },
-  { to: "/privacy", labelKey: "common.privacy", icon: Shield },
-  { to: "/terms", labelKey: "common.terms", icon: FileText },
-  { to: "/cookies", labelKey: "common.cookies", icon: Cookie },
-  { to: "/consents", labelKey: "common.consents", icon: CheckCircle },
-  { to: "/security", labelKey: "common.security", icon: Lock },
-  { to: "/returns", labelKey: "common.returns", icon: RotateCcw },
-  { to: "/shipping", labelKey: "common.shipping", icon: Truck },
-  { to: "/complaint", labelKey: "common.complaint", icon: AlertCircle },
-] as const;
-
-const paymentLinks = [
-  { to: "/payments", labelKey: "common.payments", icon: BadgeDollarSign },
-] as const;
-
-const companyLinks = [
-  { to: "/about", labelKey: "common.aboutUs", icon: Building2 },
-  { to: "/contact", labelKey: "common.contact", icon: Mail },
-] as const;
 
 export function LegalNavigationSheet({
   open,
@@ -77,6 +72,10 @@ export function LegalNavigationSheet({
 
     return () => window.clearTimeout(timer);
   }, [open, activeSection]);
+
+  const legalLinks = getPagesBySection("legal");
+  const paymentLinks = getPagesBySection("payments");
+  const companyLinks = getPagesBySection("company");
 
   return (
     <Drawer direction="bottom" open={open} onOpenChange={onOpenChange}>
@@ -131,26 +130,29 @@ export function LegalNavigationSheet({
               {t("legalMenu.sections.legal")}
             </h3>
             <div className="grid gap-2">
-              {legalLinks.map(({ to, labelKey, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={() => onOpenChange(false)}
-                  className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon
-                      className="h-4 w-4 text-blue-600"
+              {legalLinks.map((page) => {
+                const Icon = iconMap[page.icon] ?? FileText;
+                return (
+                  <Link
+                    key={page.slug}
+                    to={`/${page.slug}`}
+                    onClick={() => onOpenChange(false)}
+                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon
+                        className="h-4 w-4 text-blue-600"
+                        aria-hidden="true"
+                      />
+                      {page.title}
+                    </span>
+                    <ChevronRight
+                      className="h-3.5 w-3.5 text-gray-400"
                       aria-hidden="true"
                     />
-                    {t(labelKey)}
-                  </span>
-                  <ChevronRight
-                    className="h-3.5 w-3.5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </section>
 
@@ -162,26 +164,29 @@ export function LegalNavigationSheet({
               {t("legalMenu.paymentIntro")}
             </p>
             <div className="grid gap-2">
-              {paymentLinks.map(({ to, labelKey, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={() => onOpenChange(false)}
-                  className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon
-                      className="h-4 w-4 text-blue-600"
+              {paymentLinks.map((page) => {
+                const Icon = iconMap[page.icon] ?? BadgeDollarSign;
+                return (
+                  <Link
+                    key={page.slug}
+                    to={`/${page.slug}`}
+                    onClick={() => onOpenChange(false)}
+                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon
+                        className="h-4 w-4 text-blue-600"
+                        aria-hidden="true"
+                      />
+                      {page.title}
+                    </span>
+                    <ChevronRight
+                      className="h-3.5 w-3.5 text-gray-400"
                       aria-hidden="true"
                     />
-                    {t(labelKey)}
-                  </span>
-                  <ChevronRight
-                    className="h-3.5 w-3.5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
               <a
                 href="https://www.przelewy24.pl/regulamin"
                 target="_blank"
@@ -226,26 +231,29 @@ export function LegalNavigationSheet({
               {t("legalMenu.sections.company")}
             </h3>
             <div className="grid gap-2">
-              {companyLinks.map(({ to, labelKey, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  onClick={() => onOpenChange(false)}
-                  className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <span className="flex items-center gap-2">
-                    <Icon
-                      className="h-4 w-4 text-blue-600"
+              {companyLinks.map((page) => {
+                const Icon = iconMap[page.icon] ?? Building2;
+                return (
+                  <Link
+                    key={page.slug}
+                    to={`/${page.slug}`}
+                    onClick={() => onOpenChange(false)}
+                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon
+                        className="h-4 w-4 text-blue-600"
+                        aria-hidden="true"
+                      />
+                      {page.title}
+                    </span>
+                    <ChevronRight
+                      className="h-3.5 w-3.5 text-gray-400"
                       aria-hidden="true"
                     />
-                    {t(labelKey)}
-                  </span>
-                  <ChevronRight
-                    className="h-3.5 w-3.5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         </div>

@@ -18,6 +18,9 @@ export interface Translations {
     processing: string;
     on: string;
     off: string;
+    complaint: string;
+    contentNotFound: string;
+    contentNotFoundHint: string;
   };
   legalMenu: {
     title: string;
@@ -62,112 +65,6 @@ export interface Translations {
         description: string;
       };
     };
-  };
-  about: {
-    title: string;
-    subtitle: string;
-    mission: {
-      title: string;
-      description: string;
-    };
-    story: {
-      title: string;
-      description: string;
-    };
-    whatWeDo: {
-      title: string;
-      aiEnhancement: {
-        label: string;
-        description: string;
-      };
-      canvasPrinting: {
-        label: string;
-        description: string;
-      };
-      customFraming: {
-        label: string;
-        description: string;
-      };
-    };
-    values: {
-      title: string;
-      qualityFirst: {
-        label: string;
-        description: string;
-      };
-      customerSatisfaction: {
-        label: string;
-        description: string;
-      };
-      innovation: {
-        label: string;
-        description: string;
-      };
-      sustainability: {
-        label: string;
-        description: string;
-      };
-    };
-    contact: {
-      title: string;
-      description: string;
-      email: string;
-      phone: string;
-      address: string;
-    };
-    lastUpdated: string;
-  };
-  legal: {
-    title: string;
-    subtitle: string;
-    privacyPolicy: {
-      title: string;
-      description: string;
-      dataCollection: {
-        label: string;
-        description: string;
-      };
-      dataStorage: {
-        label: string;
-        description: string;
-      };
-      dataUsage: {
-        label: string;
-        description: string;
-      };
-      dataRetention: {
-        label: string;
-        description: string;
-      };
-    };
-    termsOfService: {
-      title: string;
-      description: string;
-      serviceUse: {
-        label: string;
-        description: string;
-      };
-      contentOwnership: {
-        label: string;
-        description: string;
-      };
-      refundPolicy: {
-        label: string;
-        description: string;
-      };
-      limitationOfLiability: {
-        label: string;
-        description: string;
-      };
-    };
-    contact: {
-      title: string;
-      description: string;
-      email: string;
-      phone: string;
-      address: string;
-    };
-    lastUpdated: string;
   };
   upload: {
     success: string;
@@ -343,8 +240,133 @@ export interface Translations {
     backToUploadDialogDescription: string;
     backToUploadDialogConfirm: string;
     backToUploadDialogCancel: string;
+    redirectingToPayment: string;
+    paymentPendingTitle: string;
+    paymentPendingMessage: string;
+    paymentRetryTitle: string;
+    paymentRetryMessage: string;
+    paymentRetryButton: string;
+    paymentSessionError: string;
+    backToHomeButton: string;
+    consents: {
+      title: string;
+      termsLabel: string;
+      termsLink: string;
+      privacyLink: string;
+      termsSuffix: string;
+      privacyLabel: string;
+      marketingLabel: string;
+      termsAcceptedError: string;
+      privacyAcceptedError: string;
+    };
+  };
+  complaint: {
+    title: string;
+    subtitle: string;
+    info: {
+      title: string;
+      deadline: {
+        label: string;
+        description: string;
+      };
+      responseTime: {
+        label: string;
+        description: string;
+      };
+      requiredDocs: {
+        label: string;
+        description: string;
+      };
+    };
+    form: {
+      title: string;
+      customerInfo: {
+        title: string;
+      };
+      name: {
+        label: string;
+        placeholder: string;
+      };
+      email: {
+        label: string;
+        placeholder: string;
+      };
+      phone: {
+        label: string;
+        placeholder: string;
+      };
+      address: {
+        label: string;
+        placeholder: string;
+      };
+      orderInfo: {
+        title: string;
+      };
+      orderNumber: {
+        label: string;
+        placeholder: string;
+      };
+      orderDate: {
+        label: string;
+      };
+      productInfo: {
+        title: string;
+      };
+      product: {
+        label: string;
+        placeholder: string;
+      };
+      details: {
+        title: string;
+      };
+      type: {
+        label: string;
+        select: string;
+        damaged: string;
+        defective: string;
+        wrong: string;
+        missing: string;
+        quality: string;
+        other: string;
+      };
+      description: {
+        label: string;
+        placeholder: string;
+      };
+      resolution: {
+        label: string;
+        placeholder: string;
+      };
+      photos: {
+        title: string;
+        description: string;
+        upload: string;
+      };
+      consent: {
+        label: string;
+      };
+      submit: string;
+    };
+    contact: {
+      title: string;
+      description: string;
+      email: {
+        label: string;
+      };
+      phone: {
+        label: string;
+      };
+      address: {
+        label: string;
+      };
+    };
+    hours: {
+      title: string;
+      description: string;
+    };
+    lastUpdated: string;
   };
 }
 
 export type TranslationKey = keyof Translations;
-export type Language = 'en' | 'pl';
+export type Language = "en" | "pl";
