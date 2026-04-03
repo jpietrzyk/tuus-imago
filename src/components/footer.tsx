@@ -46,8 +46,8 @@ export function Footer({
       <div className="w-full h-full px-4 sm:px-6 lg:px-8">
         <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="truncate text-sm text-gray-600 whitespace-nowrap">
-              {t("common.copyright", { year: new Date().getFullYear() })}
+            <div className="truncate text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+              {t("common.footerCompany")}
             </div>
 
             {showReset && onReset ? (

@@ -9,7 +9,7 @@ lastUpdated: "2025-03-01"
 
 ## 1. Przegląd warunków korzystania
 
-Niniejsze Warunki korzystania (dalej: 'Warunki') określają zasady korzystania ze sklepu internetowego dostępnego pod adresem www.tuusimago.com (dalej: 'Sklep'). Sklep prowadzony jest przez Tuusimago z siedzibą pod adresem Myślenice, ul. Wybickiego 48, NIP: 3396629204, REGON: 275867303. Składając zamówienie w Sklepie, Klient akceptuje niniejsze Warunki w całości.
+Niniejsze Warunki korzystania (dalej: 'Warunki') określają zasady korzystania ze sklepu internetowego dostępnego pod adresem www.tuusimago.com (dalej: 'Sklep'). Sklep prowadzony jest przez Car-folie.pl Adrian Uniszyn z siedzibą pod adresem Myślenice, ul. Wybickiego 48, NIP: 6811882876, REGON: 120769615. Składając zamówienie w Sklepie, Klient akceptuje niniejsze Warunki w całości.
 
 ## 2. Zakres usług
 
@@ -58,7 +58,7 @@ Sklep nie ponosi odpowiedzialności za opóźnienia spowodowane okolicznościami
 
 ## 11. Rozwiązanie umowy
 
-Klient może odstąpić od umowy w ciągu 14 dni bez podania przyczyn (Ustawa o prawach konsumenta). Produkty wykonane według indywidualnych specyfikacji nie podlegają zwrotowi, chyba że są wadliwe. Aby odstąpić od umowy, należy powiadomić nas pisemnie na adres biuro@car-folie.pl.
+Klient może odstąpić od umowy w ciągu 14 dni bez podania przyczyn (Ustawa o prawach konsumenta). Produkty wykonane według indywidualnych specyfikacji nie podlegają zwrotowi, chyba że są wadliwe. Aby odstąpić od umowy, należy powiadomić nas pisemnie na adres info@tuusimago.com.
 
 ## 12. Rozstrzyganie sporów
 
@@ -66,7 +66,54 @@ Wszelkie spory będą rozstrzygane przez polskie sądy powszechne właściwe dla
 
 ## 13. Rozpatrywanie reklamacji
 
-Reklamacje rozpatrujemy w ciągu 14 dni od otrzymania. Reklamacje można składać e-mailem na adres biuro@car-folie.pl lub poprzez formularz reklamacji na naszej stronie internetowej. Wadliwe produkty zostaną wymienione lub zwrócone.
+### Podstawa prawna
+
+Reklamacje rozpatrywane są na podstawie Ustawy o prawach konsumenta z dnia 30 maja 2014 r. (Dz.U. 2014 poz. 827 ze zm.), w szczególności art. 43a–43f, oraz przepisów Kodeksu cywilnego dotyczących rękojmi i gwarancji.
+
+### Sposoby składania reklamacji
+
+Reklamacje można składać:
+
+- e-mailem na adres info@tuusimago.com
+- poprzez formularz reklamacji dostępny na naszej stronie internetowej pod adresem /legal/complaint
+- pisemnie na adres: ul. Wybickiego 48, 32-400 Myślenice
+
+### Wymagane informacje
+
+Reklamacja powinna zawierać:
+
+- imię i nazwisko konsumenta
+- numer zamówienia
+- opis wady lub problemu
+- zdjęcia dokumentujące wadę (jeśli dotyczy)
+- oczekiwany sposób rozwiązania (naprawa, wymiana, obniżenie ceny lub odstąpienie od umowy)
+
+### Uprawnienia konsumenta (art. 43a–43f Ustawy o prawach konsumenta)
+
+Zgodnie z art. 43a ust. 1 Ustawy o prawach konsumenta, konsument może złożyć oświadczenie o żądaniu:
+
+1. **Naprawy** — usunięcie wady produktu
+2. **Wymiany** — dostarczenie produktu wolnego od wad
+3. **Obniżenia ceny** — proporcjonalne obniżenie ceny za produkt wadliwy
+4. **Odstąpienia od umowy** — zwrot produktu i zwrot ceny, jeśli wada jest istotna
+
+Sprzedawca może odmówić wymiany lub naprawy, gdy są one niemożliwe lub wymagają nadmiernych kosztów (art. 43c ust. 1). W takim przypadku konsument ma prawo żądać obniżenia ceny lub odstąpienia od umowy.
+
+Jeśli konsument żąda naprawy lub wymiany, a sprzedawca nie ustosunkuje się do żądania w terminie 14 dni, uznaje się, że sprzedawca uznał żądanie za uzasadnione (art. 43c ust. 3).
+
+### Termin rozpatrzenia reklamacji
+
+Reklamacje rozpatrujemy w ciągu 14 dni od daty jej otrzymania. O wyniku rozpatrzenia informujemy konsumenta na piśmie lub innym trwałym nośniku.
+
+### Pozasądowe rozstrzyganie sporów
+
+W przypadku braku satysfakcjonującego rozpatrzenia reklamacji, konsument ma prawo skorzystać z pozasądowych metod rozstrzygania sporów:
+
+- **Platforma ODR UE** — elektroniczne rozstrzyganie sporów konsumenckich: https://ec.europa.eu/consumers/odr/
+- **Wojewódzki Inspektorat Inspekcji Handlowej (WIIH)** — właściwy dla miejsca wykonywania działalności przez sprzedawcę
+- **UOKiK** — Urząd Ochrony Konkurencji i Konsumentów: www.uokik.gov.pl
+
+Wadliwe produkty zostaną wymienione lub zwrócone.
 
 ## 14. Zmiany w Warunkach
 
@@ -82,4 +129,4 @@ Konsumenci mają prawo do: odstąpienia od umowy w ciągu 14 dni, składania rek
 
 ## 17. Kontakt
 
-W sprawach dotyczących niniejszych Warunków prosimy o kontakt pod adresem biuro@car-folie.pl lub telefonicznie pod numerem 570-603-695.
+W sprawach dotyczących niniejszych Warunków prosimy o kontakt pod adresem info@tuusimago.com lub telefonicznie pod numerem 570-603-695.

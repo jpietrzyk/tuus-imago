@@ -10,7 +10,7 @@ lastUpdated: 2025-02-01
 ## Informacje kontaktowe
 
 - **E-mail:** info@tuusimago.com
-- **Telefon:** +48 570 603 695
+- **Telefon:** 570-603-695
 - **Adres:** ul. Wybickiego 48, 32-400 Myślenice
 
 ## Godziny pracy

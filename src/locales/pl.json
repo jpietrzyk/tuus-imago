@@ -21,7 +21,8 @@
     "on": "Wł.",
     "off": "Wył.",
     "contentNotFound": "Nie znaleziono treści",
-    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/."
+    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/.",
+    "footerCompany": "Car-folie.pl Adrian Uniszyn | NIP: 6811882876 | REGON: 120769615"
   },
   "legalMenu": {
     "title": "Informacje prawne i płatności",

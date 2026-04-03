@@ -67,7 +67,7 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 - Return address: Myślenice, ul. Wybickiego 48
 - Return costs: Customer bears direct costs
 - Refund timeline: 14 days
-- Contact email: returns@tuusimago.com
+- Contact email: info@tuusimago.com
 - Phone: 570-603-695
 
 ---
@@ -109,13 +109,13 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 - [x] Contact for privacy matters (DPO if applicable)
 
 **Information Provided**:
-- Company name: Tuusimago
+- Company name: Car-folie.pl Adrian Uniszyn
 - Address: Myślenice, ul. Wybickiego 48, 32-400, Poland
-- Phone: 570-603-695 / 663 534 814
-- Email: biuro@car-folie.pl
-- NIP: 3396629204
-- REGON: 275867303
-- VAT ID: PL3396629204
+- Phone: 570-603-695
+- Email: info@tuusimago.com
+- NIP: 6811882876
+- REGON: 120769615
+- VAT ID: PL6811882876
 - Business hours: 8:00-17:00 (Mon-Fri)
 - Data retention periods: Defined in privacy policy
 - Data Protection Officer: Not appointed
@@ -177,24 +177,24 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 **Status**: ✅ COMPLETE - Full company details provided
 
 **Required Content**:
-- [x] Full company legal name: Tuusimago
-- [x] NIP (Tax Identification Number): 3396629204
-- [x] REGON (Statistical Number): 275867303
+- [x] Full company legal name: Car-folie.pl Adrian Uniszyn
+- [x] NIP (Tax Identification Number): 6811882876
+- [x] REGON (Statistical Number): 120769615
 - [ ] KRS (Court Register Number - if applicable) - not provided
 - [x] Registered office address: Myślenice, ul. Wybickiego 48, 32-400, Poland
-- [x] Email address: biuro@car-folie.pl
-- [x] Phone number: 570-603-695 / 663 534 814
+- [x] Email address: info@tuusimago.com
+- [x] Phone number: 570-603-695
 - [x] Business hours: 8:00-17:00 (Mon-Fri)
 - [x] Bank account details (for refunds): IBAN PL38249019019509 (Alior Bank)
-- [x] VAT ID (NIP EU): PL3396629204
+- [x] VAT ID (NIP EU): PL6811882876
 
 **Information Provided**:
-- Company name: Tuusimago
+- Company name: Car-folie.pl Adrian Uniszyn
 - Address: Myślenice, ul. Wybickiego 48, 32-400, Poland
-- Phone: 570-603-695 / 663 534 814
-- Email: biuro@car-folie.pl
-- NIP: 3396629204
-- REGON: 275867303
+- Phone: 570-603-695
+- Email: info@tuusimago.com
+- NIP: 6811882876
+- REGON: 120769615
 - Business hours: 8:00-17:00 (Mon-Fri)
 - Bank: IBAN PL38249019019509 (Alior Bank)
 
@@ -242,9 +242,9 @@ This document outlines the legal pages and content required for Przelewy24.pl pa
 **Status**: ✅ COMPLETE - All company information added
 
 **Complete**:
-- Company registration numbers (NIP: 3396629204, REGON: 275867303)
+- Company registration numbers (NIP: 6811882876, REGON: 120769615)
 - Bank account details: IBAN PL38249019019509 (Alior Bank)
-- VAT ID: PL3396629204
+- VAT ID: PL6811882876
 - Data Protection Officer: Not appointed
 
 ---
@@ -425,12 +425,12 @@ Translation keys available in `src/locales/`:
 ## INFORMATION NEEDED FROM BUSINESS OWNER
 
 ### Company Registration
-- [x] Full legal company name: Tuusimago
-- [x] NIP (Tax Identification Number): 3396629204
-- [x] REGON (Statistical Number): 275867303
+- [x] Full legal company name: Car-folie.pl Adrian Uniszyn
+- [x] NIP (Tax Identification Number): 6811882876
+- [x] REGON (Statistical Number): 120769615
 - [ ] KRS (Court Register Number) - not provided
 - [x] Registered office address: Myślenice, ul. Wybickiego 48, 32-400, Poland
-- [x] VAT ID (NIP EU): PL3396629204
+- [x] VAT ID (NIP EU): PL6811882876
 - [x] Bank account number for refunds: IBAN PL38249019019509 (Alior Bank)
 
 ### Business Operations

@@ -20,7 +20,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/© \d{4} Tuus Imago/i)).toBeInTheDocument();
+    expect(screen.getByText(/Car-folie\.pl Adrian Uniszyn/)).toBeInTheDocument();
   });
 
   it("should render legal CTA button", () => {
