@@ -240,3 +240,47 @@ Test coverage:
 - `netlify/functions/create-przelewy24-session.test.ts`
 - `netlify/functions/przelewy24-webhook.test.ts`
 - Shared Supabase test helper: `netlify/functions/test-utils/supabase-mocks.ts`
+
+## HubSpot CRM integration
+
+The checkout flow pushes customer data to HubSpot CRM as a Contact between order creation and Przelewy24 session creation. HubSpot sync is **non-blocking** — failure does not prevent checkout or payment.
+
+### Endpoints
+
+- `/.netlify/functions/sync-hubspot-contact`
+- Method: `POST`
+- Body: `{ "orderId": "<ORDER_UUID>" }`
+- Response: `{ "synced": true, "contactId": "<HUBSPOT_CONTACT_ID>" }`
+
+### HubSpot setup
+
+1. Create a **Project-based App** via HubSpot CLI: `hs project create` (or use an existing project)
+2. Grant scopes: `crm.objects.contacts.read`, `crm.objects.contacts.write`
+3. Deploy the project and generate a **static access token** from the project app settings
+4. Set `HS_PRIVATE_APP_ACCESS_TOKEN` in your environment
+5. Create a property group named `tuus_imago` in HubSpot (Contacts → Settings → Properties → Groups)
+6. Create these custom contact properties in the `tuus_imago` group:
+   - **tuus_imago_order_number** — Single-line text
+   - **tuus_imago_order_value** — Number
+   - **tuus_imago_items_count** — Number
+   - **tuus_imago_checkout_date** — Date picker
+   - **tuus_imago_marketing_consent** — Single-line text
+   - **tuus_imago_order_status** — Single-line text
+
+Custom properties must be created manually in HubSpot before first sync. They are **not** auto-created by the application.
+
+### Required server env
+
+- `HS_PRIVATE_APP_ACCESS_TOKEN` — Project-based app static access token
+- `HUBSPOT_API_BASE_URL` — Optional, defaults to `https://api.hubapi.com`. Use `https://api.hubapi.eu` for EU data residency.
+
+### Database changes
+
+- Migration: `supabase/migrations/202604040001_add_hubspot_crm_fields.sql`
+- Adds `hubspot_contact_id` and `hubspot_synced_at` columns to `orders`
+- Extends `order_status_history.status_type` with `crm`
+
+### Test coverage
+
+- `netlify/__tests__/sync-hubspot-contact.test.ts`
+- `netlify/__tests__/_shared/hubspot.test.ts`
