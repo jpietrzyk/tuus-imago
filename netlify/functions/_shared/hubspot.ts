@@ -118,27 +118,57 @@ export function buildContactProperties(order: OrderRow): ContactProperties {
   return properties;
 }
 
-export async function upsertHubSpotContact(
+async function hubSpotRequest(
   config: HubSpotConfig,
-  properties: ContactProperties,
-): Promise<HubSpotContactResponse> {
-  const url = `${config.apiBaseUrl}/crm/v3/objects/contacts/${encodeURIComponent(properties.email)}?idProperty=email`;
-
-  const response = await fetch(url, {
-    method: "PATCH",
+  method: string,
+  path: string,
+  body: unknown,
+): Promise<Response> {
+  return fetch(`${config.apiBaseUrl}${path}`, {
+    method,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${config.accessToken}`,
     },
-    body: JSON.stringify({ properties }),
+    body: JSON.stringify(body),
   });
+}
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(
-      `HubSpot contact upsert failed (status ${response.status}): ${text.substring(0, 500)}`,
-    );
+export async function upsertHubSpotContact(
+  config: HubSpotConfig,
+  properties: ContactProperties,
+): Promise<HubSpotContactResponse> {
+  const patchResponse = await hubSpotRequest(
+    config,
+    "PATCH",
+    `/crm/v3/objects/contacts/${encodeURIComponent(properties.email)}?idProperty=email`,
+    { properties },
+  );
+
+  if (patchResponse.ok) {
+    return patchResponse.json() as Promise<HubSpotContactResponse>;
   }
 
-  return response.json() as Promise<HubSpotContactResponse>;
+  if (patchResponse.status === 404) {
+    const postResponse = await hubSpotRequest(
+      config,
+      "POST",
+      "/crm/v3/objects/contacts",
+      { properties },
+    );
+
+    if (!postResponse.ok) {
+      const text = await postResponse.text();
+      throw new Error(
+        `HubSpot contact create failed (status ${postResponse.status}): ${text.substring(0, 500)}`,
+      );
+    }
+
+    return postResponse.json() as Promise<HubSpotContactResponse>;
+  }
+
+  const text = await patchResponse.text();
+  throw new Error(
+    `HubSpot contact upsert failed (status ${patchResponse.status}): ${text.substring(0, 500)}`,
+  );
 }
