@@ -39,7 +39,7 @@ import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
-import { createOrder, createP24Session } from "@/lib/orders-api";
+import { createOrder, createP24Session, syncHubSpotContact } from "@/lib/orders-api";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -332,6 +332,8 @@ export function CheckoutPage() {
       );
       setOrderNumber(orderResponse.orderNumber);
       setPendingOrderId(orderResponse.orderId);
+
+      syncHubSpotContact(orderResponse.orderId).catch(() => {});
 
       try {
         setIsRedirecting(true);
