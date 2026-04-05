@@ -42,12 +42,14 @@ collections:
           - legal
           - payments
           - company
+        hint: "Grupa w menu — strony są porządkowane osobno w każdej sekcji."
       - name: menuOrder
         label: Kolejność w menu
-        widget: number
+        widget: menuOrder
         value_type: int
         min: 1
-        max: 20
+        max: 50
+        hint: "Niższa liczba = wyżej w menu. Strony są sortowane rosnąco w obrębie sekcji."
       - name: lastUpdated
         label: Ostatnia aktualizacja
         widget: datetime
