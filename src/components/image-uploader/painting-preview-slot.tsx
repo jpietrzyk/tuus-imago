@@ -4,7 +4,6 @@ import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
-import { resolveSlotFramePreset } from "./slot-frame-presets";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -67,7 +66,6 @@ export default function PaintingPreviewSlot({
     userSelectedProportion,
     previewEffects: effectivePreviewEffects,
   });
-  const slotFramePreset = resolveSlotFramePreset(userSelectedProportion);
 
   useEffect(() => {
     if (!selectedImage) {
@@ -109,7 +107,7 @@ export default function PaintingPreviewSlot({
   return (
     <div className="relative mx-0 flex h-full w-full min-w-0 flex-1 items-center justify-center">
       <div
-        className={`relative h-auto max-h-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${slotFramePreset.mainFrameSizeClassName} ${frameAspectRatioClassName} ${
+        className={`relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${frameAspectRatioClassName} ${
           isFocusPulseActive
             ? "scale-[0.985] md:scale-[0.995] opacity-95"
             : "scale-100 opacity-100"
