@@ -12,7 +12,22 @@ collections:
     create: false
     extension: md
     format: frontmatter
-    summary: "{{title}} (/{{slug}})"
+    summary: "{{menuSection}} · {{menuOrder}} — {{title}}"
+    sortable_fields:
+      - menuOrder
+      - title
+      - menuSection
+      - lastUpdated
+    view_groups:
+      - label: Sekcja — Informacje
+        field: menuSection
+        pattern: legal
+      - label: Sekcja — Płatności
+        field: menuSection
+        pattern: payments
+      - label: Sekcja — Firma
+        field: menuSection
+        pattern: company
     fields:
       - name: title
         label: Tytuł
