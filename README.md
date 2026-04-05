@@ -48,6 +48,19 @@ The `slug` field determines the page URL (e.g., `terms.md` → `/terms`). It is 
 
 The CMS will always respect the filename-based slug, ignoring any stale `slug` value in the frontmatter.
 
+### Reordering pages in the menu
+
+Pages are ordered within each **menu section** (`legal`, `payments`, `company`) by the `menuOrder` frontmatter field (ascending, lower number = higher position).
+
+To change the order:
+
+1. Open Decap CMS at `/admin/`
+2. Edit the page you want to reposition
+3. Use the **−** / **+** buttons (or type a number) in the **Kolejność w menu** field
+4. Publish — the navigation updates on the next site build
+
+The field accepts values from 1 to 50. The default is `99` (appears last) if omitted.
+
 ## Cloudinary setup (required for upload)
 
 This app uploads directly from browser to Cloudinary using a **signed upload** flow via Netlify Functions.
