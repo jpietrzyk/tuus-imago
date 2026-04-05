@@ -24,7 +24,6 @@ import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
   getOptimalDisplayProportion,
-  getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
@@ -464,6 +463,39 @@ export const ImageUploader = forwardRef<
       });
     },
     [activeImageIndex],
+  );
+
+  const updateSlotByIndex = useCallback(
+    (slotIndex: number, updater: (image: SelectedImageItem) => SelectedImageItem) => {
+      setSelectedImages((prevImages) => {
+        if (slotIndex < 0 || slotIndex >= prevImages.length || !prevImages[slotIndex]) {
+          return prevImages;
+        }
+
+        const currentImage = prevImages[slotIndex];
+        const updatedImage = updater(currentImage);
+
+        if (updatedImage === currentImage) {
+          return prevImages;
+        }
+
+        const nextImages = [...prevImages];
+        nextImages[slotIndex] = updatedImage;
+        return nextImages;
+      });
+    },
+    [],
+  );
+
+  const handleSideSlotProportionResolved = useCallback(
+    (slotIndex: number, proportion: ImageDisplayProportion) => {
+      updateSlotByIndex(slotIndex, (image) => ({
+        ...image,
+        displayImageProportion: proportion,
+        autoSelectOptimalPending: false,
+      }));
+    },
+    [updateSlotByIndex],
   );
 
   useEffect(() => {
@@ -1141,11 +1173,6 @@ export const ImageUploader = forwardRef<
     );
   }, [selectedImageMetadata]);
 
-  const previewFrameAspectRatio = useMemo(
-    () => getTargetAspectRatio(displayImageProportion),
-    [displayImageProportion],
-  );
-
   const { leftSlotIndex, rightSlotIndex, leftSlotImage, rightSlotImage } =
     usePreviewSliderSlots({
       selectedImages,
@@ -1273,7 +1300,6 @@ export const ImageUploader = forwardRef<
           selectedImageMetadata={selectedImageMetadata}
           bestProportion={bestDisplayImageProportion}
           userSelectedProportion={displayImageProportion}
-          previewFrameAspectRatio={previewFrameAspectRatio}
           isUploadOverlayVisible={isUploadOverlayVisible}
           uploadProgress={uploadProgress}
           uploadProgressLabel={uploadProgressLabel}
@@ -1296,6 +1322,7 @@ export const ImageUploader = forwardRef<
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
           onMetadataResolved={handleMetadataResolved}
+          onSideSlotProportionResolved={handleSideSlotProportionResolved}
         />
 
         <UploaderPreviewToolsPanel

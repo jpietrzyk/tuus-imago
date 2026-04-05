@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import SideSlotPreview from "./side-slot-preview";
 import { t } from "@/locales/i18n";
-import { resolveSlotFramePreset } from "./slot-frame-presets";
 import type { SelectedImageItem } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 
@@ -19,7 +18,6 @@ const createProps = () => ({
   position: "left" as const,
   slotIndex: 1,
   image: null as SelectedImageItem | null,
-  previewFrameAspectRatio: 16 / 9,
   selectedProportion: "horizontal" as ImageDisplayProportion,
   isNavigable: false,
   onSelectSlot: vi.fn(),
@@ -152,7 +150,7 @@ describe("SideSlotPreview", () => {
     );
   });
 
-  it("applies vertical side preset min-width classes", () => {
+  it("applies vertical aspect ratio classes for vertical proportion", () => {
     const props = {
       ...createProps(),
       selectedProportion: "vertical" as ImageDisplayProportion,
@@ -160,20 +158,15 @@ describe("SideSlotPreview", () => {
 
     render(<SideSlotPreview {...props} />);
 
-    const firstVerticalClass =
-      resolveSlotFramePreset("vertical").sideFrameMinWidthClassName.split(
-        " ",
-      )[0];
-
-    expect(
-      screen.getByTestId("uploader-slider-side-left-preview-frame"),
-    ).toHaveClass(firstVerticalClass);
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass("aspect-[2/3]");
+    expect(
+      screen.getByTestId("uploader-slider-side-left-preview-frame"),
+    ).toHaveStyle({ aspectRatio: String(2 / 3) });
   });
 
-  it("uses square side preset when rectangle proportion is selected", () => {
+  it("uses square aspect ratio when rectangle proportion is selected", () => {
     const props = {
       ...createProps(),
       selectedProportion: "rectangle" as ImageDisplayProportion,
@@ -181,14 +174,11 @@ describe("SideSlotPreview", () => {
 
     render(<SideSlotPreview {...props} />);
 
-    const firstSquareClass =
-      resolveSlotFramePreset("square").sideFrameMinWidthClassName.split(" ")[0];
-
-    expect(
-      screen.getByTestId("uploader-slider-side-left-preview-frame"),
-    ).toHaveClass(firstSquareClass);
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass("aspect-square");
+    expect(
+      screen.getByTestId("uploader-slider-side-left-preview-frame"),
+    ).toHaveStyle({ aspectRatio: "1" });
   });
 });

@@ -56,7 +56,6 @@ const createProps = () => ({
   selectedImageMetadata: metadata,
   bestProportion: "horizontal" as ImageDisplayProportion,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
-  previewFrameAspectRatio: 16 / 9,
   canMovePrevious: true,
   canMoveNext: true,
   leftSlotIndex: 0,

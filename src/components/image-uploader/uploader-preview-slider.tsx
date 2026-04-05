@@ -1,5 +1,6 @@
 import PaintingPreviewSlot from "./painting-preview-slot";
 import SideSlotPreview from "./side-slot-preview";
+import { FIXED_GAP_CLASS } from "./slot-frame-presets";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -13,7 +14,6 @@ interface UploaderPreviewSliderProps {
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
-  previewFrameAspectRatio: number;
   isUploadOverlayVisible?: boolean;
   uploadProgress?: number;
   uploadProgressLabel?: string;
@@ -34,6 +34,10 @@ interface UploaderPreviewSliderProps {
     nextDisplayImageProportion: ImageDisplayProportion;
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
+  onSideSlotProportionResolved?: (
+    slotIndex: number,
+    proportion: ImageDisplayProportion,
+  ) => void;
 }
 
 export default function UploaderPreviewSlider({
@@ -43,7 +47,6 @@ export default function UploaderPreviewSlider({
   selectedImageMetadata,
   bestProportion,
   userSelectedProportion,
-  previewFrameAspectRatio,
   isUploadOverlayVisible = false,
   uploadProgress = 0,
   uploadProgressLabel,
@@ -60,10 +63,11 @@ export default function UploaderPreviewSlider({
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
+  onSideSlotProportionResolved,
 }: UploaderPreviewSliderProps) {
   return (
     <div
-      className="flex w-full min-w-0 flex-1 items-center justify-center rounded-xl bg-transparent overflow-hidden"
+      className={`flex w-full min-w-0 flex-1 items-center justify-center rounded-xl bg-transparent overflow-hidden ${FIXED_GAP_CLASS}`}
       data-testid="uploader-preview-slider"
     >
       <SideSlotPreview
@@ -72,7 +76,6 @@ export default function UploaderPreviewSlider({
         image={leftSlotImage}
         previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
         useCloudPreview={!!leftSlotImage?.uploadedAsset}
-        previewFrameAspectRatio={previewFrameAspectRatio}
         selectedProportion={userSelectedProportion}
         isNavigable={canMovePrevious}
         isUploadOverlayVisible={isUploadOverlayVisible}
@@ -80,6 +83,11 @@ export default function UploaderPreviewSlider({
         uploadProgressLabel={uploadProgressLabel}
         uploadingSlotIndex={uploadingSlotIndex}
         onSelectSlot={onSelectSlot}
+        onProportionResolved={
+          typeof leftSlotIndex === "number" && onSideSlotProportionResolved
+            ? (proportion) => onSideSlotProportionResolved(leftSlotIndex, proportion)
+            : undefined
+        }
       />
 
       <PaintingPreviewSlot
@@ -90,7 +98,6 @@ export default function UploaderPreviewSlider({
         selectedImageMetadata={selectedImageMetadata}
         bestProportion={bestProportion}
         userSelectedProportion={userSelectedProportion}
-        previewFrameAspectRatio={previewFrameAspectRatio}
         isUploadOverlayVisible={isUploadOverlayVisible}
         uploadProgress={uploadProgress}
         uploadProgressLabel={uploadProgressLabel}
@@ -106,7 +113,6 @@ export default function UploaderPreviewSlider({
         image={rightSlotImage}
         previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
         useCloudPreview={!!rightSlotImage?.uploadedAsset}
-        previewFrameAspectRatio={previewFrameAspectRatio}
         selectedProportion={userSelectedProportion}
         isNavigable={canMoveNext}
         isUploadOverlayVisible={isUploadOverlayVisible}
@@ -114,6 +120,11 @@ export default function UploaderPreviewSlider({
         uploadProgressLabel={uploadProgressLabel}
         uploadingSlotIndex={uploadingSlotIndex}
         onSelectSlot={onSelectSlot}
+        onProportionResolved={
+          typeof rightSlotIndex === "number" && onSideSlotProportionResolved
+            ? (proportion) => onSideSlotProportionResolved(rightSlotIndex, proportion)
+            : undefined
+        }
       />
     </div>
   );

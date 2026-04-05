@@ -1,8 +1,11 @@
+import { useMemo, useCallback } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import { getTargetAspectRatio } from "./image-proportion-calculator";
 import { resolveSlotFramePreset } from "./slot-frame-presets";
+import { useSideSlotProportionResolve } from "./use-side-slot-proportion-resolve";
 
 interface SideSlotPreviewProps {
   position: "left" | "right";
@@ -10,7 +13,6 @@ interface SideSlotPreviewProps {
   image: SelectedImageItem | null;
   previewUrl?: string | null;
   useCloudPreview?: boolean;
-  previewFrameAspectRatio: number;
   selectedProportion: ImageDisplayProportion;
   isNavigable: boolean;
   isUploadOverlayVisible?: boolean;
@@ -18,6 +20,7 @@ interface SideSlotPreviewProps {
   uploadProgressLabel?: string;
   uploadingSlotIndex?: number | null;
   onSelectSlot: (index: number) => void;
+  onProportionResolved?: (proportion: ImageDisplayProportion) => void;
 }
 
 export default function SideSlotPreview({
@@ -26,7 +29,6 @@ export default function SideSlotPreview({
   image,
   previewUrl = null,
   useCloudPreview = false,
-  previewFrameAspectRatio,
   selectedProportion,
   isNavigable,
   isUploadOverlayVisible = false,
@@ -34,16 +36,36 @@ export default function SideSlotPreview({
   uploadProgressLabel,
   uploadingSlotIndex = null,
   onSelectSlot,
+  onProportionResolved,
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
   const isAddSlotAction = !image && typeof slotIndex === "number";
-  const slotFramePreset = resolveSlotFramePreset(selectedProportion);
+
+  const stableOnProportionResolved = useCallback(
+    (proportion: ImageDisplayProportion) => {
+      onProportionResolved?.(proportion);
+    },
+    [onProportionResolved],
+  );
+
+  useSideSlotProportionResolve({
+    image,
+    onProportionResolved: stableOnProportionResolved,
+  });
+
+  const slotOwnProportion: ImageDisplayProportion = image?.displayImageProportion ?? selectedProportion;
+  const slotFramePreset = resolveSlotFramePreset(slotOwnProportion);
   const slotAspectRatioClassName =
-    selectedProportion === "vertical"
+    slotOwnProportion === "vertical"
       ? "aspect-[2/3]"
-      : selectedProportion === "horizontal"
+      : slotOwnProportion === "horizontal"
         ? "aspect-[16/9]"
         : "aspect-square";
+
+  const previewFrameAspectRatio = useMemo(
+    () => getTargetAspectRatio(slotOwnProportion),
+    [slotOwnProportion],
+  );
 
   // Build CSS filter for preview effects
   const getEffectFilter = () => {
@@ -86,7 +108,7 @@ export default function SideSlotPreview({
             })
           : t(isLeft ? "uploader.previousImage" : "uploader.nextImage")
       }
-      className={`h-full shrink ${slotFramePreset.sideFrameMaxWidthClassName} overflow-hidden rounded-none bg-transparent transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-default disabled:opacity-70 ${
+      className={`h-full shrink-0 ${slotFramePreset.sideFrameMaxWidthClassName} overflow-hidden rounded-none bg-transparent transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-default disabled:opacity-70 ${
         isLeft
           ? "flex items-start justify-end"
           : "flex items-center justify-start"
@@ -102,7 +124,7 @@ export default function SideSlotPreview({
             ? "uploader-slider-side-left-preview-frame"
             : "uploader-slider-side-right-preview-frame"
         }
-        className={`relative flex h-full w-full min-w-0 max-w-full ${slotFramePreset.sideFrameMinWidthClassName} ${slotAspectRatioClassName} overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
+        className={`relative flex h-full w-auto max-w-full ${slotAspectRatioClassName} overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none ${
           isLeft ? "items-start justify-end" : "items-center justify-start"
         } ${
           image

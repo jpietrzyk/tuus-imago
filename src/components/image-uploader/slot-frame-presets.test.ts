@@ -1,20 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { resolveSlotFramePreset } from "./slot-frame-presets";
+import { resolveSlotFramePreset, FIXED_GAP_CLASS } from "./slot-frame-presets";
 
 describe("slot-frame-presets", () => {
-  it("maps rectangle proportion to square preset", () => {
-    expect(resolveSlotFramePreset("rectangle")).toEqual(
-      resolveSlotFramePreset("square"),
-    );
+  it("returns horizontal preset for horizontal proportion", () => {
+    const preset = resolveSlotFramePreset("horizontal");
+
+    expect(preset.mainFrameSizeClassName).toContain("w-full");
+    expect(preset.sideFrameMaxWidthClassName).toContain("max-w-");
+  });
+
+  it("returns vertical preset for vertical proportion", () => {
+    const preset = resolveSlotFramePreset("vertical");
+
+    expect(preset.mainFrameSizeClassName).toContain("w-full");
+    expect(preset.sideFrameMaxWidthClassName).toContain("max-w-");
+  });
+
+  it("returns square preset for square proportion", () => {
+    const preset = resolveSlotFramePreset("square");
+
+    expect(preset.mainFrameSizeClassName).toContain("w-full");
+    expect(preset.sideFrameMaxWidthClassName).toContain("max-w-");
+  });
+
+  it("normalizes rectangle to square preset", () => {
+    const squarePreset = resolveSlotFramePreset("square");
+    const rectanglePreset = resolveSlotFramePreset("rectangle");
+
+    expect(rectanglePreset).toEqual(squarePreset);
   });
 
   it.each(["horizontal", "vertical", "square"] as const)(
-    "returns non-empty class names for %s",
+    "sideFrameMaxWidthClassName includes max-w for %s",
     (proportion) => {
       const preset = resolveSlotFramePreset(proportion);
 
-      expect(preset.mainFrameSizeClassName.length).toBeGreaterThan(0);
-      expect(preset.sideFrameMinWidthClassName.length).toBeGreaterThan(0);
+      expect(preset.sideFrameMaxWidthClassName).toContain("max-w-");
     },
   );
+
+  it("exports a fixed gap class with responsive sizes", () => {
+    expect(FIXED_GAP_CLASS).toContain("gap-");
+  });
 });

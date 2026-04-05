@@ -30,7 +30,6 @@ const createProps = () => ({
   selectedImageMetadata: null as SelectedImageMetadata | null,
   bestProportion: null as ImageDisplayProportion | null,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
-  previewFrameAspectRatio: 16 / 9,
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
   onMetadataResolved: vi.fn(),
@@ -82,6 +81,10 @@ describe("PaintingPreviewSlot", () => {
   it("keeps user selected proportion when metadata already exists", async () => {
     const props = {
       ...createProps(),
+      selectedImage: {
+        ...createImageItem("selected"),
+        displayImageProportion: "vertical" as ImageDisplayProportion,
+      },
       selectedImageMetadata: {
         width: 1200,
         height: 800,
@@ -196,21 +199,22 @@ describe("PaintingPreviewSlot", () => {
     expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
   });
 
-  it("applies vertical fixed frame preset when vertical proportion is selected", () => {
+  it("applies vertical frame aspect when vertical proportion is selected", () => {
     const props = {
       ...createProps(),
+      selectedImage: {
+        ...createImageItem("selected"),
+        displayImageProportion: "vertical" as ImageDisplayProportion,
+      },
       userSelectedProportion: "vertical" as ImageDisplayProportion,
     };
 
     render(<PaintingPreviewSlot {...props} />);
 
-    expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
-      "w-full",
-      "max-h-full",
-      "max-w-[40rem]",
-      "md:max-w-[48rem]",
-      "aspect-[2/3]",
-    );
+    const frame = screen.getByTestId("selected-image-preview-frame");
+    expect(frame).toHaveClass("aspect-[2/3]");
+    expect(frame).toHaveStyle({ aspectRatio: String(2 / 3) });
+    expect(frame).toHaveClass("h-full");
   });
 
   it.each([
@@ -227,6 +231,10 @@ describe("PaintingPreviewSlot", () => {
     ({ proportion, aspectClass }) => {
       const props = {
         ...createProps(),
+        selectedImage: {
+          ...createImageItem("selected"),
+          displayImageProportion: proportion,
+        },
         userSelectedProportion: proportion,
       };
 
