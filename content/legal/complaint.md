@@ -1,10 +1,10 @@
 ---
-title: "Formularz reklamacji"
-subtitle: "Złóż reklamację dotyczącą zamówienia"
-icon: "AlertCircle"
-menuSection: "legal"
-menuOrder: 9
-lastUpdated: "2025-03-01"
+title: Formularz reklamacji
+subtitle: Złóż reklamację dotyczącą zamówienia
+icon: AlertCircle
+menuSection: legal
+menuOrder: 8
+lastUpdated: 2025-03-01
 ---
 
 ## Informacje o reklamacjach
