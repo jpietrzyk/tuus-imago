@@ -196,7 +196,7 @@ describe("PaintingPreviewSlot", () => {
     expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
   });
 
-  it("applies vertical fixed frame preset when vertical proportion is selected", () => {
+  it("applies vertical frame aspect when vertical proportion is selected", () => {
     const props = {
       ...createProps(),
       userSelectedProportion: "vertical" as ImageDisplayProportion,
@@ -204,13 +204,10 @@ describe("PaintingPreviewSlot", () => {
 
     render(<PaintingPreviewSlot {...props} />);
 
-    expect(screen.getByTestId("selected-image-preview-frame")).toHaveClass(
-      "w-full",
-      "max-h-full",
-      "max-w-[40rem]",
-      "md:max-w-[48rem]",
-      "aspect-[2/3]",
-    );
+    const frame = screen.getByTestId("selected-image-preview-frame");
+    expect(frame).toHaveClass("aspect-[2/3]");
+    expect(frame).toHaveClass("h-full");
+    expect(frame).toHaveClass("max-w-full");
   });
 
   it.each([
