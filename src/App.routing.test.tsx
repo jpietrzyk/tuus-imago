@@ -57,6 +57,19 @@ vi.mock("@/lib/auth-context", () => ({
   }),
 }));
 
+const { supabaseMock } = vi.hoisted(() => ({
+  supabaseMock: {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+  },
+}));
+
+vi.mock("@/lib/supabase-client", () => ({
+  supabase: supabaseMock,
+}));
+
 vi.mock("@/lib/cloudinary-upload", () => ({
   uploadImageToCloudinary: vi.fn(
     async (input: {

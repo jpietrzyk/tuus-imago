@@ -89,6 +89,19 @@ vi.mock("@/lib/auth-context", () => ({
   }),
 }));
 
+vi.mock("@/lib/supabase-client", () => ({
+  get supabase() {
+    return {
+      auth: {
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+      },
+    };
+  },
+}));
+
 describe("CheckoutPage", () => {
   let locationHrefSpy: ReturnType<typeof vi.fn>;
 
