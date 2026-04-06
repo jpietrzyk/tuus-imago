@@ -665,13 +665,13 @@ describe("ImageUploader", () => {
         );
         const leftSlot = screen.getByTestId("uploader-slider-side-left");
 
-        expect(leftFrame).toHaveStyle({ aspectRatio: String(1) });
+        expect(leftFrame).toHaveStyle({ aspectRatio: String(2 / 3) });
         expect(leftFrame).toHaveClass(
           "h-full",
           "w-full",
           "min-w-0",
           "max-w-full",
-          "aspect-square",
+          "aspect-[2/3]",
         );
 
         expect(leftSlot).toHaveClass("overflow-hidden");

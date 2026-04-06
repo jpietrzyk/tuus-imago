@@ -4,7 +4,6 @@ import SideSlotPreview from "./side-slot-preview";
 import { t } from "@/locales/i18n";
 import { resolveSlotFramePreset } from "./slot-frame-presets";
 import type { SelectedImageItem } from "./image-uploader";
-import type { ImageDisplayProportion } from "./image-proportion-calculator";
 
 const createImageItem = (name: string): SelectedImageItem => ({
   file: new File([name], `${name}.jpg`, { type: "image/jpeg" }),
@@ -19,8 +18,6 @@ const createProps = () => ({
   position: "left" as const,
   slotIndex: 1,
   image: null as SelectedImageItem | null,
-  previewFrameAspectRatio: 16 / 9,
-  selectedProportion: "horizontal" as ImageDisplayProportion,
   isNavigable: false,
   onSelectSlot: vi.fn(),
 });
@@ -148,9 +145,13 @@ describe("SideSlotPreview", () => {
   });
 
   it("applies vertical side preset min-width classes", () => {
+    const image: SelectedImageItem = {
+      ...createImageItem("vertical"),
+      displayImageProportion: "vertical",
+    };
     const props = {
       ...createProps(),
-      selectedProportion: "vertical" as ImageDisplayProportion,
+      image,
     };
 
     render(<SideSlotPreview {...props} />);
@@ -169,9 +170,13 @@ describe("SideSlotPreview", () => {
   });
 
   it("uses square side preset when rectangle proportion is selected", () => {
+    const image: SelectedImageItem = {
+      ...createImageItem("rectangle"),
+      displayImageProportion: "rectangle",
+    };
     const props = {
       ...createProps(),
-      selectedProportion: "rectangle" as ImageDisplayProportion,
+      image,
     };
 
     render(<SideSlotPreview {...props} />);
