@@ -29,6 +29,12 @@ import { TermsPage } from "./pages/terms";
 import { PaymentsPage } from "./pages/payments";
 import { ComplaintPage } from "./pages/complaint";
 import { CANVAS_PRINT_UNIT_PRICE } from "@/lib/pricing";
+import { AuthPage } from "./pages/auth";
+import { AuthCallbackPage } from "./pages/auth-callback";
+import { ResetPasswordPage } from "./pages/auth-reset-password";
+import { UpdatePasswordPage } from "./pages/auth-update-password";
+import { AccountPage } from "./pages/account";
+import { ProtectedRoute } from "@/components/protected-route";
 
 interface DebugToggleProps {
   label: string;
@@ -246,6 +252,18 @@ export function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/complaint" element={<ComplaintPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+          <Route
+            path="/account/*"
+            element={
+              <ProtectedRoute>
+                <AccountPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
       <Footer
