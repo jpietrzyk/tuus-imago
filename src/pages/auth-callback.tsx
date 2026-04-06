@@ -13,6 +13,11 @@ export function AuthCallbackPage() {
       );
 
       if (error) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          navigate("/account", { replace: true });
+          return;
+        }
         console.error("Auth callback error:", error.message);
         navigate("/auth?error=callback_failed", { replace: true });
         return;
