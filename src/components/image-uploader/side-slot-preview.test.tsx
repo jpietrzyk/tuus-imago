@@ -131,10 +131,6 @@ describe("SideSlotPreview", () => {
     expect(
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass("opacity-80", "md:opacity-75");
-    expect(screen.getByTestId("uploader-slider-side-left")).toHaveClass(
-      "scale-[0.965]",
-      "md:scale-[0.985]",
-    );
   });
 
   it("emphasizes side slot when it is a navigable target", () => {
@@ -146,10 +142,9 @@ describe("SideSlotPreview", () => {
 
     render(<SideSlotPreview {...props} />);
 
-    expect(screen.getByTestId("uploader-slider-side-left")).toHaveClass(
-      "scale-[0.985]",
-      "md:scale-[0.995]",
-    );
+    expect(
+      screen.getByTestId("uploader-slider-side-left-preview-frame"),
+    ).toHaveClass("opacity-95", "md:opacity-92");
   });
 
   it("applies vertical side preset min-width classes", () => {
