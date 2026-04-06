@@ -15,7 +15,7 @@ export function AuthCallbackPage() {
       if (error) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          navigate("/account", { replace: true });
+          navigate("/", { replace: true });
           return;
         }
         console.error("Auth callback error:", error.message);
@@ -23,7 +23,7 @@ export function AuthCallbackPage() {
         return;
       }
 
-      navigate("/account", { replace: true });
+      navigate("/", { replace: true });
     }
 
     handleCallback();
