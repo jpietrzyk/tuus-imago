@@ -47,6 +47,8 @@ type CreateOrderPayload = {
   customer?: CustomerInput;
   uploadedSlots?: UploadedSlotInput[];
   idempotencyKey?: string;
+  couponCode?: string;
+  userId?: string;
 };
 
 const DEFAULT_SHIPPING_METHOD = "inpost_courier";
@@ -198,31 +200,78 @@ export const handler = async (event: NetlifyEvent) => {
   });
 
   const itemCount = slots.length > 0 ? slots.length : 1;
-  const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE;
+  const subtotal = itemCount * CANVAS_PRINT_UNIT_PRICE;
+
+  let couponId: string | null = null;
+  let couponCode: string | null = null;
+  let discountAmount = 0;
+
+  const couponCodeInput = parsedBody.couponCode?.trim().toUpperCase();
+  if (couponCodeInput) {
+    const { data: coupon } = await supabase
+      .from("coupons")
+      .select("id, code, discount_type, discount_value, min_order_amount, max_uses, used_count, valid_from, valid_until, is_active")
+      .eq("code", couponCodeInput)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (coupon) {
+      const now = new Date();
+      const isValidFrom = !coupon.valid_from || new Date(coupon.valid_from) <= now;
+      const isValidUntil = !coupon.valid_until || new Date(coupon.valid_until) >= now;
+      const isWithinMaxUses = coupon.max_uses === null || coupon.used_count < coupon.max_uses;
+      const meetsMinAmount = coupon.min_order_amount === null || subtotal >= coupon.min_order_amount;
+
+      if (isValidFrom && isValidUntil && isWithinMaxUses && meetsMinAmount) {
+        couponId = coupon.id;
+        couponCode = coupon.code;
+        if (coupon.discount_type === "percentage") {
+          discountAmount = Math.round(subtotal * (coupon.discount_value / 100) * 100) / 100;
+        } else {
+          discountAmount = Math.min(coupon.discount_value, subtotal);
+        }
+      }
+    }
+  }
+
+  const totalPrice = Math.max(subtotal - discountAmount, 0);
+
+  const orderInsert: Record<string, unknown> = {
+    customer_name: parsedBody.customer.name.trim(),
+    customer_email: parsedBody.customer.email.trim(),
+    customer_phone: parsedBody.customer.phone.trim() || null,
+    shipping_address: parsedBody.customer.address.trim(),
+    shipping_city: parsedBody.customer.city.trim(),
+    shipping_postal_code: parsedBody.customer.postalCode.trim(),
+    shipping_country: parsedBody.customer.country,
+    terms_accepted: parsedBody.customer.termsAccepted,
+    privacy_accepted: parsedBody.customer.privacyAccepted,
+    marketing_consent: parsedBody.customer.marketingConsent,
+    status: "pending_payment",
+    shipping_method: DEFAULT_SHIPPING_METHOD,
+    shipping_cost: DEFAULT_SHIPPING_COST,
+    shipment_status: DEFAULT_SHIPMENT_STATUS,
+    currency: "PLN",
+    idempotency_key: idempotencyKey,
+    items_count: itemCount,
+    unit_price: CANVAS_PRINT_UNIT_PRICE,
+    total_price: totalPrice,
+    discount_amount: discountAmount,
+  };
+
+  if (couponId) {
+    orderInsert.coupon_id = couponId;
+    orderInsert.coupon_code = couponCode;
+  }
+
+  const userIdInput = parsedBody.userId?.trim();
+  if (userIdInput) {
+    orderInsert.user_id = userIdInput;
+  }
 
   const { data: order, error: orderInsertError } = await supabase
     .from("orders")
-    .insert({
-      customer_name: parsedBody.customer.name.trim(),
-      customer_email: parsedBody.customer.email.trim(),
-      customer_phone: parsedBody.customer.phone.trim() || null,
-      shipping_address: parsedBody.customer.address.trim(),
-      shipping_city: parsedBody.customer.city.trim(),
-      shipping_postal_code: parsedBody.customer.postalCode.trim(),
-      shipping_country: parsedBody.customer.country,
-      terms_accepted: parsedBody.customer.termsAccepted,
-      privacy_accepted: parsedBody.customer.privacyAccepted,
-      marketing_consent: parsedBody.customer.marketingConsent,
-      status: "pending_payment",
-      shipping_method: DEFAULT_SHIPPING_METHOD,
-      shipping_cost: DEFAULT_SHIPPING_COST,
-      shipment_status: DEFAULT_SHIPMENT_STATUS,
-      currency: "PLN",
-      idempotency_key: idempotencyKey,
-      items_count: itemCount,
-      unit_price: CANVAS_PRINT_UNIT_PRICE,
-      total_price: totalPrice,
-    })
+    .insert(orderInsert)
     .select("id, order_number, status")
     .single();
 
@@ -300,6 +349,16 @@ export const handler = async (event: NetlifyEvent) => {
       statusCode: 500,
       body: JSON.stringify({ error: "Could not persist order status history." }),
     };
+  }
+
+  if (couponId) {
+    await supabase.rpc("increment_coupon_used_count", { coupon_row_id: couponId });
+
+    await supabase.from("coupon_usages").insert({
+      coupon_id: couponId,
+      user_id: userIdInput || null,
+      order_id: order.id,
+    });
   }
 
   return {

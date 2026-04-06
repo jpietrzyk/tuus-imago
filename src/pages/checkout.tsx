@@ -39,7 +39,17 @@ import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
-import { createOrder, createP24Session, syncHubSpotContact } from "@/lib/orders-api";
+import {
+  createOrder,
+  createP24Session,
+  syncHubSpotContact,
+  validateCoupon,
+  getCustomerAddresses,
+  type ValidateCouponResponse,
+  type CustomerAddress,
+} from "@/lib/orders-api";
+import { useAuth } from "@/lib/auth-context";
+import { Tag } from "lucide-react";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -200,6 +210,7 @@ const REQUIRED_FIELDS: (keyof FormData)[] = [
 export function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const uploadedSlots = (
     (location.state as { uploadedSlots?: UploadedSlotResult[] } | null)
       ?.uploadedSlots ?? []
@@ -267,6 +278,38 @@ export function CheckoutPage() {
   const paymentReturn = searchParams.get("payment") === "return";
   const returnOrderId = searchParams.get("orderId");
 
+  const [couponCode, setCouponCode] = useState("");
+  const [couponResult, setCouponResult] = useState<ValidateCouponResponse | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  const discountAmount = couponResult?.valid && couponResult.discountAmount
+    ? couponResult.discountAmount
+    : 0;
+  const finalPrice = totalPrice - discountAmount;
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getCustomerAddresses().then((addresses) => {
+      if (cancelled) return;
+      const defaultAddr = addresses.find((a: CustomerAddress) => a.is_default) ?? addresses[0];
+      if (defaultAddr && !formData.name) {
+        setFormData((prev) => ({
+          ...prev,
+          name: defaultAddr.name,
+          phone: defaultAddr.phone ?? prev.phone,
+          address: defaultAddr.address,
+          city: defaultAddr.city,
+          postalCode: defaultAddr.postal_code,
+          country: defaultAddr.country,
+        }));
+      }
+    });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const field = name as keyof FormData;
@@ -301,6 +344,30 @@ export function CheckoutPage() {
     }));
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    setCouponResult(null);
+    try {
+      const result = await validateCoupon(couponCode.trim(), totalPrice);
+      setCouponResult(result);
+      if (!result.valid) {
+        setCouponError(result.reason ?? "Invalid coupon.");
+      }
+    } catch {
+      setCouponError("Could not validate coupon.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode("");
+    setCouponResult(null);
+    setCouponError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGenericError(null);
@@ -324,6 +391,8 @@ export function CheckoutPage() {
         customer: formData,
         uploadedSlots,
         idempotencyKey: submissionKey,
+        couponCode: couponResult?.valid ? couponResult.code : undefined,
+        userId: user?.id,
       });
 
       sessionStorage.setItem(
@@ -460,6 +529,79 @@ export function CheckoutPage() {
             totalPrice={totalPrice}
             slotLabel={slotLabel}
           />
+
+          {/* Coupon Code */}
+          <div className="mt-4 max-w-2xl mx-auto">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Tag className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {t("checkout.coupon.title")}
+                </span>
+              </div>
+              {couponResult?.valid ? (
+                <div className="flex items-center justify-between bg-green-50 rounded-md p-2 border border-green-200">
+                  <span className="text-sm text-green-700">
+                    {t("checkout.coupon.applied")}: <strong>{couponResult.code}</strong>
+                    {couponResult.discountType === "percentage"
+                      ? ` (-${couponResult.discountValue}%)`
+                      : ` (-${formatPrice(couponResult.discountAmount ?? 0)})`}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveCoupon}
+                    className="text-red-500 hover:text-red-700 text-xs"
+                  >
+                    {t("checkout.coupon.remove")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder={t("checkout.coupon.placeholder")}
+                    className="flex-1"
+                    disabled={couponLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleApplyCoupon}
+                    disabled={couponLoading || !couponCode.trim()}
+                  >
+                    {couponLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      t("checkout.coupon.apply")
+                    )}
+                  </Button>
+                </div>
+              )}
+              {couponError && (
+                <p className="text-xs text-red-600 mt-1">{couponError}</p>
+              )}
+            </div>
+          </div>
+
+          {discountAmount > 0 && (
+            <div className="max-w-2xl mx-auto mt-2 bg-blue-50 rounded-lg p-3 text-sm">
+              <div className="flex justify-between text-gray-600">
+                <span>{t("checkout.coupon.subtotal")}</span>
+                <span>{formatPrice(totalPrice)}</span>
+              </div>
+              <div className="flex justify-between text-green-600">
+                <span>{t("checkout.coupon.discount")}</span>
+                <span>-{formatPrice(discountAmount)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-gray-900 border-t pt-1 mt-1">
+                <span>{t("checkout.total")}</span>
+                <span className="text-blue-600">{formatPrice(finalPrice)}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <Card className="max-w-2xl mx-auto">

@@ -74,6 +74,34 @@ function createFetchMock(
   });
 }
 
+vi.mock("@/lib/auth-context", () => ({
+  useAuth: () => ({
+    user: null,
+    session: null,
+    loading: false,
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    signInWithOtp: vi.fn(),
+    resetPassword: vi.fn(),
+    updatePassword: vi.fn(),
+  }),
+}));
+
+vi.mock("@/lib/supabase-client", () => ({
+  get supabase() {
+    return {
+      auth: {
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+      },
+    };
+  },
+}));
+
 describe("CheckoutPage", () => {
   let locationHrefSpy: ReturnType<typeof vi.fn>;
 

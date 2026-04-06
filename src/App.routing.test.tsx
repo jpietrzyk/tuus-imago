@@ -42,6 +42,34 @@ vi.mock("@/lib/content-loader", () => ({
   getPagesBySection: vi.fn(() => []),
 }));
 
+vi.mock("@/lib/auth-context", () => ({
+  useAuth: () => ({
+    user: null,
+    session: null,
+    loading: false,
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    signInWithOtp: vi.fn(),
+    resetPassword: vi.fn(),
+    updatePassword: vi.fn(),
+  }),
+}));
+
+const { supabaseMock } = vi.hoisted(() => ({
+  supabaseMock: {
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+    },
+  },
+}));
+
+vi.mock("@/lib/supabase-client", () => ({
+  supabase: supabaseMock,
+}));
+
 vi.mock("@/lib/cloudinary-upload", () => ({
   uploadImageToCloudinary: vi.fn(
     async (input: {

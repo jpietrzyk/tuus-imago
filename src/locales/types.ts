@@ -1,6 +1,7 @@
 export interface Translations {
   common: {
     backToHome: string;
+    backToHomeShort: string;
     copyright: string;
     aboutUs: string;
     legalAndPrivacy: string;
@@ -22,6 +23,61 @@ export interface Translations {
     contentNotFound: string;
     contentNotFoundHint: string;
     footerContactLink: string;
+  };
+  auth: {
+    signIn: string;
+    signUp: string;
+    signOut: string;
+    email: string;
+    password: string;
+    fullName: string;
+    forgotPassword: string;
+    sendMagicLink: string;
+    orContinueWith: string;
+    accountMenu: string;
+    profile: string;
+    orders: string;
+    addresses: string;
+    resetPassword: string;
+    resetPasswordDescription: string;
+    resetPasswordSent: string;
+    sendResetLink: string;
+    backToSignIn: string;
+    updatePassword: string;
+    newPassword: string;
+    passwordUpdated: string;
+  };
+  account: {
+    title: string;
+    profile: string;
+    phone: string;
+    save: string;
+    cancel: string;
+    retry: string;
+    noOrders: string;
+    startShopping: string;
+    orderStatus: string;
+    paymentStatus: string;
+    date: string;
+    total: string;
+    discount: string;
+    trackingNumber: string;
+    items: string;
+    item: string;
+    shippingAddress: string;
+    orderNumber: string;
+    noAddresses: string;
+    addresses: string;
+    addAddress: string;
+    editAddress: string;
+    addressLabel: string;
+    defaultAddress: string;
+    default: string;
+    paymentHistory: string;
+    noPayments: string;
+    amount: string;
+    provider: string;
+    status: string;
   };
   legalMenu: {
     title: string;
@@ -259,6 +315,15 @@ export interface Translations {
       marketingLabel: string;
       termsAcceptedError: string;
       privacyAcceptedError: string;
+    };
+    coupon: {
+      title: string;
+      placeholder: string;
+      apply: string;
+      remove: string;
+      applied: string;
+      subtotal: string;
+      discount: string;
     };
   };
   complaint: {
