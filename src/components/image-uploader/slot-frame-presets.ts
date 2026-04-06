@@ -12,19 +12,19 @@ const SLOT_FRAME_PRESETS: Record<SlotPresetKey, SlotFramePreset> = {
     mainFrameSizeClassName:
       "w-full max-w-[72rem] md:max-w-[84rem] lg:max-w-[96rem]",
     sideFrameMinWidthClassName:
-      "min-w-[132px] sm:min-w-[156px] md:min-w-[188px] lg:min-w-[220px]",
+      "min-w-[96px] sm:min-w-[112px] md:min-w-[140px] lg:min-w-[168px]",
   },
   vertical: {
     mainFrameSizeClassName:
       "w-full max-w-[40rem] md:max-w-[48rem] lg:max-w-[56rem]",
     sideFrameMinWidthClassName:
-      "min-w-[88px] sm:min-w-[104px] md:min-w-[124px] lg:min-w-[140px]",
+      "min-w-[60px] sm:min-w-[72px] md:min-w-[88px] lg:min-w-[100px]",
   },
   square: {
     mainFrameSizeClassName:
       "w-full max-w-[52rem] md:max-w-[60rem] lg:max-w-[68rem]",
     sideFrameMinWidthClassName:
-      "min-w-[100px] sm:min-w-[116px] md:min-w-[136px] lg:min-w-[156px]",
+      "min-w-[72px] sm:min-w-[84px] md:min-w-[100px] lg:min-w-[112px]",
   },
 };
 
