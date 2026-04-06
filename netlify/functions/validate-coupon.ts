@@ -1,4 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
 import { createServiceClient } from "./_shared/supabase-auth";
 
 type NetlifyEvent = {

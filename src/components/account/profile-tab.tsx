@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,24 +22,26 @@ export function ProfileTab() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const fetchProfile = useCallback(async () => {
+  useEffect(() => {
     if (!user) return;
-    const { data } = await supabase
+    let cancelled = false;
+
+    supabase
       .from("profiles")
       .select("full_name, phone")
       .eq("id", user.id)
-      .maybeSingle();
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        if (data) {
+          setFullName((data as ProfileRow).full_name ?? "");
+          setPhone((data as ProfileRow).phone ?? "");
+        }
+        setLoading(false);
+      });
 
-    if (data) {
-      setFullName((data as ProfileRow).full_name ?? "");
-      setPhone((data as ProfileRow).phone ?? "");
-    }
-    setLoading(false);
+    return () => { cancelled = true; };
   }, [user]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -12,8 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, MapPin, Plus, Trash2, Pencil } from "lucide-react";
-import { t } from "@/locales/i18n";
-import {
+import { t } from "@/locales/i18n";import {
   getCustomerAddresses,
   createCustomerAddress,
   updateCustomerAddress,
