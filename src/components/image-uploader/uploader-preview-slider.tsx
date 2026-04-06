@@ -72,8 +72,6 @@ export default function UploaderPreviewSlider({
         image={leftSlotImage}
         previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
         useCloudPreview={!!leftSlotImage?.uploadedAsset}
-        previewFrameAspectRatio={previewFrameAspectRatio}
-        selectedProportion={userSelectedProportion}
         isNavigable={canMovePrevious}
         isUploadOverlayVisible={isUploadOverlayVisible}
         uploadProgress={uploadProgress}
@@ -106,8 +104,6 @@ export default function UploaderPreviewSlider({
         image={rightSlotImage}
         previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
         useCloudPreview={!!rightSlotImage?.uploadedAsset}
-        previewFrameAspectRatio={previewFrameAspectRatio}
-        selectedProportion={userSelectedProportion}
         isNavigable={canMoveNext}
         isUploadOverlayVisible={isUploadOverlayVisible}
         uploadProgress={uploadProgress}

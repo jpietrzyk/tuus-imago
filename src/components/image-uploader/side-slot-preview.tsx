@@ -1,7 +1,10 @@
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
-import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import {
+  type ImageDisplayProportion,
+  getTargetAspectRatio,
+} from "./image-proportion-calculator";
 import { resolveSlotFramePreset } from "./slot-frame-presets";
 
 interface SideSlotPreviewProps {
@@ -10,8 +13,6 @@ interface SideSlotPreviewProps {
   image: SelectedImageItem | null;
   previewUrl?: string | null;
   useCloudPreview?: boolean;
-  previewFrameAspectRatio: number;
-  selectedProportion: ImageDisplayProportion;
   isNavigable: boolean;
   isUploadOverlayVisible?: boolean;
   uploadProgress?: number;
@@ -26,8 +27,6 @@ export default function SideSlotPreview({
   image,
   previewUrl = null,
   useCloudPreview = false,
-  previewFrameAspectRatio,
-  selectedProportion,
   isNavigable,
   isUploadOverlayVisible = false,
   uploadProgress = 0,
@@ -37,11 +36,14 @@ export default function SideSlotPreview({
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
   const isAddSlotAction = !image && typeof slotIndex === "number";
-  const slotFramePreset = resolveSlotFramePreset(selectedProportion);
+  const sideProportion: ImageDisplayProportion =
+    image?.displayImageProportion ?? "horizontal";
+  const sideFrameAspectRatio = getTargetAspectRatio(sideProportion);
+  const slotFramePreset = resolveSlotFramePreset(sideProportion);
   const slotAspectRatioClassName =
-    selectedProportion === "vertical"
+    sideProportion === "vertical"
       ? "aspect-[2/3]"
-      : selectedProportion === "horizontal"
+      : sideProportion === "horizontal"
         ? "aspect-[16/9]"
         : "aspect-square";
 
@@ -108,7 +110,7 @@ export default function SideSlotPreview({
             : "border border-dashed border-primary/70 bg-primary/5 opacity-95"
         }`}
         style={{
-          aspectRatio: String(previewFrameAspectRatio),
+          aspectRatio: String(sideFrameAspectRatio),
         }}
       >
         {image ? (
