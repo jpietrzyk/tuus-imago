@@ -86,14 +86,10 @@ export default function SideSlotPreview({
             })
           : t(isLeft ? "uploader.previousImage" : "uploader.nextImage")
       }
-      className={`h-full w-12 md:w-20 lg:w-28 xl:w-36 shrink-0 overflow-hidden rounded-none bg-transparent transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-default disabled:opacity-70 ${
+      className={`h-full shrink-0 overflow-hidden rounded-none bg-transparent transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-default disabled:opacity-70 ${
         isLeft
-          ? "flex items-start justify-end md:-mr-4 lg:-mr-6"
-          : "md:-ml-4 lg:-ml-6"
-      } ${
-        isNavigable
-          ? "scale-[0.985] md:scale-[0.995]"
-          : "scale-[0.965] md:scale-[0.985]"
+          ? "flex items-start justify-end"
+          : "flex items-center justify-start"
       }`}
     >
       <div
