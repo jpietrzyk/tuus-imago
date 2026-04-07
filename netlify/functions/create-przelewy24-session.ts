@@ -172,7 +172,7 @@ export const handler = async (event: NetlifyEvent) => {
     country: order.shipping_country,
     phone: order.customer_phone?.replace(/\s+/g, "") || undefined,
     language: normalizeLanguage(parsedBody.language),
-    urlReturn: buildReturnUrl(config.siteUrl, order.id),
+    urlReturn: buildReturnUrl(config.siteUrl, order.id, order.order_number),
     urlStatus: config.statusUrl,
     waitForResult: false,
     regulationAccept: false,
@@ -201,21 +201,35 @@ export const handler = async (event: NetlifyEvent) => {
   try {
     registerData = await parseP24Response<P24RegisterResponse>(registerResponse);
   } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Could not register Przelewy24 transaction.";
+    console.error("[create-przelewy24-session] P24 register parse error:", errMsg);
+
+    await supabase
+      .from("orders")
+      .update({ payment_status: "failed", payment_error: errMsg })
+      .eq("id", order.id);
+
     return {
       statusCode: 502,
-      body: JSON.stringify({
-        error: err instanceof Error ? err.message : "Could not register Przelewy24 transaction.",
-      }),
+      body: JSON.stringify({ error: errMsg }),
     };
   }
   const token = registerData?.data?.token;
 
   if (!registerResponse.ok || !token) {
+    const p24Error = registerData?.error || "Could not register Przelewy24 transaction.";
+    const responseCode = registerData?.responseCode;
+    const errorDetail = responseCode ? `P24 error code ${responseCode}: ${p24Error}` : p24Error;
+    console.error("[create-przelewy24-session] P24 register failed:", errorDetail);
+
+    await supabase
+      .from("orders")
+      .update({ payment_status: "failed", payment_error: errorDetail })
+      .eq("id", order.id);
+
     return {
       statusCode: 502,
-      body: JSON.stringify({
-        error: registerData?.error || "Could not register Przelewy24 transaction.",
-      }),
+      body: JSON.stringify({ error: p24Error }),
     };
   }
 

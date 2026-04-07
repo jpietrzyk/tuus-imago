@@ -31,7 +31,6 @@ import {
   CreditCard,
   ExternalLink,
   Loader2,
-  Clock,
   AlertTriangle,
 } from "lucide-react";
 import { t, getCurrentLanguage } from "@/locales/i18n";
@@ -45,6 +44,7 @@ import {
   syncHubSpotContact,
   validateCoupon,
   getCustomerAddresses,
+  getCustomerOrders,
   type ValidateCouponResponse,
   type CustomerAddress,
 } from "@/lib/orders-api";
@@ -277,11 +277,57 @@ export function CheckoutPage() {
   const [searchParams] = useSearchParams();
   const paymentReturn = searchParams.get("payment") === "return";
   const returnOrderId = searchParams.get("orderId");
+  const returnOrderNumber = searchParams.get("orderNumber");
 
   const [couponCode, setCouponCode] = useState("");
   const [couponResult, setCouponResult] = useState<ValidateCouponResponse | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
+
+  const [paymentPollStatus, setPaymentPollStatus] = useState<"polling" | "paid" | "failed" | "timeout">("polling");
+
+  useEffect(() => {
+    if (!paymentReturn || !returnOrderId) return;
+
+    const POLL_INTERVAL_MS = 5000;
+    const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+    let cancelled = false;
+    const startedAt = Date.now();
+
+    const poll = async () => {
+      if (cancelled) return;
+
+      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+        setPaymentPollStatus("timeout");
+        return;
+      }
+
+      try {
+        const result = await getCustomerOrders(returnOrderId);
+        const order = "order" in result ? result.order : null;
+        if (!order) return;
+
+        if (order.status === "paid" || order.payment_status === "verified") {
+          setPaymentPollStatus("paid");
+          return;
+        }
+        if (order.payment_status === "failed") {
+          setPaymentPollStatus("failed");
+          return;
+        }
+      } catch {
+        // Ignore poll errors, retry next interval
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [paymentReturn, returnOrderId]);
 
   const discountAmount = couponResult?.valid && couponResult.discountAmount
     ? couponResult.discountAmount
@@ -461,6 +507,21 @@ export function CheckoutPage() {
     }
   };
 
+  const handleRetryPaymentFromReturn = async () => {
+    if (!returnOrderId) return;
+    setIsRedirecting(true);
+    try {
+      const p24Response = await createP24Session({
+        orderId: returnOrderId,
+        language: getCurrentLanguage(),
+      });
+      window.location.href = p24Response.redirectUrl;
+    } catch {
+      setIsRedirecting(false);
+      setPaymentPollStatus("failed");
+    }
+  };
+
   const isFormValid = REQUIRED_FIELDS.every((f) => {
     const value = formData[f];
     return typeof value === "string" ? value.trim() : value === true;
@@ -611,24 +672,72 @@ export function CheckoutPage() {
           <CardContent>
             {paymentReturn ? (
               <div className="py-12 text-center">
-                <Clock className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {t("checkout.paymentPendingTitle")}
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  {t("checkout.paymentPendingMessage")}
-                </p>
-                {returnOrderId && (
+                {paymentPollStatus === "paid" ? (
+                  <>
+                    <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      {t("checkout.paymentSuccessTitle")}
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      {t("checkout.paymentSuccessMessage")}
+                    </p>
+                  </>
+                ) : paymentPollStatus === "failed" ? (
+                  <>
+                    <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      {t("checkout.paymentFailedTitle")}
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      {t("checkout.paymentFailedMessage")}
+                    </p>
+                  </>
+                ) : paymentPollStatus === "timeout" ? (
+                  <>
+                    <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      {t("checkout.paymentTimeoutTitle")}
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      {t("checkout.paymentTimeoutMessage")}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="h-16 w-16 text-blue-600 mx-auto mb-4 animate-spin" />
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      {t("checkout.paymentPendingTitle")}
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      {t("checkout.paymentPendingMessage")}
+                    </p>
+                    <p className="text-xs text-gray-400 mb-4">
+                      {t("checkout.paymentCheckingStatus")}
+                    </p>
+                  </>
+                )}
+                {(returnOrderId || returnOrderNumber) && (
                   <p className="text-sm text-gray-500 mb-6">
                     {t("checkout.orderNumber")}:{" "}
                     <span className="font-mono font-semibold">
-                      {returnOrderId}
+                      {returnOrderNumber || returnOrderId}
                     </span>
                   </p>
                 )}
-                <Button onClick={() => navigate("/")}>
-                  {t("checkout.backToHomeButton")}
-                </Button>
+                {paymentPollStatus === "failed" && returnOrderId ? (
+                  <div className="flex gap-3 justify-center">
+                    <Button onClick={handleRetryPaymentFromReturn}>
+                      {t("checkout.paymentRetryButton")}
+                    </Button>
+                    <Button variant="outline" onClick={() => navigate("/")}>
+                      {t("checkout.backToHomeButton")}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button onClick={() => navigate("/")}>
+                    {t("checkout.backToHomeButton")}
+                  </Button>
+                )}
               </div>
             ) : isRedirecting ? (
               <div className="py-12 text-center">

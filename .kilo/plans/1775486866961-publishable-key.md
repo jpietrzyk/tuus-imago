@@ -113,17 +113,6 @@ Replace legacy key references:
 
 ### Step 3.2: Update `.env` (local development)
 
-```diff
-  SUPABASE_URL=https://bwwtoitwhkalbmlgxfgf.supabase.co
-- SUPABASE_ANON_KEY=asdf
-+ # No longer needed — publishable key used via VITE_ prefix
-- SUPABASE_SECRET_KEY=sb_secret_dcTdJ5Ec-8hWobRyBU7iSw_jSUx_mzv
-+ SUPABASE_SECRET_KEY=<new sb_secret_... key from dashboard>
-
-  VITE_SUPABASE_URL=https://bwwtoitwhkalbmlgxfgf.supabase.co
-- VITE_SUPABASE_ANON_KEY=asdf
-+ VITE_SUPABASE_PUBLISHABLE_KEY=<sb_publishable_... key from dashboard>
-```
 
 ### Step 3.3: Update Netlify Environment Variables
 

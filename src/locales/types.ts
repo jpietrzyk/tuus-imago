@@ -300,6 +300,13 @@ export interface Translations {
     redirectingToPayment: string;
     paymentPendingTitle: string;
     paymentPendingMessage: string;
+    paymentSuccessTitle: string;
+    paymentSuccessMessage: string;
+    paymentFailedTitle: string;
+    paymentFailedMessage: string;
+    paymentTimeoutTitle: string;
+    paymentTimeoutMessage: string;
+    paymentCheckingStatus: string;
     paymentRetryTitle: string;
     paymentRetryMessage: string;
     paymentRetryButton: string;
