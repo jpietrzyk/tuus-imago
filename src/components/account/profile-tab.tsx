@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, User } from "lucide-react";
 import { t } from "@/locales/i18n";
+import { DangerZone } from "@/components/account/danger-zone";
 
 type ProfileRow = {
   id: string;
@@ -71,6 +72,7 @@ export function ProfileTab() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -117,5 +119,7 @@ export function ProfileTab() {
         </form>
       </CardContent>
     </Card>
+    <DangerZone />
+    </>
   );
 }

@@ -295,3 +295,33 @@ export async function deleteCustomerAddress(
     throw new Error(data.error ?? "Could not delete address.");
   }
 }
+
+export async function deleteAccount(signal?: AbortSignal): Promise<void> {
+  const headers = await getAuthHeaders();
+  const response = await fetch("/.netlify/functions/delete-account", {
+    method: "POST",
+    headers,
+    signal,
+  });
+
+  if (!response.ok) {
+    const data = await parseJsonResponse<ErrorResponse>(response);
+    throw new Error(data.error ?? "Could not delete account.");
+  }
+}
+
+export async function exportUserData(signal?: AbortSignal): Promise<Blob> {
+  const headers = await getAuthHeaders();
+  const response = await fetch("/.netlify/functions/export-user-data", {
+    method: "GET",
+    headers,
+    signal,
+  });
+
+  if (!response.ok) {
+    const data = await parseJsonResponse<ErrorResponse>(response);
+    throw new Error(data.error ?? "Could not export data.");
+  }
+
+  return response.blob();
+}

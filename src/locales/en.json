@@ -78,7 +78,22 @@
     "noPayments": "No payment history yet.",
     "amount": "Amount",
     "provider": "Provider",
-    "status": "Status"
+    "status": "Status",
+    "dangerZoneTitle": "Danger Zone",
+    "dangerZoneDescription": "Irreversible account actions. Please proceed with caution.",
+    "deleteAccountTitle": "Delete Account",
+    "deleteAccountDescription": "Permanently delete your account and all associated data. This action cannot be undone.",
+    "deleteAccountButton": "Delete My Account",
+    "deleteAccountConfirmTitle": "Are you absolutely sure?",
+    "deleteAccountConfirmDescription": "This will permanently delete your account, remove your saved addresses, and anonymize your order history. This cannot be undone.",
+    "deleteAccountConfirmButton": "Yes, delete my account",
+    "deleteAccountCancelButton": "Cancel",
+    "deleteAccountDeleting": "Deleting account...",
+    "deleteAccountError": "Could not delete account. Please try again.",
+    "exportDataTitle": "Download Your Data",
+    "exportDataDescription": "Download a copy of all your personal data stored in our system (profile, addresses, orders).",
+    "exportDataButton": "Download My Data",
+    "exportDataError": "Could not export data. Please try again."
   },
   "legalMenu": {
     "title": "Legal and Payments",

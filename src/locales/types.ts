@@ -78,6 +78,21 @@ export interface Translations {
     amount: string;
     provider: string;
     status: string;
+    dangerZoneTitle: string;
+    dangerZoneDescription: string;
+    deleteAccountTitle: string;
+    deleteAccountDescription: string;
+    deleteAccountButton: string;
+    deleteAccountConfirmTitle: string;
+    deleteAccountConfirmDescription: string;
+    deleteAccountConfirmButton: string;
+    deleteAccountCancelButton: string;
+    deleteAccountDeleting: string;
+    deleteAccountError: string;
+    exportDataTitle: string;
+    exportDataDescription: string;
+    exportDataButton: string;
+    exportDataError: string;
   };
   legalMenu: {
     title: string;

@@ -343,7 +343,22 @@
     "noPayments": "Brak historii płatności.",
     "amount": "Kwota",
     "provider": "Dostawca",
-    "status": "Status"
+    "status": "Status",
+    "dangerZoneTitle": "Strefa niebezpieczna",
+    "dangerZoneDescription": "Nieodwracalne akcje na koncie. Prosimy o ostrożność.",
+    "deleteAccountTitle": "Usuń konto",
+    "deleteAccountDescription": "Trwale usuń swoje konto i wszystkie powiązane dane. Ta akcja nie może być cofnięta.",
+    "deleteAccountButton": "Usuń moje konto",
+    "deleteAccountConfirmTitle": "Czy na pewno?",
+    "deleteAccountConfirmDescription": "To spowoduje trwałe usunięcie Twojego konta, usunięcie zapisanych adresów i zanonimizowanie historii zamówień. Ta operacja nie może być cofnięta.",
+    "deleteAccountConfirmButton": "Tak, usuń moje konto",
+    "deleteAccountCancelButton": "Anuluj",
+    "deleteAccountDeleting": "Usuwanie konta...",
+    "deleteAccountError": "Nie udało się usunąć konta. Spróbuj ponownie.",
+    "exportDataTitle": "Pobierz swoje dane",
+    "exportDataDescription": "Pobierz kopię wszystkich swoich danych osobowych przechowywanych w naszym systemie (profil, adresy, zamówienia).",
+    "exportDataButton": "Pobierz moje dane",
+    "exportDataError": "Nie udało się wyeksportować danych. Spróbuj ponownie."
   },
   "complaint": {
     "title": "Formularz reklamacji",
