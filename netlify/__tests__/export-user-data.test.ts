@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import { handler } from "../functions/export-user-data";
-import {
-  createSelectEqMaybeSingle,
-  mockSupabaseClient,
-} from "./test-utils/supabase-mocks";
 
 vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(),
@@ -54,11 +50,6 @@ describe("export-user-data handler", () => {
 
   it("exports user profile, addresses, and orders as JSON", async () => {
     const authClient = buildAuthClient();
-
-    const { select: profileSelect } = createSelectEqMaybeSingle({
-      data: { id: "user-1", full_name: "Jane Doe", phone: "+48123" },
-      error: null,
-    });
 
     const orderData = [
       { id: "order-1", order_number: "TI-2026-000001", status: "paid" },
