@@ -1,12 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { SHIPPING_COUNTRIES } from "../../src/lib/checkout-constants";
 import { CANVAS_PRINT_UNIT_PRICE } from "../../src/lib/pricing";
-import {
-  buildContactProperties,
-  getHubSpotConfig,
-  upsertHubSpotContact,
-  type OrderRow,
-} from "./_shared/hubspot";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -365,46 +359,6 @@ export const handler = async (event: NetlifyEvent) => {
       user_id: userIdInput || null,
       order_id: order.id,
     });
-  }
-
-  try {
-    const hsConfig = getHubSpotConfig();
-    const fullOrder: OrderRow = {
-      id: order.id,
-      order_number: order.order_number,
-      status: order.status,
-      customer_name: parsedBody.customer.name.trim(),
-      customer_email: parsedBody.customer.email.trim(),
-      customer_phone: parsedBody.customer.phone.trim() || null,
-      shipping_address: parsedBody.customer.address.trim(),
-      shipping_city: parsedBody.customer.city.trim(),
-      shipping_postal_code: parsedBody.customer.postalCode.trim(),
-      shipping_country: parsedBody.customer.country,
-      total_price: totalPrice,
-      items_count: itemCount,
-      marketing_consent: parsedBody.customer.marketingConsent,
-      created_at: new Date().toISOString(),
-    };
-    const contactProperties = buildContactProperties(fullOrder);
-    const hubspotResponse = await upsertHubSpotContact(hsConfig, contactProperties);
-
-    const hsUpdateFields: Record<string, unknown> = {
-      hubspot_synced_at: new Date().toISOString(),
-    };
-    if (hubspotResponse.id) {
-      hsUpdateFields.hubspot_contact_id = hubspotResponse.id;
-    }
-
-    await supabase.from("orders").update(hsUpdateFields).eq("id", order.id);
-
-    await supabase.from("order_status_history").insert({
-      order_id: order.id,
-      status_type: "crm",
-      status: "hubspot_synced",
-      note: `Contact synced to HubSpot CRM${hubspotResponse.id ? ` (ID: ${hubspotResponse.id})` : ""}.`,
-    });
-  } catch (hsError) {
-    console.error("[create-order] HubSpot sync failed:", hsError instanceof Error ? hsError.message : hsError);
   }
 
   return {

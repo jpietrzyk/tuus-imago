@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import bgProduction from "./assets/2.png";
 import { Footer } from "@/components/footer";
@@ -35,6 +35,26 @@ import { ResetPasswordPage } from "./pages/auth-reset-password";
 import { UpdatePasswordPage } from "./pages/auth-update-password";
 import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
+import { AdminApp } from "./admin/AdminApp";
+import { AdminLayout } from "./admin/layout";
+import { AdminLoginPage } from "./admin/login";
+
+const DashboardPage = lazy(() => import("./admin/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
+const OrderListPage = lazy(() => import("./admin/pages/order-list").then((m) => ({ default: m.OrderListPage })));
+const OrderShowPage = lazy(() => import("./admin/pages/order-show").then((m) => ({ default: m.OrderShowPage })));
+const CouponListPage = lazy(() => import("./admin/pages/coupon-list").then((m) => ({ default: m.CouponListPage })));
+const CouponCreatePage = lazy(() => import("./admin/pages/coupon-create").then((m) => ({ default: m.CouponCreatePage })));
+const CouponEditPage = lazy(() => import("./admin/pages/coupon-edit").then((m) => ({ default: m.CouponEditPage })));
+const CustomerListPage = lazy(() => import("./admin/pages/customer-list").then((m) => ({ default: m.CustomerListPage })));
+const CustomerShowPage = lazy(() => import("./admin/pages/customer-show").then((m) => ({ default: m.CustomerShowPage })));
+
+function AdminPageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+    </div>
+  );
+}
 
 interface DebugToggleProps {
   label: string;
@@ -76,6 +96,33 @@ function DebugToggle({
 
 // Main App Component with Routes
 export function App() {
+  const location = useLocation();
+
+  if (location.pathname.startsWith("/admin")) {
+    return (
+      <>
+        <AdminApp />
+        <Routes>
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Suspense fallback={<AdminPageLoader />}><DashboardPage /></Suspense>} />
+            <Route path="orders" element={<Suspense fallback={<AdminPageLoader />}><OrderListPage /></Suspense>} />
+            <Route path="orders/:id" element={<Suspense fallback={<AdminPageLoader />}><OrderShowPage /></Suspense>} />
+            <Route path="coupons" element={<Suspense fallback={<AdminPageLoader />}><CouponListPage /></Suspense>} />
+            <Route path="coupons/new" element={<Suspense fallback={<AdminPageLoader />}><CouponCreatePage /></Suspense>} />
+            <Route path="coupons/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><CouponEditPage /></Suspense>} />
+            <Route path="customers" element={<Suspense fallback={<AdminPageLoader />}><CustomerListPage /></Suspense>} />
+            <Route path="customers/:email" element={<Suspense fallback={<AdminPageLoader />}><CustomerShowPage /></Suspense>} />
+          </Route>
+        </Routes>
+      </>
+    );
+  }
+
+  return <StorefrontApp />;
+}
+
+function StorefrontApp() {
   const [isLegalSheetOpen, setIsLegalSheetOpen] = useState(false);
   const [activeLegalSection, setActiveLegalSection] =
     useState<LegalMenuSection>("legal");
