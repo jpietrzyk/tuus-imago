@@ -41,7 +41,6 @@ import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 import {
   createOrder,
   createP24Session,
-  syncHubSpotContact,
   validateCoupon,
   getCustomerAddresses,
   getCustomerOrders,
@@ -447,8 +446,6 @@ export function CheckoutPage() {
       );
       setOrderNumber(orderResponse.orderNumber);
       setPendingOrderId(orderResponse.orderId);
-
-      syncHubSpotContact(orderResponse.orderId).catch(() => {});
 
       try {
         setIsRedirecting(true);

@@ -144,18 +144,6 @@ export async function createOrder(
   return data as CreateOrderResponse;
 }
 
-export async function syncHubSpotContact(orderId: string): Promise<void> {
-  try {
-    await fetch("/.netlify/functions/sync-hubspot-contact", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId }),
-    });
-  } catch {
-    // Non-blocking — HubSpot failure must not affect checkout
-  }
-}
-
 export async function createP24Session(
   payload: { orderId: string; language?: string },
   signal?: AbortSignal,
