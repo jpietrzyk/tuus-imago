@@ -93,68 +93,6 @@ function getAuthHeader(event: NetlifyEvent): string | null {
   return null;
 }
 
-async function getAuthenticatedAdmin(
-  event: NetlifyEvent,
-): Promise<
-  { user: User; supabase: ReturnType<typeof createClient> } | { error: { statusCode: number; body: string } }
-> {
-  const token = getAuthHeader(event);
-  if (!token) {
-    return {
-      error: {
-        statusCode: 401,
-        body: JSON.stringify({ error: "Missing authorization token." }),
-      },
-    };
-  }
-
-  const supabaseUrl = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
-  const supabasePublishableKey =
-    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-    process.env.SUPABASE_PUBLISHABLE_KEY;
-
-  if (!supabaseUrl || !supabasePublishableKey) {
-    return {
-      error: {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Missing Supabase configuration." }),
-      },
-    };
-  }
-
-  const authClient = createClient(supabaseUrl, supabasePublishableKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  const { data, error } = await authClient.auth.getUser(token);
-
-  if (error || !data.user) {
-    return {
-      error: {
-        statusCode: 401,
-        body: JSON.stringify({ error: "Invalid or expired token." }),
-      },
-    };
-  }
-
-  const { data: profile, error: profileError } = await authClient
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", data.user.id)
-    .single();
-
-  if (profileError || !profile?.is_admin) {
-    return {
-      error: {
-        statusCode: 403,
-        body: JSON.stringify({ error: "Forbidden: not an admin user." }),
-      },
-    };
-  }
-
-  return { user: data.user, supabase: authClient };
-}
-
 function createAdminClient() {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
@@ -257,15 +195,50 @@ function toCsvRow(fields: unknown[]): string {
 }
 
 export const handler = async (event: NetlifyEvent) => {
-  const adminResult = await getAuthenticatedAdmin(event);
-  if ("error" in adminResult) {
-    return {
-      statusCode: adminResult.error.statusCode,
-      body: adminResult.error.body,
-    };
+  const token = getAuthHeader(event);
+
+  if (!token) {
+    return jsonResponse(401, { error: "Missing authorization token.", debug: "no_auth_header" });
   }
 
-  const supabase = createAdminClient();
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const apiKey = process.env.SUPABASE_SECRET_KEY;
+
+  if (!supabaseUrl || !apiKey) {
+    return jsonResponse(500, { error: "Missing Supabase configuration.", debug: { hasUrl: !!supabaseUrl, hasKey: !!apiKey } });
+  }
+
+  let user: User | null = null;
+  try {
+    const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: apiKey,
+      },
+    });
+
+    if (!authResponse.ok) {
+      const body = await authResponse.text();
+      return jsonResponse(401, { error: "Invalid or expired token.", debug: { status: authResponse.status, body: body.slice(0, 300) } });
+    }
+
+    user = (await authResponse.json()) as User;
+  } catch (err) {
+    return jsonResponse(500, { error: "Auth request failed.", debug: String(err) });
+  }
+
+  const adminClient = createAdminClient();
+
+  const { data: profile, error: profileError } = await adminClient
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile?.is_admin) {
+    return jsonResponse(403, { error: "Forbidden: not an admin user.", debug: { userId: user.id, profileError: profileError?.message } });
+  }
+
   const method = (event.httpMethod ?? "GET").toUpperCase();
 
   let requestPayload: AdminApiRequest = {};
@@ -307,7 +280,7 @@ export const handler = async (event: NetlifyEvent) => {
     switch (method) {
       case "GET": {
         if (meta?.export) {
-          return handleExport(supabase, resource, meta);
+          return handleExport(adminClient, resource, meta);
         }
 
         const selectFields = meta?.select ?? "*";
@@ -316,7 +289,7 @@ export const handler = async (event: NetlifyEvent) => {
         const offset = (currentPage - 1) * pageSize;
 
         if (id) {
-          let query = supabase
+          let query = adminClient
             .from(resource)
             .select(selectFields)
             .eq("id", id);
@@ -342,7 +315,7 @@ export const handler = async (event: NetlifyEvent) => {
           return jsonResponse(200, { data: record });
         }
 
-        let query = supabase.from(resource).select(selectFields, {
+        let query = adminClient.from(resource).select(selectFields, {
           count: "exact",
         });
 
@@ -374,26 +347,26 @@ export const handler = async (event: NetlifyEvent) => {
 
       case "POST": {
         if (resource === "orders" && meta?.aggregate) {
-          return handleAggregation(supabase, resource, meta);
+          return handleAggregation(adminClient, resource, meta);
         }
 
         if (meta?.aggregateFunction) {
-          return handleAggregation(supabase, resource, meta);
+          return handleAggregation(adminClient, resource, meta);
         }
 
         if (meta?.bulkAction === "update_status" && resource === "orders") {
-          return handleBulkStatusUpdate(supabase, data);
+          return handleBulkStatusUpdate(adminClient, data);
         }
 
         if (meta?.export) {
-          return handleExport(supabase, resource, meta);
+          return handleExport(adminClient, resource, meta);
         }
 
         if (!data) {
           return jsonResponse(400, { error: "Missing data payload." });
         }
 
-        const { data: created, error } = await supabase
+        const { data: created, error } = await adminClient
           .from(resource)
           .insert(data)
           .select()
@@ -417,7 +390,7 @@ export const handler = async (event: NetlifyEvent) => {
           data?.shipment_status &&
           typeof data.shipment_status === "string"
         ) {
-          return handleShipmentUpdate(supabase, id, data);
+          return handleShipmentUpdate(adminClient, id, data);
         }
 
         if (
@@ -425,14 +398,14 @@ export const handler = async (event: NetlifyEvent) => {
           data?.status &&
           typeof data.status === "string"
         ) {
-          return handleOrderStatusUpdate(supabase, id, data);
+          return handleOrderStatusUpdate(adminClient, id, data);
         }
 
         if (!data) {
           return jsonResponse(400, { error: "Missing data payload." });
         }
 
-        const { data: updated, error } = await supabase
+        const { data: updated, error } = await adminClient
           .from(resource)
           .update(data)
           .eq("id", id)
@@ -455,7 +428,7 @@ export const handler = async (event: NetlifyEvent) => {
           return jsonResponse(400, { error: "Missing record id." });
         }
 
-        const { error } = await supabase
+        const { error } = await adminClient
           .from(resource)
           .delete()
           .eq("id", id);

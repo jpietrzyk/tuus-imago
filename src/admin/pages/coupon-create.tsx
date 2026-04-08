@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 export function CouponCreatePage() {
   const navigate = useNavigate();
@@ -34,14 +35,11 @@ export function CouponCreatePage() {
     setError(null);
 
     try {
-      const { data: sessionData } = await import("@/lib/supabase-client").then((m) =>
-        m.supabase.auth.getSession(),
-      );
-      const token = sessionData.session?.access_token;
+      const headers = await getAuthHeaders();
 
       const response = await fetch("/.netlify/functions/admin-api", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers,
         body: JSON.stringify({
           resource: "coupons",
           data: {

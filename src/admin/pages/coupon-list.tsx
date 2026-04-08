@@ -32,11 +32,7 @@ type CouponRow = {
   created_at: string;
 };
 
-async function getAuthHeaders() {
-  const { supabase } = await import("@/lib/supabase-client");
-  const { data } = await supabase.auth.getSession();
-  return { Authorization: `Bearer ${data.session?.access_token}` };
-}
+import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 export function CouponListPage() {
   const navigate = useNavigate();

@@ -1,14 +1,5 @@
 import type { DataProvider, HttpError, BaseRecord } from "@refinedev/core";
-import { supabase } from "@/lib/supabase-client";
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 function mapOperator(operator: string): string {
   const operatorMap: Record<string, string> = {

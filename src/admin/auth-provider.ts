@@ -61,6 +61,19 @@ export const adminAuthProvider: AuthProvider = {
   },
 
   check: async () => {
+    const { data: existingSession } = await supabase.auth.getSession();
+    if (existingSession.session?.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", existingSession.session.user.id)
+        .single();
+
+      if (profile?.is_admin) {
+        return { authenticated: true };
+      }
+    }
+
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
     const queryParams = new URLSearchParams(window.location.search);
     const code = queryParams.get("code");
@@ -129,7 +142,23 @@ export const adminAuthProvider: AuthProvider = {
   },
 
   onError: async (error) => {
-    if (error?.statusCode === 401 || error?.statusCode === 403) {
+    if (error?.statusCode === 401) {
+      // Try to recover the session before forcing logout.
+      // A 401 may happen because the access token expired but the refresh
+      // token is still valid. Attempting a refresh avoids a login death-spiral.
+      const { data } = await supabase.auth.refreshSession();
+      if (data.session) {
+        // Session recovered — tell Refine to retry the request.
+        return { error };
+      }
+      // No recoverable session — must re-login.
+      return {
+        logout: true,
+        error,
+        redirectTo: "/admin/login",
+      };
+    }
+    if (error?.statusCode === 403) {
       return {
         logout: true,
         error,
