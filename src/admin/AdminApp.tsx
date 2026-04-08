@@ -1,8 +1,9 @@
 import { Refine } from "@refinedev/core";
 import { adminDataProvider } from "./data-provider";
 import { adminAuthProvider } from "./auth-provider";
+import type { ReactNode } from "react";
 
-export function AdminApp() {
+export function AdminApp({ children }: { children: ReactNode }) {
   return (
     <Refine
       dataProvider={adminDataProvider}
@@ -43,6 +44,8 @@ export function AdminApp() {
         syncWithLocation: true,
         warnWhenUnsavedChanges: true,
       }}
-    />
+    >
+      {children}
+    </Refine>
   );
 }

@@ -138,9 +138,19 @@ export function DashboardPage() {
   const activeCoupons = couponsResult.total ?? 0;
   const pendingShipments = pendingShipmentsResult.total ?? 0;
   const orders = recentOrdersResult.data ?? [];
-  const statuses = statusBreakdownResult.data ?? [];
-  const revenueOverTime = revenueOverTimeResult.data ?? [];
-  const revenueByMonth = revenueByMonthResult.data ?? [];
+
+  const unwrapCustom = (d: unknown): unknown[] => {
+    if (Array.isArray(d)) return d;
+    if (d && typeof d === "object" && "data" in d) {
+      const inner = (d as Record<string, unknown>).data;
+      if (Array.isArray(inner)) return inner;
+    }
+    return [];
+  };
+
+  const statuses = unwrapCustom(statusBreakdownResult.data) as StatusGroup[];
+  const revenueOverTime = unwrapCustom(revenueOverTimeResult.data) as RevenueOverTimePoint[];
+  const revenueByMonth = unwrapCustom(revenueByMonthResult.data) as RevenueByMonthPoint[];
 
   return (
     <div className="space-y-6">

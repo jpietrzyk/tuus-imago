@@ -3,45 +3,52 @@ import { supabase } from "@/lib/supabase-client";
 
 export const adminAuthProvider: AuthProvider = {
   login: async ({ email, password }) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (email && password) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
+      if (error) {
+        return {
+          success: false,
+          error: { message: error.message, name: "LoginError" },
+        };
+      }
+
+      if (!data.user) {
+        return {
+          success: false,
+          error: { message: "No user returned.", name: "LoginError" },
+        };
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profileError || !profile?.is_admin) {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: {
+            message: "Not an admin user.",
+            name: "ForbiddenError",
+          },
+        };
+      }
+
       return {
-        success: false,
-        error: { message: error.message, name: "LoginError" },
-      };
-    }
-
-    if (!data.user) {
-      return {
-        success: false,
-        error: { message: "No user returned.", name: "LoginError" },
-      };
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", data.user.id)
-      .single();
-
-    if (profileError || !profile?.is_admin) {
-      await supabase.auth.signOut();
-      return {
-        success: false,
-        error: {
-          message: "Not an admin user.",
-          name: "ForbiddenError",
-        },
+        success: true,
+        redirectTo: "/admin",
       };
     }
 
     return {
-      success: true,
-      redirectTo: "/admin",
+      success: false,
+      error: { message: "Missing email or password.", name: "LoginError" },
     };
   },
 
@@ -54,6 +61,27 @@ export const adminAuthProvider: AuthProvider = {
   },
 
   check: async () => {
+    const hashParams = new URLSearchParams(window.location.hash.slice(1));
+    const queryParams = new URLSearchParams(window.location.search);
+    const code = queryParams.get("code");
+    const accessToken = hashParams.get("access_token");
+
+    if (code || accessToken) {
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          window.location.href,
+        );
+        if (error) {
+          return {
+            authenticated: false,
+            redirectTo: "/admin/login",
+          };
+        }
+      }
+
+      window.history.replaceState(null, "", "/admin");
+    }
+
     const { data } = await supabase.auth.getSession();
 
     if (!data.session?.user) {

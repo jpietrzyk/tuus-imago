@@ -101,8 +101,7 @@ export function App() {
 
   if (location.pathname.startsWith("/admin")) {
     return (
-      <>
-        <AdminApp />
+      <AdminApp>
         <Routes>
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/admin" element={<AdminLayout />}>
@@ -117,7 +116,7 @@ export function App() {
             <Route path="admin-users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage /></Suspense>} />
           </Route>
         </Routes>
-      </>
+      </AdminApp>
     );
   }
 
