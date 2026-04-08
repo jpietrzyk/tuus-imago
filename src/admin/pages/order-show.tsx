@@ -1,11 +1,16 @@
 import { useOne, useList } from "@refinedev/core";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { formatPrice } from "@/lib/pricing";
+import { formatDateTime } from "@/lib/format";
+import {
+  OrderStatusBadge,
+  PaymentStatusBadge,
+  ShipmentStatusBadge,
+} from "@/admin/components/badges";
 import {
   ArrowLeft,
   Package,
@@ -71,12 +76,25 @@ type ShipmentStatus =
   | "failed_delivery"
   | "returned";
 
-const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
+type OrderStatus =
+  | "pending_payment"
+  | "paid"
+  | "cancelled"
+  | "refunded";
+
+const SHIPMENT_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
   pending_fulfillment: ["in_transit", "failed_delivery", "returned"],
   in_transit: ["delivered", "failed_delivery", "returned"],
   delivered: ["returned"],
   failed_delivery: ["in_transit", "returned"],
   returned: [],
+};
+
+const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  pending_payment: ["paid", "cancelled"],
+  paid: ["cancelled", "refunded"],
+  cancelled: [],
+  refunded: [],
 };
 
 const SHIPMENT_LABELS: Record<string, string> = {
@@ -87,10 +105,24 @@ const SHIPMENT_LABELS: Record<string, string> = {
   returned: "Returned",
 };
 
+const ORDER_LABELS: Record<string, string> = {
+  pending_payment: "Pending Payment",
+  paid: "Paid",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
+};
+
+async function getAuthHeaders() {
+  const { supabase } = await import("@/lib/supabase-client");
+  const { data } = await supabase.auth.getSession();
+  return { Authorization: `Bearer ${data.session?.access_token}` };
+}
+
 export function OrderShowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [statusNote, setStatusNote] = useState("");
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
 
@@ -136,22 +168,45 @@ export function OrderShowPage() {
   }
 
   const shipmentStatus = order.shipment_status as ShipmentStatus;
-  const allowedTransitions = STATUS_TRANSITIONS[shipmentStatus] ?? [];
+  const allowedShipmentTransitions = SHIPMENT_TRANSITIONS[shipmentStatus] ?? [];
+  const orderStatus = order.status as OrderStatus;
+  const allowedOrderTransitions = ORDER_TRANSITIONS[orderStatus] ?? [];
+
+  const handleOrderStatusUpdate = async (newStatus: OrderStatus) => {
+    setUpdating(true);
+    setUpdateError(null);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/.netlify/functions/admin-api", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          resource: "orders",
+          id: order.id,
+          data: { status: newStatus, note: statusNote || undefined },
+        }),
+      });
+      if (!response.ok) {
+        const err = (await response.json()) as { error?: string };
+        throw new Error(err.error ?? "Update failed");
+      }
+      setStatusNote("");
+      window.location.reload();
+    } catch (err) {
+      setUpdateError(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const handleShipmentUpdate = async (newStatus: ShipmentStatus) => {
     setUpdating(true);
     setUpdateError(null);
     try {
-      const { data: sessionData } = await import("@/lib/supabase-client").then((m) =>
-        m.supabase.auth.getSession(),
-      );
-      const token = sessionData.session?.access_token;
+      const headers = await getAuthHeaders();
       const response = await fetch("/.netlify/functions/admin-api", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({
           resource: "orders",
           id: order.id,
@@ -161,7 +216,6 @@ export function OrderShowPage() {
           },
         }),
       });
-
       if (!response.ok) {
         const err = (await response.json()) as { error?: string };
         throw new Error(err.error ?? "Update failed");
@@ -185,12 +239,12 @@ export function OrderShowPage() {
             Order #{order.order_number}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Created {new Date(order.created_at).toLocaleString()}
+            Created {formatDateTime(order.created_at)}
           </p>
         </div>
         <div className="ml-auto flex gap-2">
           <OrderStatusBadge status={order.status} />
-          <PaymentBadge status={order.payment_status} />
+          <PaymentStatusBadge status={order.payment_status} />
         </div>
       </div>
 
@@ -240,13 +294,55 @@ export function OrderShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" /> Shipment Management
+                <Clock className="h-5 w-5" /> Order Status
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">Current:</span>
-                <ShipmentBadge status={order.shipment_status} />
+                <OrderStatusBadge status={order.status} />
+              </div>
+
+              {updateError && (
+                <div className="text-sm text-destructive">{updateError}</div>
+              )}
+
+              {allowedOrderTransitions.length > 0 && (
+                <div className="space-y-3">
+                  <Input
+                    value={statusNote}
+                    onChange={(e) => setStatusNote(e.target.value)}
+                    placeholder="Optional note for status change..."
+                    className="text-sm"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {allowedOrderTransitions.map((status) => (
+                      <Button
+                        key={status}
+                        size="sm"
+                        variant="outline"
+                        disabled={updating}
+                        onClick={() => handleOrderStatusUpdate(status)}
+                      >
+                        Mark as {ORDER_LABELS[status] ?? status}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" /> Shipment Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Current:</span>
+                <ShipmentStatusBadge status={order.shipment_status} />
                 {order.tracking_number && (
                   <span className="text-sm text-muted-foreground">
                     Tracking: {order.tracking_number}
@@ -263,13 +359,9 @@ export function OrderShowPage() {
                 />
               </div>
 
-              {updateError && (
-                <div className="text-sm text-destructive">{updateError}</div>
-              )}
-
-              {allowedTransitions.length > 0 && (
+              {allowedShipmentTransitions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {allowedTransitions.map((status) => (
+                  {allowedShipmentTransitions.map((status) => (
                     <Button
                       key={status}
                       size="sm"
@@ -331,7 +423,7 @@ export function OrderShowPage() {
                 <p><span className="font-medium">Provider:</span> {order.payment_provider}</p>
               )}
               {order.payment_paid_at && (
-                <p><span className="font-medium">Paid:</span> {new Date(order.payment_paid_at).toLocaleString()}</p>
+                <p><span className="font-medium">Paid:</span> {formatDateTime(order.payment_paid_at)}</p>
               )}
               <Separator className="my-2" />
               <div className="flex justify-between">
@@ -368,15 +460,15 @@ export function OrderShowPage() {
           <div className="space-y-3">
             {history.map((entry: StatusHistoryEntry) => (
               <div key={entry.id} className="flex items-start gap-3 text-sm">
-                <div className="w-20 shrink-0 text-muted-foreground text-xs">
-                  {new Date(entry.created_at).toLocaleString()}
+                <div className="w-32 shrink-0 text-muted-foreground text-xs">
+                  {formatDateTime(entry.created_at)}
                 </div>
-                <Badge variant="outline" className="text-xs shrink-0">
+                <span className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium shrink-0">
                   {entry.status_type}
-                </Badge>
-                <Badge variant="secondary" className="text-xs shrink-0">
+                </span>
+                <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium shrink-0">
                   {entry.status.replace(/_/g, " ")}
-                </Badge>
+                </span>
                 <span className="text-muted-foreground">{entry.note}</span>
               </div>
             ))}
@@ -388,33 +480,4 @@ export function OrderShowPage() {
       </Card>
     </div>
   );
-}
-
-function OrderStatusBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending_payment: "outline",
-    paid: "default",
-    cancelled: "destructive",
-  };
-  return <Badge variant={variants[status] ?? "secondary"}>{status.replace(/_/g, " ")}</Badge>;
-}
-
-function PaymentBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending: "outline",
-    verified: "default",
-    failed: "destructive",
-  };
-  return <Badge variant={variants[status] ?? "secondary"}>{status.replace(/_/g, " ")}</Badge>;
-}
-
-function ShipmentBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending_fulfillment: "outline",
-    in_transit: "default",
-    delivered: "secondary",
-    failed_delivery: "destructive",
-    returned: "destructive",
-  };
-  return <Badge variant={variants[status] ?? "secondary"}>{(SHIPMENT_LABELS[status] ?? status).replace(/_/g, " ")}</Badge>;
 }

@@ -1,5 +1,5 @@
 import { useTable } from "@refinedev/react-table";
-import { type ColumnDef, type Column } from "@tanstack/react-table";
+import { type ColumnDef, type Column, type Row } from "@tanstack/react-table";
 import { DataTable } from "@/components/refine-ui/data-table";
 import { DataTableSorter } from "@/components/refine-ui/data-table/data-table-sorter";
 import { Badge } from "@/components/ui/badge";
@@ -12,9 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ORDER_STATUS_VARIANTS,
+  PAYMENT_STATUS_VARIANTS,
+  SHIPMENT_STATUS_VARIANTS,
+} from "@/admin/components/badges";
 import { formatPrice } from "@/lib/pricing";
-import { Search, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import { formatDate } from "@/lib/format";
+import { Search, X, Download, CheckSquare, Square } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
 import type { CrudFilter } from "@refinedev/core";
 
 type OrderRow = {
@@ -30,30 +36,21 @@ type OrderRow = {
   created_at: string;
 };
 
-const STATUS_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending_payment: "outline",
-  paid: "default",
-};
-
-const PAYMENT_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending: "outline",
-  registered: "secondary",
-  verified: "default",
-  failed: "destructive",
-};
-
-const SHIPMENT_VARIANTS: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  pending_fulfillment: "outline",
-  in_transit: "secondary",
-  delivered: "default",
-  failed_delivery: "destructive",
-  returned: "destructive",
-};
+async function getAuthHeaders() {
+  const { supabase } = await import("@/lib/supabase-client");
+  const { data } = await supabase.auth.getSession();
+  return { Authorization: `Bearer ${data.session?.access_token}` };
+}
 
 export function OrderListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("__all__");
   const [paymentFilter, setPaymentFilter] = useState("__all__");
+  const [shipmentFilter, setShipmentFilter] = useState("__all__");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("cancelled");
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];
@@ -66,12 +63,59 @@ export function OrderListPage() {
     if (paymentFilter !== "__all__") {
       f.push({ field: "payment_status", operator: "eq", value: paymentFilter });
     }
+    if (shipmentFilter !== "__all__") {
+      f.push({ field: "shipment_status", operator: "eq", value: shipmentFilter });
+    }
     return f;
-  }, [search, statusFilter, paymentFilter]);
+  }, [search, statusFilter, paymentFilter, shipmentFilter]);
+
+  const toggleRow = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback((table: { getFilteredRowModel: () => { rows: Row<OrderRow>[] } }) => {
+    const rows = table.getFilteredRowModel().rows;
+    setSelectedIds((prev) => {
+      const allSelected = rows.every((r) => prev.has(r.original.id));
+      const next = new Set(prev);
+      if (allSelected) {
+        for (const r of rows) next.delete(r.original.id);
+      } else {
+        for (const r of rows) next.add(r.original.id);
+      }
+      return next;
+    });
+  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<OrderRow, any>[]>(
     () => [
+      {
+        id: "select",
+        header: ({ table }: { table: { getFilteredRowModel: () => { rows: Row<OrderRow>[] } } }) => (
+          <button onClick={() => toggleAll(table)} className="p-1">
+            {table.getFilteredRowModel().rows.every((r) => selectedIds.has(r.original.id))
+              ? <CheckSquare className="h-4 w-4" />
+              : <Square className="h-4 w-4" />}
+          </button>
+        ),
+        cell: ({ row }: { row: Row<OrderRow> }) => (
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleRow(row.original.id); }}
+            className="p-1"
+          >
+            {selectedIds.has(row.original.id)
+              ? <CheckSquare className="h-4 w-4" />
+              : <Square className="h-4 w-4" />}
+          </button>
+        ),
+        size: 40,
+      },
       {
         id: "order_number",
         accessorKey: "order_number",
@@ -113,7 +157,7 @@ export function OrderListPage() {
         header: "Status",
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string;
-          return <Badge variant={STATUS_VARIANTS[val] ?? "secondary"}>{val.replace(/_/g, " ")}</Badge>;
+          return <Badge variant={ORDER_STATUS_VARIANTS[val] ?? "secondary"}>{val.replace(/_/g, " ")}</Badge>;
         },
         size: 130,
       },
@@ -123,7 +167,7 @@ export function OrderListPage() {
         header: "Payment",
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string;
-          return <Badge variant={PAYMENT_VARIANTS[val] ?? "secondary"}>{val}</Badge>;
+          return <Badge variant={PAYMENT_STATUS_VARIANTS[val] ?? "secondary"}>{val}</Badge>;
         },
         size: 110,
       },
@@ -133,7 +177,7 @@ export function OrderListPage() {
         header: "Shipment",
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string;
-          return <Badge variant={SHIPMENT_VARIANTS[val] ?? "secondary"}>{val.replace(/_/g, " ")}</Badge>;
+          return <Badge variant={SHIPMENT_STATUS_VARIANTS[val] ?? "secondary"}>{val.replace(/_/g, " ")}</Badge>;
         },
         size: 140,
       },
@@ -147,17 +191,11 @@ export function OrderListPage() {
           </div>
         ),
         cell: ({ getValue }: { getValue: () => unknown }) =>
-          new Date(getValue() as string).toLocaleDateString("pl-PL", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          formatDate(getValue() as string),
         size: 100,
       },
     ],
-    [],
+    [selectedIds, toggleRow, toggleAll],
   );
 
   const table = useTable({
@@ -178,11 +216,102 @@ export function OrderListPage() {
     },
   });
 
+  const handleBulkStatusUpdate = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkLoading(true);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/.netlify/functions/admin-api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { bulkAction: "update_status" },
+          data: {
+            ids: [...selectedIds],
+            status: bulkStatus,
+          },
+        }),
+      });
+      const result = (await response.json()) as { data?: { updated: number; failed: number } };
+      if (!response.ok) throw new Error("Bulk update failed");
+      alert(`Updated ${result.data?.updated ?? 0} orders. Failed: ${result.data?.failed ?? 0}.`);
+      setSelectedIds(new Set());
+      window.location.reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Bulk update failed");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/.netlify/functions/admin-api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { export: true, filters, sorters: [{ field: "created_at", order: "desc" }] },
+        }),
+      });
+      if (!response.ok) throw new Error("Export failed");
+      const blob = new Blob([await response.text()], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orders-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("__all__");
+    setPaymentFilter("__all__");
+    setShipmentFilter("__all__");
+  };
+
+  const hasFilters = search || statusFilter !== "__all__" || paymentFilter !== "__all__" || shipmentFilter !== "__all__";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+        <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
+          <Download className="h-4 w-4 mr-1" />
+          {exporting ? "Exporting..." : "Export CSV"}
+        </Button>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <Select value={bulkStatus} onValueChange={setBulkStatus}>
+            <SelectTrigger className="w-40 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="paid">Mark Paid</SelectItem>
+              <SelectItem value="cancelled">Cancel</SelectItem>
+              <SelectItem value="refunded">Refund</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={handleBulkStatusUpdate} disabled={bulkLoading}>
+            {bulkLoading ? "Updating..." : "Apply"}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-64">
@@ -194,10 +323,7 @@ export function OrderListPage() {
             className="pl-8"
           />
           {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2.5 top-2.5"
-            >
+            <button onClick={() => setSearch("")} className="absolute right-2.5 top-2.5">
               <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
@@ -211,6 +337,8 @@ export function OrderListPage() {
             <SelectItem value="__all__">All statuses</SelectItem>
             <SelectItem value="pending_payment">Pending Payment</SelectItem>
             <SelectItem value="paid">Paid</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="refunded">Refunded</SelectItem>
           </SelectContent>
         </Select>
 
@@ -227,16 +355,22 @@ export function OrderListPage() {
           </SelectContent>
         </Select>
 
-        {(search || statusFilter !== "__all__" || paymentFilter !== "__all__") && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSearch("");
-              setStatusFilter("__all__");
-              setPaymentFilter("__all__");
-            }}
-          >
+        <Select value={shipmentFilter} onValueChange={setShipmentFilter}>
+          <SelectTrigger className="w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">All shipments</SelectItem>
+            <SelectItem value="pending_fulfillment">Pending Fulfillment</SelectItem>
+            <SelectItem value="in_transit">In Transit</SelectItem>
+            <SelectItem value="delivered">Delivered</SelectItem>
+            <SelectItem value="failed_delivery">Failed Delivery</SelectItem>
+            <SelectItem value="returned">Returned</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
             Clear filters
           </Button>
         )}

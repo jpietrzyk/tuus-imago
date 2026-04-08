@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,7 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/pricing";
-import { Search, X } from "lucide-react";
+import { formatDate } from "@/lib/format";
+import { Search, X, Download } from "lucide-react";
 import { useState } from "react";
 
 type CustomerAggregate = {
@@ -24,9 +26,16 @@ type CustomerAggregate = {
   marketing_consent: boolean;
 };
 
+async function getAuthHeaders() {
+  const { supabase } = await import("@/lib/supabase-client");
+  const { data } = await supabase.auth.getSession();
+  return { Authorization: `Bearer ${data.session?.access_token}` };
+}
+
 export function CustomerListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const { query, result } = useCustom<CustomerAggregate[]>({
     url: "/.netlify/functions/admin-api",
@@ -52,10 +61,41 @@ export function CustomerListPage() {
     );
   }
 
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/.netlify/functions/admin-api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          resource: "customers",
+          meta: { export: true },
+        }),
+      });
+      if (!response.ok) throw new Error("Export failed");
+      const blob = new Blob([await response.text()], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `customers-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
+        <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
+          <Download className="h-4 w-4 mr-1" />
+          {exporting ? "Exporting..." : "Export CSV"}
+        </Button>
       </div>
 
       <div className="relative w-72">
@@ -122,7 +162,7 @@ export function CustomerListPage() {
                         {formatPrice(customer.total_revenue)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(customer.last_order_date).toLocaleDateString()}
+                        {formatDate(customer.last_order_date)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={customer.marketing_consent ? "default" : "secondary"}>

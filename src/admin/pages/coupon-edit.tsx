@@ -31,6 +31,21 @@ type Coupon = {
   created_at: string;
 };
 
+function useCouponFormState() {
+  const [dirty, setDirty] = useState<Record<string, string>>({});
+
+  const get = (field: string, fallback: string): string => {
+    if (field in dirty) return dirty[field];
+    return fallback;
+  };
+
+  const set = (field: string, value: string) => {
+    setDirty((prev) => ({ ...prev, [field]: value }));
+  };
+
+  return { get, set };
+}
+
 export function CouponEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -41,18 +56,20 @@ export function CouponEditPage() {
     id: id ?? "",
   });
 
-  const [code, setCode] = useState(() => coupon?.code ?? "");
-  const [description, setDescription] = useState(() => coupon?.description ?? "");
-  const [discountType, setDiscountType] = useState<"percentage" | "fixed_amount">(() => coupon?.discount_type ?? "percentage");
-  const [discountValue, setDiscountValue] = useState(() => coupon ? String(coupon.discount_value) : "");
-  const [minOrderAmount, setMinOrderAmount] = useState(() => coupon?.min_order_amount ? String(coupon.min_order_amount) : "");
-  const [maxUses, setMaxUses] = useState(() => coupon?.max_uses ? String(coupon.max_uses) : "");
-  const [validFrom, setValidFrom] = useState(() => coupon?.valid_from ? coupon.valid_from.slice(0, 16) : "");
-  const [validUntil, setValidUntil] = useState(() => coupon?.valid_until ? coupon.valid_until.slice(0, 16) : "");
-  const [isActive, setIsActive] = useState(() => coupon?.is_active ?? true);
+  const form = useCouponFormState();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const code = form.get("code", coupon?.code ?? "");
+  const description = form.get("description", coupon?.description ?? "");
+  const discountType = form.get("discount_type", coupon?.discount_type ?? "percentage") as "percentage" | "fixed_amount";
+  const discountValue = form.get("discount_value", coupon?.discount_value != null ? String(coupon.discount_value) : "");
+  const minOrderAmount = form.get("min_order_amount", coupon?.min_order_amount != null ? String(coupon.min_order_amount) : "");
+  const maxUses = form.get("max_uses", coupon?.max_uses != null ? String(coupon.max_uses) : "");
+  const validFrom = form.get("valid_from", coupon?.valid_from ? coupon.valid_from.slice(0, 16) : "");
+  const validUntil = form.get("valid_until", coupon?.valid_until ? coupon.valid_until.slice(0, 16) : "");
+  const isActive = form.get("is_active", coupon?.is_active != null ? String(coupon.is_active) : "true") === "true";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,18 +143,18 @@ export function CouponEditPage() {
 
             <div className="space-y-2">
               <Label htmlFor="code">Code</Label>
-              <Input id="code" value={code} onChange={(e) => setCode(e.target.value)} required />
+              <Input id="code" value={code} onChange={(e) => form.set("code", e.target.value)} required />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <Input id="description" value={description} onChange={(e) => form.set("description", e.target.value)} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Discount Type</Label>
-                <Select value={discountType} onValueChange={(v) => setDiscountType(v as "percentage" | "fixed_amount")}>
+                <Select value={discountType} onValueChange={(v) => form.set("discount_type", v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="percentage">Percentage (%)</SelectItem>
@@ -147,29 +164,29 @@ export function CouponEditPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="value">Discount Value</Label>
-                <Input id="value" type="number" step="0.01" min="0.01" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} required />
+                <Input id="value" type="number" step="0.01" min="0.01" value={discountValue} onChange={(e) => form.set("discount_value", e.target.value)} required />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="minOrder">Min Order Amount</Label>
-                <Input id="minOrder" type="number" step="0.01" placeholder="No minimum" value={minOrderAmount} onChange={(e) => setMinOrderAmount(e.target.value)} />
+                <Input id="minOrder" type="number" step="0.01" placeholder="No minimum" value={minOrderAmount} onChange={(e) => form.set("min_order_amount", e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maxUses">Max Uses</Label>
-                <Input id="maxUses" type="number" step="1" placeholder="Unlimited" value={maxUses} onChange={(e) => setMaxUses(e.target.value)} />
+                <Input id="maxUses" type="number" step="1" placeholder="Unlimited" value={maxUses} onChange={(e) => form.set("max_uses", e.target.value)} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="validFrom">Valid From</Label>
-                <Input id="validFrom" type="datetime-local" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+                <Input id="validFrom" type="datetime-local" value={validFrom} onChange={(e) => form.set("valid_from", e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="validUntil">Valid Until</Label>
-                <Input id="validUntil" type="datetime-local" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+                <Input id="validUntil" type="datetime-local" value={validUntil} onChange={(e) => form.set("valid_until", e.target.value)} />
               </div>
             </div>
 
@@ -178,7 +195,7 @@ export function CouponEditPage() {
                 type="checkbox"
                 id="isActive"
                 checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
+                onChange={(e) => form.set("is_active", String(e.target.checked))}
                 className="h-4 w-4 rounded border-input"
               />
               <Label htmlFor="isActive">Active</Label>

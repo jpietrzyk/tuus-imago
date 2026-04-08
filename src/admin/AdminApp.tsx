@@ -33,6 +33,11 @@ export function AdminApp() {
           show: "/admin/customers/:email",
           meta: { label: "Customers" },
         },
+        {
+          name: "admin-users",
+          list: "/admin/admin-users",
+          meta: { label: "Admin Users" },
+        },
       ]}
       options={{
         syncWithLocation: true,

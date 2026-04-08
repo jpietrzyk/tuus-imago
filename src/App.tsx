@@ -47,6 +47,7 @@ const CouponCreatePage = lazy(() => import("./admin/pages/coupon-create").then((
 const CouponEditPage = lazy(() => import("./admin/pages/coupon-edit").then((m) => ({ default: m.CouponEditPage })));
 const CustomerListPage = lazy(() => import("./admin/pages/customer-list").then((m) => ({ default: m.CustomerListPage })));
 const CustomerShowPage = lazy(() => import("./admin/pages/customer-show").then((m) => ({ default: m.CustomerShowPage })));
+const AdminUsersPage = lazy(() => import("./admin/pages/admin-users-list").then((m) => ({ default: m.AdminUsersPage })));
 
 function AdminPageLoader() {
   return (
@@ -113,6 +114,7 @@ export function App() {
             <Route path="coupons/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><CouponEditPage /></Suspense>} />
             <Route path="customers" element={<Suspense fallback={<AdminPageLoader />}><CustomerListPage /></Suspense>} />
             <Route path="customers/:email" element={<Suspense fallback={<AdminPageLoader />}><CustomerShowPage /></Suspense>} />
+            <Route path="admin-users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage /></Suspense>} />
           </Route>
         </Routes>
       </>

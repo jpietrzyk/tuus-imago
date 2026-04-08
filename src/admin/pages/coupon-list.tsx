@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CrudFilter } from "@refinedev/core";
@@ -32,11 +32,18 @@ type CouponRow = {
   created_at: string;
 };
 
+async function getAuthHeaders() {
+  const { supabase } = await import("@/lib/supabase-client");
+  const { data } = await supabase.auth.getSession();
+  return { Authorization: `Bearer ${data.session?.access_token}` };
+}
+
 export function CouponListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("__all__");
   const [activeFilter, setActiveFilter] = useState("__all__");
+  const [exporting, setExporting] = useState(false);
 
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];
@@ -131,13 +138,46 @@ export function CouponListPage() {
     },
   });
 
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/.netlify/functions/admin-api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          resource: "coupons",
+          meta: { export: true },
+        }),
+      });
+      if (!response.ok) throw new Error("Export failed");
+      const blob = new Blob([await response.text()], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `coupons-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Coupons</h1>
-        <Button onClick={() => navigate("/admin/coupons/new")}>
-          <Plus className="h-4 w-4 mr-2" /> New Coupon
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
+            <Download className="h-4 w-4 mr-1" />
+            {exporting ? "Exporting..." : "Export CSV"}
+          </Button>
+          <Button onClick={() => navigate("/admin/coupons/new")}>
+            <Plus className="h-4 w-4 mr-2" /> New Coupon
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 items-end">

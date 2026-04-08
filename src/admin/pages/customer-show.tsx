@@ -12,6 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/pricing";
+import { formatDate } from "@/lib/format";
+import {
+  OrderStatusBadge,
+  PaymentStatusBadge,
+  ShipmentStatusBadge,
+} from "@/admin/components/badges";
 import { ArrowLeft, User, MapPin, Mail } from "lucide-react";
 
 type OrderRow = {
@@ -31,7 +37,7 @@ type OrderRow = {
 };
 
 export function CustomerShowPage() {
-  const { id: emailParam } = useParams<{ id: string }>();
+  const { email: emailParam } = useParams<{ email: string }>();
   const navigate = useNavigate();
   const email = decodeURIComponent(emailParam ?? "");
 
@@ -175,16 +181,16 @@ export function CustomerShowPage() {
                     <OrderStatusBadge status={order.status} />
                   </TableCell>
                   <TableCell>
-                    <PaymentBadge status={order.payment_status} />
+                    <PaymentStatusBadge status={order.payment_status} />
                   </TableCell>
                   <TableCell>
-                    <ShipmentBadge status={order.shipment_status} />
+                    <ShipmentStatusBadge status={order.shipment_status} />
                   </TableCell>
                   <TableCell className="text-right">
                     {formatPrice(order.total_price)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {new Date(order.created_at).toLocaleDateString()}
+                    {formatDate(order.created_at)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -194,32 +200,4 @@ export function CustomerShowPage() {
       </Card>
     </div>
   );
-}
-
-function OrderStatusBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending_payment: "outline",
-    paid: "default",
-    cancelled: "destructive",
-  };
-  return <Badge variant={variants[status] ?? "secondary"}>{status.replace(/_/g, " ")}</Badge>;
-}
-
-function PaymentBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending: "outline",
-    verified: "default",
-    failed: "destructive",
-  };
-  return <Badge variant={variants[status] ?? "secondary"}>{status}</Badge>;
-}
-
-function ShipmentBadge({ status }: { status: string }) {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    pending_fulfillment: "outline",
-    in_transit: "default",
-    delivered: "secondary",
-    failed_delivery: "destructive",
-  };
-  return <Badge variant={variants[status] ?? "secondary"}>{status.replace(/_/g, " ")}</Badge>;
 }
