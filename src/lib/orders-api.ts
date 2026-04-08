@@ -36,6 +36,12 @@ type ErrorResponse = {
   error?: string;
 };
 
+export interface OrderStatusResponse {
+  status: string;
+  payment_status: string;
+  order_number: string;
+}
+
 export interface CreateP24SessionResponse {
   orderId: string;
   orderNumber: string;
@@ -142,6 +148,20 @@ export async function createOrder(
   }
 
   return data as CreateOrderResponse;
+}
+
+export async function getOrderStatus(orderId: string): Promise<OrderStatusResponse> {
+  const response = await fetch(
+    `/.netlify/functions/order-status?orderId=${encodeURIComponent(orderId)}`,
+  );
+
+  const data = await parseJsonResponse<OrderStatusResponse | ErrorResponse>(response);
+
+  if (!response.ok || "error" in data) {
+    throw new Error((data as ErrorResponse).error ?? "Could not fetch order status.");
+  }
+
+  return data as OrderStatusResponse;
 }
 
 export async function createP24Session(

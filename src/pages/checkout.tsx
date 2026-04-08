@@ -43,7 +43,7 @@ import {
   createP24Session,
   validateCoupon,
   getCustomerAddresses,
-  getCustomerOrders,
+  getOrderStatus,
   type ValidateCouponResponse,
   type CustomerAddress,
 } from "@/lib/orders-api";
@@ -302,15 +302,13 @@ export function CheckoutPage() {
       }
 
       try {
-        const result = await getCustomerOrders(returnOrderId);
-        const order = "order" in result ? result.order : null;
-        if (!order) return;
+        const result = await getOrderStatus(returnOrderId);
 
-        if (order.status === "paid" || order.payment_status === "verified") {
+        if (result.status === "paid" || result.payment_status === "verified") {
           setPaymentPollStatus("paid");
           return;
         }
-        if (order.payment_status === "failed") {
+        if (result.payment_status === "failed") {
           setPaymentPollStatus("failed");
           return;
         }
