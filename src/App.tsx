@@ -49,6 +49,10 @@ const CouponEditPage = lazy(() => import("./admin/pages/coupon-edit").then((m) =
 const CustomerListPage = lazy(() => import("./admin/pages/customer-list").then((m) => ({ default: m.CustomerListPage })));
 const CustomerShowPage = lazy(() => import("./admin/pages/customer-show").then((m) => ({ default: m.CustomerShowPage })));
 const AdminUsersPage = lazy(() => import("./admin/pages/admin-users-list").then((m) => ({ default: m.AdminUsersPage })));
+const PartnerListPage = lazy(() => import("./admin/pages/partner-list").then((m) => ({ default: m.PartnerListPage })));
+const PartnerShowPage = lazy(() => import("./admin/pages/partner-show").then((m) => ({ default: m.PartnerShowPage })));
+const PartnerCreatePage = lazy(() => import("./admin/pages/partner-create").then((m) => ({ default: m.PartnerCreatePage })));
+const PartnerEditPage = lazy(() => import("./admin/pages/partner-edit").then((m) => ({ default: m.PartnerEditPage })));
 
 function AdminPageLoader() {
   return (
@@ -119,6 +123,10 @@ export function App() {
             <Route path="coupons" element={<Suspense fallback={<AdminPageLoader />}><CouponListPage /></Suspense>} />
             <Route path="coupons/new" element={<Suspense fallback={<AdminPageLoader />}><CouponCreatePage /></Suspense>} />
             <Route path="coupons/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><CouponEditPage /></Suspense>} />
+            <Route path="partners" element={<Suspense fallback={<AdminPageLoader />}><PartnerListPage /></Suspense>} />
+            <Route path="partners/new" element={<Suspense fallback={<AdminPageLoader />}><PartnerCreatePage /></Suspense>} />
+            <Route path="partners/:id" element={<Suspense fallback={<AdminPageLoader />}><PartnerShowPage /></Suspense>} />
+            <Route path="partners/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PartnerEditPage /></Suspense>} />
             <Route path="customers" element={<Suspense fallback={<AdminPageLoader />}><CustomerListPage /></Suspense>} />
             <Route path="customers/:email" element={<Suspense fallback={<AdminPageLoader />}><CustomerShowPage /></Suspense>} />
             <Route path="admin-users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage /></Suspense>} />

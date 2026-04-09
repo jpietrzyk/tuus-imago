@@ -1,5 +1,5 @@
 import { useTable } from "@refinedev/react-table";
-import { useList } from "@refinedev/core";
+import { useCustom } from "@refinedev/core";
 import { type ColumnDef, type Column } from "@tanstack/react-table";
 import { DataTable } from "@/components/refine-ui/data-table";
 import { DataTableSorter } from "@/components/refine-ui/data-table/data-table-sorter";
@@ -17,128 +17,148 @@ import { Plus, Download } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CrudFilter } from "@refinedev/core";
+import { formatPrice } from "@/lib/pricing";
+import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
-type CouponRow = {
+type PartnerRow = {
   id: string;
-  code: string;
-  description: string | null;
-  discount_type: "percentage" | "fixed_amount";
-  discount_value: number;
-  min_order_amount: number | null;
-  max_uses: number | null;
-  used_count: number;
-  valid_from: string | null;
-  valid_until: string | null;
+  company_name: string;
+  contact_name: string | null;
+  city: string | null;
   is_active: boolean;
-  partner_id: string | null;
   created_at: string;
 };
 
-type Partner = {
-  id: string;
+type PartnerStat = {
+  partner_id: string;
   company_name: string;
+  is_active: boolean;
+  coupon_count: number;
+  total_orders: number;
+  total_revenue: number;
+  last_order_date: string | null;
+  created_at: string;
 };
 
-import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
-
-export function CouponListPage() {
+export function PartnerListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("__all__");
   const [activeFilter, setActiveFilter] = useState("__all__");
   const [exporting, setExporting] = useState(false);
 
-  const { result: partnersResult } = useList<Partner>({
-    resource: "partners",
-    pagination: { pageSize: 200 },
-    sorters: [{ field: "company_name", order: "asc" }],
-    queryOptions: { enabled: true },
+  const { result: statsResult } = useCustom<PartnerStat[]>({
+    url: "/.netlify/functions/admin-api",
+    method: "post",
+    config: {
+      payload: {
+        resource: "partners",
+        meta: {
+          aggregateFunction: "partner_stats",
+        },
+      },
+    },
   });
 
-  const partners = partnersResult?.data ?? [];
+  const rawData = statsResult.data;
+  let partnerStats: PartnerStat[] = [];
+  if (Array.isArray(rawData)) {
+    partnerStats = rawData;
+  } else if (rawData && typeof rawData === "object" && "data" in rawData) {
+    const inner = (rawData as Record<string, unknown>).data;
+    partnerStats = Array.isArray(inner) ? (inner as PartnerStat[]) : [];
+  }
 
-  const partnerLookup = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const p of partners) {
-      map.set(p.id, p.company_name);
+  const statsMap = useMemo(() => {
+    const map = new Map<string, PartnerStat>();
+    for (const s of partnerStats) {
+      map.set(s.partner_id, s);
     }
     return map;
-  }, [partners]);
+  }, [partnerStats]);
 
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];
     if (search.trim()) {
-      f.push({ field: "code", operator: "contains", value: search.trim() });
-    }
-    if (typeFilter !== "__all__") {
-      f.push({ field: "discount_type", operator: "eq", value: typeFilter });
+      f.push({ field: "company_name", operator: "contains", value: search.trim() });
     }
     if (activeFilter !== "__all__") {
       f.push({ field: "is_active", operator: "eq", value: activeFilter === "true" });
     }
     return f;
-  }, [search, typeFilter, activeFilter]);
+  }, [search, activeFilter]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const columns = useMemo<ColumnDef<CouponRow, any>[]>(
+  const columns = useMemo<ColumnDef<PartnerRow, any>[]>(
     () => [
       {
-        id: "code",
-        accessorKey: "code",
-        header: ({ column }: { column: Column<CouponRow> }) => (
+        id: "company_name",
+        accessorKey: "company_name",
+        header: ({ column }: { column: Column<PartnerRow> }) => (
           <div className="flex items-center gap-1">
-            Code
+            Company
             <DataTableSorter column={column} />
           </div>
         ),
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <span className="font-mono font-medium">{getValue() as string}</span>
+        cell: ({ row }: { row: { original: PartnerRow } }) => (
+          <button
+            type="button"
+            className="font-medium text-left hover:underline"
+            onClick={() => navigate(`/admin/partners/${row.original.id}`)}
+          >
+            {row.original.company_name}
+          </button>
         ),
       },
       {
-        id: "partner_id",
-        accessorKey: "partner_id",
-        header: "Partner",
+        id: "contact_name",
+        accessorKey: "contact_name",
+        header: "Contact",
         cell: ({ getValue }: { getValue: () => unknown }) => {
-          const pid = getValue() as string | null;
-          if (!pid) return <span className="text-muted-foreground">—</span>;
-          return <span>{partnerLookup.get(pid) ?? <span className="text-muted-foreground">—</span>}</span>;
-        },
-      },
-      {
-        id: "discount_type",
-        accessorKey: "discount_type",
-        header: "Type",
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <Badge variant="outline">{getValue() === "percentage" ? "%" : "Fixed"}</Badge>
-        ),
-      },
-      {
-        id: "discount_value",
-        accessorKey: "discount_value",
-        header: "Value",
-        cell: ({ row }: { row: { original: CouponRow } }) =>
-          row.original.discount_type === "percentage"
-            ? `${row.original.discount_value}%`
-            : `${Number(row.original.discount_value).toFixed(2)} PLN`,
-      },
-      {
-        id: "used_count",
-        accessorKey: "used_count",
-        header: "Used",
-        cell: ({ row }: { row: { original: CouponRow } }) => {
-          const { used_count, max_uses } = row.original;
-          return max_uses ? `${used_count}/${max_uses}` : used_count;
-        },
-      },
-      {
-        id: "partner",
-        header: "Partner",
-        accessorFn: (row: CouponRow) => row.partner_id ? (partnerLookup.get(row.partner_id) ?? "") : "",
-        cell: ({ getValue }: { getValue: () => unknown }) => {
-          const val = getValue() as string;
+          const val = getValue() as string | null;
           return val || <span className="text-muted-foreground">—</span>;
         },
+      },
+      {
+        id: "city",
+        accessorKey: "city",
+        header: "City",
+        cell: ({ getValue }: { getValue: () => unknown }) => {
+          const val = getValue() as string | null;
+          return val || <span className="text-muted-foreground">—</span>;
+        },
+      },
+      {
+        id: "coupon_count",
+        header: "Coupons",
+        accessorFn: (_row: PartnerRow) => {
+          const stat = statsMap.get(_row.id);
+          return stat?.coupon_count ?? 0;
+        },
+        cell: ({ getValue }: { getValue: () => unknown }) => (
+          <span>{getValue() as number}</span>
+        ),
+      },
+      {
+        id: "total_orders",
+        header: "Orders",
+        accessorFn: (_row: PartnerRow) => {
+          const stat = statsMap.get(_row.id);
+          return stat?.total_orders ?? 0;
+        },
+        cell: ({ getValue }: { getValue: () => unknown }) => (
+          <span>{getValue() as number}</span>
+        ),
+      },
+      {
+        id: "total_revenue",
+        header: "Revenue",
+        accessorFn: (_row: PartnerRow) => {
+          const stat = statsMap.get(_row.id);
+          return stat?.total_revenue ?? 0;
+        },
+        cell: ({ getValue }: { getValue: () => unknown }) => (
+          <span>{formatPrice(getValue() as number)}</span>
+        ),
       },
       {
         id: "is_active",
@@ -150,23 +170,14 @@ export function CouponListPage() {
           </Badge>
         ),
       },
-      {
-        id: "valid_until",
-        accessorKey: "valid_until",
-        header: "Valid Until",
-        cell: ({ getValue }: { getValue: () => unknown }) => {
-          const val = getValue() as string | null;
-          return val ? new Date(val).toLocaleDateString("pl-PL") : "No limit";
-        },
-      },
     ],
-    [partnerLookup],
+    [statsMap, navigate],
   );
 
   const table = useTable({
     columns,
     refineCoreProps: {
-      resource: "coupons",
+      resource: "partners",
       filters: {
         permanent: filters,
       },
@@ -185,7 +196,7 @@ export function CouponListPage() {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({
-          resource: "coupons",
+          resource: "partners",
           meta: { export: true },
         }),
       });
@@ -194,7 +205,7 @@ export function CouponListPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `coupons-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `partners-export-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -207,14 +218,14 @@ export function CouponListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Coupons</h1>
+        <h1 className="text-3xl font-bold">Partners</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
             <Download className="h-4 w-4 mr-1" />
             {exporting ? "Exporting..." : "Export CSV"}
           </Button>
-          <Button onClick={() => navigate("/admin/coupons/new")}>
-            <Plus className="h-4 w-4 mr-2" /> New Coupon
+          <Button onClick={() => navigate("/admin/partners/new")}>
+            <Plus className="h-4 w-4 mr-2" /> New Partner
           </Button>
         </div>
       </div>
@@ -222,20 +233,10 @@ export function CouponListPage() {
       <div className="flex flex-wrap gap-3 items-end">
         <div className="w-60">
           <Input
-            placeholder="Search code..."
+            placeholder="Search company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
-        <div className="w-40">
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All Types</SelectItem>
-              <SelectItem value="percentage">Percentage</SelectItem>
-              <SelectItem value="fixed_amount">Fixed</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
         <div className="w-36">
           <Select value={activeFilter} onValueChange={setActiveFilter}>

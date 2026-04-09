@@ -7,6 +7,7 @@ import {
   Tag,
   Users,
   Shield,
+  Building2,
   LogOut,
   Menu,
   X,
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: "/admin" },
   { label: "Orders", icon: <ShoppingCart className="h-5 w-5" />, path: "/admin/orders" },
   { label: "Coupons", icon: <Tag className="h-5 w-5" />, path: "/admin/coupons" },
+  { label: "Partners", icon: <Building2 className="h-5 w-5" />, path: "/admin/partners" },
   { label: "Customers", icon: <Users className="h-5 w-5" />, path: "/admin/customers" },
   { label: "Admin Users", icon: <Shield className="h-5 w-5" />, path: "/admin/admin-users" },
 ];
