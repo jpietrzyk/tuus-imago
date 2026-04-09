@@ -250,11 +250,12 @@ export function OrderListPage() {
     },
   });
 
-  const pageRows: OrderRow[] = table.refineCore.tableQuery?.data?.data ?? [];
-
   const orderIds = useMemo(
-    () => pageRows.map((o) => o.id),
-    [pageRows],
+    () => {
+      const rows: OrderRow[] = table.refineCore.tableQuery?.data?.data ?? [];
+      return rows.map((o) => o.id);
+    },
+    [table.refineCore.tableQuery?.data?.data],
   );
 
   if (orderIds.length > 0) {

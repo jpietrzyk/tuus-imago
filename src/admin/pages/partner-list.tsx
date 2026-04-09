@@ -59,22 +59,21 @@ export function PartnerListPage() {
     },
   });
 
-  const rawData = statsResult.data;
-  let partnerStats: PartnerStat[] = [];
-  if (Array.isArray(rawData)) {
-    partnerStats = rawData;
-  } else if (rawData && typeof rawData === "object" && "data" in rawData) {
-    const inner = (rawData as Record<string, unknown>).data;
-    partnerStats = Array.isArray(inner) ? (inner as PartnerStat[]) : [];
-  }
-
   const statsMap = useMemo(() => {
+    const rawData = statsResult.data;
+    let stats: PartnerStat[] = [];
+    if (Array.isArray(rawData)) {
+      stats = rawData;
+    } else if (rawData && typeof rawData === "object" && "data" in rawData) {
+      const inner = (rawData as Record<string, unknown>).data;
+      stats = Array.isArray(inner) ? (inner as PartnerStat[]) : [];
+    }
     const map = new Map<string, PartnerStat>();
-    for (const s of partnerStats) {
+    for (const s of stats) {
       map.set(s.partner_id, s);
     }
     return map;
-  }, [partnerStats]);
+  }, [statsResult.data]);
 
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];

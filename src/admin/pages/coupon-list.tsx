@@ -55,15 +55,14 @@ export function CouponListPage() {
     queryOptions: { enabled: true },
   });
 
-  const partners = partnersResult?.data ?? [];
-
   const partnerLookup = useMemo(() => {
+    const partners = partnersResult?.data ?? [];
     const map = new Map<string, string>();
     for (const p of partners) {
       map.set(p.id, p.company_name);
     }
     return map;
-  }, [partners]);
+  }, [partnersResult?.data]);
 
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];
