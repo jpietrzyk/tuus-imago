@@ -108,7 +108,7 @@ export function App() {
           <Route
             path="/admin"
             element={
-              <Authenticated>
+              <Authenticated key="admin-auth">
                 <AdminLayout />
               </Authenticated>
             }
