@@ -474,6 +474,10 @@ async function handleAggregation(
     return handlePartnerStats(supabase, meta);
   }
 
+  if (aggregateFunction === "user_list") {
+    return handleUserList(supabase);
+  }
+
   if (aggregateFunction === "count" && groupBy) {
     const { data, error } = await supabase
       .from("orders")
@@ -838,6 +842,43 @@ async function handlePartnerStats(
   });
 
   return jsonResponse(200, { data: stats });
+}
+
+async function handleUserList(
+  supabase: ReturnType<typeof createClient>,
+) {
+  const { data: authData, error: authError } = await supabase.auth.admin.listUsers({ pageSize: 1000 });
+  if (authError) {
+    return jsonResponse(500, { error: authError.message });
+  }
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, full_name, phone, is_admin, created_at, updated_at");
+
+  if (profilesError) {
+    return jsonResponse(500, { error: profilesError.message });
+  }
+
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  const users = (authData?.users ?? []).map((u) => {
+    const profile = profileMap.get(u.id);
+    return {
+      id: u.id,
+      email: u.email ?? "",
+      full_name: profile?.full_name ?? null,
+      phone: profile?.phone ?? null,
+      is_admin: profile?.is_admin ?? false,
+      last_sign_in_at: u.last_sign_in_at ?? null,
+      created_at: u.created_at,
+      updated_at: profile?.updated_at ?? null,
+    };
+  });
+
+  users.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return jsonResponse(200, { data: users });
 }
 
 async function handleOrderStatusUpdate(
