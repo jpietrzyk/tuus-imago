@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Coupons", icon: <Tag className="h-5 w-5" />, path: "/admin/coupons" },
   { label: "Partners", icon: <Building2 className="h-5 w-5" />, path: "/admin/partners" },
   { label: "Customers", icon: <Users className="h-5 w-5" />, path: "/admin/customers" },
-  { label: "Admin Users", icon: <Shield className="h-5 w-5" />, path: "/admin/admin-users" },
+  { label: "Users", icon: <Shield className="h-5 w-5" />, path: "/admin/admin-users" },
 ];
 
 type AdminIdentity = {
