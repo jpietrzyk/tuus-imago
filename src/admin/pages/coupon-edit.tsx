@@ -1,4 +1,4 @@
-import { useOne, useUpdate } from "@refinedev/core";
+import { useOne, useUpdate, useList } from "@refinedev/core";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,13 @@ type Coupon = {
   valid_from: string | null;
   valid_until: string | null;
   is_active: boolean;
+  partner_id: string | null;
   created_at: string;
+};
+
+type Partner = {
+  id: string;
+  company_name: string;
 };
 
 function useCouponFormState() {
@@ -56,6 +62,15 @@ export function CouponEditPage() {
     id: id ?? "",
   });
 
+  const { result: partnersResult } = useList<Partner>({
+    resource: "partners",
+    pagination: { pageSize: 200 },
+    sorters: [{ field: "company_name", order: "asc" }],
+    queryOptions: { enabled: true },
+  });
+
+  const partners = partnersResult?.data ?? [];
+
   const form = useCouponFormState();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +85,7 @@ export function CouponEditPage() {
   const validFrom = form.get("valid_from", coupon?.valid_from ? coupon.valid_from.slice(0, 16) : "");
   const validUntil = form.get("valid_until", coupon?.valid_until ? coupon.valid_until.slice(0, 16) : "");
   const isActive = form.get("is_active", coupon?.is_active != null ? String(coupon.is_active) : "true") === "true";
+  const partnerId = form.get("partner_id", coupon?.partner_id ?? "__none__");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +108,7 @@ export function CouponEditPage() {
           valid_from: validFrom || null,
           valid_until: validUntil || null,
           is_active: isActive,
+          partner_id: partnerId === "__none__" ? null : partnerId,
         },
       },
       {
@@ -188,6 +205,19 @@ export function CouponEditPage() {
                 <Label htmlFor="validUntil">Valid Until</Label>
                 <Input id="validUntil" type="datetime-local" value={validUntil} onChange={(e) => form.set("valid_until", e.target.value)} />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Partner</Label>
+              <Select value={partnerId} onValueChange={(v) => form.set("partner_id", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No partner</SelectItem>
+                  {partners.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.company_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-3">

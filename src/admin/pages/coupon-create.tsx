@@ -12,7 +12,13 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useList } from "@refinedev/core";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+
+type Partner = {
+  id: string;
+  company_name: string;
+};
 
 export function CouponCreatePage() {
   const navigate = useNavigate();
@@ -28,6 +34,16 @@ export function CouponCreatePage() {
   const [validFrom, setValidFrom] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [partnerId, setPartnerId] = useState<string>("__none__");
+
+  const { result: partnersResult } = useList<Partner>({
+    resource: "partners",
+    pagination: { pageSize: 200 },
+    sorters: [{ field: "company_name", order: "asc" }],
+    queryOptions: { enabled: true },
+  });
+
+  const partners = partnersResult?.data ?? [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +69,7 @@ export function CouponCreatePage() {
             valid_from: validFrom || null,
             valid_until: validUntil || null,
             is_active: isActive,
+            partner_id: partnerId === "__none__" ? null : partnerId,
           },
         }),
       });
@@ -133,6 +150,19 @@ export function CouponCreatePage() {
                 <Label htmlFor="validUntil">Valid Until</Label>
                 <Input id="validUntil" type="datetime-local" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Partner</Label>
+              <Select value={partnerId} onValueChange={setPartnerId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No partner</SelectItem>
+                  {partners.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.company_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-3">
