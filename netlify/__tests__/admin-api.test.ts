@@ -482,8 +482,6 @@ describe("admin-api handler", () => {
     it("returns stats for a single partner", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
 
-      let profilesCallCount = 0;
-
       const couponsData = [
         { id: "c1", code: "PARTNER10", discount_type: "percentage", discount_value: 10, used_count: 3, is_active: true },
       ];
@@ -499,7 +497,6 @@ describe("admin-api handler", () => {
       fromSpy.mockImplementation((table: string) => {
         switch (table) {
           case "profiles": {
-            profilesCallCount++;
             const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
             const eq = vi.fn().mockReturnValue({ single });
             const select = vi.fn().mockReturnValue({ eq });
