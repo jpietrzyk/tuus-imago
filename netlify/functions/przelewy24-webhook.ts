@@ -9,12 +9,6 @@ import {
   toMinorUnits,
   type P24NotificationPayload,
 } from "./_shared/przelewy24";
-import {
-  buildContactProperties,
-  getHubSpotConfig,
-  upsertHubSpotContact,
-  type OrderRow as HubSpotOrderRow,
-} from "./_shared/hubspot";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -246,40 +240,6 @@ export const handler = async (event: NetlifyEvent) => {
 
   if (historyError) {
     console.error("[przelewy24-webhook] Could not write payment verification history.");
-  }
-
-  try {
-    const hsConfig = getHubSpotConfig();
-    const { data: fullOrder } = await supabase
-      .from("orders")
-      .select(
-        "id, order_number, status, customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_postal_code, shipping_country, total_price, items_count, marketing_consent, created_at",
-      )
-      .eq("id", order.id)
-      .single<HubSpotOrderRow>();
-
-    if (fullOrder) {
-      const contactProperties = buildContactProperties(fullOrder);
-      const hubspotResponse = await upsertHubSpotContact(hsConfig, contactProperties);
-
-      const hsUpdateFields: Record<string, unknown> = {
-        hubspot_synced_at: new Date().toISOString(),
-      };
-      if (hubspotResponse.id) {
-        hsUpdateFields.hubspot_contact_id = hubspotResponse.id;
-      }
-
-      await supabase.from("orders").update(hsUpdateFields).eq("id", order.id);
-
-      await supabase.from("order_status_history").insert({
-        order_id: order.id,
-        status_type: "crm",
-        status: "hubspot_synced",
-        note: `Contact re-synced to HubSpot CRM after payment verification${hubspotResponse.id ? ` (ID: ${hubspotResponse.id})` : ""}.`,
-      });
-    }
-  } catch (hsError) {
-    console.error("[przelewy24-webhook] HubSpot re-sync failed:", hsError instanceof Error ? hsError.message : hsError);
   }
 
   return {
