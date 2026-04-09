@@ -1,4 +1,5 @@
 import { useTable } from "@refinedev/react-table";
+import { useList } from "@refinedev/core";
 import { type ColumnDef, type Column, type Row } from "@tanstack/react-table";
 import { DataTable } from "@/components/refine-ui/data-table";
 import { DataTableSorter } from "@/components/refine-ui/data-table/data-table-sorter";
@@ -19,8 +20,10 @@ import {
 } from "@/admin/components/badges";
 import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
+import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
+import { useNavigate } from "react-router-dom";
 import { Search, X, Download, CheckSquare, Square } from "lucide-react";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import type { CrudFilter } from "@refinedev/core";
 
 type OrderRow = {
@@ -36,9 +39,16 @@ type OrderRow = {
   created_at: string;
 };
 
+type OrderItemThumbnail = {
+  order_id: string;
+  transformed_url: string;
+  slot_index: number;
+};
+
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 export function OrderListPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("__all__");
   const [paymentFilter, setPaymentFilter] = useState("__all__");
@@ -47,6 +57,9 @@ export function OrderListPage() {
   const [bulkStatus, setBulkStatus] = useState("cancelled");
   const [bulkLoading, setBulkLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const prevOrderIdsRef = useRef<string[]>([]);
+  const thumbnailMapRef = useRef<Map<string, string>>(new Map());
+  const [thumbVersion, setThumbVersion] = useState(0);
 
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];
@@ -113,6 +126,22 @@ export function OrderListPage() {
         size: 40,
       },
       {
+        id: "thumbnail",
+        header: "",
+        cell: ({ row }: { row: Row<OrderRow> }) => {
+          const thumb = thumbnailMapRef.current.get(row.original.id);
+          if (!thumb) return <div className="h-9 w-9 rounded bg-muted" />;
+          return (
+            <img
+              src={thumb}
+              alt=""
+              className="h-9 w-9 rounded object-cover border"
+            />
+          );
+        },
+        size: 52,
+      },
+      {
         id: "order_number",
         accessorKey: "order_number",
         header: ({ column }: { column: Column<OrderRow> }) => (
@@ -120,6 +149,14 @@ export function OrderListPage() {
             Order #
             <DataTableSorter column={column} />
           </div>
+        ),
+        cell: ({ row, getValue }: { row: Row<OrderRow>; getValue: () => unknown }) => (
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/${row.original.id}`); }}
+            className="text-blue-600 hover:underline font-medium"
+          >
+            {getValue() as string}
+          </button>
         ),
         size: 120,
       },
@@ -191,7 +228,8 @@ export function OrderListPage() {
         size: 100,
       },
     ],
-    [selectedIds, toggleRow, toggleAll],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedIds, toggleRow, toggleAll, thumbVersion],
   );
 
   const table = useTable({
@@ -211,6 +249,41 @@ export function OrderListPage() {
       },
     },
   });
+
+  const pageRows: OrderRow[] = table.refineCore.tableQuery?.data?.data ?? [];
+
+  const orderIds = useMemo(
+    () => pageRows.map((o) => o.id),
+    [pageRows],
+  );
+
+  if (orderIds.length > 0) {
+    prevOrderIdsRef.current = orderIds;
+  }
+  const effectiveOrderIds = orderIds.length > 0 ? orderIds : prevOrderIdsRef.current;
+
+  const { result: thumbnailsResult } = useList<OrderItemThumbnail>({
+    resource: "order_items",
+    pagination: { pageSize: 100 },
+    filters: [{ field: "order_id", operator: "in", value: effectiveOrderIds }],
+    meta: { select: "order_id,transformed_url,slot_index" },
+    queryOptions: { enabled: effectiveOrderIds.length > 0 },
+  });
+
+  const thumbItems = thumbnailsResult.data ?? [];
+  const prevThumbLen = useRef(0);
+  if (thumbItems.length !== prevThumbLen.current) {
+    prevThumbLen.current = thumbItems.length;
+    const map = new Map<string, string>();
+    for (const item of thumbItems) {
+      if (!map.has(item.order_id)) {
+        map.set(item.order_id, getCloudinaryThumbnailUrl(item.transformed_url, 36, 36));
+      }
+    }
+    thumbnailMapRef.current = map;
+    // defer version bump to avoid setState during render
+    queueMicrotask(() => setThumbVersion((v) => v + 1));
+  }
 
   const handleBulkStatusUpdate = async () => {
     if (selectedIds.size === 0) return;

@@ -4,6 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -19,8 +26,12 @@ import {
   CreditCard,
   Clock,
   Tag,
+  Download,
+  X,
+  Sparkles,
+  ZoomIn,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 type OrderDetail = {
   id: string;
@@ -57,6 +68,8 @@ type OrderItem = {
   slot_key: string;
   slot_index: number;
   transformed_url: string;
+  public_id: string | null;
+  secure_url: string | null;
   transformations: Record<string, unknown>;
   ai_adjustments: Record<string, unknown> | null;
 };
@@ -112,6 +125,36 @@ const ORDER_LABELS: Record<string, string> = {
   refunded: "Refunded",
 };
 
+const AI_LABELS: Record<string, string> = {
+  enhance: "Enhanced",
+  removeBackground: "BG Removed",
+  upscale: "Upscaled",
+  restore: "Restored",
+};
+
+function getDownloadUrl(item: OrderItem): string {
+  if (item.public_id) {
+    const urlParts = item.transformed_url.split("/upload/");
+    if (urlParts.length === 2) {
+      return `${urlParts[0]}/upload/fl_attachment/${urlParts[1]}`;
+    }
+  }
+  if (item.secure_url) {
+    const urlParts = item.secure_url.split("/upload/");
+    if (urlParts.length === 2) {
+      return `${urlParts[0]}/upload/fl_attachment/${urlParts[1]}`;
+    }
+  }
+  return item.transformed_url;
+}
+
+function getActiveAiLabels(ai: Record<string, unknown> | null): string[] {
+  if (!ai) return [];
+  return Object.entries(ai)
+    .filter(([, v]) => v === true)
+    .map(([k]) => AI_LABELS[k] ?? k);
+}
+
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 export function OrderShowPage() {
@@ -121,6 +164,7 @@ export function OrderShowPage() {
   const [statusNote, setStatusNote] = useState("");
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [previewItem, setPreviewItem] = useState<OrderItem | null>(null);
 
   const { query: orderQuery, result: order } = useOne<OrderDetail>({
     resource: "orders",
@@ -132,6 +176,7 @@ export function OrderShowPage() {
     resource: "order_items",
     pagination: { pageSize: 100 },
     filters: [{ field: "order_id", operator: "eq", value: id }],
+    meta: { select: "id,slot_key,slot_index,transformed_url,public_id,secure_url,transformations,ai_adjustments" },
   });
 
   const { result: historyResult } = useList<StatusHistoryEntry>({
@@ -143,6 +188,18 @@ export function OrderShowPage() {
 
   const items = itemsResult.data ?? [];
   const history = historyResult.data ?? [];
+
+  const handleDownload = useCallback((item: OrderItem) => {
+    const url = getDownloadUrl(item);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `order-${item.slot_key}-${item.slot_index + 1}`;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, []);
 
   if (orderQuery.isFetching) {
     return (
@@ -249,39 +306,81 @@ export function OrderShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" /> Items ({items.length})
+                <Package className="h-5 w-5" /> Ordered Paintings ({items.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {items.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No items</p>
               ) : (
-                <div className="space-y-3">
-                  {items.map((item: OrderItem) => (
-                    <div key={item.id} className="flex items-center gap-3 p-2 rounded-md border">
-                      <img
-                        src={item.transformed_url}
-                        alt={item.slot_key}
-                        className="h-16 w-16 rounded object-cover border"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium capitalize">
-                          {item.slot_key} (Slot {item.slot_index + 1})
-                        </p>
-                        <a
-                          href={item.transformed_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-blue-600 hover:underline truncate block"
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map((item: OrderItem) => {
+                    const aiLabels = getActiveAiLabels(item.ai_adjustments as Record<string, unknown> | null);
+                    return (
+                      <div
+                        key={item.id}
+                        className="group relative rounded-lg border overflow-hidden"
+                      >
+                        <div
+                          className="relative aspect-square cursor-pointer bg-muted"
+                          onClick={() => setPreviewItem(item)}
                         >
-                          View full image
-                        </a>
+                          <img
+                            src={item.transformed_url}
+                            alt={`${item.slot_key} painting`}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                            <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                        <div className="p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium capitalize">
+                              {item.slot_key} (Slot {item.slot_index + 1})
+                            </span>
+                            <span className="text-sm font-medium">
+                              {formatPrice(order.unit_price)}
+                            </span>
+                          </div>
+                          {aiLabels.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {aiLabels.map((label) => (
+                                <Badge
+                                  key={label}
+                                  variant="secondary"
+                                  className="text-xs gap-1"
+                                >
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  {label}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => setPreviewItem(item)}
+                            >
+                              <ZoomIn className="h-3.5 w-3.5 mr-1" />
+                              Preview
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => handleDownload(item)}
+                            >
+                              <Download className="h-3.5 w-3.5 mr-1" />
+                              Download
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <span className="text-sm font-medium">
-                        {formatPrice(order.unit_price)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -430,13 +529,21 @@ export function OrderShowPage() {
                 <span>Shipping</span>
                 <span>{formatPrice(order.shipping_cost)}</span>
               </div>
-              {order.discount_amount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" /> {order.coupon_code}
-                  </span>
-                  <span>-{formatPrice(order.discount_amount)}</span>
-                </div>
+              {order.discount_amount > 0 && order.coupon_code && (
+                <>
+                  <Separator className="my-1" />
+                  <div className="rounded-md border border-green-200 bg-green-50 p-3 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-green-600" />
+                      <span className="font-mono text-sm font-bold text-green-700">
+                        {order.coupon_code}
+                      </span>
+                    </div>
+                    <p className="text-xs text-green-600">
+                      Discount: -{formatPrice(order.discount_amount)}
+                    </p>
+                  </div>
+                </>
               )}
               <Separator className="my-1" />
               <div className="flex justify-between font-bold">
@@ -474,6 +581,55 @@ export function OrderShowPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
+        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
+          {previewItem && (
+            <>
+              <DialogHeader className="p-4 pb-0 flex-row items-center justify-between space-y-0">
+                <DialogTitle className="flex items-center gap-3">
+                  <span className="capitalize">{previewItem.slot_key}</span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    Slot {previewItem.slot_index + 1} of {items.length}
+                  </span>
+                  {getActiveAiLabels(previewItem.ai_adjustments as Record<string, unknown> | null).map((label) => (
+                    <Badge key={label} variant="secondary" className="text-xs gap-1">
+                      <Sparkles className="h-2.5 w-2.5" />
+                      {label}
+                    </Badge>
+                  ))}
+                </DialogTitle>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownload(previewItem)}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setPreviewItem(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </DialogHeader>
+              <div className="p-4">
+                <div className="relative bg-muted rounded-lg overflow-hidden">
+                  <img
+                    src={previewItem.transformed_url}
+                    alt={`${previewItem.slot_key} painting`}
+                    className="w-full h-auto max-h-[70vh] object-contain"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
