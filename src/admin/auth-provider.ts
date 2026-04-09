@@ -10,6 +10,7 @@ export const adminAuthProvider: AuthProvider = {
       });
 
       if (error) {
+        console.error("[auth] signInWithPassword failed:", error.message);
         return {
           success: false,
           error: { message: error.message, name: "LoginError" },
@@ -17,11 +18,14 @@ export const adminAuthProvider: AuthProvider = {
       }
 
       if (!data.user) {
+        console.error("[auth] signInWithPassword returned no user");
         return {
           success: false,
           error: { message: "No user returned.", name: "LoginError" },
         };
       }
+
+      console.log("[auth] signInWithPassword OK — user:", data.user.id, "session expires_at:", data.session?.expires_at);
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -30,6 +34,7 @@ export const adminAuthProvider: AuthProvider = {
         .single();
 
       if (profileError || !profile?.is_admin) {
+        console.error("[auth] Admin check failed — profileError:", profileError?.message, "is_admin:", profile?.is_admin);
         await supabase.auth.signOut();
         return {
           success: false,
@@ -39,6 +44,10 @@ export const adminAuthProvider: AuthProvider = {
           },
         };
       }
+
+      // Verify session was persisted
+      const { data: verifySession } = await supabase.auth.getSession();
+      console.log("[auth] Post-login session check — has session:", !!verifySession.session, "token present:", !!verifySession.session?.access_token);
 
       return {
         success: true,
@@ -62,6 +71,8 @@ export const adminAuthProvider: AuthProvider = {
 
   check: async () => {
     const { data: existingSession } = await supabase.auth.getSession();
+    console.log("[auth] check — has session:", !!existingSession.session, "user:", existingSession.session?.user?.id ?? "none");
+
     if (existingSession.session?.user) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -142,11 +153,14 @@ export const adminAuthProvider: AuthProvider = {
   },
 
   onError: async (error) => {
+    console.log("[auth] onError — statusCode:", error?.statusCode);
+
     if (error?.statusCode === 401) {
       // Try to recover the session before forcing logout.
       // A 401 may happen because the access token expired but the refresh
       // token is still valid. Attempting a refresh avoids a login death-spiral.
       const { data } = await supabase.auth.refreshSession();
+      console.log("[auth] onError refreshSession — recovered:", !!data.session);
       if (data.session) {
         // Session recovered — tell Refine to retry the request.
         return { error };

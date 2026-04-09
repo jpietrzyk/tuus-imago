@@ -35,6 +35,7 @@ import { ResetPasswordPage } from "./pages/auth-reset-password";
 import { UpdatePasswordPage } from "./pages/auth-update-password";
 import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
+import { Authenticated } from "@refinedev/core";
 import { AdminApp } from "./admin/AdminApp";
 import { AdminLayout } from "./admin/layout";
 import { AdminLoginPage } from "./admin/login";
@@ -104,7 +105,14 @@ export function App() {
       <AdminApp>
         <Routes>
           <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="/admin"
+            element={
+              <Authenticated>
+                <AdminLayout />
+              </Authenticated>
+            }
+          >
             <Route index element={<Suspense fallback={<AdminPageLoader />}><DashboardPage /></Suspense>} />
             <Route path="orders" element={<Suspense fallback={<AdminPageLoader />}><OrderListPage /></Suspense>} />
             <Route path="orders/:id" element={<Suspense fallback={<AdminPageLoader />}><OrderShowPage /></Suspense>} />

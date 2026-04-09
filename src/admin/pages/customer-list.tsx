@@ -46,7 +46,14 @@ export function CustomerListPage() {
     },
   });
 
-  let customers = result.data ?? [];
+  const rawData = result.data;
+  let customers: CustomerAggregate[] = [];
+  if (Array.isArray(rawData)) {
+    customers = rawData;
+  } else if (rawData && typeof rawData === "object" && "data" in rawData) {
+    const inner = (rawData as Record<string, unknown>).data;
+    customers = Array.isArray(inner) ? (inner as CustomerAggregate[]) : [];
+  }
 
   if (search) {
     const q = search.toLowerCase();
