@@ -157,11 +157,11 @@ export function PartnerShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Tag className="h-5 w-5" /> Coupons ({stats?.coupons.length ?? 0})
+                <Tag className="h-5 w-5" /> Coupons ({stats?.coupons?.length ?? 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {!stats?.coupons.length ? (
+              {!stats?.coupons?.length ? (
                 <p className="text-sm text-muted-foreground">No coupons assigned</p>
               ) : (
                 <div className="space-y-2">
