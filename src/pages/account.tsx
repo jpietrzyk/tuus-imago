@@ -19,8 +19,12 @@ function AccountLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const activeTab =
-    TABS.find((tab) => location.pathname === tab.path || location.pathname.startsWith(tab.path + "/"))?.id ?? "profile";
+  const activeTab = (() => {
+    const exact = TABS.find((tab) => location.pathname === tab.path);
+    if (exact) return exact.id;
+    const prefix = TABS.find((tab) => tab.path !== "/account" && location.pathname.startsWith(tab.path + "/"));
+    return prefix?.id ?? "profile";
+  })();
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -111,7 +111,13 @@ export interface CustomerAddress {
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  let token = data.session?.access_token;
+
+  if (!token) {
+    const { data: refreshData } = await supabase.auth.refreshSession();
+    token = refreshData.session?.access_token;
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
