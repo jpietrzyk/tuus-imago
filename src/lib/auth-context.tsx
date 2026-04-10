@@ -24,6 +24,8 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const CHECKOUT_OAUTH_REDIRECT_FLAG = "checkout-oauth-redirect";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -38,10 +40,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setLoading(false);
+
+      if (event === "SIGNED_IN") {
+        const checkoutRedirect = sessionStorage.getItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+        if (checkoutRedirect) {
+          sessionStorage.removeItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+          window.location.href = "/checkout";
+        }
+      }
     });
 
     return () => {
