@@ -95,8 +95,14 @@ export function CouponListPage() {
             <DataTableSorter column={column} />
           </div>
         ),
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <span className="font-mono font-medium">{getValue() as string}</span>
+        cell: ({ row, getValue }: { row: { original: CouponRow }; getValue: () => unknown }) => (
+          <button
+            type="button"
+            className="font-mono font-medium text-left hover:underline"
+            onClick={() => navigate(`/admin/coupons/${row.original.id}`)}
+          >
+            {getValue() as string}
+          </button>
         ),
       },
       {
@@ -222,7 +228,7 @@ export function CouponListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Coupons</h1>
+        <h1 className="text-3xl font-bold">{t("admin.labels.couponTitle")}</h1>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -231,10 +237,10 @@ export function CouponListPage() {
             disabled={exporting}
           >
             <Download className="h-4 w-4 mr-1" />
-            {exporting ? "Exporting..." : "Export CSV"}
+            {exporting ? t("admin.labels.exporting") : t("admin.labels.exportCsv")}
           </Button>
           <Button onClick={() => navigate("/admin/coupons/new")}>
-            <Plus className="h-4 w-4 mr-2" /> New Coupon
+            <Plus className="h-4 w-4 mr-2" /> {t("admin.labels.couponNewCoupon")}
           </Button>
         </div>
       </div>
@@ -242,7 +248,7 @@ export function CouponListPage() {
       <div className="flex flex-wrap gap-3 items-end">
         <div className="w-60">
           <Input
-            placeholder="Search code..."
+            placeholder={t("admin.labels.couponSearchCode")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -253,9 +259,9 @@ export function CouponListPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All Types</SelectItem>
-              <SelectItem value="percentage">Percentage</SelectItem>
-              <SelectItem value="fixed_amount">Fixed</SelectItem>
+              <SelectItem value="__all__">{t("admin.labels.couponAllTypes")}</SelectItem>
+              <SelectItem value="percentage">{t("admin.labels.percentage")}</SelectItem>
+              <SelectItem value="fixed_amount">{t("admin.labels.fixedAmount")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -265,9 +271,9 @@ export function CouponListPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All Status</SelectItem>
-              <SelectItem value="true">Active</SelectItem>
-              <SelectItem value="false">Inactive</SelectItem>
+              <SelectItem value="__all__">{t("admin.labels.partnerAllStatus")}</SelectItem>
+              <SelectItem value="true">{t("admin.labels.active")}</SelectItem>
+              <SelectItem value="false">{t("admin.labels.inactive")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

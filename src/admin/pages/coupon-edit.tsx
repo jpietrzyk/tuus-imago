@@ -178,7 +178,7 @@ export function CouponEditPage() {
           variant={coupon.is_active ? "default" : "secondary"}
           className="ml-2"
         >
-          {coupon.is_active ? "Active" : "Inactive"}
+          {coupon.is_active ? t("admin.labels.active") : t("admin.labels.inactive")}
         </Badge>
       </div>
 
