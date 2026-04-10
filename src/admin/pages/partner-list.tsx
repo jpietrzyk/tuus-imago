@@ -120,7 +120,7 @@ export function PartnerListPage() {
       {
         id: "contact_name",
         accessorKey: "contact_name",
-        header: t("admin.labels.contact"),
+        header: t("admin.labels.partnerContact"),
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string | null;
           return val || <span className="text-muted-foreground">—</span>;
@@ -129,7 +129,7 @@ export function PartnerListPage() {
       {
         id: "city",
         accessorKey: "city",
-        header: t("admin.labels.city"),
+        header: t("admin.labels.partnerCity"),
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string | null;
           return val || <span className="text-muted-foreground">—</span>;
@@ -137,7 +137,7 @@ export function PartnerListPage() {
       },
       {
         id: "coupon_count",
-        header: t("admin.labels.coupons"),
+        header: t("admin.labels.partnerCoupons"),
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.coupon_count ?? 0;
@@ -148,7 +148,7 @@ export function PartnerListPage() {
       },
       {
         id: "total_orders",
-        header: t("admin.labels.orders"),
+        header: t("admin.labels.partnerOrders"),
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.total_orders ?? 0;
@@ -159,7 +159,7 @@ export function PartnerListPage() {
       },
       {
         id: "total_revenue",
-        header: t("admin.labels.revenue"),
+        header: t("admin.labels.partnerRevenue"),
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.total_revenue ?? 0;
@@ -171,7 +171,7 @@ export function PartnerListPage() {
       {
         id: "is_active",
         accessorKey: "is_active",
-        header: t("admin.labels.status"),
+        header: t("admin.labels.partnerStatus"),
         cell: ({ getValue }: { getValue: () => unknown }) => (
           <Badge variant={getValue() ? "default" : "secondary"}>
             {getValue() ? t("admin.labels.active") : t("admin.labels.inactive")}
@@ -248,7 +248,7 @@ export function PartnerListPage() {
       <div className="flex flex-wrap gap-3 items-end">
         <div className="w-60">
           <Input
-            placeholder={t("admin.labels.searchCompany")}
+            placeholder={t("admin.labels.partnerSearchCompany")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -260,7 +260,7 @@ export function PartnerListPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">
-                {t("admin.labels.allStatus")}
+                {t("admin.labels.partnerAllStatus")}
               </SelectItem>
               <SelectItem value="true">{t("admin.labels.active")}</SelectItem>
               <SelectItem value="false">

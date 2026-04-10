@@ -106,15 +106,15 @@ export function CustomerListPage() {
         >
           <Download className="h-4 w-4 mr-1" />
           {exporting
-            ? t("admin.labels.exporting")
-            : t("admin.labels.exportCsv")}
+            ? t("admin.labels.customerExporting")
+            : t("admin.labels.customerExportCsv")}
         </Button>
       </div>
 
       <div className="relative w-72">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={t("admin.labels.searchCustomers")}
+          placeholder={t("admin.labels.customerSearch")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-8"
@@ -139,16 +139,16 @@ export function CustomerListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("admin.labels.name")}</TableHead>
-                  <TableHead>{t("admin.labels.email")}</TableHead>
+                  <TableHead>{t("admin.labels.customerName")}</TableHead>
+                  <TableHead>{t("admin.labels.customerEmail")}</TableHead>
                   <TableHead className="text-right">
-                    {t("admin.labels.orders")}
+                    {t("admin.labels.customerOrders")}
                   </TableHead>
                   <TableHead className="text-right">
-                    {t("admin.labels.revenue")}
+                    {t("admin.labels.customerRevenue")}
                   </TableHead>
-                  <TableHead>{t("admin.labels.lastOrder")}</TableHead>
-                  <TableHead>{t("admin.labels.marketing")}</TableHead>
+                  <TableHead>{t("admin.labels.customerLastOrder")}</TableHead>
+                  <TableHead>{t("admin.labels.customerMarketing")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -158,7 +158,7 @@ export function CustomerListPage() {
                       colSpan={6}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      {t("admin.labels.noCustomersFound")}
+                      {t("admin.labels.customerNoCustomersFound")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -194,8 +194,8 @@ export function CustomerListPage() {
                           }
                         >
                           {customer.marketing_consent
-                            ? t("admin.labels.yes")
-                            : t("admin.labels.no")}
+                            ? t("admin.labels.customerYes")
+                            : t("admin.labels.customerNo")}
                         </Badge>
                       </TableCell>
                     </TableRow>
