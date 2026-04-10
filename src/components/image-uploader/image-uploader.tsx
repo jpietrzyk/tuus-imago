@@ -885,7 +885,8 @@ export const ImageUploader = forwardRef<
         }
 
         return splitFiles.map((file) => ({
-          ...buildSelectedImageItem(file),
+          ...buildSelectedImageItem(file, false),
+          displayImageProportion: "vertical" as ImageDisplayProportion,
           previewEffects: {
             ...activeImage.previewEffects,
           },
