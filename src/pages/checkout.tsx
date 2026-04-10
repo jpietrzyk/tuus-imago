@@ -72,6 +72,8 @@ type FormTouched = Partial<Record<keyof FormData, boolean>>;
 const ORDER_SUBMISSION_KEY_STORAGE = "checkout-order-submission-key";
 const PENDING_ORDER_ID_STORAGE = "checkout-pending-order-id";
 const CHECKOUT_SLOTS_STORAGE = "checkout-uploaded-slots";
+const CHECKOUT_COUPON_CODE_STORAGE = "checkout-coupon-code";
+const CHECKOUT_COUPON_RESULT_STORAGE = "checkout-coupon-result";
 
 function generateOrderSubmissionKey(): string {
   if (
@@ -295,10 +297,36 @@ export function CheckoutPage() {
   const returnOrderId = searchParams.get("orderId");
   const returnOrderNumber = searchParams.get("orderNumber");
 
-  const [couponCode, setCouponCode] = useState("");
-  const [couponResult, setCouponResult] = useState<ValidateCouponResponse | null>(null);
+  const [couponCode, setCouponCode] = useState<string>(() => {
+    try {
+      return sessionStorage.getItem(CHECKOUT_COUPON_CODE_STORAGE) ?? "";
+    } catch {
+      return "";
+    }
+  });
+  const [couponResult, setCouponResult] = useState<ValidateCouponResponse | null>(() => {
+    try {
+      const saved = sessionStorage.getItem(CHECKOUT_COUPON_RESULT_STORAGE);
+      if (saved) return JSON.parse(saved) as ValidateCouponResponse;
+    } catch {
+      // ignore malformed data
+    }
+    return null;
+  });
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
+
+  useEffect(() => {
+    sessionStorage.setItem(CHECKOUT_COUPON_CODE_STORAGE, couponCode);
+  }, [couponCode]);
+
+  useEffect(() => {
+    if (couponResult) {
+      sessionStorage.setItem(CHECKOUT_COUPON_RESULT_STORAGE, JSON.stringify(couponResult));
+    } else {
+      sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
+    }
+  }, [couponResult]);
 
   const [paymentPollStatus, setPaymentPollStatus] = useState<"polling" | "paid" | "failed" | "timeout">("polling");
 
@@ -480,6 +508,8 @@ export function CheckoutPage() {
         sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
         sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
         sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+        sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         setSubmissionKey(generateOrderSubmissionKey());
 
         window.location.href = p24Response.redirectUrl;
@@ -518,6 +548,8 @@ export function CheckoutPage() {
       sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
       sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
       sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+      sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
+      sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
       window.location.href = p24Response.redirectUrl;
     } catch (p24Err) {
       setIsRedirecting(false);
