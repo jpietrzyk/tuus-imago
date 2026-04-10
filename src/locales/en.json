@@ -638,7 +638,19 @@
       "userSaveChanges": "Save Changes",
       "userCancel": "Cancel",
       "userConfirmRevokeAdmin": "Are you sure you want to revoke admin for {email}?",
-      "userConfirmGrantAdmin": "Are you sure you want to grant admin for {email}?"
+      "userConfirmGrantAdmin": "Are you sure you want to grant admin for {email}?",
+      "couponNotFound": "Coupon not found.",
+      "couponBackToCoupons": "Back to Coupons",
+      "couponDiscount": "Discount",
+      "couponDiscountValue": "Discount Value",
+      "couponTimesUsed": "Times Used",
+      "couponMinOrder": "Min. Order",
+      "couponDetails": "Details",
+      "couponValidity": "Validity",
+      "couponTitle": "Coupons",
+      "couponSearchCode": "Search code...",
+      "couponAllTypes": "All Types",
+      "couponNewCoupon": "New Coupon"
     }
   }
 }

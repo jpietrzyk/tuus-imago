@@ -638,7 +638,19 @@
       "userSaveChanges": "Zapisz zmiany",
       "userCancel": "Anuluj",
       "userConfirmRevokeAdmin": "Czy na pewno chcesz cofnąć uprawnienia admina dla {email}?",
-      "userConfirmGrantAdmin": "Czy na pewno chcesz przyznać uprawnienia admina dla {email}?"
+      "userConfirmGrantAdmin": "Czy na pewno chcesz przyznać uprawnienia admina dla {email}?",
+      "couponNotFound": "Kupon nie znaleziony.",
+      "couponBackToCoupons": "Powrót do kuponów",
+      "couponDiscount": "Rabat",
+      "couponDiscountValue": "Wartość rabatu",
+      "couponTimesUsed": "Razy użyty",
+      "couponMinOrder": "Min. zamówienie",
+      "couponDetails": "Szczegóły",
+      "couponValidity": "Ważność",
+      "couponTitle": "Kupony",
+      "couponSearchCode": "Szukaj kodu...",
+      "couponAllTypes": "Wszystkie typy",
+      "couponNewCoupon": "Nowy kupon"
     }
   }
 }

@@ -507,6 +507,18 @@ export interface Translations {
       editPartner: string;
       newPartner: string;
       createPartner: string;
+      couponNotFound: string;
+      couponBackToCoupons: string;
+      couponDiscount: string;
+      couponDiscountValue: string;
+      couponTimesUsed: string;
+      couponMinOrder: string;
+      couponDetails: string;
+      couponValidity: string;
+      couponTitle: string;
+      couponSearchCode: string;
+      couponAllTypes: string;
+      couponNewCoupon: string;
       created: string;
       payment: string;
       dashboard: string;
