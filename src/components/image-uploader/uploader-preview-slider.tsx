@@ -66,19 +66,21 @@ export default function UploaderPreviewSlider({
       className="flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 rounded-xl bg-transparent overflow-hidden"
       data-testid="uploader-preview-slider"
     >
-      <SideSlotPreview
-        position="left"
-        slotIndex={leftSlotIndex}
-        image={leftSlotImage}
-        previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
-        useCloudPreview={!!leftSlotImage?.uploadedAsset}
-        isNavigable={canMovePrevious}
-        isUploadOverlayVisible={isUploadOverlayVisible}
-        uploadProgress={uploadProgress}
-        uploadProgressLabel={uploadProgressLabel}
-        uploadingSlotIndex={uploadingSlotIndex}
-        onSelectSlot={onSelectSlot}
-      />
+      {leftSlotImage ? (
+        <SideSlotPreview
+          position="left"
+          slotIndex={leftSlotIndex}
+          image={leftSlotImage}
+          previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
+          useCloudPreview={!!leftSlotImage?.uploadedAsset}
+          isNavigable={canMovePrevious}
+          isUploadOverlayVisible={isUploadOverlayVisible}
+          uploadProgress={uploadProgress}
+          uploadProgressLabel={uploadProgressLabel}
+          uploadingSlotIndex={uploadingSlotIndex}
+          onSelectSlot={onSelectSlot}
+        />
+      ) : null}
 
       <PaintingPreviewSlot
         selectedImage={activeImage}
@@ -98,19 +100,21 @@ export default function UploaderPreviewSlider({
         onMetadataResolved={onMetadataResolved}
       />
 
-      <SideSlotPreview
-        position="right"
-        slotIndex={rightSlotIndex}
-        image={rightSlotImage}
-        previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
-        useCloudPreview={!!rightSlotImage?.uploadedAsset}
-        isNavigable={canMoveNext}
-        isUploadOverlayVisible={isUploadOverlayVisible}
-        uploadProgress={uploadProgress}
-        uploadProgressLabel={uploadProgressLabel}
-        uploadingSlotIndex={uploadingSlotIndex}
-        onSelectSlot={onSelectSlot}
-      />
+      {rightSlotImage ? (
+        <SideSlotPreview
+          position="right"
+          slotIndex={rightSlotIndex}
+          image={rightSlotImage}
+          previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
+          useCloudPreview={!!rightSlotImage?.uploadedAsset}
+          isNavigable={canMoveNext}
+          isUploadOverlayVisible={isUploadOverlayVisible}
+          uploadProgress={uploadProgress}
+          uploadProgressLabel={uploadProgressLabel}
+          uploadingSlotIndex={uploadingSlotIndex}
+          onSelectSlot={onSelectSlot}
+        />
+      ) : null}
     </div>
   );
 }
