@@ -271,6 +271,7 @@ export interface Translations {
     canvasPrint: string;
     total: string;
     openCheckout: string;
+    proceedToCheckout: string;
     orderSelectionButton: string;
     orderSelectionTitle: string;
     orderSelectionHint: string;

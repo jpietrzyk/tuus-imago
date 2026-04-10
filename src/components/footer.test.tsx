@@ -6,6 +6,11 @@ import { Footer } from "./footer";
 import { tr } from "@/test/i18n-test";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 
+function checkoutButtonLabel(): RegExp {
+  const base = tr("checkout.openCheckout").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${base}`);
+}
+
 function hasExactTextContent(expectedText: string) {
   return (_content: string, element: Element | null) =>
     element?.textContent?.replace(/\s+/g, " ").trim() ===
@@ -119,32 +124,28 @@ describe("Footer Component", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+      screen.queryByRole("button", { name: checkoutButtonLabel() }),
     ).not.toBeInTheDocument();
   });
 
-  it("should render checkout CTA when enabled and call callback", async () => {
-    const user = userEvent.setup();
-    const onCheckout = vi.fn();
-
+  it("should render merged checkout dropup trigger when enabled", () => {
     render(
       <MemoryRouter>
         <Footer
           onOpenLegalMenu={vi.fn()}
           showCheckout
-          onCheckout={onCheckout}
+          onCheckout={vi.fn()}
+          onToggleOrderSlot={vi.fn()}
         />
       </MemoryRouter>,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: tr("checkout.openCheckout") }),
-    );
-
-    expect(onCheckout).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("button", { name: checkoutButtonLabel() }),
+    ).toBeInTheDocument();
   });
 
-  it("should render order selection popover trigger when checkout is visible", () => {
+  it("should render order count badge showing checked count", () => {
     render(
       <MemoryRouter>
         <Footer
@@ -159,6 +160,13 @@ describe("Footer Component", () => {
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
             },
+            {
+              slotKey: "right",
+              slotIndex: 2,
+              proportion: "2:3",
+              isUploaded: false,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
+            },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
           onToggleOrderSlot={vi.fn()}
@@ -166,15 +174,10 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("button", {
-        name: new RegExp(tr("checkout.orderSelectionButton")),
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("1/1")).toBeInTheDocument();
+    expect(screen.getByText("1")).toBeInTheDocument();
   });
 
-  it("should allow toggling slot selection from order popover", async () => {
+  it("should open dropup and show order rows when trigger is clicked", async () => {
     const user = userEvent.setup();
     const onToggleOrderSlot = vi.fn();
 
@@ -200,9 +203,7 @@ describe("Footer Component", () => {
     );
 
     await user.click(
-      screen.getByRole("button", {
-        name: new RegExp(tr("checkout.orderSelectionButton")),
-      }),
+      screen.getByRole("button", { name: checkoutButtonLabel() }),
     );
 
     expect(
@@ -213,6 +214,36 @@ describe("Footer Component", () => {
         hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
       ).length,
     ).toBeGreaterThanOrEqual(1);
+  });
+
+  it("should allow toggling slot selection from dropup", async () => {
+    const user = userEvent.setup();
+    const onToggleOrderSlot = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer
+          onOpenLegalMenu={vi.fn()}
+          showCheckout
+          onCheckout={vi.fn()}
+          orderRows={[
+            {
+              slotKey: "left",
+              slotIndex: 0,
+              proportion: "3:2",
+              isUploaded: true,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
+            },
+          ]}
+          checkedOrderSlotKeys={new Set(["left"])}
+          onToggleOrderSlot={onToggleOrderSlot}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: checkoutButtonLabel() }),
+    );
 
     await user.click(
       screen.getByRole("checkbox", {
@@ -225,7 +256,45 @@ describe("Footer Component", () => {
     expect(onToggleOrderSlot).toHaveBeenCalledWith("left");
   });
 
-  it("should disable checkout CTA when disabled flag is set", () => {
+  it("should call onCheckout when proceed button is clicked inside dropup", async () => {
+    const user = userEvent.setup();
+    const onCheckout = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer
+          onOpenLegalMenu={vi.fn()}
+          showCheckout
+          onCheckout={onCheckout}
+          orderRows={[
+            {
+              slotKey: "left",
+              slotIndex: 0,
+              proportion: "3:2",
+              isUploaded: true,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
+            },
+          ]}
+          checkedOrderSlotKeys={new Set(["left"])}
+          onToggleOrderSlot={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: checkoutButtonLabel() }),
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: tr("checkout.proceedToCheckout") }),
+    );
+
+    expect(onCheckout).toHaveBeenCalledTimes(1);
+  });
+
+  it("should keep trigger enabled but disable proceed button when no slots are checked", async () => {
+    const user = userEvent.setup();
+
     render(
       <MemoryRouter>
         <Footer
@@ -233,13 +302,32 @@ describe("Footer Component", () => {
           showCheckout
           checkoutDisabled
           onCheckout={vi.fn()}
+          orderRows={[
+            {
+              slotKey: "left",
+              slotIndex: 0,
+              proportion: "3:2",
+              isUploaded: true,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
+            },
+          ]}
+          checkedOrderSlotKeys={new Set()}
+          onToggleOrderSlot={vi.fn()}
         />
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("button", { name: tr("checkout.openCheckout") }),
-    ).toBeDisabled();
+    const trigger = screen.getByRole("button", {
+      name: checkoutButtonLabel(),
+    });
+    expect(trigger).not.toBeDisabled();
+
+    await user.click(trigger);
+
+    const proceedButton = screen.getByRole("button", {
+      name: tr("checkout.proceedToCheckout"),
+    });
+    expect(proceedButton).toBeDisabled();
   });
 
   it("should not render reset CTA by default", () => {
@@ -307,7 +395,7 @@ describe("Footer Component", () => {
   it("should use three-column footer layout for centered checkout", () => {
     const { container } = render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} showCheckout onCheckout={vi.fn()} />
+        <Footer onOpenLegalMenu={vi.fn()} showCheckout onCheckout={vi.fn()} onToggleOrderSlot={vi.fn()} />
       </MemoryRouter>,
     );
 
