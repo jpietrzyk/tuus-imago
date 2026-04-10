@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Upload } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
@@ -29,6 +30,7 @@ interface PaintingPreviewSlotProps {
     nextDisplayImageProportion: ImageDisplayProportion;
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
+  onSelectEmptySlot?: () => void;
 }
 
 export default function PaintingPreviewSlot({
@@ -47,6 +49,7 @@ export default function PaintingPreviewSlot({
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
+  onSelectEmptySlot,
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const effectivePreviewUrl = previewUrl ?? selectedImage?.previewUrl ?? null;
@@ -130,13 +133,21 @@ export default function PaintingPreviewSlot({
             }}
           />
         ) : (
-          <div
+          <button
+            type="button"
             data-testid="selected-image-preview-placeholder"
-            className="flex h-full w-full items-center justify-center border border-dashed border-primary/70 bg-primary/5 px-4 text-center text-sm font-medium text-muted-foreground"
-            aria-live="polite"
+            className="flex h-full w-full cursor-pointer items-center justify-center border border-dashed border-primary/70 bg-primary/5 px-4 text-center transition-colors duration-150 hover:border-primary hover:bg-primary/10"
+            aria-label={
+              typeof activeSlotIndex === "number"
+                ? t("uploader.addImageSlot", {
+                    index: String(activeSlotIndex + 1),
+                  })
+                : t("upload.clickToUpload")
+            }
+            onClick={onSelectEmptySlot}
           >
-            {t("uploader.emptyCenterSlotPlaceholder")}
-          </div>
+            <Upload className="h-8 w-8 text-muted-foreground/50" />
+          </button>
         )}
 
         <UploadProgressOverlay

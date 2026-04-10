@@ -1297,6 +1297,11 @@ export const ImageUploader = forwardRef<
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
           onMetadataResolved={handleMetadataResolved}
+          onSelectEmptySlot={
+            typeof activeImageIndex === "number"
+              ? () => handlePreviewSlotSelect(activeImageIndex)
+              : undefined
+          }
         />
 
         <UploaderPreviewToolsPanel
