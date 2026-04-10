@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Link } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { t } from "@/locales/i18n"
@@ -21,15 +21,20 @@ export function LegalPageLayout({
   markdownContent,
   children,
 }: LegalPageLayoutProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as { from?: string } | null)?.from ?? "/";
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link
-          to="/"
+        <button
+          type="button"
+          onClick={() => navigate(returnTo)}
           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
         >
           {t("common.backToHome")}
-        </Link>
+        </button>
 
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">{title}</h1>

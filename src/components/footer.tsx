@@ -111,7 +111,7 @@ export function Footer({
               asChild
               className="h-9 rounded-full px-3 text-xs sm:text-sm font-semibold text-blue-600 border-blue-200 hover:bg-blue-50"
             >
-              <Link to="/contact" aria-label={t("common.footerContactLink")}>
+              <Link to="/contact" state={{ from: location.pathname }} aria-label={t("common.footerContactLink")}>
                 <Mail className="h-4 w-4" aria-hidden="true" />
                 {t("common.footerContactLink")}
               </Link>

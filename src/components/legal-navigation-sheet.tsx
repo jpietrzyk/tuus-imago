@@ -15,7 +15,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Drawer,
   DrawerClose,
@@ -55,6 +55,7 @@ export function LegalNavigationSheet({
   onOpenChange,
   activeSection,
 }: LegalNavigationSheetProps) {
+  const location = useLocation();
   const legalSectionRef = useRef<HTMLElement | null>(null);
   const paymentSectionRef = useRef<HTMLElement | null>(null);
 
@@ -136,6 +137,7 @@ export function LegalNavigationSheet({
                   <Link
                     key={page.slug}
                     to={`/${page.slug}`}
+                    state={{ from: location.pathname }}
                     onClick={() => onOpenChange(false)}
                     className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
@@ -170,6 +172,7 @@ export function LegalNavigationSheet({
                   <Link
                     key={page.slug}
                     to={`/${page.slug}`}
+                    state={{ from: location.pathname }}
                     onClick={() => onOpenChange(false)}
                     className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
@@ -237,6 +240,7 @@ export function LegalNavigationSheet({
                   <Link
                     key={page.slug}
                     to={`/${page.slug}`}
+                    state={{ from: location.pathname }}
                     onClick={() => onOpenChange(false)}
                     className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >

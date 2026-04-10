@@ -130,8 +130,8 @@ describe("App Component Routing", () => {
       );
 
       expect(
-        screen.getByRole("link", { name: tr("common.backToHome") }),
-      ).toHaveAttribute("href", "/");
+        screen.getByRole("button", { name: tr("common.backToHome") }),
+      ).toBeInTheDocument();
       expect(
         screen.getByRole("heading", { level: 1 }),
       ).toBeInTheDocument();
@@ -180,7 +180,7 @@ describe("App Component Routing", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: tr("common.backToHome") }),
+      screen.getByRole("button", { name: tr("common.backToHome") }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1 }),
@@ -195,7 +195,7 @@ describe("App Component Routing", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: tr("common.backToHome") }),
+      screen.getByRole("button", { name: tr("common.backToHome") }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1 }),
@@ -502,32 +502,30 @@ describe("App Component Routing", () => {
     expect(screen.queryByText(tr("upload.slotRight"))).not.toBeInTheDocument();
   });
 
-  it("should render home navigation link on about page", () => {
+  it("should render back navigation button on about page", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", {
+    const backButton = screen.getByRole("button", {
       name: tr("common.backToHome"),
     });
-    expect(backLink).toBeInTheDocument();
-    expect(backLink).toHaveAttribute("href", "/");
+    expect(backButton).toBeInTheDocument();
   });
 
-  it("should render home navigation link on legal page", () => {
+  it("should render back navigation button on legal page", () => {
     render(
       <MemoryRouter initialEntries={["/legal"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", {
+    const backButton = screen.getByRole("button", {
       name: tr("common.backToHome"),
     });
-    expect(backLink).toBeInTheDocument();
-    expect(backLink).toHaveAttribute("href", "/");
+    expect(backButton).toBeInTheDocument();
   });
 
   it("should have correct layout structure", () => {
