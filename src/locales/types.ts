@@ -312,6 +312,9 @@ export interface Translations {
     paymentRetryButton: string;
     paymentSessionError: string;
     backToHomeButton: string;
+    loginPrompt: string;
+    loginWithEmail: string;
+    loggedInAs: string;
     consents: {
       title: string;
       termsLabel: string;

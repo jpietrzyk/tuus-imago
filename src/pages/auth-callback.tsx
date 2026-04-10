@@ -23,7 +23,13 @@ export function AuthCallbackPage() {
         return;
       }
 
-      navigate("/", { replace: true });
+      const checkoutRedirect = sessionStorage.getItem("checkout-oauth-redirect");
+      if (checkoutRedirect) {
+        sessionStorage.removeItem("checkout-oauth-redirect");
+        navigate("/checkout", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     }
 
     handleCallback();

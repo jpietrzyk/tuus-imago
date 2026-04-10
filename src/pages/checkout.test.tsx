@@ -15,6 +15,40 @@ import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 
+let __mockUser: {
+  id: string;
+  email: string;
+  user_metadata?: Record<string, unknown>;
+} | null = null;
+
+vi.mock("@/lib/auth-context", () => ({
+  useAuth: () => ({
+    get user() { return __mockUser; },
+    session: __mockUser ? { access_token: "token" } : null,
+    loading: false,
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    signInWithOtp: vi.fn(),
+    resetPassword: vi.fn(),
+    updatePassword: vi.fn(),
+  }),
+}));
+
+vi.mock("@/lib/supabase-client", () => ({
+  get supabase() {
+    return {
+      auth: {
+        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+        onAuthStateChange: vi.fn(() => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })),
+      },
+    };
+  },
+}));
+
 function hasExactTextContent(expectedText: string) {
   return (_content: string, element: Element | null) =>
     element?.textContent?.replace(/\s+/g, " ").trim() ===
@@ -65,6 +99,14 @@ function createFetchMock(
         }),
       );
     }
+    if (url.includes("customer-addresses")) {
+      return Promise.resolve(
+        new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
     return Promise.resolve(
       new Response(JSON.stringify({ error: "Not found" }), {
         status: 404,
@@ -74,38 +116,11 @@ function createFetchMock(
   });
 }
 
-vi.mock("@/lib/auth-context", () => ({
-  useAuth: () => ({
-    user: null,
-    session: null,
-    loading: false,
-    signUp: vi.fn(),
-    signIn: vi.fn(),
-    signOut: vi.fn(),
-    signInWithOAuth: vi.fn(),
-    signInWithOtp: vi.fn(),
-    resetPassword: vi.fn(),
-    updatePassword: vi.fn(),
-  }),
-}));
-
-vi.mock("@/lib/supabase-client", () => ({
-  get supabase() {
-    return {
-      auth: {
-        getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-        onAuthStateChange: vi.fn(() => ({
-          data: { subscription: { unsubscribe: vi.fn() } },
-        })),
-      },
-    };
-  },
-}));
-
 describe("CheckoutPage", () => {
   let locationHrefSpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    __mockUser = null;
     vi.stubGlobal("fetch", createFetchMock());
     sessionStorage.clear();
   });
@@ -885,5 +900,90 @@ describe("CheckoutPage", () => {
       expect(locationHrefSpy).toHaveBeenCalled();
     }, { timeout: 3000 });
     expect(sessionStorage.getItem("checkout-pending-order-id")).toBeNull();
+  });
+
+  describe("auth prompt", () => {
+    it("shows login prompt banner when user is not logged in", () => {
+      __mockUser = null;
+      renderWithRouter();
+      expect(screen.getByText(tr("checkout.loginPrompt"))).toBeDefined();
+    });
+
+    it("shows OAuth buttons when user is not logged in", () => {
+      __mockUser = null;
+      renderWithRouter();
+      expect(screen.getByRole("button", { name: /google/i })).toBeDefined();
+      expect(screen.getByRole("button", { name: /facebook/i })).toBeDefined();
+      expect(screen.getByRole("button", { name: tr("checkout.loginWithEmail") })).toBeDefined();
+    });
+
+    it("does not show login prompt when user is logged in", () => {
+      __mockUser = { id: "user-1", email: "john@example.com" };
+      renderWithRouter();
+      expect(screen.queryByText(tr("checkout.loginPrompt"))).toBeNull();
+    });
+
+    it("shows signed-in message when user is logged in", () => {
+      __mockUser = { id: "user-1", email: "john@example.com" };
+      renderWithRouter();
+      expect(screen.getByText(tr("checkout.loggedInAs", { email: "john@example.com" }))).toBeDefined();
+    });
+  });
+
+  describe("auto-fill for authenticated users", () => {
+    it("fills email from auth user profile", async () => {
+      __mockUser = { id: "user-1", email: "john@example.com" };
+      sessionStorage.removeItem("checkout-form-draft");
+      renderWithRouter();
+      await waitFor(() => {
+        expect(
+          (screen.getByLabelText(tr("checkout.email")) as HTMLInputElement).value,
+        ).toBe("john@example.com");
+      });
+    });
+  });
+
+  describe("slot persistence for OAuth flow", () => {
+    it("persists uploaded slots to sessionStorage", () => {
+      const mockSlots: UploadedSlotResult[] = [
+        {
+          slotIndex: 0,
+          slotKey: "left",
+          transformations: {
+            brightness: 0,
+            contrast: 0,
+            rotation: 0,
+            flipHorizontal: false,
+            flipVertical: false,
+            grayscale: 0,
+            blur: 0,
+          },
+          transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+          publicId: "tuus-imago/left",
+          secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+        },
+      ];
+      renderWithSlots(mockSlots);
+      const saved = sessionStorage.getItem("checkout-uploaded-slots");
+      expect(saved).not.toBeNull();
+      const parsed = JSON.parse(saved!);
+      expect(parsed).toHaveLength(1);
+    });
+
+    it("restores slots from sessionStorage when location state is missing", () => {
+      const slotData = [
+        {
+          slotIndex: 0,
+          slotKey: "left",
+          transformations: { brightness: 0, contrast: 0, rotation: 0, flipHorizontal: false, flipVertical: false, grayscale: 0, blur: 0 },
+          transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+          publicId: "tuus-imago/left",
+          secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+        },
+      ];
+      sessionStorage.setItem("checkout-uploaded-slots", JSON.stringify(slotData));
+      renderWithRouter();
+      expect(screen.getByText(tr("upload.slotLeft"))).toBeDefined();
+    });
   });
 });

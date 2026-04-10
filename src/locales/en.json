@@ -324,6 +324,9 @@
     "paymentRetryButton": "Retry payment",
     "paymentSessionError": "Your order was created but payment could not be started. Please try again.",
     "backToHomeButton": "Back to Home",
+    "loginPrompt": "Sign in to auto-fill your details and save your order history",
+    "loginWithEmail": "Email",
+    "loggedInAs": "Signed in as {email}",
     "consents": {
       "title": "Legal Consents",
       "termsLabel": "I accept",

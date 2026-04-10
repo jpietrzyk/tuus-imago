@@ -269,6 +269,9 @@
     "paymentRetryButton": "Ponów płatność",
     "paymentSessionError": "Zamówienie zostało utworzone, ale nie udało się uruchomić płatności. Spróbuj ponownie.",
     "backToHomeButton": "Wróć do strony głównej",
+    "loginPrompt": "Zaloguj się, aby automatycznie uzupełnić dane i zachować historię zamówień",
+    "loginWithEmail": "Email",
+    "loggedInAs": "Zalogowany jako {email}",
     "consents": {
       "title": "Zgody prawne",
       "termsLabel": "Akceptuję",
