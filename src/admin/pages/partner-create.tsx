@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { t } from "@/locales/i18n";
 
 export function PartnerCreatePage() {
   const navigate = useNavigate();
@@ -64,54 +65,97 @@ export function PartnerCreatePage() {
   return (
     <div className="space-y-6 max-w-xl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/partners")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin/partners")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold">New Partner</h1>
+        <h1 className="text-2xl font-bold">{t("admin.labels.newPartner")}</h1>
       </div>
 
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
             )}
 
             <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" value={companyName} onChange={(e) => setCompanyName(e.target.value)} required placeholder="e.g. Art Gallery Warsaw" />
+              <Input
+                id="companyName"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
+                placeholder="e.g. Art Gallery Warsaw"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="contactName">Contact Name</Label>
-              <Input id="contactName" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="e.g. Jan Kowalski" />
+              <Input
+                id="contactName"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                placeholder="e.g. Jan Kowalski"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="nip">NIP (Tax ID)</Label>
-                <Input id="nip" value={nip} onChange={(e) => setNip(e.target.value)} placeholder="e.g. 1234567890" />
+                <Input
+                  id="nip"
+                  value={nip}
+                  onChange={(e) => setNip(e.target.value)}
+                  placeholder="e.g. 1234567890"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contactEmail">Contact Email</Label>
-                <Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" />
+                <Input
+                  id="contactEmail"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="email@example.com"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+48 123 456 789" />
+                <Input
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+48 123 456 789"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Warsaw" />
+                <Input
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Warsaw"
+                />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="ul. Example 12/3" />
+              <Input
+                id="address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="ul. Example 12/3"
+              />
             </div>
 
             <div className="space-y-2">
@@ -139,10 +183,16 @@ export function PartnerCreatePage() {
 
             <div className="flex gap-3 pt-2">
               <Button type="submit" disabled={saving}>
-                {saving ? "Creating..." : "Create Partner"}
+                {saving
+                  ? t("admin.actions.creating")
+                  : t("admin.labels.createPartner")}
               </Button>
-              <Button type="button" variant="outline" onClick={() => navigate("/admin/partners")}>
-                Cancel
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/admin/partners")}
+              >
+                {t("admin.actions.cancel")}
               </Button>
             </div>
           </form>

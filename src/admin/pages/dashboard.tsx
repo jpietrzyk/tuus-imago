@@ -28,6 +28,7 @@ import {
   Legend,
 } from "recharts";
 import { OrderStatusBadge } from "@/admin/components/badges";
+import { t } from "@/locales/i18n";
 
 type OrderRow = {
   id: string;
@@ -87,7 +88,11 @@ export function DashboardPage() {
     pagination: { pageSize: 1 },
     filters: [
       { field: "status", operator: "eq", value: "paid" },
-      { field: "shipment_status", operator: "eq", value: "pending_fulfillment" },
+      {
+        field: "shipment_status",
+        operator: "eq",
+        value: "pending_fulfillment",
+      },
     ],
   });
 
@@ -95,7 +100,10 @@ export function DashboardPage() {
     resource: "orders",
     pagination: { pageSize: 10, currentPage: 1 },
     sorters: [{ field: "created_at", order: "desc" }],
-    meta: { select: "id,order_number,status,customer_email,total_price,items_count,created_at" },
+    meta: {
+      select:
+        "id,order_number,status,customer_email,total_price,items_count,created_at",
+    },
   });
 
   const { result: statusBreakdownResult } = useCustom<StatusGroup[]>({
@@ -149,17 +157,25 @@ export function DashboardPage() {
   };
 
   const statuses = unwrapCustom(statusBreakdownResult.data) as StatusGroup[];
-  const revenueOverTime = unwrapCustom(revenueOverTimeResult.data) as RevenueOverTimePoint[];
-  const revenueByMonth = unwrapCustom(revenueByMonthResult.data) as RevenueByMonthPoint[];
+  const revenueOverTime = unwrapCustom(
+    revenueOverTimeResult.data,
+  ) as RevenueOverTimePoint[];
+  const revenueByMonth = unwrapCustom(
+    revenueByMonthResult.data,
+  ) as RevenueByMonthPoint[];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      <h1 className="text-2xl font-bold tracking-tight">
+        {t("admin.labels.dashboard")}
+      </h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("admin.labels.totalOrders")}
+            </CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -169,17 +185,23 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("admin.labels.revenue")}
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(totalRevenue)}</div>
+            <div className="text-2xl font-bold">
+              {formatPrice(totalRevenue)}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Shipments</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("admin.labels.pendingShipments")}
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -189,7 +211,9 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Coupons</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t("admin.labels.activeCoupons")}
+            </CardTitle>
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -201,11 +225,13 @@ export function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Revenue (Last 30 Days)</CardTitle>
+            <CardTitle>{t("admin.labels.revenueLast30Days")}</CardTitle>
           </CardHeader>
           <CardContent>
             {revenueOverTime.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No revenue data</p>
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {t("admin.labels.noRevenueData")}
+              </p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={revenueOverTime}>
@@ -214,9 +240,17 @@ export function DashboardPage() {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
                     formatter={(value: unknown) => formatPrice(Number(value))}
-                    labelFormatter={(label: unknown) => `Date: ${String(label)}`}
+                    labelFormatter={(label: unknown) =>
+                      `Date: ${String(label)}`
+                    }
                   />
-                  <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.15}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -225,11 +259,13 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Orders by Status</CardTitle>
+            <CardTitle>{t("admin.labels.ordersByStatus")}</CardTitle>
           </CardHeader>
           <CardContent>
             {statuses.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No orders</p>
+              <p className="text-sm text-muted-foreground text-center py-8">
+                {t("admin.labels.noOrders")}
+              </p>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
@@ -240,15 +276,23 @@ export function DashboardPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={((props: { name?: string; value?: number }) =>
-                      `${String(props.name ?? "").replace(/_/g, " ")} (${props.value ?? 0})`
-                    ) as unknown as boolean}
+                    label={
+                      ((props: { name?: string; value?: number }) =>
+                        `${String(props.name ?? "").replace(/_/g, " ")} (${props.value ?? 0})`) as unknown as boolean
+                    }
                   >
                     {statuses.map((_, index) => (
-                      <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      <Cell
+                        key={index}
+                        fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      />
                     ))}
                   </Pie>
-                  <Legend formatter={(value: unknown) => String(value).replace(/_/g, " ")} />
+                  <Legend
+                    formatter={(value: unknown) =>
+                      String(value).replace(/_/g, " ")
+                    }
+                  />
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
@@ -261,19 +305,27 @@ export function DashboardPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Monthly Revenue</CardTitle>
+              <CardTitle>{t("admin.labels.monthlyRevenue")}</CardTitle>
             </CardHeader>
             <CardContent>
               {revenueByMonth.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No monthly data</p>
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  {t("admin.labels.noMonthlyData")}
+                </p>
               ) : (
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={revenueByMonth}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(value: unknown) => formatPrice(Number(value))} />
-                    <Bar dataKey="revenue" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Tooltip
+                      formatter={(value: unknown) => formatPrice(Number(value))}
+                    />
+                    <Bar
+                      dataKey="revenue"
+                      fill="#3b82f6"
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -283,15 +335,20 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Status Breakdown</CardTitle>
+            <CardTitle>{t("admin.labels.statusBreakdown")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {statuses.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No orders</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("admin.labels.noOrders")}
+                </p>
               ) : (
                 statuses.map((s) => (
-                  <div key={s.status} className="flex items-center justify-between">
+                  <div
+                    key={s.status}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-2">
                       <OrderStatusBadge status={s.status} />
                     </div>
@@ -306,24 +363,29 @@ export function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle>{t("admin.labels.recentOrders")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order #</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t("admin.labels.orderNumber")}</TableHead>
+                <TableHead>{t("admin.labels.email")}</TableHead>
+                <TableHead>{t("admin.labels.status")}</TableHead>
+                <TableHead className="text-right">
+                  {t("admin.labels.total")}
+                </TableHead>
+                <TableHead>{t("admin.labels.date")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {orders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No orders yet
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground py-8"
+                  >
+                    {t("admin.labels.noOrdersYet")}
                   </TableCell>
                 </TableRow>
               ) : (

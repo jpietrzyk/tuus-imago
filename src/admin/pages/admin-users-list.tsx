@@ -18,8 +18,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatDateTime } from "@/lib/format";
-import { Search, Shield, ShieldOff, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Shield,
+  ShieldOff,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useState, useMemo } from "react";
+import { t } from "@/locales/i18n";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 type UserRecord = {
@@ -68,7 +76,10 @@ export function AdminUsersPage() {
     },
   });
 
-  const allUsers = useMemo(() => unwrapData<UserRecord>(usersResult.data), [usersResult.data]);
+  const allUsers = useMemo(
+    () => unwrapData<UserRecord>(usersResult.data),
+    [usersResult.data],
+  );
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allUsers;
@@ -82,12 +93,16 @@ export function AdminUsersPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageUsers = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageUsers = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
   const handleToggleAdmin = (user: UserRecord) => {
     if (toggling) return;
     const action = user.is_admin ? "revoke admin" : "grant admin";
-    if (!confirm(`Are you sure you want to ${action} for ${user.email}?`)) return;
+    if (!confirm(`Are you sure you want to ${action} for ${user.email}?`))
+      return;
     setToggling(user.id);
     updateProfile(
       {
@@ -158,16 +173,23 @@ export function AdminUsersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">User Accounts</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} users</span>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("admin.labels.userAccounts")}
+        </h1>
+        <span className="text-sm text-muted-foreground">
+          {filtered.length} {t("admin.labels.users")}
+        </span>
       </div>
 
       <div className="relative w-72">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by email or name..."
+          placeholder={t("admin.labels.searchByEmailOrName")}
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-8"
         />
       </div>
@@ -188,23 +210,38 @@ export function AdminUsersPage() {
           <TableBody>
             {pageUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   No users found
                 </TableCell>
               </TableRow>
             ) : (
               pageUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium text-sm">{user.email}</TableCell>
-                  <TableCell>{user.full_name || <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell className="text-sm">{user.phone || <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    {user.email}
+                  </TableCell>
+                  <TableCell>
+                    {user.full_name || (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {user.phone || (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={user.is_admin ? "default" : "secondary"}>
                       {user.is_admin ? "Admin" : "User"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {user.last_sign_in_at ? formatDateTime(user.last_sign_in_at) : "Never"}
+                    {user.last_sign_in_at
+                      ? formatDateTime(user.last_sign_in_at)
+                      : "Never"}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDateTime(user.created_at)}
@@ -273,7 +310,10 @@ export function AdminUsersPage() {
         </div>
       )}
 
-      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+      <Dialog
+        open={!!editUser}
+        onOpenChange={(open) => !open && setEditUser(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
@@ -281,10 +321,14 @@ export function AdminUsersPage() {
           {editUser && (
             <form onSubmit={handleSaveEdit} className="space-y-4">
               {editError && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{editError}</div>
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {editError}
+                </div>
               )}
               {editSuccess && (
-                <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">Profile updated.</div>
+                <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+                  Profile updated.
+                </div>
               )}
 
               <div className="space-y-1 text-sm text-muted-foreground">
@@ -318,7 +362,11 @@ export function AdminUsersPage() {
                 <Button type="submit" disabled={saving}>
                   {saving ? "Saving..." : "Save Changes"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setEditUser(null)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditUser(null)}
+                >
                   Cancel
                 </Button>
               </div>

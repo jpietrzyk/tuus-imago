@@ -16,6 +16,7 @@ import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
 import { Search, X, Download } from "lucide-react";
 import { useState } from "react";
+import { t } from "@/locales/i18n";
 
 type CustomerAggregate = {
   customer_email: string;
@@ -94,23 +95,35 @@ export function CustomerListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Customers</h1>
-        <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("admin.labels.customers")}
+        </h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCsv}
+          disabled={exporting}
+        >
           <Download className="h-4 w-4 mr-1" />
-          {exporting ? "Exporting..." : "Export CSV"}
+          {exporting
+            ? t("admin.labels.exporting")
+            : t("admin.labels.exportCsv")}
         </Button>
       </div>
 
       <div className="relative w-72">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search customers..."
+          placeholder={t("admin.labels.searchCustomers")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-8"
         />
         {search && (
-          <button onClick={() => setSearch("")} className="absolute right-2.5 top-2.5">
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-2.5 top-2.5"
+          >
             <X className="h-4 w-4 text-muted-foreground" />
           </button>
         )}
@@ -126,19 +139,26 @@ export function CustomerListPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="text-right">Orders</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead>Last Order</TableHead>
-                  <TableHead>Marketing</TableHead>
+                  <TableHead>{t("admin.labels.name")}</TableHead>
+                  <TableHead>{t("admin.labels.email")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("admin.labels.orders")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("admin.labels.revenue")}
+                  </TableHead>
+                  <TableHead>{t("admin.labels.lastOrder")}</TableHead>
+                  <TableHead>{t("admin.labels.marketing")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {customers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No customers found
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-muted-foreground"
+                    >
+                      {t("admin.labels.noCustomersFound")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -168,8 +188,14 @@ export function CustomerListPage() {
                         {formatDate(customer.last_order_date)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={customer.marketing_consent ? "default" : "secondary"}>
-                          {customer.marketing_consent ? "Yes" : "No"}
+                        <Badge
+                          variant={
+                            customer.marketing_consent ? "default" : "secondary"
+                          }
+                        >
+                          {customer.marketing_consent
+                            ? t("admin.labels.yes")
+                            : t("admin.labels.no")}
                         </Badge>
                       </TableCell>
                     </TableRow>

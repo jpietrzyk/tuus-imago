@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/format";
+import { t } from "@/locales/i18n";
 import {
   ArrowLeft,
   Building2,
@@ -92,9 +93,15 @@ export function PartnerShowPage() {
   if (!partner) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Partner not found.</p>
-        <Button variant="outline" onClick={() => navigate("/admin/partners")} className="mt-4">
-          Back to Partners
+        <p className="text-muted-foreground">
+          {t("admin.labels.partnerNotFound")}
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/admin/partners")}
+          className="mt-4"
+        >
+          {t("admin.labels.backToPartners")}
         </Button>
       </div>
     );
@@ -103,22 +110,34 @@ export function PartnerShowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/partners")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin/partners")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{partner.company_name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {partner.company_name}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Created {formatDateTime(partner.created_at)}
+            {t("admin.labels.created")} {formatDateTime(partner.created_at)}
           </p>
         </div>
         <div className="ml-auto flex gap-2">
           <Badge variant={partner.is_active ? "default" : "secondary"}>
-            {partner.is_active ? "Active" : "Inactive"}
+            {partner.is_active
+              ? t("admin.labels.active")
+              : t("admin.labels.inactive")}
           </Badge>
-          <Button variant="outline" size="sm" onClick={() => navigate(`/admin/partners/${id}/edit`)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin/partners/${id}/edit`)}
+          >
             <Pencil className="h-4 w-4 mr-1" />
-            Edit
+            {t("admin.actions.edit")}
           </Button>
         </div>
       </div>
@@ -128,27 +147,40 @@ export function PartnerShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" /> Statistics
+                <BarChart3 className="h-5 w-5" /> {t("admin.labels.statistics")}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-lg border p-4 text-center">
-                  <p className="text-2xl font-bold">{stats?.total_orders ?? 0}</p>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.total_orders ?? 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("admin.labels.totalOrders")}
+                  </p>
                 </div>
                 <div className="rounded-lg border p-4 text-center">
-                  <p className="text-2xl font-bold">{formatPrice(stats?.total_revenue ?? 0)}</p>
-                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                  <p className="text-2xl font-bold">
+                    {formatPrice(stats?.total_revenue ?? 0)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("admin.labels.totalRevenue")}
+                  </p>
                 </div>
                 <div className="rounded-lg border p-4 text-center">
-                  <p className="text-2xl font-bold">{stats?.coupon_count ?? 0}</p>
-                  <p className="text-sm text-muted-foreground">Coupons</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.coupon_count ?? 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("admin.labels.coupons")}
+                  </p>
                 </div>
               </div>
               {stats?.last_order_date && (
                 <p className="text-sm text-muted-foreground mt-3">
-                  Last order: {formatDateTime(stats.last_order_date)}
+                  {t("admin.labels.lastOrder")}{" "}
+                  {formatDateTime(stats.last_order_date)}
                 </p>
               )}
             </CardContent>
@@ -157,27 +189,40 @@ export function PartnerShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Tag className="h-5 w-5" /> Coupons ({stats?.coupons?.length ?? 0})
+                <Tag className="h-5 w-5" /> {t("admin.labels.coupons")} (
+                {stats?.coupons?.length ?? 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {!stats?.coupons?.length ? (
-                <p className="text-sm text-muted-foreground">No coupons assigned</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("admin.labels.noCouponsAssigned")}
+                </p>
               ) : (
                 <div className="space-y-2">
                   {stats.coupons.map((coupon) => (
-                    <div key={coupon.id} className="flex items-center gap-3 p-2 rounded-md border">
-                      <span className="font-mono font-medium text-sm">{coupon.code}</span>
+                    <div
+                      key={coupon.id}
+                      className="flex items-center gap-3 p-2 rounded-md border"
+                    >
+                      <span className="font-mono font-medium text-sm">
+                        {coupon.code}
+                      </span>
                       <Badge variant="outline">
                         {coupon.discount_type === "percentage"
                           ? `${coupon.discount_value}%`
                           : `${Number(coupon.discount_value).toFixed(2)} PLN`}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        Used {coupon.used_count}x
+                        {t("admin.labels.used")} {coupon.used_count}x
                       </span>
-                      <Badge variant={coupon.is_active ? "default" : "secondary"} className="ml-auto">
-                        {coupon.is_active ? "Active" : "Inactive"}
+                      <Badge
+                        variant={coupon.is_active ? "default" : "secondary"}
+                        className="ml-auto"
+                      >
+                        {coupon.is_active
+                          ? t("admin.labels.active")
+                          : t("admin.labels.inactive")}
                       </Badge>
                     </div>
                   ))}
@@ -191,28 +236,35 @@ export function PartnerShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" /> Company
+                <Building2 className="h-5 w-5" /> {t("admin.labels.company")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p><span className="font-medium">Company:</span> {partner.company_name}</p>
-              {partner.nip && <p><span className="font-medium">NIP:</span> {partner.nip}</p>}
-              {partner.contact_email && <p><span className="font-medium">Email:</span> {partner.contact_email}</p>}
-              {partner.phone && <p><span className="font-medium">Phone:</span> {partner.phone}</p>}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" /> Contact
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm">
-              {partner.contact_name ? (
-                <p>{partner.contact_name}</p>
-              ) : (
-                <p className="text-muted-foreground">No contact name</p>
+              <p>
+                <span className="font-medium">
+                  {t("admin.labels.company")}:
+                </span>{" "}
+                {partner.company_name}
+              </p>
+              {partner.nip && (
+                <p>
+                  <span className="font-medium">{t("admin.labels.nip")}</span>{" "}
+                  {partner.nip}
+                </p>
+              )}
+              {partner.contact_email && (
+                <p>
+                  <span className="font-medium">
+                    {t("admin.labels.email")}:
+                  </span>{" "}
+                  {partner.contact_email}
+                </p>
+              )}
+              {partner.phone && (
+                <p>
+                  <span className="font-medium">{t("admin.labels.phone")}</span>{" "}
+                  {partner.phone}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -220,14 +272,33 @@ export function PartnerShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" /> Location
+                <User className="h-5 w-5" /> {t("admin.labels.contact")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm">
+              {partner.contact_name ? (
+                <p>{partner.contact_name}</p>
+              ) : (
+                <p className="text-muted-foreground">
+                  {t("admin.labels.noContactName")}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" /> {t("admin.labels.location")}
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-1">
               {partner.address && <p>{partner.address}</p>}
               {partner.city && <p>{partner.city}</p>}
               {!partner.address && !partner.city && (
-                <p className="text-muted-foreground">No address</p>
+                <p className="text-muted-foreground">
+                  {t("admin.labels.noAddress")}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -236,7 +307,7 @@ export function PartnerShowPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" /> Notes
+                  <FileText className="h-5 w-5" /> {t("admin.labels.notes")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="text-sm whitespace-pre-wrap">
@@ -247,9 +318,13 @@ export function PartnerShowPage() {
 
           <Card>
             <CardContent className="pt-6 space-y-1 text-xs text-muted-foreground">
-              <p>Created: {formatDateTime(partner.created_at)}</p>
+              <p>
+                {t("admin.labels.created")} {formatDateTime(partner.created_at)}
+              </p>
               <Separator className="my-2" />
-              <p>Updated: {formatDateTime(partner.updated_at)}</p>
+              <p>
+                {t("admin.labels.updated")} {formatDateTime(partner.updated_at)}
+              </p>
             </CardContent>
           </Card>
         </div>

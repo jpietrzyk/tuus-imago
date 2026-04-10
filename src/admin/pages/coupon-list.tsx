@@ -17,6 +17,7 @@ import { Plus, Download } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CrudFilter } from "@refinedev/core";
+import { t } from "@/locales/i18n";
 
 type CouponRow = {
   id: string;
@@ -73,7 +74,11 @@ export function CouponListPage() {
       f.push({ field: "discount_type", operator: "eq", value: typeFilter });
     }
     if (activeFilter !== "__all__") {
-      f.push({ field: "is_active", operator: "eq", value: activeFilter === "true" });
+      f.push({
+        field: "is_active",
+        operator: "eq",
+        value: activeFilter === "true",
+      });
     }
     return f;
   }, [search, typeFilter, activeFilter]);
@@ -86,7 +91,7 @@ export function CouponListPage() {
         accessorKey: "code",
         header: ({ column }: { column: Column<CouponRow> }) => (
           <div className="flex items-center gap-1">
-            Code
+            {t("admin.labels.code")}
             <DataTableSorter column={column} />
           </div>
         ),
@@ -97,25 +102,33 @@ export function CouponListPage() {
       {
         id: "partner_id",
         accessorKey: "partner_id",
-        header: "Partner",
+        header: t("admin.labels.partner"),
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const pid = getValue() as string | null;
           if (!pid) return <span className="text-muted-foreground">—</span>;
-          return <span>{partnerLookup.get(pid) ?? <span className="text-muted-foreground">—</span>}</span>;
+          return (
+            <span>
+              {partnerLookup.get(pid) ?? (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </span>
+          );
         },
       },
       {
         id: "discount_type",
         accessorKey: "discount_type",
-        header: "Type",
+        header: t("admin.labels.type"),
         cell: ({ getValue }: { getValue: () => unknown }) => (
-          <Badge variant="outline">{getValue() === "percentage" ? "%" : "Fixed"}</Badge>
+          <Badge variant="outline">
+            {getValue() === "percentage" ? "%" : "Fixed"}
+          </Badge>
         ),
       },
       {
         id: "discount_value",
         accessorKey: "discount_value",
-        header: "Value",
+        header: t("admin.labels.value"),
         cell: ({ row }: { row: { original: CouponRow } }) =>
           row.original.discount_type === "percentage"
             ? `${row.original.discount_value}%`
@@ -124,7 +137,7 @@ export function CouponListPage() {
       {
         id: "used_count",
         accessorKey: "used_count",
-        header: "Used",
+        header: t("admin.labels.used"),
         cell: ({ row }: { row: { original: CouponRow } }) => {
           const { used_count, max_uses } = row.original;
           return max_uses ? `${used_count}/${max_uses}` : used_count;
@@ -132,8 +145,9 @@ export function CouponListPage() {
       },
       {
         id: "partner",
-        header: "Partner",
-        accessorFn: (row: CouponRow) => row.partner_id ? (partnerLookup.get(row.partner_id) ?? "") : "",
+        header: t("admin.labels.partner"),
+        accessorFn: (row: CouponRow) =>
+          row.partner_id ? (partnerLookup.get(row.partner_id) ?? "") : "",
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string;
           return val || <span className="text-muted-foreground">—</span>;
@@ -142,20 +156,22 @@ export function CouponListPage() {
       {
         id: "is_active",
         accessorKey: "is_active",
-        header: "Status",
+        header: t("admin.labels.status"),
         cell: ({ getValue }: { getValue: () => unknown }) => (
           <Badge variant={getValue() ? "default" : "secondary"}>
-            {getValue() ? "Active" : "Inactive"}
+            {getValue() ? t("admin.labels.active") : t("admin.labels.inactive")}
           </Badge>
         ),
       },
       {
         id: "valid_until",
         accessorKey: "valid_until",
-        header: "Valid Until",
+        header: t("admin.labels.validUntil"),
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string | null;
-          return val ? new Date(val).toLocaleDateString("pl-PL") : "No limit";
+          return val
+            ? new Date(val).toLocaleDateString("pl-PL")
+            : t("admin.labels.noLimit");
         },
       },
     ],
@@ -208,7 +224,12 @@ export function CouponListPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Coupons</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={exporting}
+          >
             <Download className="h-4 w-4 mr-1" />
             {exporting ? "Exporting..." : "Export CSV"}
           </Button>
@@ -228,7 +249,9 @@ export function CouponListPage() {
         </div>
         <div className="w-40">
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">All Types</SelectItem>
               <SelectItem value="percentage">Percentage</SelectItem>
@@ -238,7 +261,9 @@ export function CouponListPage() {
         </div>
         <div className="w-36">
           <Select value={activeFilter} onValueChange={setActiveFilter}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">All Status</SelectItem>
               <SelectItem value="true">Active</SelectItem>

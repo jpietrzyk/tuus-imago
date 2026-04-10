@@ -32,6 +32,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { useState, useCallback } from "react";
+import { t } from "@/locales/i18n";
 
 type OrderDetail = {
   id: string;
@@ -89,11 +90,7 @@ type ShipmentStatus =
   | "failed_delivery"
   | "returned";
 
-type OrderStatus =
-  | "pending_payment"
-  | "paid"
-  | "cancelled"
-  | "refunded";
+type OrderStatus = "pending_payment" | "paid" | "cancelled" | "refunded";
 
 const SHIPMENT_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
   pending_fulfillment: ["in_transit", "failed_delivery", "returned"],
@@ -176,7 +173,10 @@ export function OrderShowPage() {
     resource: "order_items",
     pagination: { pageSize: 100 },
     filters: [{ field: "order_id", operator: "eq", value: id }],
-    meta: { select: "id,slot_key,slot_index,transformed_url,public_id,secure_url,transformations,ai_adjustments" },
+    meta: {
+      select:
+        "id,slot_key,slot_index,transformed_url,public_id,secure_url,transformations,ai_adjustments",
+    },
   });
 
   const { result: historyResult } = useList<StatusHistoryEntry>({
@@ -213,7 +213,11 @@ export function OrderShowPage() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Order not found.</p>
-        <Button variant="outline" onClick={() => navigate("/admin/orders")} className="mt-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate("/admin/orders")}
+          className="mt-4"
+        >
           Back to Orders
         </Button>
       </div>
@@ -284,7 +288,11 @@ export function OrderShowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/orders")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin/orders")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -292,7 +300,7 @@ export function OrderShowPage() {
             Order #{order.order_number}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Created {formatDateTime(order.created_at)}
+            {t("admin.labels.created")} {formatDateTime(order.created_at)}
           </p>
         </div>
         <div className="ml-auto flex gap-2">
@@ -306,7 +314,8 @@ export function OrderShowPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" /> Ordered Paintings ({items.length})
+                <Package className="h-5 w-5" /> Ordered Paintings (
+                {items.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -315,7 +324,9 @@ export function OrderShowPage() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((item: OrderItem) => {
-                    const aiLabels = getActiveAiLabels(item.ai_adjustments as Record<string, unknown> | null);
+                    const aiLabels = getActiveAiLabels(
+                      item.ai_adjustments as Record<string, unknown> | null,
+                    );
                     return (
                       <div
                         key={item.id}
@@ -481,12 +492,23 @@ export function OrderShowPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <p><span className="font-medium">Name:</span> {order.customer_name}</p>
-              <p><span className="font-medium">Email:</span> {order.customer_email}</p>
+              <p>
+                <span className="font-medium">Name:</span> {order.customer_name}
+              </p>
+              <p>
+                <span className="font-medium">Email:</span>{" "}
+                {order.customer_email}
+              </p>
               {order.customer_phone && (
-                <p><span className="font-medium">Phone:</span> {order.customer_phone}</p>
+                <p>
+                  <span className="font-medium">Phone:</span>{" "}
+                  {order.customer_phone}
+                </p>
               )}
-              <p><span className="font-medium">Marketing:</span> {order.marketing_consent ? "Yes" : "No"}</p>
+              <p>
+                <span className="font-medium">Marketing:</span>{" "}
+                {order.marketing_consent ? "Yes" : "No"}
+              </p>
             </CardContent>
           </Card>
 
@@ -498,27 +520,44 @@ export function OrderShowPage() {
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
               <p>{order.shipping_address}</p>
-              <p>{order.shipping_city}, {order.shipping_postal_code}</p>
+              <p>
+                {order.shipping_city}, {order.shipping_postal_code}
+              </p>
               <p>{order.shipping_country}</p>
               <Separator className="my-2" />
-              <p><span className="font-medium">Method:</span> {order.shipping_method}</p>
-              <p><span className="font-medium">Cost:</span> {formatPrice(order.shipping_cost)}</p>
+              <p>
+                <span className="font-medium">Method:</span>{" "}
+                {order.shipping_method}
+              </p>
+              <p>
+                <span className="font-medium">Cost:</span>{" "}
+                {formatPrice(order.shipping_cost)}
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" /> Payment
+                <CreditCard className="h-5 w-5" /> {t("admin.labels.payment")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
-              <p><span className="font-medium">Status:</span> {order.payment_status}</p>
+              <p>
+                <span className="font-medium">Status:</span>{" "}
+                {order.payment_status}
+              </p>
               {order.payment_provider && (
-                <p><span className="font-medium">Provider:</span> {order.payment_provider}</p>
+                <p>
+                  <span className="font-medium">Provider:</span>{" "}
+                  {order.payment_provider}
+                </p>
               )}
               {order.payment_paid_at && (
-                <p><span className="font-medium">Paid:</span> {formatDateTime(order.payment_paid_at)}</p>
+                <p>
+                  <span className="font-medium">Paid:</span>{" "}
+                  {formatDateTime(order.payment_paid_at)}
+                </p>
               )}
               <Separator className="my-2" />
               <div className="flex justify-between">
@@ -576,13 +615,18 @@ export function OrderShowPage() {
               </div>
             ))}
             {history.length === 0 && (
-              <p className="text-sm text-muted-foreground">No history entries</p>
+              <p className="text-sm text-muted-foreground">
+                No history entries
+              </p>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Dialog open={!!previewItem} onOpenChange={(open) => !open && setPreviewItem(null)}>
+      <Dialog
+        open={!!previewItem}
+        onOpenChange={(open) => !open && setPreviewItem(null)}
+      >
         <DialogContent className="max-w-4xl w-full p-0 overflow-hidden">
           {previewItem && (
             <>
@@ -592,8 +636,17 @@ export function OrderShowPage() {
                   <span className="text-sm font-normal text-muted-foreground">
                     Slot {previewItem.slot_index + 1} of {items.length}
                   </span>
-                  {getActiveAiLabels(previewItem.ai_adjustments as Record<string, unknown> | null).map((label) => (
-                    <Badge key={label} variant="secondary" className="text-xs gap-1">
+                  {getActiveAiLabels(
+                    previewItem.ai_adjustments as Record<
+                      string,
+                      unknown
+                    > | null,
+                  ).map((label) => (
+                    <Badge
+                      key={label}
+                      variant="secondary"
+                      className="text-xs gap-1"
+                    >
                       <Sparkles className="h-2.5 w-2.5" />
                       {label}
                     </Badge>

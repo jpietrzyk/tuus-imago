@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { t } from "@/locales/i18n";
 
 type Partner = {
   id: string;
@@ -60,7 +61,11 @@ export function PartnerEditPage() {
   const city = form.get("city", partner?.city ?? "");
   const address = form.get("address", partner?.address ?? "");
   const notes = form.get("notes", partner?.notes ?? "");
-  const isActive = form.get("is_active", partner?.is_active != null ? String(partner.is_active) : "true") === "true";
+  const isActive =
+    form.get(
+      "is_active",
+      partner?.is_active != null ? String(partner.is_active) : "true",
+    ) === "true";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,17 +112,28 @@ export function PartnerEditPage() {
   }
 
   if (!partner) {
-    return <div className="text-center py-12 text-muted-foreground">Partner not found.</div>;
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Partner not found.
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6 max-w-xl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/admin/partners/${id}`)}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(`/admin/partners/${id}`)}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold">Edit Partner</h1>
-        <Badge variant={partner.is_active ? "default" : "secondary"} className="ml-2">
+        <h1 className="text-2xl font-bold">{t("admin.labels.editPartner")}</h1>
+        <Badge
+          variant={partner.is_active ? "default" : "secondary"}
+          className="ml-2"
+        >
           {partner.is_active ? "Active" : "Inactive"}
         </Badge>
       </div>
@@ -125,44 +141,82 @@ export function PartnerEditPage() {
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
-            {success && <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">Partner updated.</div>}
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+                Partner updated.
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="companyName">Company Name</Label>
-              <Input id="companyName" value={companyName} onChange={(e) => form.set("company_name", e.target.value)} required />
+              <Input
+                id="companyName"
+                value={companyName}
+                onChange={(e) => form.set("company_name", e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="contactName">Contact Name</Label>
-              <Input id="contactName" value={contactName} onChange={(e) => form.set("contact_name", e.target.value)} />
+              <Input
+                id="contactName"
+                value={contactName}
+                onChange={(e) => form.set("contact_name", e.target.value)}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="nip">NIP (Tax ID)</Label>
-                <Input id="nip" value={nip} onChange={(e) => form.set("nip", e.target.value)} />
+                <Input
+                  id="nip"
+                  value={nip}
+                  onChange={(e) => form.set("nip", e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contactEmail">Contact Email</Label>
-                <Input id="contactEmail" type="email" value={contactEmail} onChange={(e) => form.set("contact_email", e.target.value)} />
+                <Input
+                  id="contactEmail"
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => form.set("contact_email", e.target.value)}
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" value={phone} onChange={(e) => form.set("phone", e.target.value)} />
+                <Input
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => form.set("phone", e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="city">City</Label>
-                <Input id="city" value={city} onChange={(e) => form.set("city", e.target.value)} />
+                <Input
+                  id="city"
+                  value={city}
+                  onChange={(e) => form.set("city", e.target.value)}
+                />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Input id="address" value={address} onChange={(e) => form.set("address", e.target.value)} />
+              <Input
+                id="address"
+                value={address}
+                onChange={(e) => form.set("address", e.target.value)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -181,15 +235,27 @@ export function PartnerEditPage() {
                 type="checkbox"
                 id="isActive"
                 checked={isActive}
-                onChange={(e) => form.set("is_active", String(e.target.checked))}
+                onChange={(e) =>
+                  form.set("is_active", String(e.target.checked))
+                }
                 className="h-4 w-4 rounded border-input"
               />
               <Label htmlFor="isActive">Active</Label>
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Save Changes"}</Button>
-              <Button type="button" variant="outline" onClick={() => navigate(`/admin/partners/${id}`)}>Cancel</Button>
+              <Button type="submit" disabled={saving}>
+                {saving
+                  ? t("admin.actions.saving")
+                  : t("admin.actions.saveChanges")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate(`/admin/partners/${id}`)}
+              >
+                {t("admin.actions.cancel")}
+              </Button>
             </div>
           </form>
         </CardContent>
