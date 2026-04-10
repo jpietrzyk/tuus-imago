@@ -885,7 +885,8 @@ export const ImageUploader = forwardRef<
         }
 
         return splitFiles.map((file) => ({
-          ...buildSelectedImageItem(file),
+          ...buildSelectedImageItem(file, false),
+          displayImageProportion: "vertical" as ImageDisplayProportion,
           previewEffects: {
             ...activeImage.previewEffects,
           },
@@ -1296,6 +1297,11 @@ export const ImageUploader = forwardRef<
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
           onMetadataResolved={handleMetadataResolved}
+          onSelectEmptySlot={
+            typeof activeImageIndex === "number"
+              ? () => handlePreviewSlotSelect(activeImageIndex)
+              : undefined
+          }
         />
 
         <UploaderPreviewToolsPanel

@@ -35,6 +35,7 @@ export default function SideSlotPreview({
   onSelectSlot,
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
+  const isSpacer = slotIndex === null;
   const isAddSlotAction = !image && typeof slotIndex === "number";
   const sideProportion: ImageDisplayProportion =
     image?.displayImageProportion ?? "horizontal";
@@ -68,6 +69,16 @@ export default function SideSlotPreview({
 
     return `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
   };
+
+  if (isSpacer) {
+    return (
+      <div
+        className="h-full shrink-0"
+        style={{ flexBasis: "0", flexGrow: 1 }}
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <button

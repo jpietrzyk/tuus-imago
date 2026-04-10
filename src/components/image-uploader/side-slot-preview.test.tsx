@@ -41,7 +41,7 @@ describe("SideSlotPreview", () => {
     expect(props.onSelectSlot).toHaveBeenCalledWith(2);
   });
 
-  it("does not call onSelectSlot when slot index is null", () => {
+  it("renders invisible spacer when slot index is null", () => {
     const props = {
       ...createProps(),
       slotIndex: null,
@@ -49,11 +49,9 @@ describe("SideSlotPreview", () => {
 
     render(<SideSlotPreview {...props} />);
 
-    const button = screen.getByTestId("uploader-slider-side-left");
-    expect(button).toBeDisabled();
-
-    fireEvent.click(button);
-
+    expect(
+      screen.queryByTestId("uploader-slider-side-left"),
+    ).not.toBeInTheDocument();
     expect(props.onSelectSlot).not.toHaveBeenCalled();
   });
 

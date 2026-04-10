@@ -34,6 +34,7 @@ interface UploaderPreviewSliderProps {
     nextDisplayImageProportion: ImageDisplayProportion;
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
+  onSelectEmptySlot?: () => void;
 }
 
 export default function UploaderPreviewSlider({
@@ -60,6 +61,7 @@ export default function UploaderPreviewSlider({
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
+  onSelectEmptySlot,
 }: UploaderPreviewSliderProps) {
   return (
     <div
@@ -96,6 +98,7 @@ export default function UploaderPreviewSlider({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMetadataResolved={onMetadataResolved}
+        onSelectEmptySlot={onSelectEmptySlot}
       />
 
       <SideSlotPreview
