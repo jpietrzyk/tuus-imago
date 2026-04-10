@@ -60,6 +60,7 @@ vi.mock("@/lib/auth-context", () => ({
     resetPassword: vi.fn(),
     updatePassword: vi.fn(),
   }),
+  POST_AUTH_REDIRECT_KEY: "checkout-oauth-redirect",
 }));
 
 const { supabaseMock } = vi.hoisted(() => ({

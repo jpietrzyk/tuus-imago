@@ -24,7 +24,11 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const CHECKOUT_OAUTH_REDIRECT_FLAG = "checkout-oauth-redirect";
+/**
+ * sessionStorage key used to signal that an OAuth login was initiated from
+ * the checkout page so the user is redirected back to `/checkout` after auth.
+ */
+export const POST_AUTH_REDIRECT_KEY = "checkout-oauth-redirect";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -46,9 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       if (event === "SIGNED_IN") {
-        const checkoutRedirect = sessionStorage.getItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+        const checkoutRedirect = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
         if (checkoutRedirect) {
-          sessionStorage.removeItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+          sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
           window.location.href = "/checkout";
         }
       }

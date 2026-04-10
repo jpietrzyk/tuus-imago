@@ -48,7 +48,7 @@ import {
   type ValidateCouponResponse,
   type CustomerAddress,
 } from "@/lib/orders-api";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import { Tag } from "lucide-react";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
@@ -72,7 +72,6 @@ type FormTouched = Partial<Record<keyof FormData, boolean>>;
 const ORDER_SUBMISSION_KEY_STORAGE = "checkout-order-submission-key";
 const PENDING_ORDER_ID_STORAGE = "checkout-pending-order-id";
 const CHECKOUT_SLOTS_STORAGE = "checkout-uploaded-slots";
-const CHECKOUT_OAUTH_REDIRECT_FLAG = "checkout-oauth-redirect";
 
 function generateOrderSubmissionKey(): string {
   if (
@@ -480,7 +479,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
         sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
         sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
-        sessionStorage.removeItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+        sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
         setSubmissionKey(generateOrderSubmissionKey());
 
         window.location.href = p24Response.redirectUrl;
@@ -518,7 +517,7 @@ export function CheckoutPage() {
       sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
       sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
       sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
-      sessionStorage.removeItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+      sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
       window.location.href = p24Response.redirectUrl;
     } catch (p24Err) {
       setIsRedirecting(false);
@@ -829,7 +828,7 @@ export function CheckoutPage() {
                         size="sm"
                         disabled={isSubmitting}
                         onClick={() => {
-                          sessionStorage.setItem(CHECKOUT_OAUTH_REDIRECT_FLAG, "true");
+                          sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
                           signInWithOAuth("google");
                         }}
                       >
@@ -847,7 +846,7 @@ export function CheckoutPage() {
                         size="sm"
                         disabled={isSubmitting}
                         onClick={() => {
-                          sessionStorage.setItem(CHECKOUT_OAUTH_REDIRECT_FLAG, "true");
+                          sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
                           signInWithOAuth("facebook");
                         }}
                       >
