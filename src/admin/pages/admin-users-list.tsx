@@ -18,8 +18,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatDateTime } from "@/lib/format";
-import { Search, Shield, ShieldOff, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Shield,
+  ShieldOff,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useState, useMemo } from "react";
+import { t } from "@/locales/i18n";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 type UserRecord = {
@@ -68,7 +76,10 @@ export function AdminUsersPage() {
     },
   });
 
-  const allUsers = useMemo(() => unwrapData<UserRecord>(usersResult.data), [usersResult.data]);
+  const allUsers = useMemo(
+    () => unwrapData<UserRecord>(usersResult.data),
+    [usersResult.data],
+  );
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allUsers;
@@ -82,12 +93,17 @@ export function AdminUsersPage() {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
-  const pageUsers = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageUsers = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
   const handleToggleAdmin = (user: UserRecord) => {
     if (toggling) return;
-    const action = user.is_admin ? "revoke admin" : "grant admin";
-    if (!confirm(`Are you sure you want to ${action} for ${user.email}?`)) return;
+    const confirmMsg = user.is_admin
+      ? t("admin.labels.userConfirmRevokeAdmin", { email: user.email })
+      : t("admin.labels.userConfirmGrantAdmin", { email: user.email });
+    if (!confirm(confirmMsg)) return;
     setToggling(user.id);
     updateProfile(
       {
@@ -158,16 +174,23 @@ export function AdminUsersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">User Accounts</h1>
-        <span className="text-sm text-muted-foreground">{filtered.length} users</span>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {t("admin.labels.userAccounts")}
+        </h1>
+        <span className="text-sm text-muted-foreground">
+          {filtered.length} {t("admin.labels.users")}
+        </span>
       </div>
 
       <div className="relative w-72">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by email or name..."
+          placeholder={t("admin.labels.userSearchByEmailOrName")}
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-8"
         />
       </div>
@@ -176,35 +199,50 @@ export function AdminUsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Last Sign In</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("admin.labels.email")}</TableHead>
+              <TableHead>{t("admin.labels.customerName")}</TableHead>
+              <TableHead>{t("admin.labels.userPhone")}</TableHead>
+              <TableHead>{t("admin.labels.userRole")}</TableHead>
+              <TableHead>{t("admin.labels.userLastSignIn")}</TableHead>
+              <TableHead>{t("admin.labels.userCreated")}</TableHead>
+              <TableHead className="text-right">{t("admin.labels.userActions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No users found
+                <TableCell
+                  colSpan={7}
+                  className="text-center py-8 text-muted-foreground"
+                >
+                  {t("admin.labels.userNoUsersFound")}
                 </TableCell>
               </TableRow>
             ) : (
               pageUsers.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium text-sm">{user.email}</TableCell>
-                  <TableCell>{user.full_name || <span className="text-muted-foreground">—</span>}</TableCell>
-                  <TableCell className="text-sm">{user.phone || <span className="text-muted-foreground">—</span>}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    {user.email}
+                  </TableCell>
+                  <TableCell>
+                    {user.full_name || (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {user.phone || (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={user.is_admin ? "default" : "secondary"}>
-                      {user.is_admin ? "Admin" : "User"}
+                      {user.is_admin ? t("admin.labels.userAdmin") : t("admin.labels.userUser")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {user.last_sign_in_at ? formatDateTime(user.last_sign_in_at) : "Never"}
+                    {user.last_sign_in_at
+                      ? formatDateTime(user.last_sign_in_at)
+                      : t("admin.labels.userNever")}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDateTime(user.created_at)}
@@ -227,12 +265,12 @@ export function AdminUsersPage() {
                         {user.is_admin ? (
                           <>
                             <ShieldOff className="h-3 w-3 mr-1" />
-                            Revoke
+                            {t("admin.labels.userRevoke")}
                           </>
                         ) : (
                           <>
                             <Shield className="h-3 w-3 mr-1" />
-                            Grant
+                            {t("admin.labels.userGrant")}
                           </>
                         )}
                       </Button>
@@ -248,7 +286,7 @@ export function AdminUsersPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {safePage} of {totalPages}
+            {t("admin.labels.userPageOf", { page: safePage, total: totalPages })}
           </p>
           <div className="flex gap-2">
             <Button
@@ -258,7 +296,7 @@ export function AdminUsersPage() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              {t("admin.labels.userPrevious")}
             </Button>
             <Button
               size="sm"
@@ -266,46 +304,53 @@ export function AdminUsersPage() {
               disabled={safePage >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next
+              {t("admin.labels.userNext")}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>
       )}
 
-      <Dialog open={!!editUser} onOpenChange={(open) => !open && setEditUser(null)}>
+      <Dialog
+        open={!!editUser}
+        onOpenChange={(open) => !open && setEditUser(null)}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{t("admin.labels.userEditUser")}</DialogTitle>
           </DialogHeader>
           {editUser && (
             <form onSubmit={handleSaveEdit} className="space-y-4">
               {editError && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{editError}</div>
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {editError}
+                </div>
               )}
               {editSuccess && (
-                <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">Profile updated.</div>
+                <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+                  {t("admin.labels.userProfileUpdated")}
+                </div>
               )}
 
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>{editUser.email}</p>
                 <Badge variant={editUser.is_admin ? "default" : "secondary"}>
-                  {editUser.is_admin ? "Admin" : "User"}
+                  {editUser.is_admin ? t("admin.labels.userAdmin") : t("admin.labels.userUser")}
                 </Badge>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editName">Full Name</Label>
+                <Label htmlFor="editName">{t("admin.labels.userFullName")}</Label>
                 <Input
                   id="editName"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Full name"
+                  placeholder={t("admin.labels.userFullNamePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editPhone">Phone</Label>
+                <Label htmlFor="editPhone">{t("admin.labels.userPhone")}</Label>
                 <Input
                   id="editPhone"
                   value={editPhone}
@@ -316,10 +361,14 @@ export function AdminUsersPage() {
 
               <div className="flex gap-3 pt-2">
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Saving..." : "Save Changes"}
+                  {saving ? t("admin.labels.userSaving") : t("admin.labels.userSaveChanges")}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setEditUser(null)}>
-                  Cancel
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditUser(null)}
+                >
+                  {t("admin.labels.userCancel")}
                 </Button>
               </div>
             </form>

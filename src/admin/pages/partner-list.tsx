@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import type { CrudFilter } from "@refinedev/core";
 import { formatPrice } from "@/lib/pricing";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { t } from "@/locales/i18n";
 
 type PartnerRow = {
   id: string;
@@ -78,10 +79,18 @@ export function PartnerListPage() {
   const filters = useMemo((): CrudFilter[] => {
     const f: CrudFilter[] = [];
     if (search.trim()) {
-      f.push({ field: "company_name", operator: "contains", value: search.trim() });
+      f.push({
+        field: "company_name",
+        operator: "contains",
+        value: search.trim(),
+      });
     }
     if (activeFilter !== "__all__") {
-      f.push({ field: "is_active", operator: "eq", value: activeFilter === "true" });
+      f.push({
+        field: "is_active",
+        operator: "eq",
+        value: activeFilter === "true",
+      });
     }
     return f;
   }, [search, activeFilter]);
@@ -111,7 +120,7 @@ export function PartnerListPage() {
       {
         id: "contact_name",
         accessorKey: "contact_name",
-        header: "Contact",
+        header: t("admin.labels.partnerContact"),
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string | null;
           return val || <span className="text-muted-foreground">—</span>;
@@ -120,7 +129,7 @@ export function PartnerListPage() {
       {
         id: "city",
         accessorKey: "city",
-        header: "City",
+        header: t("admin.labels.partnerCity"),
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const val = getValue() as string | null;
           return val || <span className="text-muted-foreground">—</span>;
@@ -128,7 +137,7 @@ export function PartnerListPage() {
       },
       {
         id: "coupon_count",
-        header: "Coupons",
+        header: t("admin.labels.partnerCoupons"),
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.coupon_count ?? 0;
@@ -139,7 +148,7 @@ export function PartnerListPage() {
       },
       {
         id: "total_orders",
-        header: "Orders",
+        header: t("admin.labels.partnerOrders"),
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.total_orders ?? 0;
@@ -150,7 +159,7 @@ export function PartnerListPage() {
       },
       {
         id: "total_revenue",
-        header: "Revenue",
+        header: t("admin.labels.partnerRevenue"),
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.total_revenue ?? 0;
@@ -162,10 +171,10 @@ export function PartnerListPage() {
       {
         id: "is_active",
         accessorKey: "is_active",
-        header: "Status",
+        header: t("admin.labels.partnerStatus"),
         cell: ({ getValue }: { getValue: () => unknown }) => (
           <Badge variant={getValue() ? "default" : "secondary"}>
-            {getValue() ? "Active" : "Inactive"}
+            {getValue() ? t("admin.labels.active") : t("admin.labels.inactive")}
           </Badge>
         ),
       },
@@ -217,14 +226,21 @@ export function PartnerListPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Partners</h1>
+        <h1 className="text-3xl font-bold">{t("admin.labels.partners")}</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={exporting}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            disabled={exporting}
+          >
             <Download className="h-4 w-4 mr-1" />
-            {exporting ? "Exporting..." : "Export CSV"}
+            {exporting
+              ? t("admin.labels.exporting")
+              : t("admin.labels.exportCsv")}
           </Button>
           <Button onClick={() => navigate("/admin/partners/new")}>
-            <Plus className="h-4 w-4 mr-2" /> New Partner
+            <Plus className="h-4 w-4 mr-2" /> {t("admin.labels.newPartner")}
           </Button>
         </div>
       </div>
@@ -232,18 +248,24 @@ export function PartnerListPage() {
       <div className="flex flex-wrap gap-3 items-end">
         <div className="w-60">
           <Input
-            placeholder="Search company..."
+            placeholder={t("admin.labels.partnerSearchCompany")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="w-36">
           <Select value={activeFilter} onValueChange={setActiveFilter}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">All Status</SelectItem>
-              <SelectItem value="true">Active</SelectItem>
-              <SelectItem value="false">Inactive</SelectItem>
+              <SelectItem value="__all__">
+                {t("admin.labels.partnerAllStatus")}
+              </SelectItem>
+              <SelectItem value="true">{t("admin.labels.active")}</SelectItem>
+              <SelectItem value="false">
+                {t("admin.labels.inactive")}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

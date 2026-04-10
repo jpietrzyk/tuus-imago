@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
+import { t } from "@/locales/i18n";
 import {
   OrderStatusBadge,
   PaymentStatusBadge,
@@ -65,9 +66,15 @@ export function CustomerShowPage() {
   if (orders.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No customer found with email: {email}</p>
-        <Button variant="outline" onClick={() => navigate("/admin/customers")} className="mt-4">
-          Back to Customers
+        <p className="text-muted-foreground">
+          {t("admin.labels.customerNoCustomerFound")} {email}
+        </p>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/admin/customers")}
+          className="mt-4"
+        >
+          {t("admin.labels.customerBackToCustomers")}
         </Button>
       </div>
     );
@@ -80,14 +87,21 @@ export function CustomerShowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/admin/customers")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin/customers")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{email}</h1>
           <p className="text-sm text-muted-foreground">
-            {orders.length} order{orders.length !== 1 ? "s" : ""} &middot;{" "}
-            {formatPrice(totalSpent)} total
+            {orders.length}{" "}
+            {orders.length !== 1
+              ? t("admin.labels.customerOrdersCount")
+              : t("admin.labels.customerOrder")}{" "}
+            &middot; {formatPrice(totalSpent)} {t("admin.labels.customerTotal")}
           </p>
         </div>
       </div>
@@ -96,7 +110,7 @@ export function CustomerShowPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" /> Customer Info
+              <User className="h-5 w-5" /> {t("admin.labels.customerInfo")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
@@ -105,9 +119,13 @@ export function CustomerShowPage() {
               <span>{email}</span>
             </div>
             <div>
-              <span className="font-medium">Marketing consent:</span>{" "}
+              <span className="font-medium">
+                {t("admin.labels.customerMarketingConsent")}
+              </span>{" "}
               <Badge variant={hasMarketingConsent ? "default" : "secondary"}>
-                {hasMarketingConsent ? "Yes" : "No"}
+                {hasMarketingConsent
+                  ? t("admin.labels.customerYes")
+                  : t("admin.labels.customerNo")}
               </Badge>
             </div>
           </CardContent>
@@ -116,7 +134,7 @@ export function CustomerShowPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" /> Latest Address
+              <MapPin className="h-5 w-5" /> {t("admin.labels.customerLatestAddress")}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
@@ -130,19 +148,19 @@ export function CustomerShowPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Summary</CardTitle>
+            <CardTitle>{t("admin.labels.customerSummary")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span>Total orders</span>
+              <span>{t("admin.labels.customerTotalOrders")}</span>
               <span className="font-medium">{orders.length}</span>
             </div>
             <div className="flex justify-between">
-              <span>Total spent</span>
+              <span>{t("admin.labels.customerTotalSpent")}</span>
               <span className="font-medium">{formatPrice(totalSpent)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Avg order value</span>
+              <span>{t("admin.labels.customerAvgOrderValue")}</span>
               <span className="font-medium">
                 {formatPrice(totalSpent / orders.length)}
               </span>
@@ -153,18 +171,20 @@ export function CustomerShowPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Orders</CardTitle>
+          <CardTitle>{t("admin.labels.customerOrders")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order #</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead>Shipment</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>{t("admin.labels.customerOrderNumber")}</TableHead>
+                <TableHead>{t("admin.labels.customerStatus")}</TableHead>
+                <TableHead>{t("admin.labels.customerPayment")}</TableHead>
+                <TableHead>{t("admin.labels.customerShipment")}</TableHead>
+                <TableHead className="text-right">
+                  {t("admin.labels.customerTotal")}
+                </TableHead>
+                <TableHead>{t("admin.labels.customerDate")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

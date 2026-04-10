@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { t } from "@/locales/i18n";
 
 type NavItem = {
   label: string;
@@ -22,12 +23,36 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", icon: <LayoutDashboard className="h-5 w-5" />, path: "/admin" },
-  { label: "Orders", icon: <ShoppingCart className="h-5 w-5" />, path: "/admin/orders" },
-  { label: "Coupons", icon: <Tag className="h-5 w-5" />, path: "/admin/coupons" },
-  { label: "Partners", icon: <Building2 className="h-5 w-5" />, path: "/admin/partners" },
-  { label: "Customers", icon: <Users className="h-5 w-5" />, path: "/admin/customers" },
-  { label: "Users", icon: <Shield className="h-5 w-5" />, path: "/admin/admin-users" },
+  {
+    label: t("admin.navigation.dashboard"),
+    icon: <LayoutDashboard className="h-5 w-5" />,
+    path: "/admin",
+  },
+  {
+    label: t("admin.navigation.orders"),
+    icon: <ShoppingCart className="h-5 w-5" />,
+    path: "/admin/orders",
+  },
+  {
+    label: t("admin.navigation.coupons"),
+    icon: <Tag className="h-5 w-5" />,
+    path: "/admin/coupons",
+  },
+  {
+    label: t("admin.navigation.partners"),
+    icon: <Building2 className="h-5 w-5" />,
+    path: "/admin/partners",
+  },
+  {
+    label: t("admin.navigation.customers"),
+    icon: <Users className="h-5 w-5" />,
+    path: "/admin/customers",
+  },
+  {
+    label: t("admin.navigation.users"),
+    icon: <Shield className="h-5 w-5" />,
+    path: "/admin/admin-users",
+  },
 ];
 
 type AdminIdentity = {
@@ -57,7 +82,9 @@ export function AdminLayout() {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
         <h1 className="text-lg font-bold tracking-tight">Tuus Imago</h1>
-        <p className="text-xs text-muted-foreground">Admin Panel</p>
+        <p className="text-xs text-muted-foreground">
+          {t("admin.navigation.adminPanel")}
+        </p>
       </div>
 
       <nav className="flex-1 p-2 space-y-1">
@@ -92,7 +119,7 @@ export function AdminLayout() {
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2" />
-          Sign out
+          {t("admin.navigation.signOut")}
         </Button>
       </div>
     </div>
