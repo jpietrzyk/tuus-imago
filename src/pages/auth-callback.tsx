@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
 import { Loader2 } from "lucide-react";
 
+const CHECKOUT_OAUTH_REDIRECT_FLAG = "checkout-oauth-redirect";
+
+function getPostAuthRedirectPath(): string {
+  const checkoutRedirect = sessionStorage.getItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+  if (checkoutRedirect) {
+    sessionStorage.removeItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+    return "/checkout";
+  }
+  return "/";
+}
+
 export function AuthCallbackPage() {
   const navigate = useNavigate();
 
@@ -15,7 +26,7 @@ export function AuthCallbackPage() {
       if (error) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          navigate("/", { replace: true });
+          navigate(getPostAuthRedirectPath(), { replace: true });
           return;
         }
         console.error("Auth callback error:", error.message);
@@ -23,13 +34,7 @@ export function AuthCallbackPage() {
         return;
       }
 
-      const checkoutRedirect = sessionStorage.getItem("checkout-oauth-redirect");
-      if (checkoutRedirect) {
-        sessionStorage.removeItem("checkout-oauth-redirect");
-        navigate("/checkout", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+      navigate(getPostAuthRedirectPath(), { replace: true });
     }
 
     handleCallback();
