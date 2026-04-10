@@ -19,20 +19,27 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     async function handleCallback() {
-      const { error } = await supabase.auth.exchangeCodeForSession(
-        window.location.href,
-      );
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
 
-      if (error) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          navigate(getPostAuthRedirectPath(), { replace: true });
-          return;
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(
+          window.location.href,
+        );
+
+        if (error) {
+          console.error("Auth callback exchange error:", error.message);
         }
-        console.error("Auth callback error:", error.message);
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
         navigate("/auth?error=callback_failed", { replace: true });
         return;
       }
+
+      window.history.replaceState({}, document.title, "/auth/callback");
 
       navigate(getPostAuthRedirectPath(), { replace: true });
     }
