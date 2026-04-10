@@ -1,4 +1,4 @@
-import { ListChecks } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +17,12 @@ export interface FooterOrderRow {
   unitPrice: number;
 }
 
-interface FooterOrderPopoverProps {
+interface CheckoutOrderDropupProps {
   rows: FooterOrderRow[];
   checkedSlotKeys: Set<UploadSlotKey>;
   onToggleSlot: (slotKey: UploadSlotKey) => void;
+  onCheckout: () => void;
+  checkoutDisabled: boolean;
 }
 
 function slotLabel(slotKey: UploadSlotKey): string {
@@ -35,19 +37,20 @@ function slotLabel(slotKey: UploadSlotKey): string {
   return t("upload.slotCenter");
 }
 
-export function FooterOrderPopover({
+export function CheckoutOrderDropup({
   rows,
   checkedSlotKeys,
   onToggleSlot,
-}: FooterOrderPopoverProps) {
-  const selectedCount = rows.reduce((sum, row) => {
+  onCheckout,
+  checkoutDisabled,
+}: CheckoutOrderDropupProps) {
+  const checkedCount = rows.reduce((sum, row) => {
     if (!checkedSlotKeys.has(row.slotKey)) {
       return sum;
     }
 
     return sum + 1;
   }, 0);
-  const totalCount = rows.length;
 
   const totalPrice = rows.reduce((sum, row) => {
     if (!checkedSlotKeys.has(row.slotKey)) {
@@ -63,21 +66,29 @@ export function FooterOrderPopover({
         <Button
           type="button"
           size="sm"
-          variant="outline"
-          className="relative h-9 w-9 rounded-full p-0"
-          aria-label={`${t("checkout.orderSelectionButton")} (${selectedCount}/${totalCount})`}
-          title={`${t("checkout.orderSelectionButton")} (${selectedCount}/${totalCount})`}
+          className="h-9 gap-2 rounded-full px-4 text-xs font-semibold tracking-[0.01em] shadow-sm sm:text-sm"
+          aria-label={
+            rows.length > 0
+              ? `${t("checkout.openCheckout")} · ${formatPrice(totalPrice)}`
+              : t("checkout.openCheckout")
+          }
         >
-          <ListChecks className="h-4 w-4" aria-hidden="true" />
-          {totalCount > 0 ? (
-            <span className="absolute -right-2 -top-2 min-w-8 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground">
-              {selectedCount}/{totalCount}
-            </span>
+          <ShoppingBag className="h-4 w-4" aria-hidden="true" />
+          {t("checkout.openCheckout")}
+          {rows.length > 0 ? (
+            <>
+              <span className="text-[10px] font-normal opacity-70">·</span>
+              <span className="text-xs font-semibold">{formatPrice(totalPrice)}</span>
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 text-[10px] font-bold leading-none">
+                {checkedCount}
+              </span>
+            </>
           ) : null}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="center"
+        side="top"
         className="w-80 p-3"
         onClick={(event) => event.stopPropagation()}
       >
@@ -146,6 +157,16 @@ export function FooterOrderPopover({
               <span>{t("checkout.orderSelectionTotal")}</span>
               <span>{formatPrice(totalPrice)}</span>
             </div>
+
+            <Button
+              size="sm"
+              className="h-8 w-full gap-2 rounded-full text-xs font-semibold"
+              disabled={checkoutDisabled}
+              onClick={onCheckout}
+            >
+              <ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("checkout.proceedToCheckout")}
+            </Button>
           </div>
         )}
       </DropdownMenuContent>
@@ -153,4 +174,4 @@ export function FooterOrderPopover({
   );
 }
 
-export default FooterOrderPopover;
+export default CheckoutOrderDropup;

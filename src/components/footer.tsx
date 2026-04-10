@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, RotateCcw, Scale, ShoppingBag, TriangleAlert } from "lucide-react";
+import { Mail, RotateCcw, Scale, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -15,7 +15,7 @@ import {
 import { t } from "@/locales/i18n";
 import { type UploadSlotKey } from "@/components/image-uploader";
 import {
-  FooterOrderPopover,
+  CheckoutOrderDropup,
   type FooterOrderRow,
 } from "@/components/footer-order-popover";
 
@@ -94,24 +94,13 @@ export function Footer({
 
           <div className="flex items-center justify-center gap-2">
             {showCheckout && onCheckout && onToggleOrderSlot ? (
-              <FooterOrderPopover
+              <CheckoutOrderDropup
                 rows={orderRows}
                 checkedSlotKeys={checkedOrderSlotKeys}
                 onToggleSlot={onToggleOrderSlot}
+                onCheckout={onCheckout}
+                checkoutDisabled={checkoutDisabled}
               />
-            ) : null}
-
-            {showCheckout && onCheckout ? (
-              <Button
-                size="sm"
-                className="h-9 gap-2 rounded-full px-4 text-xs font-semibold tracking-[0.01em] shadow-sm sm:text-sm"
-                onClick={onCheckout}
-                disabled={checkoutDisabled}
-                aria-label={t("checkout.openCheckout")}
-              >
-                <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-                {t("checkout.openCheckout")}
-              </Button>
             ) : null}
           </div>
 

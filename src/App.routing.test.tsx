@@ -8,6 +8,11 @@ import { App } from "./App";
 import { tr } from "@/test/i18n-test";
 import type { LegalPageData } from "@/lib/content-loader";
 
+function checkoutButtonLabel(): RegExp {
+  const base = tr("checkout.openCheckout").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^${base}`);
+}
+
 const fixturePage = (overrides?: Partial<LegalPageData>): LegalPageData => ({
   title: "Test Page Title",
   subtitle: "Test subtitle",
@@ -55,6 +60,7 @@ vi.mock("@/lib/auth-context", () => ({
     resetPassword: vi.fn(),
     updatePassword: vi.fn(),
   }),
+  POST_AUTH_REDIRECT_KEY: "checkout-oauth-redirect",
 }));
 
 const { supabaseMock } = vi.hoisted(() => ({
@@ -293,7 +299,7 @@ describe("App Component Routing", () => {
       screen.getByRole("button", { name: "Open camera" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+      screen.queryByRole("button", { name: checkoutButtonLabel() }),
     ).not.toBeInTheDocument();
   });
 
@@ -344,7 +350,7 @@ describe("App Component Routing", () => {
     );
 
     expect(
-      screen.queryByRole("button", { name: tr("checkout.openCheckout") }),
+      screen.queryByRole("button", { name: checkoutButtonLabel() }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: tr("uploader.resetSlots") }),
@@ -394,7 +400,7 @@ describe("App Component Routing", () => {
 
     expect(
       screen.queryByRole("button", {
-        name: tr("checkout.openCheckout"),
+        name: checkoutButtonLabel(),
       }),
     ).not.toBeInTheDocument();
 
@@ -414,7 +420,7 @@ describe("App Component Routing", () => {
       await waitFor(() => {
         expect(
           screen.getByRole("button", {
-            name: tr("checkout.openCheckout"),
+            name: checkoutButtonLabel(),
           }),
         ).toBeInTheDocument();
       });
@@ -472,7 +478,7 @@ describe("App Component Routing", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: new RegExp(tr("checkout.orderSelectionButton")),
+        name: checkoutButtonLabel(),
       }),
     );
 
@@ -484,11 +490,9 @@ describe("App Component Routing", () => {
       }),
     );
 
-    await user.keyboard("{Escape}");
-
     await user.click(
       screen.getByRole("button", {
-        name: tr("checkout.openCheckout"),
+        name: tr("checkout.proceedToCheckout"),
       }),
     );
 

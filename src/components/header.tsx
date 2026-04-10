@@ -1,5 +1,5 @@
 import { BadgeDollarSign, Scale, User, LogOut, Package, MapPin } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import type { LegalMenuSection } from "@/components/legal-navigation-sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ interface HeaderProps {
 export function Header({ onOpenLegalMenu }: HeaderProps) {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -112,7 +113,11 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
                 size="sm"
                 variant="ghost"
                 className="text-xs sm:text-sm"
-                onClick={() => navigate("/auth")}
+                onClick={() =>
+                  navigate("/auth", {
+                    state: { from: { pathname: location.pathname } },
+                  })
+                }
               >
                 <User className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t("auth.signIn")}</span>

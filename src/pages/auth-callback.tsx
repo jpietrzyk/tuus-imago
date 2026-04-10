@@ -1,14 +1,13 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
+import { POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import { Loader2 } from "lucide-react";
 
-const CHECKOUT_OAUTH_REDIRECT_FLAG = "checkout-oauth-redirect";
-
 function getPostAuthRedirectPath(): string {
-  const checkoutRedirect = sessionStorage.getItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+  const checkoutRedirect = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
   if (checkoutRedirect) {
-    sessionStorage.removeItem(CHECKOUT_OAUTH_REDIRECT_FLAG);
+    sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
     return "/checkout";
   }
   return "/";
