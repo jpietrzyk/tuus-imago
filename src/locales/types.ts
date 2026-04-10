@@ -613,9 +613,12 @@ export interface Translations {
       editUser: string;
       profileUpdated: string;
       fullName: string;
+      fullNamePlaceholder: string;
       saving: string;
       saveChanges: string;
       cancel: string;
+      confirmRevokeAdmin: string;
+      confirmGrantAdmin: string;
     };
   };
 }

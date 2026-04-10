@@ -628,15 +628,18 @@
       "never": "Nigdy",
       "revoke": "Cofnij",
       "grant": "Przyznaj",
-      "pageOf": "Strona {{page}} z {{total}}",
+      "pageOf": "Strona {page} z {total}",
       "previous": "Poprzednia",
       "next": "Następna",
       "editUser": "Edytuj użytkownika",
       "profileUpdated": "Profil zaktualizowany.",
       "fullName": "Pełna nazwa",
+      "fullNamePlaceholder": "Pełna nazwa",
       "saving": "Zapisywanie...",
       "saveChanges": "Zapisz zmiany",
-      "cancel": "Anuluj"
+      "cancel": "Anuluj",
+      "confirmRevokeAdmin": "Czy na pewno chcesz cofnąć uprawnienia admina dla {email}?",
+      "confirmGrantAdmin": "Czy na pewno chcesz przyznać uprawnienia admina dla {email}?"
     }
   }
 }

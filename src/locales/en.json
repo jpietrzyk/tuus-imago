@@ -628,15 +628,18 @@
       "never": "Never",
       "revoke": "Revoke",
       "grant": "Grant",
-      "pageOf": "Page {{page}} of {{total}}",
+      "pageOf": "Page {page} of {total}",
       "previous": "Previous",
       "next": "Next",
       "editUser": "Edit User",
       "profileUpdated": "Profile updated.",
       "fullName": "Full Name",
+      "fullNamePlaceholder": "Full name",
       "saving": "Saving...",
       "saveChanges": "Save Changes",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "confirmRevokeAdmin": "Are you sure you want to revoke admin for {email}?",
+      "confirmGrantAdmin": "Are you sure you want to grant admin for {email}?"
     }
   }
 }

@@ -100,9 +100,10 @@ export function AdminUsersPage() {
 
   const handleToggleAdmin = (user: UserRecord) => {
     if (toggling) return;
-    const action = user.is_admin ? "revoke admin" : "grant admin";
-    if (!confirm(`Are you sure you want to ${action} for ${user.email}?`))
-      return;
+    const confirmMsg = user.is_admin
+      ? t("admin.labels.confirmRevokeAdmin", { email: user.email })
+      : t("admin.labels.confirmGrantAdmin", { email: user.email });
+    if (!confirm(confirmMsg)) return;
     setToggling(user.id);
     updateProfile(
       {
@@ -198,13 +199,13 @@ export function AdminUsersPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Last Sign In</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("admin.labels.email")}</TableHead>
+              <TableHead>{t("admin.labels.name")}</TableHead>
+              <TableHead>{t("admin.labels.phone")}</TableHead>
+              <TableHead>{t("admin.labels.role")}</TableHead>
+              <TableHead>{t("admin.labels.lastSignIn")}</TableHead>
+              <TableHead>{t("admin.labels.created")}</TableHead>
+              <TableHead className="text-right">{t("admin.labels.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -214,7 +215,7 @@ export function AdminUsersPage() {
                   colSpan={7}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  No users found
+                  {t("admin.labels.noUsersFound")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -235,13 +236,13 @@ export function AdminUsersPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.is_admin ? "default" : "secondary"}>
-                      {user.is_admin ? "Admin" : "User"}
+                      {user.is_admin ? t("admin.labels.admin") : t("admin.labels.user")}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {user.last_sign_in_at
                       ? formatDateTime(user.last_sign_in_at)
-                      : "Never"}
+                      : t("admin.labels.never")}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDateTime(user.created_at)}
@@ -264,12 +265,12 @@ export function AdminUsersPage() {
                         {user.is_admin ? (
                           <>
                             <ShieldOff className="h-3 w-3 mr-1" />
-                            Revoke
+                            {t("admin.labels.revoke")}
                           </>
                         ) : (
                           <>
                             <Shield className="h-3 w-3 mr-1" />
-                            Grant
+                            {t("admin.labels.grant")}
                           </>
                         )}
                       </Button>
@@ -285,7 +286,7 @@ export function AdminUsersPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {safePage} of {totalPages}
+            {t("admin.labels.pageOf", { page: safePage, total: totalPages })}
           </p>
           <div className="flex gap-2">
             <Button
@@ -295,7 +296,7 @@ export function AdminUsersPage() {
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              {t("admin.labels.previous")}
             </Button>
             <Button
               size="sm"
@@ -303,7 +304,7 @@ export function AdminUsersPage() {
               disabled={safePage >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >
-              Next
+              {t("admin.labels.next")}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
@@ -316,7 +317,7 @@ export function AdminUsersPage() {
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>{t("admin.labels.editUser")}</DialogTitle>
           </DialogHeader>
           {editUser && (
             <form onSubmit={handleSaveEdit} className="space-y-4">
@@ -327,29 +328,29 @@ export function AdminUsersPage() {
               )}
               {editSuccess && (
                 <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
-                  Profile updated.
+                  {t("admin.labels.profileUpdated")}
                 </div>
               )}
 
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>{editUser.email}</p>
                 <Badge variant={editUser.is_admin ? "default" : "secondary"}>
-                  {editUser.is_admin ? "Admin" : "User"}
+                  {editUser.is_admin ? t("admin.labels.admin") : t("admin.labels.user")}
                 </Badge>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editName">Full Name</Label>
+                <Label htmlFor="editName">{t("admin.labels.fullName")}</Label>
                 <Input
                   id="editName"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Full name"
+                  placeholder={t("admin.labels.fullNamePlaceholder")}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editPhone">Phone</Label>
+                <Label htmlFor="editPhone">{t("admin.labels.phone")}</Label>
                 <Input
                   id="editPhone"
                   value={editPhone}
@@ -360,14 +361,14 @@ export function AdminUsersPage() {
 
               <div className="flex gap-3 pt-2">
                 <Button type="submit" disabled={saving}>
-                  {saving ? "Saving..." : "Save Changes"}
+                  {saving ? t("admin.labels.saving") : t("admin.labels.saveChanges")}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setEditUser(null)}
                 >
-                  Cancel
+                  {t("admin.labels.cancel")}
                 </Button>
               </div>
             </form>
