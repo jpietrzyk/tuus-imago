@@ -29,6 +29,42 @@ import { TermsPage } from "./pages/terms";
 import { PaymentsPage } from "./pages/payments";
 import { ComplaintPage } from "./pages/complaint";
 import { CANVAS_PRINT_UNIT_PRICE } from "@/lib/pricing";
+import { getPageBySlug } from "@/lib/content-loader";
+import { ContentPageOverlay } from "@/components/content-page-overlay";
+
+const UPLOAD_SLOTS_STORAGE = "upload-uploaded-slots";
+
+function persistUploadSlots(slots: UploadedSlotResult[]) {
+  try {
+    if (slots.length > 0) {
+      sessionStorage.setItem(UPLOAD_SLOTS_STORAGE, JSON.stringify(slots));
+    } else {
+      sessionStorage.removeItem(UPLOAD_SLOTS_STORAGE);
+    }
+  } catch {
+    // sessionStorage may be unavailable in private browsing or quota exceeded
+  }
+}
+
+function restoreUploadSlots(): UploadedSlotResult[] {
+  try {
+    const saved = sessionStorage.getItem(UPLOAD_SLOTS_STORAGE);
+    if (saved) {
+      return JSON.parse(saved) as UploadedSlotResult[];
+    }
+  } catch {
+    // sessionStorage may be unavailable or data corrupted
+  }
+  return [];
+}
+
+function clearUploadSlots() {
+  try {
+    sessionStorage.removeItem(UPLOAD_SLOTS_STORAGE);
+  } catch {
+    // ignore
+  }
+}
 import { AuthPage } from "./pages/auth";
 import { AuthCallbackPage } from "./pages/auth-callback";
 import { ResetPasswordPage } from "./pages/auth-reset-password";
@@ -145,6 +181,9 @@ function StorefrontApp() {
   const [isLegalSheetOpen, setIsLegalSheetOpen] = useState(false);
   const [activeLegalSection, setActiveLegalSection] =
     useState<LegalMenuSection>("legal");
+  const [contentOverlaySlug, setContentOverlaySlug] = useState<string | null>(
+    null,
+  );
   const [isFooterCheckoutAvailable, setIsFooterCheckoutAvailable] =
     useState(false);
   const [isFooterResetAvailable, setIsFooterResetAvailable] = useState(false);
@@ -169,16 +208,41 @@ function StorefrontApp() {
     setIsLegalSheetOpen(true);
   };
 
-  const handleFooterResetActionChange = useCallback(
-    (action: (() => void) | null) => {
-      setOnFooterReset(() => action);
-    },
-    [],
-  );
+  const openContentPage = useCallback((slug: string) => {
+    setContentOverlaySlug(slug);
+  }, []);
+
+  const closeContentPage = useCallback(() => {
+    setContentOverlaySlug(null);
+  }, []);
 
   const handleCheckoutWithUpload = useCallback(
     (action: (() => Promise<UploadedSlotResult[]>) | null) => {
       setOnCheckoutWithUpload(() => action);
+    },
+    [],
+  );
+
+  // Persist upload slots to sessionStorage so they survive navigation away from /upload
+  const handleSuccessfulSlotsChange = useCallback(
+    (slots: UploadedSlotResult[]) => {
+      setSuccessfulSlotsForCheckout(slots);
+      persistUploadSlots(slots);
+    },
+    [],
+  );
+
+  // Clear persisted upload slots on reset
+  const handleResetActionChange = useCallback(
+    (action: (() => void) | null) => {
+      if (action) {
+        setOnFooterReset(() => () => {
+          action();
+          clearUploadSlots();
+        });
+      } else {
+        setOnFooterReset(null);
+      }
     },
     [],
   );
@@ -297,11 +361,12 @@ function StorefrontApp() {
               <UploadPage
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onResetAvailabilityChange={setIsFooterResetAvailable}
-                onResetActionChange={handleFooterResetActionChange}
-                onSuccessfulSlotsChange={setSuccessfulSlotsForCheckout}
+                onResetActionChange={handleResetActionChange}
+                onSuccessfulSlotsChange={handleSuccessfulSlotsChange}
                 onOrderableSlotsChange={setOrderableSlots}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
+                initialRestoredSlots={restoreUploadSlots()}
               />
             }
           />
@@ -334,6 +399,7 @@ function StorefrontApp() {
       </main>
       <Footer
         onOpenLegalMenu={() => openLegalSheet("legal")}
+        onOpenContentPage={openContentPage}
         showCheckout={showFooterCheckout}
         checkoutDisabled={showFooterCheckout && !hasCheckedOrderSlots}
         onCheckout={async () => {
@@ -365,7 +431,14 @@ function StorefrontApp() {
         open={isLegalSheetOpen}
         onOpenChange={setIsLegalSheetOpen}
         activeSection={activeLegalSection}
+        onOpenContentPage={openContentPage}
       />
+      {contentOverlaySlug && (
+        <ContentPageOverlay
+          page={getPageBySlug(contentOverlaySlug)}
+          onClose={closeContentPage}
+        />
+      )}
       {isDebug && (
         <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-2 text-xs font-medium text-amber-900 shadow-lg backdrop-blur-sm">
           <DebugToggle

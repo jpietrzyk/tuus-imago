@@ -15,7 +15,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
 import {
   Drawer,
   DrawerClose,
@@ -48,14 +47,15 @@ interface LegalNavigationSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeSection: LegalMenuSection;
+  onOpenContentPage?: (slug: string) => void;
 }
 
 export function LegalNavigationSheet({
   open,
   onOpenChange,
   activeSection,
+  onOpenContentPage,
 }: LegalNavigationSheetProps) {
-  const location = useLocation();
   const legalSectionRef = useRef<HTMLElement | null>(null);
   const paymentSectionRef = useRef<HTMLElement | null>(null);
 
@@ -134,12 +134,14 @@ export function LegalNavigationSheet({
               {legalLinks.map((page) => {
                 const Icon = iconMap[page.icon] ?? FileText;
                 return (
-                  <Link
+                  <button
                     key={page.slug}
-                    to={`/${page.slug}`}
-                    state={{ from: location.pathname }}
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onOpenContentPage?.(page.slug);
+                    }}
+                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <span className="flex items-center gap-2">
                       <Icon
@@ -152,7 +154,7 @@ export function LegalNavigationSheet({
                       className="h-3.5 w-3.5 text-gray-400"
                       aria-hidden="true"
                     />
-                  </Link>
+                  </button>
                 );
               })}
             </div>
@@ -169,12 +171,14 @@ export function LegalNavigationSheet({
               {paymentLinks.map((page) => {
                 const Icon = iconMap[page.icon] ?? BadgeDollarSign;
                 return (
-                  <Link
+                  <button
                     key={page.slug}
-                    to={`/${page.slug}`}
-                    state={{ from: location.pathname }}
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onOpenContentPage?.(page.slug);
+                    }}
+                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <span className="flex items-center gap-2">
                       <Icon
@@ -187,7 +191,7 @@ export function LegalNavigationSheet({
                       className="h-3.5 w-3.5 text-gray-400"
                       aria-hidden="true"
                     />
-                  </Link>
+                  </button>
                 );
               })}
               <a
@@ -237,12 +241,14 @@ export function LegalNavigationSheet({
               {companyLinks.map((page) => {
                 const Icon = iconMap[page.icon] ?? Building2;
                 return (
-                  <Link
+                  <button
                     key={page.slug}
-                    to={`/${page.slug}`}
-                    state={{ from: location.pathname }}
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    type="button"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onOpenContentPage?.(page.slug);
+                    }}
+                    className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <span className="flex items-center gap-2">
                       <Icon
@@ -255,7 +261,7 @@ export function LegalNavigationSheet({
                       className="h-3.5 w-3.5 text-gray-400"
                       aria-hidden="true"
                     />
-                  </Link>
+                  </button>
                 );
               })}
             </div>
