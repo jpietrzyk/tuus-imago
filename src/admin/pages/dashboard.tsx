@@ -11,7 +11,7 @@ import {
 import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
 import { ShoppingCart, DollarSign, Package, Tag } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   AreaChart,
   Area,
@@ -141,26 +141,32 @@ export function DashboardPage() {
     },
   });
 
-  const totalOrders = ordersCountResult.data?.count ?? 0;
-  const totalRevenue = paidOrdersResult.data?.total_price ?? 0;
+  const unwrapCustom = (d: unknown): unknown => {
+    if (d && typeof d === "object" && "data" in d) {
+      const inner = (d as Record<string, unknown>).data;
+      if (inner !== undefined && inner !== null) return inner;
+    }
+    return d;
+  };
+
+  const unwrapCustomArray = (d: unknown): unknown[] => {
+    const inner = unwrapCustom(d);
+    return Array.isArray(inner) ? inner : [];
+  };
+
+  const countData = unwrapCustom(ordersCountResult.data) as CountResult | undefined;
+  const revenueData = unwrapCustom(paidOrdersResult.data) as RevenueResult | undefined;
+  const totalOrders = countData?.count ?? 0;
+  const totalRevenue = revenueData?.total_price ?? 0;
   const activeCoupons = couponsResult.total ?? 0;
   const pendingShipments = pendingShipmentsResult.total ?? 0;
   const orders = recentOrdersResult.data ?? [];
 
-  const unwrapCustom = (d: unknown): unknown[] => {
-    if (Array.isArray(d)) return d;
-    if (d && typeof d === "object" && "data" in d) {
-      const inner = (d as Record<string, unknown>).data;
-      if (Array.isArray(inner)) return inner;
-    }
-    return [];
-  };
-
-  const statuses = unwrapCustom(statusBreakdownResult.data) as StatusGroup[];
-  const revenueOverTime = unwrapCustom(
+  const statuses = unwrapCustomArray(statusBreakdownResult.data) as StatusGroup[];
+  const revenueOverTime = unwrapCustomArray(
     revenueOverTimeResult.data,
   ) as RevenueOverTimePoint[];
-  const revenueByMonth = unwrapCustom(
+  const revenueByMonth = unwrapCustomArray(
     revenueByMonthResult.data,
   ) as RevenueByMonthPoint[];
 
@@ -171,17 +177,19 @@ export function DashboardPage() {
       </h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("admin.labels.totalOrders")}
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalOrders}</div>
-          </CardContent>
-        </Card>
+        <Link to="/admin/orders">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                {t("admin.labels.totalOrders")}
+              </CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalOrders}</div>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -197,29 +205,33 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("admin.labels.pendingShipments")}
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingShipments}</div>
-          </CardContent>
-        </Card>
+        <Link to="/admin/orders?shipment_status=pending_fulfillment">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                {t("admin.labels.pendingShipments")}
+              </CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingShipments}</div>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("admin.labels.activeCoupons")}
-            </CardTitle>
-            <Tag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeCoupons}</div>
-          </CardContent>
-        </Card>
+        <Link to="/admin/coupons">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                {t("admin.labels.activeCoupons")}
+              </CardTitle>
+              <Tag className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeCoupons}</div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -362,8 +374,14 @@ export function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("admin.labels.recentOrders")}</CardTitle>
+          <Link
+            to="/admin/orders"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            {t("admin.labels.viewAll")} →
+          </Link>
         </CardHeader>
         <CardContent>
           <Table>

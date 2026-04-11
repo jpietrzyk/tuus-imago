@@ -21,7 +21,7 @@ import {
 import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, X, Download, CheckSquare, Square } from "lucide-react";
 import { useState, useMemo, useCallback, useRef } from "react";
 import type { CrudFilter } from "@refinedev/core";
@@ -50,10 +50,13 @@ import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 export function OrderListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("__all__");
   const [paymentFilter, setPaymentFilter] = useState("__all__");
-  const [shipmentFilter, setShipmentFilter] = useState("__all__");
+  const [shipmentFilter, setShipmentFilter] = useState(
+    () => searchParams.get("shipment_status") ?? "__all__",
+  );
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState("cancelled");
   const [bulkLoading, setBulkLoading] = useState(false);
