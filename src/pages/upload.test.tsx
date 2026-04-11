@@ -238,7 +238,7 @@ describe("UploadPage Component", () => {
       const thumbnailUrl = getCloudinaryThumbnailUrl(originalUrl, 48, 48);
 
       expect(thumbnailUrl).toBe(
-        "https://res.cloudinary.com/demo/image/upload/c_fill,g_auto,h_48,w_48/f_auto/q_auto/e_brightness:10/v123/sample.jpg",
+        "https://res.cloudinary.com/demo/image/upload/e_brightness:10/c_fill,g_auto,h_48,w_48/f_auto/q_auto/v123/sample.jpg",
       );
     });
 

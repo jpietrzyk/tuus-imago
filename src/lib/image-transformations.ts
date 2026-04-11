@@ -53,6 +53,13 @@ function hasActiveAiAdjustments(aiAdjustments: AiAdjustments | null): boolean {
   return aiAdjustments ? Object.values(aiAdjustments).some(Boolean) : false;
 }
 
+/**
+ * Inserts Cloudinary transformation parts into a URL.
+ * If the URL already contains transformations (between /upload/ and the
+ * version/public_id), the new parts are appended AFTER the existing ones.
+ * This ensures correct ordering — e.g. AI effects run on the full image
+ * first, then thumbnail cropping is applied last.
+ */
 function applyCloudinaryTransformations(
   url: string,
   transformationParts: string[],
@@ -61,12 +68,44 @@ function applyCloudinaryTransformations(
     return url;
   }
 
-  const urlParts = url.split("/upload/");
-  if (urlParts.length !== 2) {
+  const uploadMarker = "/upload/";
+  const uploadIndex = url.indexOf(uploadMarker);
+  if (uploadIndex === -1) {
     return url;
   }
 
-  return `${urlParts[0]}/upload/${transformationParts.join("/")}/${urlParts[1]}`;
+  const prefix = url.substring(0, uploadIndex + uploadMarker.length);
+  const suffix = url.substring(uploadIndex + uploadMarker.length);
+
+  // Find the start of the version/public_id by locating the first segment
+  // that is a version (v123...) or contains a file extension.
+  // Everything before that point is existing transformations.
+  const segments = suffix.split("/");
+  let insertIndex = 0;
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    // Version segment: v followed by digits
+    if (/^v\d+/.test(seg)) {
+      insertIndex = i;
+      break;
+    }
+    // Public ID segment: contains a dot (file extension)
+    if (seg.includes(".")) {
+      insertIndex = i;
+      break;
+    }
+    // Otherwise it's an existing transformation — continue
+    insertIndex = i + 1;
+  }
+
+  const newParts = transformationParts.join("/");
+  const before = segments.slice(0, insertIndex).join("/");
+  const after = segments.slice(insertIndex).join("/");
+
+  if (before) {
+    return `${prefix}${before}/${newParts}/${after}`;
+  }
+  return `${prefix}${newParts}/${after}`;
 }
 
 export function getCloudinaryThumbnailUrl(
