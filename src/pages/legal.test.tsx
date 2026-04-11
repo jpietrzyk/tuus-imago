@@ -34,18 +34,17 @@ describe("LegalPage Component", () => {
     expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
-  it("should render the home navigation link", () => {
+  it("should render the close button", () => {
     render(
       <MemoryRouter>
         <LegalPage />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", {
+    const closeButton = screen.getByRole("button", {
       name: t("common.backToHome"),
     });
-    expect(backLink).toBeInTheDocument();
-    expect(backLink).toHaveAttribute("href", "/");
+    expect(closeButton).toBeInTheDocument();
   });
 
   it("should render the last updated text", () => {

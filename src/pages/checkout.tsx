@@ -1197,6 +1197,7 @@ export function CheckoutPage() {
                         {t("checkout.consents.termsLabel")}{" "}
                         <Link
                           to="/terms"
+                          state={{ from: location.pathname }}
                           className="text-blue-600 hover:underline"
                         >
                           {t("checkout.consents.termsLink")}
@@ -1204,6 +1205,7 @@ export function CheckoutPage() {
                         ,{" "}
                         <Link
                           to="/privacy"
+                          state={{ from: location.pathname }}
                           className="text-blue-600 hover:underline"
                         >
                           {t("checkout.consents.privacyLink")}

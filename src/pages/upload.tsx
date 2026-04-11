@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import {
   ImageUploader,
@@ -40,6 +39,7 @@ interface UploadPageProps {
     action: (() => Promise<UploadedSlotResult[]>) | null,
   ) => void;
   imageDebugDataEnabled?: boolean;
+  initialRestoredSlots?: UploadedSlotResult[];
 }
 
 const PREVIEW_LOADING_TIMEOUT_MS = 30000;
@@ -52,11 +52,9 @@ export function UploadPage({
   onOrderableSlotsChange,
   onCheckoutWithUpload,
   imageDebugDataEnabled = true,
+  initialRestoredSlots = [],
 }: UploadPageProps = {}) {
-  const location = useLocation();
-  const restoredSlots =
-    (location.state as { restoredSlots?: UploadedSlotResult[] } | null)
-      ?.restoredSlots ?? [];
+  const restoredSlots = initialRestoredSlots;
   const uploaderRef = useRef<ImageUploaderHandle | null>(null);
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [uploadedSlots, setUploadedSlots] =

@@ -34,18 +34,17 @@ describe("PrivacyPage Component", () => {
     expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
-  it("should render the back to home link", () => {
+  it("should render the close button", () => {
     render(
       <MemoryRouter>
         <PrivacyPage />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", {
+    const closeButton = screen.getByRole("button", {
       name: t("common.backToHome"),
     });
-    expect(backLink).toBeInTheDocument();
-    expect(backLink).toHaveAttribute("href", "/");
+    expect(closeButton).toBeInTheDocument();
   });
 
   it("should render the last updated text", () => {

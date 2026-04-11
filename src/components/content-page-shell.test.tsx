@@ -71,17 +71,16 @@ describe("ContentPageShell Component", () => {
     expect(screen.getByText(t("common.contentNotFoundHint"))).toBeInTheDocument();
   });
 
-  it("should render back to home link in fallback UI", () => {
+  it("should render back button in fallback UI", () => {
     render(
       <MemoryRouter>
         <ContentPageShell page={undefined} />
       </MemoryRouter>,
     );
 
-    const backLink = screen.getByRole("link", {
+    const backButton = screen.getByRole("button", {
       name: t("common.backToHome"),
     });
-    expect(backLink).toBeInTheDocument();
-    expect(backLink).toHaveAttribute("href", "/");
+    expect(backButton).toBeInTheDocument();
   });
 });

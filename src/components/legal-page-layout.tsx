@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import { Link } from "react-router-dom"
+import { X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { t } from "@/locales/i18n"
@@ -24,12 +24,16 @@ export function LegalPageLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link
-          to="/"
-          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
-        >
-          {t("common.backToHome")}
-        </Link>
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            aria-label={t("common.backToHome")}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">{title}</h1>

@@ -35,6 +35,7 @@ function renderSheet(
   const defaults = {
     open: true,
     onOpenChange: vi.fn(),
+    onOpenContentPage: vi.fn(),
     activeSection: "legal" as const,
   };
   return render(
@@ -61,14 +62,10 @@ describe("LegalNavigationSheet", () => {
   it("renders links for all legal section pages", () => {
     renderSheet();
 
-    const legalLinks = legalPages.map((p) =>
-      screen.getByRole("link", { name: p.title }),
-    );
-    expect(legalLinks).toHaveLength(legalPages.length);
     legalPages.forEach((page) => {
       expect(
-        screen.getByRole("link", { name: page.title }),
-      ).toHaveAttribute("href", `/${page.slug}`);
+        screen.getByRole("button", { name: page.title }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -77,8 +74,8 @@ describe("LegalNavigationSheet", () => {
 
     companyPages.forEach((page) => {
       expect(
-        screen.getByRole("link", { name: page.title }),
-      ).toHaveAttribute("href", `/${page.slug}`);
+        screen.getByRole("button", { name: page.title }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -87,8 +84,8 @@ describe("LegalNavigationSheet", () => {
 
     paymentPages.forEach((page) => {
       expect(
-        screen.getByRole("link", { name: page.title }),
-      ).toHaveAttribute("href", `/${page.slug}`);
+        screen.getByRole("button", { name: page.title }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -122,20 +119,24 @@ describe("LegalNavigationSheet", () => {
 
   it("calls onOpenChange(false) when a legal link is clicked", () => {
     const onOpenChange = vi.fn();
-    renderSheet({ onOpenChange });
+    const onOpenContentPage = vi.fn();
+    renderSheet({ onOpenChange, onOpenContentPage });
 
-    fireEvent.click(screen.getByRole("link", { name: legalPages[0].title }));
+    fireEvent.click(screen.getByRole("button", { name: legalPages[0].title }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenContentPage).toHaveBeenCalledWith(legalPages[0].slug);
   });
 
   it("calls onOpenChange(false) when a company link is clicked", () => {
     const onOpenChange = vi.fn();
-    renderSheet({ onOpenChange });
+    const onOpenContentPage = vi.fn();
+    renderSheet({ onOpenChange, onOpenContentPage });
 
-    fireEvent.click(screen.getByRole("link", { name: companyPages[0].title }));
+    fireEvent.click(screen.getByRole("button", { name: companyPages[0].title }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenContentPage).toHaveBeenCalledWith(companyPages[0].slug);
   });
 
   it("legal nav button has secondary variant when activeSection is legal", () => {

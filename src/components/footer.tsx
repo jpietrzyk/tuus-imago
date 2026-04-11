@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { Mail, RotateCcw, Scale, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +20,7 @@ import {
 
 interface FooterProps {
   onOpenLegalMenu: () => void;
+  onOpenContentPage?: (slug: string) => void;
   showCheckout?: boolean;
   checkoutDisabled?: boolean;
   onCheckout?: () => void;
@@ -33,6 +33,7 @@ interface FooterProps {
 
 export function Footer({
   onOpenLegalMenu,
+  onOpenContentPage,
   showCheckout = false,
   checkoutDisabled = false,
   onCheckout,
@@ -108,13 +109,12 @@ export function Footer({
             <Button
               size="sm"
               variant="outline"
-              asChild
               className="h-9 rounded-full px-3 text-xs sm:text-sm font-semibold text-blue-600 border-blue-200 hover:bg-blue-50"
+              onClick={() => onOpenContentPage?.("contact")}
+              aria-label={t("common.footerContactLink")}
             >
-              <Link to="/contact" aria-label={t("common.footerContactLink")}>
-                <Mail className="h-4 w-4" aria-hidden="true" />
-                {t("common.footerContactLink")}
-              </Link>
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              {t("common.footerContactLink")}
             </Button>
 
             <Button
