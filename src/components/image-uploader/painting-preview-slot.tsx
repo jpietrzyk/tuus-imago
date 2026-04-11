@@ -104,13 +104,16 @@ export default function PaintingPreviewSlot({
 
   const handleMetadataResolved = useCallback(
     (args: Parameters<typeof onMetadataResolved>[0]) => {
-      // Mark current cloud URL as rendered
-      setConfirmedCloudUrl(effectivePreviewUrl);
+      // Mark current cloud URL as rendered. Using a functional update to avoid
+      // capturing effectivePreviewUrl in a stale closure, and letting React
+      // bail out if the value hasn't changed (prevents infinite re-renders).
+      setConfirmedCloudUrl((prev) => {
+        const next = effectivePreviewUrl;
+        return prev === next ? prev : next;
+      });
       onMetadataResolved(args);
     },
-    // effectivePreviewUrl is derived from props and stable per render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onMetadataResolved],
+    [onMetadataResolved, effectivePreviewUrl],
   );
 
   // Derive loading state: cloud preview is active but the URL hasn't been

@@ -7,7 +7,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Settings, RotateCcw, ChevronUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Settings, ChevronUp, RotateCcw, Loader2 } from "lucide-react";
 import { t } from "@/locales/i18n";
 
 interface UploaderEffectsPopoverProps {
@@ -53,6 +54,8 @@ export function UploaderEffectsPopover({
     !!effectValues.removeBackground ||
     !!effectValues.enhance;
 
+  const isApplyingEffect = isRemoveBackgroundBusy || isEnhanceBusy;
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -71,7 +74,7 @@ export function UploaderEffectsPopover({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="center"
-        className="w-72 p-4 space-y-4"
+        className="w-72 p-4 space-y-4 bg-popover/95 backdrop-blur-sm"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="space-y-1">
@@ -88,7 +91,6 @@ export function UploaderEffectsPopover({
             {t("uploader.canvasEffectsGroupTitle")}
           </p>
 
-          {/* Brightness Control */}
           <div className="space-y-2">
             <Label className="flex items-center justify-between">
               <span>{t("uploader.brightness")}</span>
@@ -107,7 +109,6 @@ export function UploaderEffectsPopover({
             />
           </div>
 
-          {/* Contrast Control */}
           <div className="space-y-2">
             <Label className="flex items-center justify-between">
               <span>{t("uploader.contrast")}</span>
@@ -140,24 +141,14 @@ export function UploaderEffectsPopover({
                   {t("uploader.removeBackgroundDescription")}
                 </p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant={effectValues.removeBackground ? "default" : "outline"}
-                role="switch"
-                aria-label={t("upload.aiRemoveBackground")}
-                aria-checked={!!effectValues.removeBackground}
-                disabled={disabled || isRemoveBackgroundBusy}
-                onClick={() =>
-                  onToggleRemoveBackground(!effectValues.removeBackground)
+              <Switch
+                checked={!!effectValues.removeBackground}
+                onCheckedChange={(checked) =>
+                  onToggleRemoveBackground(checked)
                 }
-              >
-                {isRemoveBackgroundBusy
-                  ? t("common.loading")
-                  : effectValues.removeBackground
-                    ? t("common.on")
-                    : t("common.off")}
-              </Button>
+                disabled={disabled || isRemoveBackgroundBusy}
+                aria-label={t("upload.aiRemoveBackground")}
+              />
             </div>
           </div>
 
@@ -169,27 +160,25 @@ export function UploaderEffectsPopover({
                   {t("uploader.enhanceDescription")}
                 </p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant={effectValues.enhance ? "default" : "outline"}
-                role="switch"
-                aria-label={t("upload.aiEnhance")}
-                aria-checked={!!effectValues.enhance}
+              <Switch
+                checked={!!effectValues.enhance}
+                onCheckedChange={(checked) => onToggleEnhance(checked)}
                 disabled={disabled || isEnhanceBusy}
-                onClick={() => onToggleEnhance(!effectValues.enhance)}
-              >
-                {isEnhanceBusy
-                  ? t("common.loading")
-                  : effectValues.enhance
-                    ? t("common.on")
-                    : t("common.off")}
-              </Button>
+                aria-label={t("upload.aiEnhance")}
+              />
             </div>
           </div>
+
+          {isApplyingEffect && (
+            <div className="flex items-center gap-2 rounded-md bg-blue-50 border border-blue-200 px-3 py-2">
+              <Loader2 className="h-3.5 w-3.5 text-blue-600 animate-spin" />
+              <span className="text-xs font-medium text-blue-700">
+                {t("uploader.applyingEffect")}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Reset Button */}
         {hasEffects && (
           <Button
             type="button"
