@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
@@ -71,19 +71,18 @@ export default function SideSlotPreview({
     return `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
   };
 
-  const [isEffectImageLoading, setIsEffectImageLoading] = useState(false);
-  const prevCloudPreviewUrlRef = useRef<string | null>(null);
+  // Track the last cloud URL that has been loaded by the <img>.
+  // Updated via onLoad/onError callbacks.
+  const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
+    null,
+  );
 
-  useEffect(() => {
-    const currentPreviewUrl = useCloudPreview ? (previewUrl ?? null) : null;
-    if (
-      currentPreviewUrl !== null &&
-      currentPreviewUrl !== prevCloudPreviewUrlRef.current
-    ) {
-      setIsEffectImageLoading(true);
-    }
-    prevCloudPreviewUrlRef.current = currentPreviewUrl;
-  }, [previewUrl, useCloudPreview]);
+  // Derive loading state: cloud preview is active but the URL hasn't been
+  // confirmed as loaded yet (it changed since last onLoad).
+  const isEffectImageLoading =
+    useCloudPreview &&
+    previewUrl !== null &&
+    previewUrl !== confirmedCloudUrl;
 
   if (isSpacer) {
     return (
@@ -155,8 +154,8 @@ export default function SideSlotPreview({
                 filter: getEffectFilter(),
               }}
               draggable={false}
-              onLoad={() => setIsEffectImageLoading(false)}
-              onError={() => setIsEffectImageLoading(false)}
+              onLoad={() => setConfirmedCloudUrl(previewUrl ?? null)}
+              onError={() => setConfirmedCloudUrl(previewUrl ?? null)}
             />
             <UploadProgressOverlay
               isVisible={

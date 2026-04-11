@@ -96,16 +96,29 @@ export default function PaintingPreviewSlot({
     userSelectedProportion,
   ]);
 
-  const prevCloudPreviewUrlRef = useRef<string | null>(null);
-  const [isEffectImageLoading, setIsEffectImageLoading] = useState(false);
+  // Track the last cloud URL that has been successfully rendered on canvas.
+  // Updated via onMetadataResolved callback (fires after canvas draw).
+  const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
+    null,
+  );
 
   const handleMetadataResolved = useCallback(
     (args: Parameters<typeof onMetadataResolved>[0]) => {
-      setIsEffectImageLoading(false);
+      // Mark current cloud URL as rendered
+      setConfirmedCloudUrl(effectivePreviewUrl);
       onMetadataResolved(args);
     },
+    // effectivePreviewUrl is derived from props and stable per render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onMetadataResolved],
   );
+
+  // Derive loading state: cloud preview is active but the URL hasn't been
+  // confirmed as rendered yet (it changed since last onMetadataResolved).
+  const isEffectImageLoading =
+    useCloudPreview &&
+    effectivePreviewUrl !== null &&
+    effectivePreviewUrl !== confirmedCloudUrl;
 
   usePreviewCanvasRender({
     previewUrl: effectivePreviewUrl,
@@ -119,14 +132,6 @@ export default function PaintingPreviewSlot({
     latestRenderConfigRef,
     onMetadataResolved: handleMetadataResolved,
   });
-
-  useEffect(() => {
-    const cloudUrl = useCloudPreview ? effectivePreviewUrl : null;
-    if (cloudUrl !== null && cloudUrl !== prevCloudPreviewUrlRef.current) {
-      setIsEffectImageLoading(true);
-    }
-    prevCloudPreviewUrlRef.current = cloudUrl;
-  }, [effectivePreviewUrl, useCloudPreview]);
 
   return (
     <div className="relative mx-0 flex h-full shrink-0 items-center justify-center">
@@ -182,7 +187,7 @@ export default function PaintingPreviewSlot({
         />
 
         <UploadProgressOverlay
-          isVisible={isEffectUploading || (useCloudPreview && isEffectImageLoading)}
+          isVisible={isEffectUploading || isEffectImageLoading}
           progress={0}
           isIndeterminate
           label={t("uploader.applyingEffect")}
