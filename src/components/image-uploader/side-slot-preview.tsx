@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
@@ -70,6 +71,20 @@ export default function SideSlotPreview({
     return `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
   };
 
+  const [isEffectImageLoading, setIsEffectImageLoading] = useState(false);
+  const prevCloudPreviewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const currentPreviewUrl = useCloudPreview ? (previewUrl ?? null) : null;
+    if (
+      currentPreviewUrl !== null &&
+      currentPreviewUrl !== prevCloudPreviewUrlRef.current
+    ) {
+      setIsEffectImageLoading(true);
+    }
+    prevCloudPreviewUrlRef.current = currentPreviewUrl;
+  }, [previewUrl, useCloudPreview]);
+
   if (isSpacer) {
     return (
       <div
@@ -140,6 +155,8 @@ export default function SideSlotPreview({
                 filter: getEffectFilter(),
               }}
               draggable={false}
+              onLoad={() => setIsEffectImageLoading(false)}
+              onError={() => setIsEffectImageLoading(false)}
             />
             <UploadProgressOverlay
               isVisible={
@@ -149,6 +166,12 @@ export default function SideSlotPreview({
               }
               progress={uploadProgress}
               label={uploadProgressLabel}
+            />
+            <UploadProgressOverlay
+              isVisible={useCloudPreview && isEffectImageLoading}
+              progress={0}
+              isIndeterminate
+              label={t("uploader.applyingEffect")}
             />
           </>
         ) : null}

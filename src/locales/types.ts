@@ -242,6 +242,7 @@ export interface Translations {
     debugRectangleCoverage: string;
     debugUnknown: string;
     maxImagesError: string;
+    applyingEffect: string;
   };
   checkout: {
     title: string;

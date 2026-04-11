@@ -191,7 +191,8 @@
     "debugVerticalCoverage": "Widoczny obszar pionowy",
     "debugRectangleCoverage": "Widoczny obszar prostokątny",
     "debugUnknown": "Nieznane",
-    "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia"
+    "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia",
+    "applyingEffect": "Stosowanie efektu..."
   },
   "checkout": {
     "title": "Zamówienie",

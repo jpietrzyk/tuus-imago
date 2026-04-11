@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
@@ -94,6 +94,17 @@ export default function PaintingPreviewSlot({
     userSelectedProportion,
   ]);
 
+  const prevCloudPreviewUrlRef = useRef<string | null>(null);
+  const [isEffectImageLoading, setIsEffectImageLoading] = useState(false);
+
+  const handleMetadataResolved = useCallback(
+    (args: Parameters<typeof onMetadataResolved>[0]) => {
+      setIsEffectImageLoading(false);
+      onMetadataResolved(args);
+    },
+    [onMetadataResolved],
+  );
+
   usePreviewCanvasRender({
     previewUrl: effectivePreviewUrl,
     canvasRef: previewCanvasRef,
@@ -104,8 +115,16 @@ export default function PaintingPreviewSlot({
     userSelectedProportion,
     previewEffects: effectivePreviewEffects,
     latestRenderConfigRef,
-    onMetadataResolved,
+    onMetadataResolved: handleMetadataResolved,
   });
+
+  useEffect(() => {
+    const cloudUrl = useCloudPreview ? effectivePreviewUrl : null;
+    if (cloudUrl !== null && cloudUrl !== prevCloudPreviewUrlRef.current) {
+      setIsEffectImageLoading(true);
+    }
+    prevCloudPreviewUrlRef.current = cloudUrl;
+  }, [effectivePreviewUrl, useCloudPreview]);
 
   return (
     <div className="relative mx-0 flex h-full shrink-0 items-center justify-center">
@@ -158,6 +177,13 @@ export default function PaintingPreviewSlot({
           }
           progress={uploadProgress}
           label={uploadProgressLabel}
+        />
+
+        <UploadProgressOverlay
+          isVisible={useCloudPreview && isEffectImageLoading}
+          progress={0}
+          isIndeterminate
+          label={t("uploader.applyingEffect")}
         />
       </div>
     </div>
