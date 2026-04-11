@@ -246,7 +246,8 @@
     "debugVerticalCoverage": "Vertical visible area",
     "debugRectangleCoverage": "Rectangle visible area",
     "debugUnknown": "Unknown",
-    "maxImagesError": "You can select up to 3 images"
+    "maxImagesError": "You can select up to 3 images",
+    "applyingEffect": "Applying effect..."
   },
   "checkout": {
     "title": "Checkout",

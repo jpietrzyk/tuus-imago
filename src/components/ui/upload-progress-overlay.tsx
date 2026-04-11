@@ -2,12 +2,14 @@ interface UploadProgressOverlayProps {
   isVisible: boolean;
   progress: number; // 0-100
   label?: string;
+  isIndeterminate?: boolean;
 }
 
 export function UploadProgressOverlay({
   isVisible,
   progress,
   label,
+  isIndeterminate = false,
 }: UploadProgressOverlayProps) {
   if (!isVisible) {
     return null;
@@ -19,16 +21,19 @@ export function UploadProgressOverlay({
         <div className="text-sm font-medium text-white">
           {label || "Uploading..."}
         </div>
-        {progress !== undefined && (
+        {!isIndeterminate && progress !== undefined && (
           <div className="text-xs text-white/80">{Math.round(progress)}%</div>
         )}
       </div>
-      {/* Inline Progress Bar */}
       <div className="w-32 h-1.5 bg-white/20 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-white/80 rounded-full transition-all duration-200"
-          style={{ width: `${progress}%` }}
-        />
+        {isIndeterminate ? (
+          <div className="h-full w-1/3 bg-white/80 rounded-full animate-[indeterminate-slide_1.2s_ease-in-out_infinite]" />
+        ) : (
+          <div
+            className="h-full bg-white/80 rounded-full transition-all duration-200"
+            style={{ width: `${progress}%` }}
+          />
+        )}
       </div>
     </div>
   );

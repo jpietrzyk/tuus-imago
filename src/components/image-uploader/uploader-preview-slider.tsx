@@ -18,6 +18,7 @@ interface UploaderPreviewSliderProps {
   uploadProgress?: number;
   uploadProgressLabel?: string;
   uploadingSlotIndex?: number | null;
+  isEffectUploading?: boolean;
   canMovePrevious: boolean;
   canMoveNext: boolean;
   leftSlotIndex: number | null;
@@ -49,6 +50,7 @@ export default function UploaderPreviewSlider({
   uploadProgress = 0,
   uploadProgressLabel,
   uploadingSlotIndex = null,
+  isEffectUploading = false,
   canMovePrevious,
   canMoveNext,
   leftSlotIndex,
@@ -95,6 +97,7 @@ export default function UploaderPreviewSlider({
         uploadProgress={uploadProgress}
         uploadProgressLabel={uploadProgressLabel}
         uploadingSlotIndex={uploadingSlotIndex}
+        isEffectUploading={isEffectUploading}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMetadataResolved={onMetadataResolved}
