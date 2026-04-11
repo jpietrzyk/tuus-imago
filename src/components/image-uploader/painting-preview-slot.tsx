@@ -23,6 +23,7 @@ interface PaintingPreviewSlotProps {
   uploadProgress?: number;
   uploadProgressLabel?: string;
   uploadingSlotIndex?: number | null;
+  isEffectUploading?: boolean;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -46,6 +47,7 @@ export default function PaintingPreviewSlot({
   uploadProgress = 0,
   uploadProgressLabel,
   uploadingSlotIndex = null,
+  isEffectUploading = false,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -180,7 +182,7 @@ export default function PaintingPreviewSlot({
         />
 
         <UploadProgressOverlay
-          isVisible={useCloudPreview && isEffectImageLoading}
+          isVisible={isEffectUploading || (useCloudPreview && isEffectImageLoading)}
           progress={0}
           isIndeterminate
           label={t("uploader.applyingEffect")}

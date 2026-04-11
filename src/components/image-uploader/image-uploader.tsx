@@ -1279,6 +1279,10 @@ export const ImageUploader = forwardRef<
           uploadProgress={uploadProgress}
           uploadProgressLabel={uploadProgressLabel}
           uploadingSlotIndex={uploadingSlotIndex}
+          isEffectUploading={
+            typeof activeImageIndex === "number" &&
+            busyBackgroundUploadSlots.has(activeImageIndex)
+          }
           canMovePrevious={canMovePrevious}
           canMoveNext={canMoveNext}
           leftSlotIndex={leftSlotIndex}
