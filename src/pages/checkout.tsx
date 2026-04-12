@@ -617,11 +617,12 @@ export function CheckoutPage() {
                 {t("checkout.backToUploadDialogCancel")}
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={() =>
+                onClick={() => {
+                  sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
                   navigate("/upload", {
                     state: { restoredSlots: uploadedSlots },
-                  })
-                }
+                  });
+                }}
               >
                 {t("checkout.backToUploadDialogConfirm")}
               </AlertDialogAction>
