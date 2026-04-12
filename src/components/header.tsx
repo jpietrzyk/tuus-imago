@@ -1,4 +1,4 @@
-import { Scale, User, LogOut, Package, MapPin } from "lucide-react";
+import { Menu, User, LogOut, Package, MapPin } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import type { LegalMenuSection } from "@/components/legal-navigation-sheet";
 import { Button } from "@/components/ui/button";
@@ -47,17 +47,6 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
         </Link>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-xs sm:text-sm"
-            onClick={() => onOpenLegalMenu("legal")}
-            aria-label={t("common.legalMenu")}
-          >
-            <Scale className="h-4 w-4" aria-hidden="true" />
-            {t("common.legalMenu")}
-          </Button>
-
           {!loading &&
             (user ? (
               <DropdownMenu>
@@ -112,6 +101,16 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
                 <span className="hidden sm:inline">{t("auth.signIn")}</span>
               </Button>
             ))}
+
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => onOpenLegalMenu("legal")}
+            aria-label={t("common.legalMenu")}
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </Button>
         </div>
       </div>
     </header>
