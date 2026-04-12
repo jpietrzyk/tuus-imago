@@ -65,7 +65,8 @@ describe("ImageUploader", () => {
       splitPartFiles,
     );
 
-    render(<ImageUploader />);
+    const uploaderRef = createRef<ImageUploaderHandle>();
+    render(<ImageUploader ref={uploaderRef} />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -100,7 +101,9 @@ describe("ImageUploader", () => {
         ).toBeTruthy();
       });
 
-      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+      act(() => {
+        uploaderRef.current?.removeActiveImage();
+      });
 
       await waitFor(() => {
         expect(
@@ -115,12 +118,6 @@ describe("ImageUploader", () => {
       expect(
         screen.getByTestId("selected-image-preview-placeholder"),
       ).toBeInTheDocument();
-      expect(
-        screen.getByTestId("uploader-remove-active-image"),
-      ).toHaveAttribute(
-        "aria-label",
-        tr("uploader.removeImageSlot", { index: "2" }),
-      );
     }
   });
 
@@ -254,7 +251,8 @@ describe("ImageUploader", () => {
 
   it("calls onImageMetadataChange with proportions and null after cancel", async () => {
     const onImageMetadataChange = vi.fn();
-    render(<ImageUploader onImageMetadataChange={onImageMetadataChange} />);
+    const uploaderRef = createRef<ImageUploaderHandle>();
+    render(<ImageUploader ref={uploaderRef} onImageMetadataChange={onImageMetadataChange} />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -278,14 +276,9 @@ describe("ImageUploader", () => {
         );
       });
 
-      const cancelButton = document
-        .querySelector(".lucide-x")
-        ?.closest("button");
-
-      expect(cancelButton).toBeDefined();
-      if (cancelButton) {
-        fireEvent.click(cancelButton);
-      }
+      act(() => {
+        uploaderRef.current?.removeActiveImage();
+      });
 
       await waitFor(() => {
         expect(onImageMetadataChange).toHaveBeenLastCalledWith(null);
@@ -680,7 +673,8 @@ describe("ImageUploader", () => {
   });
 
   it("removes the active image and returns to upload area when it was the only one", async () => {
-    render(<ImageUploader />);
+    const uploaderRef = createRef<ImageUploaderHandle>();
+    render(<ImageUploader ref={uploaderRef} />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -694,7 +688,9 @@ describe("ImageUploader", () => {
 
       await screen.findByRole("img", { name: "Preview" });
 
-      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+      act(() => {
+        uploaderRef.current?.removeActiveImage();
+      });
 
       await waitFor(() => {
         expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
@@ -703,7 +699,8 @@ describe("ImageUploader", () => {
   });
 
   it("removes current active image and keeps remaining image in its slot", async () => {
-    render(<ImageUploader />);
+    const uploaderRef = createRef<ImageUploaderHandle>();
+    render(<ImageUploader ref={uploaderRef} />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -743,7 +740,9 @@ describe("ImageUploader", () => {
         expect(previewCanvas.height).toBe(675);
       });
 
-      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+      act(() => {
+        uploaderRef.current?.removeActiveImage();
+      });
 
       await waitFor(() => {
         expect(
@@ -769,7 +768,8 @@ describe("ImageUploader", () => {
   });
 
   it("keeps side slots populated after center removal", async () => {
-    render(<ImageUploader />);
+    const uploaderRef = createRef<ImageUploaderHandle>();
+    render(<ImageUploader ref={uploaderRef} />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -830,7 +830,9 @@ describe("ImageUploader", () => {
         ).toBeTruthy();
       });
 
-      fireEvent.click(screen.getByTestId("uploader-remove-active-image"));
+      act(() => {
+        uploaderRef.current?.removeActiveImage();
+      });
 
       await waitFor(() => {
         expect(

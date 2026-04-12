@@ -7,8 +7,7 @@ import {
   useMemo,
   useImperativeHandle,
 } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { t } from "@/locales/i18n";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import {
@@ -139,6 +138,8 @@ export interface BatchUploadSummary {
 
 export interface ImageUploaderHandle {
   uploadFilledSlots: () => Promise<BatchUploadSummary>;
+  removeActiveImage: () => void;
+  hasActiveImage: () => boolean;
 }
 
 const SLOT_KEYS: UploadSlotKey[] = ["left", "center", "right"];
@@ -1046,8 +1047,10 @@ export const ImageUploader = forwardRef<
     ref,
     () => ({
       uploadFilledSlots,
+      removeActiveImage: handleRemoveActiveImage,
+      hasActiveImage: () => !!activeImageIndexRef.current && typeof activeImageIndexRef.current === "number",
     }),
-    [uploadFilledSlots],
+    [uploadFilledSlots, handleRemoveActiveImage],
   );
 
   const {
@@ -1241,30 +1244,8 @@ export const ImageUploader = forwardRef<
         onChange={handleFileSelect}
         className="hidden"
       />
-      <CardHeader>
+      <CardContent className="relative flex-1 flex flex-col overflow-hidden pb-3">
         <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
-        <div className="grid min-h-9 grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <span aria-hidden="true" />
-          <button
-            type="button"
-            onClick={handleRemoveActiveImage}
-            disabled={!activeImage}
-            aria-label={t("uploader.removeImageSlot", {
-              index:
-                typeof activeImageIndex === "number"
-                  ? String(activeImageIndex + 1)
-                  : "",
-            })}
-            data-testid="uploader-remove-active-image"
-            className="z-10 inline-flex items-center justify-center gap-1.5 justify-self-center rounded-full border border-border/70 bg-background/95 px-3 py-1.5 text-xs font-semibold tracking-[0.01em] text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50"
-          >
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>{t("uploader.clearSlot")}</span>
-          </button>
-          <span aria-hidden="true" />
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col space-y-5 overflow-hidden pb-5">
         <UploaderPreviewSlider
           activeImage={activeImage}
           activeImagePreviewUrl={
@@ -1306,6 +1287,7 @@ export const ImageUploader = forwardRef<
               ? () => handlePreviewSlotSelect(activeImageIndex)
               : undefined
           }
+          onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
         />
 
         <UploaderPreviewToolsPanel
