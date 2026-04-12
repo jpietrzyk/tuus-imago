@@ -7,8 +7,7 @@ import {
   useMemo,
   useImperativeHandle,
 } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { t } from "@/locales/i18n";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import {
