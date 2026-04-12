@@ -134,6 +134,9 @@ export interface Translations {
     uploading: string;
     uploadingSlotProgress: string;
     clickToUpload: string;
+    uploadFromDevice: string;
+    takePhoto: string;
+    openCamera: string;
     fileSupport: string;
     uploadedPhoto: string;
     dimensions: string;

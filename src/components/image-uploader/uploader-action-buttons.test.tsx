@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { UploaderActionButtons } from "./uploader-action-buttons";
+import { tr } from "@/test/i18n-test";
 
 describe("UploaderActionButtons", () => {
   it("renders both upload and camera buttons with accessible labels", () => {
     const noop = () => {};
     render(<UploaderActionButtons onUploadClick={noop} onCameraClick={noop} />);
 
-    const uploadBtn = screen.getByLabelText("Upload from device");
-    const cameraBtn = screen.getByLabelText("Open camera");
+    const uploadBtn = screen.getByLabelText(tr("upload.uploadFromDevice"));
+    const cameraBtn = screen.getByLabelText(tr("upload.openCamera"));
 
     expect(uploadBtn).toBeInTheDocument();
     expect(cameraBtn).toBeInTheDocument();
@@ -21,8 +22,8 @@ describe("UploaderActionButtons", () => {
     const noop = () => {};
     render(<UploaderActionButtons onUploadClick={noop} onCameraClick={noop} />);
 
-    expect(screen.getByText("Upload from device")).toBeInTheDocument();
-    expect(screen.getByText("Take photo")).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.uploadFromDevice"))).toBeInTheDocument();
+    expect(screen.getByText(tr("upload.takePhoto"))).toBeInTheDocument();
   });
 
   it("renders custom text props when provided", () => {
@@ -38,8 +39,8 @@ describe("UploaderActionButtons", () => {
 
     expect(screen.getByText("Select from gallery")).toBeInTheDocument();
     expect(screen.getByText("Use camera")).toBeInTheDocument();
-    expect(screen.queryByText("Upload from device")).not.toBeInTheDocument();
-    expect(screen.queryByText("Take photo")).not.toBeInTheDocument();
+    expect(screen.queryByText(tr("upload.uploadFromDevice"))).not.toBeInTheDocument();
+    expect(screen.queryByText(tr("upload.takePhoto"))).not.toBeInTheDocument();
   });
 
   it("fires callbacks when buttons are clicked", () => {
@@ -52,8 +53,8 @@ describe("UploaderActionButtons", () => {
       />,
     );
 
-    const uploadBtn = screen.getByLabelText("Upload from device");
-    const cameraBtn = screen.getByLabelText("Open camera");
+    const uploadBtn = screen.getByLabelText(tr("upload.uploadFromDevice"));
+    const cameraBtn = screen.getByLabelText(tr("upload.openCamera"));
 
     fireEvent.click(uploadBtn);
     fireEvent.click(cameraBtn);

@@ -293,10 +293,10 @@ describe("App Component Routing", () => {
 
     // Check for upload page elements
     expect(
-      screen.getByRole("button", { name: "Upload from device" }),
+      screen.getByRole("button", { name: tr("upload.uploadFromDevice") }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Open camera" }),
+      screen.getByRole("button", { name: tr("upload.openCamera") }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: checkoutButtonLabel() }),

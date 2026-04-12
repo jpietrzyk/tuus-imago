@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { t } from "@/locales/i18n";
 import { Upload, Camera } from "lucide-react";
 
 interface UploaderActionButtonsProps {
@@ -13,8 +14,8 @@ export function UploaderActionButtons({
   onUploadClick,
   onCameraClick,
   className,
-  uploadText = "Upload from device",
-  cameraText = "Take photo",
+  uploadText = t("upload.uploadFromDevice"),
+  cameraText = t("upload.takePhoto"),
 }: UploaderActionButtonsProps) {
   return (
     <div className={cn("w-full h-full", className)}>
@@ -22,7 +23,7 @@ export function UploaderActionButtons({
         <div className="flex h-full w-full flex-col gap-6">
           <button
             type="button"
-            aria-label="Upload from device"
+            aria-label={t("upload.uploadFromDevice")}
             className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 p-6"
             onClick={(e) => {
               e.stopPropagation();
@@ -34,7 +35,7 @@ export function UploaderActionButtons({
           </button>
           <button
             type="button"
-            aria-label="Open camera"
+            aria-label={t("upload.openCamera")}
             className="flex-1 w-full flex flex-col items-center justify-center cursor-pointer text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 p-6"
             onClick={(e) => {
               e.stopPropagation();
