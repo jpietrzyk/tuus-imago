@@ -258,21 +258,7 @@ describe("App Component Routing", () => {
     ).toHaveAttribute("href", "/");
   });
 
-  it("should render footer links on all pages", () => {
-    render(
-      <MemoryRouter initialEntries={["/"]}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    const legalButtons = screen.getAllByRole("button", {
-      name: tr("common.legalMenu"),
-    });
-
-    expect(legalButtons.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("should render payments action in header", () => {
+  it("should render legal menu button in header and clickable copyright in footer", () => {
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -280,7 +266,23 @@ describe("App Component Routing", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: tr("common.paymentsP24") }),
+      screen.getByRole("button", { name: tr("common.legalMenu") }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/TuusImago 2026/),
+    ).toBeInTheDocument();
+  });
+
+  it("should render legal menu action in header", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: tr("common.legalMenu") }),
     ).toBeInTheDocument();
   });
 

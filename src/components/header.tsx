@@ -1,4 +1,4 @@
-import { BadgeDollarSign, Scale, User, LogOut, Package, MapPin } from "lucide-react";
+import { Scale, User, LogOut, Package, MapPin } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import type { LegalMenuSection } from "@/components/legal-navigation-sheet";
 import { Button } from "@/components/ui/button";
@@ -56,17 +56,6 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
           >
             <Scale className="h-4 w-4" aria-hidden="true" />
             {t("common.legalMenu")}
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-xs sm:text-sm"
-            onClick={() => onOpenLegalMenu("payments")}
-            aria-label={t("common.paymentsP24")}
-          >
-            <BadgeDollarSign className="h-4 w-4" aria-hidden="true" />
-            <span>P24</span>
           </Button>
 
           {!loading &&

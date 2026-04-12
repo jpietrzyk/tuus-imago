@@ -1,4 +1,4 @@
-import { Mail, RotateCcw, Scale, TriangleAlert } from "lucide-react";
+import { RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -19,7 +19,6 @@ import {
 } from "@/components/footer-order-popover";
 
 interface FooterProps {
-  onOpenLegalMenu: () => void;
   onOpenContentPage?: (slug: string) => void;
   showCheckout?: boolean;
   checkoutDisabled?: boolean;
@@ -32,7 +31,6 @@ interface FooterProps {
 }
 
 export function Footer({
-  onOpenLegalMenu,
   onOpenContentPage,
   showCheckout = false,
   checkoutDisabled = false,
@@ -48,7 +46,14 @@ export function Footer({
       <div className="w-full h-full px-4 sm:px-6 lg:px-8">
         <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <div className="text-xs sm:text-sm text-gray-500">© TuusImago</div>
+            <button
+              type="button"
+              className="text-xs sm:text-sm text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
+              onClick={() => onOpenContentPage?.("contact")}
+              aria-label="Contact"
+            >
+              © TuusImago 2026 - paint that
+            </button>
 
             {showReset && onReset ? (
               <AlertDialog>
@@ -106,27 +111,6 @@ export function Footer({
           </div>
 
           <div className="flex justify-end gap-1 sm:gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-9 rounded-full px-3 text-xs sm:text-sm font-semibold text-blue-600 border-blue-200 hover:bg-blue-50"
-              onClick={() => onOpenContentPage?.("contact")}
-              aria-label={t("common.footerContactLink")}
-            >
-              <Mail className="h-4 w-4" aria-hidden="true" />
-              {t("common.footerContactLink")}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-9 rounded-full px-3 text-xs sm:text-sm"
-              onClick={onOpenLegalMenu}
-              aria-label={t("common.legalMenu")}
-            >
-              <Scale className="h-4 w-4" aria-hidden="true" />
-              {t("common.legalMenu")}
-            </Button>
           </div>
         </div>
       </div>

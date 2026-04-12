@@ -21,105 +21,32 @@ describe("Footer Component", () => {
   it("should render the footer with copyright text", () => {
     render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
+        <Footer />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/TuusImago/)).toBeInTheDocument();
-    expect(screen.getByText(tr("common.footerContactLink"))).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago 2026/)).toBeInTheDocument();
   });
 
-  it("should render legal CTA button", () => {
-    render(
-      <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    const legalButton = screen.getByRole("button", {
-      name: tr("common.legalMenu"),
-    });
-    expect(legalButton).toBeInTheDocument();
-  });
-
-  it("should call callback when legal CTA is clicked", async () => {
+  it("should call onOpenContentPage with 'contact' when copyright is clicked", async () => {
     const user = userEvent.setup();
-    const onOpenLegalMenu = vi.fn();
+    const onOpenContentPage = vi.fn();
 
     render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={onOpenLegalMenu} />
+        <Footer onOpenContentPage={onOpenContentPage} />
       </MemoryRouter>,
     );
 
-    await user.click(
-      screen.getByRole("button", { name: tr("common.legalMenu") }),
-    );
+    await user.click(screen.getByText(/TuusImago 2026/));
 
-    expect(onOpenLegalMenu).toHaveBeenCalledTimes(1);
-  });
-
-  it("should not render legacy about link in footer", () => {
-    render(
-      <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.queryByRole("link", { name: tr("common.aboutUs") }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("should not render legacy legal route link in footer", () => {
-    render(
-      <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    expect(
-      screen.queryByRole("link", {
-        name: tr("common.legalAndPrivacy"),
-      }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("should render scale icon in legal CTA button", () => {
-    render(
-      <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    const legalButton = screen.getByRole("button", {
-      name: tr("common.legalMenu"),
-    });
-    const icon = legalButton.querySelector("svg");
-    expect(icon).toBeInTheDocument();
-  });
-
-  it("should have correct styling classes", () => {
-    const { container } = render(
-      <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
-      </MemoryRouter>,
-    );
-
-    const footer = container.querySelector("footer");
-    expect(footer).toHaveClass(
-      "bg-white/95",
-      "backdrop-blur-sm",
-      "border-t",
-      "border-gray-200",
-      "shadow-lg",
-    );
+    expect(onOpenContentPage).toHaveBeenCalledWith("contact");
   });
 
   it("should not render checkout CTA by default", () => {
     render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
+        <Footer />
       </MemoryRouter>,
     );
 
@@ -132,7 +59,6 @@ describe("Footer Component", () => {
     render(
       <MemoryRouter>
         <Footer
-          onOpenLegalMenu={vi.fn()}
           showCheckout
           onCheckout={vi.fn()}
           onToggleOrderSlot={vi.fn()}
@@ -149,7 +75,6 @@ describe("Footer Component", () => {
     render(
       <MemoryRouter>
         <Footer
-          onOpenLegalMenu={vi.fn()}
           showCheckout
           onCheckout={vi.fn()}
           orderRows={[
@@ -184,7 +109,6 @@ describe("Footer Component", () => {
     render(
       <MemoryRouter>
         <Footer
-          onOpenLegalMenu={vi.fn()}
           showCheckout
           onCheckout={vi.fn()}
           orderRows={[
@@ -223,7 +147,6 @@ describe("Footer Component", () => {
     render(
       <MemoryRouter>
         <Footer
-          onOpenLegalMenu={vi.fn()}
           showCheckout
           onCheckout={vi.fn()}
           orderRows={[
@@ -263,7 +186,6 @@ describe("Footer Component", () => {
     render(
       <MemoryRouter>
         <Footer
-          onOpenLegalMenu={vi.fn()}
           showCheckout
           onCheckout={onCheckout}
           orderRows={[
@@ -298,7 +220,6 @@ describe("Footer Component", () => {
     render(
       <MemoryRouter>
         <Footer
-          onOpenLegalMenu={vi.fn()}
           showCheckout
           checkoutDisabled
           onCheckout={vi.fn()}
@@ -333,7 +254,7 @@ describe("Footer Component", () => {
   it("should not render reset CTA by default", () => {
     render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} />
+        <Footer />
       </MemoryRouter>,
     );
 
@@ -348,7 +269,7 @@ describe("Footer Component", () => {
 
     render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} showReset onReset={onReset} />
+        <Footer showReset onReset={onReset} />
       </MemoryRouter>,
     );
 
@@ -378,7 +299,7 @@ describe("Footer Component", () => {
 
     render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} showReset onReset={onReset} />
+        <Footer showReset onReset={onReset} />
       </MemoryRouter>,
     );
 
@@ -395,7 +316,7 @@ describe("Footer Component", () => {
   it("should use three-column footer layout for centered checkout", () => {
     const { container } = render(
       <MemoryRouter>
-        <Footer onOpenLegalMenu={vi.fn()} showCheckout onCheckout={vi.fn()} onToggleOrderSlot={vi.fn()} />
+        <Footer showCheckout onCheckout={vi.fn()} onToggleOrderSlot={vi.fn()} />
       </MemoryRouter>,
     );
 
