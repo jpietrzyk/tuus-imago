@@ -413,7 +413,6 @@ function StorefrontApp() {
         </Routes>
       </main>
       <Footer
-        onOpenLegalMenu={() => openLegalSheet("legal")}
         onOpenContentPage={openContentPage}
         showCheckout={showFooterCheckout}
         checkoutDisabled={showFooterCheckout && !hasCheckedOrderSlots}
