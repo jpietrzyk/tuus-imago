@@ -202,6 +202,20 @@ function StorefrontApp() {
   >(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const [uploadPageKey, setUploadPageKey] = useState(0);
+
+  useEffect(() => {
+    if (location.pathname === "/upload") {
+      setUploadPageKey((k) => k + 1);
+    }
+  }, [location.pathname, location.key]);
+
+  const uploadInitialSlots: UploadedSlotResult[] =
+    (location.state as { restoredSlots?: UploadedSlotResult[] } | null)
+      ?.restoredSlots?.length
+      ? (location.state as { restoredSlots: UploadedSlotResult[] })
+          .restoredSlots
+      : restoreUploadSlots();
 
   const openLegalSheet = (section: LegalMenuSection) => {
     setActiveLegalSection(section);
@@ -359,6 +373,7 @@ function StorefrontApp() {
             path="/upload"
             element={
               <UploadPage
+                key={uploadPageKey}
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onResetAvailabilityChange={setIsFooterResetAvailable}
                 onResetActionChange={handleResetActionChange}
@@ -366,7 +381,7 @@ function StorefrontApp() {
                 onOrderableSlotsChange={setOrderableSlots}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
-                initialRestoredSlots={restoreUploadSlots()}
+                initialRestoredSlots={uploadInitialSlots}
               />
             }
           />
