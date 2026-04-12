@@ -15,7 +15,7 @@
     "terms": "Terms",
     "payments": "Payments",
     "complaint": "Complaint Form",
-    "legalMenu": "Check",
+    "legalMenu": "Rules",
     "paymentsP24": "Payments P24",
     "loading": "Loading...",
     "processing": "Processing...",
@@ -81,7 +81,7 @@
     "status": "Status"
   },
   "legalMenu": {
-    "title": "Legal and Payments",
+    "title": "Terms of Service",
     "subtitle": "Access privacy, terms, and payment information before checkout.",
     "close": "Close legal menu",
     "sections": {

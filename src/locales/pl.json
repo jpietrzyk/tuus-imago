@@ -15,7 +15,7 @@
     "terms": "Warunki",
     "payments": "Płatności",
     "complaint": "Formularz reklamacji",
-    "legalMenu": "Sprawdź",
+    "legalMenu": "Zasady",
     "paymentsP24": "Płatności P24",
     "loading": "Ładowanie...",
     "processing": "Przetwarzanie...",
@@ -26,7 +26,7 @@
     "footerContactLink": "Kontakt"
   },
   "legalMenu": {
-    "title": "Informacje prawne i płatności",
+    "title": "Zasady korzystania z serwisu",
     "subtitle": "Dostęp do prywatności, regulaminów i informacji o płatnościach przed zakupem.",
     "close": "Zamknij menu prawne",
     "sections": {
