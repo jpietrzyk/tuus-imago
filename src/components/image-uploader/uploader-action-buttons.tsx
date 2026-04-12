@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { t } from "@/Locales/i18n";
+import { t } from "@/locales/i18n";
 import { Upload, Camera } from "lucide-react";
 
 interface UploaderActionButtonsProps {
