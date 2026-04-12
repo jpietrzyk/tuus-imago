@@ -653,10 +653,10 @@ export function UploadPage({
   }, [isPageVisible, isPreviewLoading, previewLoadingReason]);
 
   return (
-    <div className="flex-1 h-full flex justify-center p-4 transition-all duration-500 ease-in-out">
+    <div className="flex-1 h-full flex justify-center pt-1 pb-4 px-4 transition-all duration-500 ease-in-out">
       <div className="w-full h-full transition-all duration-500 ease-in-out max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl overflow-hidden lg:overflow-visible">
         <Card className="h-full border-0 bg-transparent! shadow-none! ring-0!">
-          <CardContent className="h-full space-y-6">
+          <CardContent className="h-full space-y-4">
             {/* Status Messages */}
             {isSuccess && (
               <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
@@ -728,7 +728,7 @@ export function UploadPage({
                     uploadProgress={batchUploadProgress}
                     uploadProgressLabel={uploadProgressLabel}
                     uploadingSlotIndex={uploadingSlotIndex}
-                    className="mx-auto h-full w-full max-w-sm py-6 text-lg font-semibold"
+                    className="mx-auto h-full w-full max-w-sm pt-4 pb-6 text-lg font-semibold"
                   />
                 </div>
               </div>
