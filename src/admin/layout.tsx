@@ -50,8 +50,13 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: t("admin.navigation.users"),
+    icon: <Users className="h-5 w-5" />,
+    path: "/admin/users",
+  },
+  {
+    label: t("admin.navigation.admins"),
     icon: <Shield className="h-5 w-5" />,
-    path: "/admin/admin-users",
+    path: "/admin/admins",
   },
 ];
 

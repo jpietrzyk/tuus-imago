@@ -1,5 +1,5 @@
 import { useCustom, useUpdate } from "@refinedev/core";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,8 @@ function unwrapUsers(raw: unknown): UserRecord[] {
 export function AdminUserShowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const backPath = (location.state as { from?: string } | undefined)?.from ?? "/admin/users";
   const { mutate: updateProfile } = useUpdate();
 
   const [editName, setEditName] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function AdminUserShowPage() {
         </p>
         <Button
           variant="outline"
-          onClick={() => navigate("/admin/admin-users")}
+          onClick={() => navigate(backPath)}
           className="mt-4"
         >
           {t("admin.labels.userBackToUsers")}
@@ -169,7 +171,7 @@ export function AdminUserShowPage() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/admin/admin-users")}
+          onClick={() => navigate(backPath)}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>

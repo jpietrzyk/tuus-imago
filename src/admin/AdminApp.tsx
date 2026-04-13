@@ -43,9 +43,16 @@ export function AdminApp({ children }: { children: ReactNode }) {
           meta: { label: "Customers" },
         },
         {
-          name: "admin-users",
-          list: "/admin/admin-users",
-          meta: { label: "Admin Users" },
+          name: "users",
+          list: "/admin/users",
+          show: "/admin/users/:id",
+          meta: { label: "Users" },
+        },
+        {
+          name: "admins",
+          list: "/admin/admins",
+          show: "/admin/admins/:id",
+          meta: { label: "Admins" },
         },
       ]}
       options={{

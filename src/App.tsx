@@ -168,8 +168,10 @@ export function App() {
             <Route path="partners/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PartnerEditPage /></Suspense>} />
             <Route path="customers" element={<Suspense fallback={<AdminPageLoader />}><CustomerListPage /></Suspense>} />
             <Route path="customers/:email" element={<Suspense fallback={<AdminPageLoader />}><CustomerShowPage /></Suspense>} />
-            <Route path="admin-users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage /></Suspense>} />
-            <Route path="admin-users/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
+            <Route path="users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={false} /></Suspense>} />
+            <Route path="users/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
+            <Route path="admins" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={true} /></Suspense>} />
+            <Route path="admins/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
           </Route>
         </Routes>
       </AdminApp>

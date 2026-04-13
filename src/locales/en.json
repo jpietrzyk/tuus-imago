@@ -467,6 +467,7 @@
       "partners": "Partners",
       "customers": "Customers",
       "users": "Users",
+      "admins": "Admins",
       "signOut": "Sign out",
       "adminPanel": "Admin Panel"
     },
@@ -624,6 +625,7 @@
       "customerDate": "Date",
       "userAccounts": "User Accounts",
       "users": "users",
+      "admins": "admins",
       "userSearchByEmailOrName": "Search by email or name...",
       "userPhone": "Phone",
       "userRole": "Role",
