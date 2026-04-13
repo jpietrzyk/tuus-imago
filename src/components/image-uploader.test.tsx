@@ -487,6 +487,61 @@ describe("ImageUploader", () => {
     }
   });
 
+  it("auto-selects vertical proportion for vertical image added to side slot", async () => {
+    render(<ImageUploader />);
+
+    mockImageWidth = 1200;
+    mockImageHeight = 800;
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const verticalFile = new File(["selfie"], "selfie.jpg", {
+      type: "image/jpeg",
+    });
+    const initialInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(initialInput).toBeDefined();
+
+    if (initialInput) {
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      mockImageWidth = 1080;
+      mockImageHeight = 1920;
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, {
+          target: { files: [verticalFile] },
+        });
+      }
+
+      const rightSideSlot = screen.getByTestId("uploader-slider-side-right");
+      await waitFor(() => {
+        expect(rightSideSlot.querySelector("img")).toBeTruthy();
+      });
+
+      expect(rightSideSlot.querySelector("img")).toHaveAttribute(
+        "src",
+        expect.any(String),
+      );
+
+      const rightFrame = rightSideSlot.querySelector(
+        '[data-testid="uploader-slider-side-right-preview-frame"]',
+      ) as HTMLElement | null;
+      expect(rightFrame).toBeTruthy();
+      expect(rightFrame).toHaveClass("aspect-[2/3]");
+    }
+  });
+
   it("adds second image to the clicked left slot", async () => {
     render(<ImageUploader />);
 
@@ -762,7 +817,7 @@ describe("ImageUploader", () => {
           "selected-image-preview-canvas",
         ) as HTMLCanvasElement;
         expect(nextActiveCanvas.width).toBe(900);
-        expect(nextActiveCanvas.height).toBe(506);
+        expect(nextActiveCanvas.height).toBe(900);
       });
     }
   });

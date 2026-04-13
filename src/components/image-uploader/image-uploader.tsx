@@ -364,6 +364,24 @@ export const ImageUploader = forwardRef<
     [],
   );
 
+  const resolveOptimalProportionForFile = useCallback(
+    (previewUrl: string): Promise<ImageDisplayProportion> => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          resolve(
+            getOptimalDisplayProportion(img.naturalWidth, img.naturalHeight),
+          );
+        };
+        img.onerror = () => {
+          resolve("horizontal");
+        };
+        img.src = previewUrl;
+      });
+    },
+    [],
+  );
+
   const addOrReplaceSelection = useCallback(
     (file: File, preferredIndex?: number) => {
       const currentImages = selectedImagesRef.current;
@@ -381,13 +399,7 @@ export const ImageUploader = forwardRef<
         return;
       }
 
-      const shouldAutoSelectOptimalWhenActive = !(
-        hasExistingSelection && clickedEmptySlot
-      );
-      const nextImage = buildSelectedImageItem(
-        file,
-        shouldAutoSelectOptimalWhenActive,
-      );
+      const nextImage = buildSelectedImageItem(file, true);
 
       setSelectedImages((prevImages) => {
         const nextImages = [...prevImages];
@@ -408,8 +420,29 @@ export const ImageUploader = forwardRef<
 
         return insertionIndex;
       });
+
+      resolveOptimalProportionForFile(nextImage.previewUrl).then((optimalProportion) => {
+        setSelectedImages((prevImages) => {
+          const current = prevImages[insertionIndex];
+          if (
+            !current ||
+            current.file !== file ||
+            !current.autoSelectOptimalPending ||
+            current.displayImageProportion !== "horizontal"
+          ) {
+            return prevImages;
+          }
+
+          const nextImages = [...prevImages];
+          nextImages[insertionIndex] = {
+            ...current,
+            displayImageProportion: optimalProportion,
+          };
+          return nextImages;
+        });
+      });
     },
-    [buildSelectedImageItem],
+    [buildSelectedImageItem, resolveOptimalProportionForFile],
   );
 
   const validateAndStoreFile = useCallback(
