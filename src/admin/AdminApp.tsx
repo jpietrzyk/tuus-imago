@@ -29,6 +29,11 @@ export function AdminApp({ children }: { children: ReactNode }) {
           meta: { label: "Coupons" },
         },
         {
+          name: "partner_refs",
+          list: "/admin/refs",
+          meta: { label: "Referral Codes" },
+        },
+        {
           name: "partners",
           list: "/admin/partners",
           create: "/admin/partners/new",

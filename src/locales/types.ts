@@ -452,6 +452,7 @@ export interface Translations {
       dashboard: string;
       orders: string;
       coupons: string;
+      referralCodes: string;
       partners: string;
       customers: string;
       users: string;
@@ -601,6 +602,14 @@ export interface Translations {
       partnerRefDeleteConfirm: string;
       partnerNoRefs: string;
       partnerTotalRefEvents: string;
+      partnerCouponCreate: string;
+      refListTitle: string;
+      refSearchCode: string;
+      refPartner: string;
+      refNoRefsFound: string;
+      newRef: string;
+      createRef: string;
+      refDeleteConfirm: string;
       customers: string;
       customerExporting: string;
       customerExportCsv: string;

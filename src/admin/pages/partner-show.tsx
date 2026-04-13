@@ -5,6 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +38,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useState, useCallback } from "react";
+import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 type Partner = {
   id: string;
@@ -92,6 +101,13 @@ export function PartnerShowPage() {
   const [newRefLabel, setNewRefLabel] = useState("");
   const [newRefSaving, setNewRefSaving] = useState(false);
 
+  const [addCouponDialogOpen, setAddCouponDialogOpen] = useState(false);
+  const [newCouponCode, setNewCouponCode] = useState("");
+  const [newCouponDiscountType, setNewCouponDiscountType] = useState<"percentage" | "fixed_amount">("percentage");
+  const [newCouponDiscountValue, setNewCouponDiscountValue] = useState("");
+  const [newCouponSaving, setNewCouponSaving] = useState(false);
+  const [newCouponError, setNewCouponError] = useState<string | null>(null);
+
   const { query: partnerQuery, result: partner } = useOne<Partner>({
     resource: "partners",
     id: id ?? "",
@@ -150,6 +166,43 @@ export function PartnerShowPage() {
       // error handled by refine
     }
   }, [deleteRef, statsQuery.refetch]);
+
+  const handleAddCoupon = useCallback(async () => {
+    if (!newCouponCode.trim() || !newCouponDiscountValue || !id) return;
+    setNewCouponSaving(true);
+    setNewCouponError(null);
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch("/.netlify/functions/admin-api", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          resource: "coupons",
+          data: {
+            code: newCouponCode.toUpperCase().trim(),
+            discount_type: newCouponDiscountType,
+            discount_value: parseFloat(newCouponDiscountValue),
+            currency: "PLN",
+            is_active: true,
+            partner_id: id,
+          },
+        }),
+      });
+      if (!response.ok) {
+        const err = (await response.json()) as { error?: string };
+        throw new Error(err.error ?? "Create failed");
+      }
+      setNewCouponCode("");
+      setNewCouponDiscountValue("");
+      setNewCouponDiscountType("percentage");
+      setAddCouponDialogOpen(false);
+      await statsQuery.refetch();
+    } catch (err) {
+      setNewCouponError(err instanceof Error ? err.message : "Create failed");
+    } finally {
+      setNewCouponSaving(false);
+    }
+  }, [newCouponCode, newCouponDiscountType, newCouponDiscountValue, id, statsQuery.refetch]);
 
   if (partnerQuery.isFetching) {
     return (
@@ -255,12 +308,20 @@ export function PartnerShowPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="flex items-center gap-2">
                 <Tag className="h-5 w-5" /> {t("admin.labels.partnerCoupons")} (
                 {stats?.coupons?.length ?? 0})
               </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAddCouponDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t("admin.labels.partnerCouponCreate")}
+              </Button>
             </CardHeader>
             <CardContent>
               {!stats?.coupons?.length ? (
@@ -410,6 +471,83 @@ export function PartnerShowPage() {
                 {newRefSaving ? t("admin.actions.saving") : t("admin.actions.create")}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={addCouponDialogOpen} onOpenChange={setAddCouponDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("admin.labels.partnerCouponCreate")}</DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddCoupon();
+              }}
+              className="space-y-4"
+            >
+              {newCouponError && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {newCouponError}
+                </div>
+              )}
+              <div>
+                <Label>{t("admin.labels.code")} *</Label>
+                <Input
+                  value={newCouponCode}
+                  onChange={(e) => setNewCouponCode(e.target.value)}
+                  placeholder="e.g. SUMMER20"
+                  className="mt-1"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>{t("admin.labels.discountType")}</Label>
+                  <Select
+                    value={newCouponDiscountType}
+                    onValueChange={(v) => setNewCouponDiscountType(v as "percentage" | "fixed_amount")}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percentage">
+                        {t("admin.labels.percentage")}
+                      </SelectItem>
+                      <SelectItem value="fixed_amount">
+                        {t("admin.labels.fixedAmount")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>{t("admin.labels.discountValue")} *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={newCouponDiscountValue}
+                    onChange={(e) => setNewCouponDiscountValue(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setAddCouponDialogOpen(false)}
+                >
+                  {t("admin.actions.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!newCouponCode.trim() || !newCouponDiscountValue || newCouponSaving}
+                >
+                  {newCouponSaving ? t("admin.actions.saving") : t("admin.actions.create")}
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
 
