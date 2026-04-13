@@ -28,12 +28,10 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
   };
 
   const userEmail = user?.email;
-  const userInitial = userEmail
-    ? userEmail.charAt(0).toUpperCase()
-    : "?";
+  const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
   return (
-    <header className="w-full h-[var(--app-shell-bar-height)] bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
+    <header className="w-full h-(--app-shell-bar-height) bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
       <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
         <Link
           to="/"
@@ -75,7 +73,9 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
                     <Package className="h-4 w-4 mr-2" />
                     {t("auth.orders")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/account/addresses")}>
+                  <DropdownMenuItem
+                    onClick={() => navigate("/account/addresses")}
+                  >
                     <MapPin className="h-4 w-4 mr-2" />
                     {t("auth.addresses")}
                   </DropdownMenuItem>
