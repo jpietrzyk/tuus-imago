@@ -179,21 +179,13 @@ export function OrderListPage() {
           </div>
         ),
         cell: ({
-          row,
           getValue,
         }: {
-          row: Row<OrderRow>;
           getValue: () => unknown;
         }) => (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/admin/orders/${row.original.id}`);
-            }}
-            className="text-blue-600 hover:underline font-medium"
-          >
+          <span className="font-medium">
             {getValue() as string}
-          </button>
+          </span>
         ),
         size: 120,
       },
@@ -567,7 +559,7 @@ export function OrderListPage() {
         )}
       </div>
 
-      <DataTable table={table} />
+      <DataTable table={table} onRowClick={(row) => navigate(`/admin/orders/${row.id}`)} />
     </div>
   );
 }

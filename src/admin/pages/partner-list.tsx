@@ -108,13 +108,9 @@ export function PartnerListPage() {
           </div>
         ),
         cell: ({ row }: { row: { original: PartnerRow } }) => (
-          <button
-            type="button"
-            className="font-medium text-left hover:underline"
-            onClick={() => navigate(`/admin/partners/${row.original.id}`)}
-          >
+          <span className="font-medium">
             {row.original.company_name}
-          </button>
+          </span>
         ),
       },
       {
@@ -179,7 +175,7 @@ export function PartnerListPage() {
         ),
       },
     ],
-    [statsMap, navigate],
+    [statsMap],
   );
 
   const table = useTable({
@@ -271,7 +267,7 @@ export function PartnerListPage() {
         </div>
       </div>
 
-      <DataTable table={table} />
+      <DataTable table={table} onRowClick={(row) => navigate(`/admin/partners/${row.id}`)} />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useCustom, useUpdate } from "@refinedev/core";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ function unwrapData<T>(raw: unknown): T[] {
 }
 
 export function AdminUsersPage() {
+  const navigate = useNavigate();
   const [toggling, setToggling] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -220,8 +222,12 @@ export function AdminUsersPage() {
               </TableRow>
             ) : (
               pageUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium text-sm">
+                <TableRow
+                  key={user.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/admin/admin-users/${user.id}`)}
+                >
+                  <TableCell className="text-sm">
                     {user.email}
                   </TableCell>
                   <TableCell>
@@ -252,7 +258,10 @@ export function AdminUsersPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => openEdit(user)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(user);
+                        }}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
@@ -260,7 +269,10 @@ export function AdminUsersPage() {
                         size="sm"
                         variant={user.is_admin ? "destructive" : "outline"}
                         disabled={toggling === user.id}
-                        onClick={() => handleToggleAdmin(user)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleAdmin(user);
+                        }}
                       >
                         {user.is_admin ? (
                           <>
