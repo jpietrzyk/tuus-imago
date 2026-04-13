@@ -93,6 +93,7 @@ const PartnerListPage = lazy(() => import("./admin/pages/partner-list").then((m)
 const PartnerShowPage = lazy(() => import("./admin/pages/partner-show").then((m) => ({ default: m.PartnerShowPage })));
 const PartnerCreatePage = lazy(() => import("./admin/pages/partner-create").then((m) => ({ default: m.PartnerCreatePage })));
 const PartnerEditPage = lazy(() => import("./admin/pages/partner-edit").then((m) => ({ default: m.PartnerEditPage })));
+const RefListPage = lazy(() => import("./admin/pages/ref-list").then((m) => ({ default: m.RefListPage })));
 
 function AdminPageLoader() {
   return (
@@ -164,6 +165,7 @@ export function App() {
             <Route path="coupons/new" element={<Suspense fallback={<AdminPageLoader />}><CouponCreatePage /></Suspense>} />
             <Route path="coupons/:id" element={<Suspense fallback={<AdminPageLoader />}><CouponShowPage /></Suspense>} />
             <Route path="coupons/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><CouponEditPage /></Suspense>} />
+            <Route path="refs" element={<Suspense fallback={<AdminPageLoader />}><RefListPage /></Suspense>} />
             <Route path="partners" element={<Suspense fallback={<AdminPageLoader />}><PartnerListPage /></Suspense>} />
             <Route path="partners/new" element={<Suspense fallback={<AdminPageLoader />}><PartnerCreatePage /></Suspense>} />
             <Route path="partners/:id" element={<Suspense fallback={<AdminPageLoader />}><PartnerShowPage /></Suspense>} />
@@ -211,7 +213,7 @@ function StorefrontApp() {
     if (changed) {
       const qs = params.toString();
       const newPath = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-      window.history.replaceState(null, "", newPath);
+       window.history.replaceState(null, "", newPath);
     }
   }, []);
 

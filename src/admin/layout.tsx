@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   ShoppingCart,
   Tag,
+  Link2,
   Users,
   Shield,
   Building2,
@@ -37,6 +38,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.coupons"),
     icon: <Tag className="h-5 w-5" />,
     path: "/admin/coupons",
+  },
+  {
+    label: t("admin.navigation.referralCodes"),
+    icon: <Link2 className="h-5 w-5" />,
+    path: "/admin/refs",
   },
   {
     label: t("admin.navigation.partners"),
