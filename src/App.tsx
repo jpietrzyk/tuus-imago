@@ -211,7 +211,7 @@ function StorefrontApp() {
     if (changed) {
       const qs = params.toString();
       const newPath = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-      window.history.replaceState(null, "", newPath);
+       window.history.replaceState(null, "", newPath);
     }
   }, []);
 
