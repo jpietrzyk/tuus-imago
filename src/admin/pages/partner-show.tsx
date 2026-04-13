@@ -98,7 +98,7 @@ export function PartnerShowPage() {
     meta: { select: "*" },
   });
 
-  const { result: statsResult, refetch: refetchStats } = useCustom<PartnerStatDetail>({
+  const { result: statsResult, query: statsQuery } = useCustom<PartnerStatDetail>({
     url: "/.netlify/functions/admin-api",
     method: "post",
     config: {
@@ -130,13 +130,13 @@ export function PartnerShowPage() {
       setNewRefCode("");
       setNewRefLabel("");
       setAddRefDialogOpen(false);
-      await refetchStats();
+      await statsQuery.refetch();
     } catch {
       // error handled by refine
     } finally {
       setNewRefSaving(false);
     }
-  }, [newRefCode, newRefLabel, id, createRef, refetchStats]);
+  }, [newRefCode, newRefLabel, id, createRef, statsQuery.refetch]);
 
   const handleDeleteRef = useCallback(async (refId: string) => {
     if (!confirm(t("admin.labels.partnerRefDeleteConfirm"))) return;
@@ -145,11 +145,11 @@ export function PartnerShowPage() {
         resource: "partner_refs",
         id: refId,
       });
-      await refetchStats();
+      await statsQuery.refetch();
     } catch {
       // error handled by refine
     }
-  }, [deleteRef, refetchStats]);
+  }, [deleteRef, statsQuery.refetch]);
 
   if (partnerQuery.isFetching) {
     return (
