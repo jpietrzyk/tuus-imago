@@ -17,7 +17,6 @@ import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
 import {
   setReferralCookie,
   getReferralCookie,
-  removeReferralCookie,
 } from "@/lib/referral-cookie";
 
 let __mockReferralCookie: string | null = null;
