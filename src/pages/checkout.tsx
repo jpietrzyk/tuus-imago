@@ -33,6 +33,7 @@ import {
   Loader2,
   AlertTriangle,
   LogIn,
+  Tag,
 } from "lucide-react";
 import { t, getCurrentLanguage } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
@@ -50,10 +51,8 @@ import {
 } from "@/lib/orders-api";
 import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import {
-  getReferralCookie,
   removeReferralCookie,
 } from "@/lib/referral-cookie";
-import { Tag } from "lucide-react";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -334,12 +333,18 @@ export function CheckoutPage() {
 
   useEffect(() => {
     if (couponCode.trim() || couponResult?.valid) return;
-    const refCode = getReferralCookie();
-    if (!refCode) return;
-    setCouponCode(refCode);
+    let pendingCode: string | null = null;
+    try {
+      pendingCode = sessionStorage.getItem("pending_coupon_code");
+    } catch {
+      // sessionStorage may be unavailable
+    }
+    if (!pendingCode) return;
+    sessionStorage.removeItem("pending_coupon_code");
+    setCouponCode(pendingCode);
     let cancelled = false;
     setCouponLoading(true);
-    validateCoupon(refCode, totalPrice)
+    validateCoupon(pendingCode, totalPrice)
       .then((result) => {
         if (cancelled) return;
         setCouponResult(result);

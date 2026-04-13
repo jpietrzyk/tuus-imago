@@ -591,6 +591,16 @@ export interface Translations {
       partnerBackToPartners: string;
       partnerCreated: string;
       partnerUpdated: string;
+      partnerRefs: string;
+      partnerRefCode: string;
+      partnerRefLabel: string;
+      partnerRefLabelPlaceholder: string;
+      partnerRefActive: string;
+      partnerRefEvents: string;
+      partnerRefCreate: string;
+      partnerRefDeleteConfirm: string;
+      partnerNoRefs: string;
+      partnerTotalRefEvents: string;
       customers: string;
       customerExporting: string;
       customerExportCsv: string;

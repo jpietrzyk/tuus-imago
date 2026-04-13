@@ -72,6 +72,7 @@ import { UpdatePasswordPage } from "./pages/auth-update-password";
 import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
 import { setReferralCookie } from "@/lib/referral-cookie";
+import { useReferralTracking } from "@/lib/use-referral-tracking";
 import { Authenticated } from "@refinedev/core";
 import { AdminApp } from "./admin/AdminApp";
 import { AdminLayout } from "./admin/layout";
@@ -183,15 +184,34 @@ export function App() {
 }
 
 function StorefrontApp() {
+  useReferralTracking();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    let changed = false;
+
     const ref = params.get("ref");
-    if (ref && ref.trim()) {
+    if (ref?.trim()) {
       setReferralCookie(ref);
       params.delete("ref");
+      changed = true;
+    }
+
+    const code = params.get("code");
+    if (code?.trim()) {
+      try {
+        sessionStorage.setItem("pending_coupon_code", code.trim());
+      } catch {
+        // sessionStorage may be unavailable
+      }
+      params.delete("code");
+      changed = true;
+    }
+
+    if (changed) {
       const qs = params.toString();
       const newPath = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-      window.history.replaceState(window.history.state, "", newPath);
+      window.history.replaceState(null, "", newPath);
     }
   }, []);
 

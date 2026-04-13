@@ -1005,10 +1005,10 @@ describe("CheckoutPage", () => {
     });
   });
 
-  describe("referral cookie auto-fill", () => {
+  describe("coupon code auto-fill from pending_coupon_code", () => {
     const COUPON_VALID_RESPONSE = {
       valid: true,
-      code: "PARTNER10",
+      code: "SAVE10",
       discountType: "percentage" as const,
       discountValue: 10,
       discountAmount: Math.round(CANVAS_PRINT_UNIT_PRICE * 0.1),
@@ -1033,34 +1033,34 @@ describe("CheckoutPage", () => {
       });
     }
 
-    it("auto-fills coupon code from referral cookie on mount", async () => {
+    it("auto-fills coupon code from pending_coupon_code in sessionStorage", async () => {
+      sessionStorage.setItem("pending_coupon_code", "SAVE10");
       vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
-      setReferralCookie("PARTNER10");
 
       renderWithRouter();
 
       await waitFor(() => {
         expect(
-          screen.getByText(/PARTNER10/),
+          screen.getByText(/SAVE10/),
         ).toBeDefined();
       });
     });
 
-    it("auto-applies valid referral coupon and shows discount", async () => {
+    it("auto-applies valid pending coupon and shows discount", async () => {
+      sessionStorage.setItem("pending_coupon_code", "SAVE10");
       vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
-      setReferralCookie("PARTNER10");
 
       renderWithRouter();
 
       await waitFor(() => {
-        expect(screen.getByText(/PARTNER10/)).toBeDefined();
+        expect(screen.getByText(/SAVE10/)).toBeDefined();
         expect(screen.getByText(/-10%/)).toBeDefined();
       }, { timeout: 5000 });
     });
 
-    it("pre-fills but shows error for invalid referral coupon", async () => {
+    it("pre-fills but shows error for invalid pending coupon", async () => {
+      sessionStorage.setItem("pending_coupon_code", "INVALID");
       vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_INVALID_RESPONSE));
-      setReferralCookie("INVALID");
 
       renderWithRouter();
 
@@ -1075,7 +1075,7 @@ describe("CheckoutPage", () => {
       expect(couponInput!.value).toBe("INVALID");
     });
 
-    it("does not auto-fill when no referral cookie is set", () => {
+    it("does not auto-fill when no pending_coupon_code is set", () => {
       vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
       renderWithRouter();
 
@@ -1098,8 +1098,8 @@ describe("CheckoutPage", () => {
           discountAmount: Math.round(CANVAS_PRINT_UNIT_PRICE * 0.2),
         }),
       );
+      sessionStorage.setItem("pending_coupon_code", "SAVE10");
       vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
-      setReferralCookie("PARTNER10");
 
       renderWithRouter();
 
@@ -1109,7 +1109,20 @@ describe("CheckoutPage", () => {
       }, { timeout: 3000 });
     });
 
+    it("does not auto-fill coupon from referral cookie (only from code param)", () => {
+      setReferralCookie("PARTNER10");
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
+      renderWithRouter();
+
+      const couponInput = document.querySelector(
+        'input[placeholder="' + tr("checkout.coupon.placeholder") + '"]',
+      ) as HTMLInputElement | null;
+      expect(couponInput).not.toBeNull();
+      expect(couponInput!.value).toBe("");
+    });
+
     it("clears referral cookie after successful checkout", async () => {
+      sessionStorage.setItem("pending_coupon_code", "SAVE10");
       vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
       setReferralCookie("PARTNER10");
       stubLocationHref();

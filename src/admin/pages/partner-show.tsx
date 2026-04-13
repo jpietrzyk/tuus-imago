@@ -1,9 +1,17 @@
-import { useOne, useCustom } from "@refinedev/core";
+import { useOne, useCustom, useCreate, useDelete } from "@refinedev/core";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { formatPrice } from "@/lib/pricing";
 import { formatDateTime } from "@/lib/format";
 import { t } from "@/locales/i18n";
@@ -16,7 +24,12 @@ import {
   Tag,
   BarChart3,
   Pencil,
+  Link2,
+  Plus,
+  Trash2,
+  Eye,
 } from "lucide-react";
+import { useState, useCallback } from "react";
 
 type Partner = {
   id: string;
@@ -49,6 +62,18 @@ type PartnerStatDetail = {
   total_orders: number;
   total_revenue: number;
   last_order_date: string | null;
+  ref_count: number;
+  refs: PartnerRefWithEvents[];
+  total_ref_events: number;
+};
+
+type PartnerRefWithEvents = {
+  id: string;
+  ref_code: string;
+  label: string | null;
+  is_active: boolean;
+  created_at: string;
+  event_count: number;
 };
 
 function unwrapData<T>(raw: unknown): T | null {
@@ -62,6 +87,10 @@ function unwrapData<T>(raw: unknown): T | null {
 export function PartnerShowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [addRefDialogOpen, setAddRefDialogOpen] = useState(false);
+  const [newRefCode, setNewRefCode] = useState("");
+  const [newRefLabel, setNewRefLabel] = useState("");
+  const [newRefSaving, setNewRefSaving] = useState(false);
 
   const { query: partnerQuery, result: partner } = useOne<Partner>({
     resource: "partners",
@@ -69,7 +98,7 @@ export function PartnerShowPage() {
     meta: { select: "*" },
   });
 
-  const { result: statsResult } = useCustom<PartnerStatDetail>({
+  const { result: statsResult, query: statsQuery } = useCustom<PartnerStatDetail>({
     url: "/.netlify/functions/admin-api",
     method: "post",
     config: {
@@ -80,7 +109,47 @@ export function PartnerShowPage() {
     },
   });
 
+  const { mutateAsync: createRef } = useCreate();
+  const { mutateAsync: deleteRef } = useDelete();
+
   const stats = unwrapData<PartnerStatDetail>(statsResult.data);
+
+  const handleAddRef = useCallback(async () => {
+    if (!newRefCode.trim() || !id) return;
+    setNewRefSaving(true);
+    try {
+      await createRef({
+        resource: "partner_refs",
+        values: {
+          partner_id: id,
+          ref_code: newRefCode.trim(),
+          label: newRefLabel.trim() || null,
+          is_active: true,
+        },
+      });
+      setNewRefCode("");
+      setNewRefLabel("");
+      setAddRefDialogOpen(false);
+      await statsQuery.refetch();
+    } catch {
+      // error handled by refine
+    } finally {
+      setNewRefSaving(false);
+    }
+  }, [newRefCode, newRefLabel, id, createRef, statsQuery.refetch]);
+
+  const handleDeleteRef = useCallback(async (refId: string) => {
+    if (!confirm(t("admin.labels.partnerRefDeleteConfirm"))) return;
+    try {
+      await deleteRef({
+        resource: "partner_refs",
+        id: refId,
+      });
+      await statsQuery.refetch();
+    } catch {
+      // error handled by refine
+    }
+  }, [deleteRef, statsQuery.refetch]);
 
   if (partnerQuery.isFetching) {
     return (
@@ -228,11 +297,123 @@ export function PartnerShowPage() {
                   ))}
                 </div>
               )}
+             </CardContent>
+           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5" /> {t("admin.labels.partnerRefs")} (
+                {stats?.refs?.length ?? 0})
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAddRefDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t("admin.actions.create")}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {!stats?.refs?.length ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("admin.labels.partnerNoRefs")}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {stats.refs.map((ref) => (
+                    <div
+                      key={ref.id}
+                      className="flex items-center gap-3 p-2 rounded-md border"
+                    >
+                      <span className="font-mono font-medium text-sm">
+                        {ref.ref_code}
+                      </span>
+                      {ref.label && (
+                        <span className="text-xs text-muted-foreground">
+                          {ref.label}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Eye className="h-3 w-3" /> {ref.event_count}
+                      </span>
+                      <Badge
+                        variant={ref.is_active ? "default" : "secondary"}
+                        className="ml-auto"
+                      >
+                        {ref.is_active
+                          ? t("admin.labels.active")
+                          : t("admin.labels.inactive")}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => handleDeleteRef(ref.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {stats.total_ref_events > 0 && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t("admin.labels.partnerTotalRefEvents")}: {stats.total_ref_events}
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
-        </div>
+         </div>
 
-        <div className="space-y-4">
+        <Dialog open={addRefDialogOpen} onOpenChange={setAddRefDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("admin.labels.partnerRefCreate")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">
+                  {t("admin.labels.partnerRefCode")} *
+                </label>
+                <Input
+                  value={newRefCode}
+                  onChange={(e) => setNewRefCode(e.target.value)}
+                  placeholder="e.g. partner-name"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">
+                  {t("admin.labels.partnerRefLabel")}
+                </label>
+                <Input
+                  value={newRefLabel}
+                  onChange={(e) => setNewRefLabel(e.target.value)}
+                  placeholder={t("admin.labels.partnerRefLabelPlaceholder")}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setAddRefDialogOpen(false)}
+              >
+                {t("admin.actions.cancel")}
+              </Button>
+              <Button
+                onClick={handleAddRef}
+                disabled={!newRefCode.trim() || newRefSaving}
+              >
+                {newRefSaving ? t("admin.actions.saving") : t("admin.actions.create")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+         <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
