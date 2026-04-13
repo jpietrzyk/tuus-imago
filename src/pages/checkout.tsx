@@ -49,6 +49,10 @@ import {
   type CustomerAddress,
 } from "@/lib/orders-api";
 import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
+import {
+  getReferralCookie,
+  removeReferralCookie,
+} from "@/lib/referral-cookie";
 import { Tag } from "lucide-react";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
@@ -328,6 +332,31 @@ export function CheckoutPage() {
     }
   }, [couponResult]);
 
+  useEffect(() => {
+    if (couponCode.trim() || couponResult?.valid) return;
+    const refCode = getReferralCookie();
+    if (!refCode) return;
+    setCouponCode(refCode);
+    let cancelled = false;
+    setCouponLoading(true);
+    validateCoupon(refCode, totalPrice)
+      .then((result) => {
+        if (cancelled) return;
+        setCouponResult(result);
+        if (!result.valid) {
+          setCouponError(result.reason ?? "Invalid coupon.");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCouponError("Could not validate coupon.");
+      })
+      .finally(() => {
+        if (!cancelled) setCouponLoading(false);
+      });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [paymentPollStatus, setPaymentPollStatus] = useState<"polling" | "paid" | "failed" | "timeout">("polling");
 
   useEffect(() => {
@@ -510,6 +539,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
+        removeReferralCookie();
         setSubmissionKey(generateOrderSubmissionKey());
 
         window.location.href = p24Response.redirectUrl;
@@ -550,6 +580,7 @@ export function CheckoutPage() {
       sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
       sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
       sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
+      removeReferralCookie();
       window.location.href = p24Response.redirectUrl;
     } catch (p24Err) {
       setIsRedirecting(false);

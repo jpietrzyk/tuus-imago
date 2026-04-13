@@ -14,6 +14,22 @@ import { type UploadedSlotResult } from "@/components/image-uploader";
 import { getCloudinaryThumbnailUrl } from "@/lib/image-transformations";
 import { CANVAS_PRINT_UNIT_PRICE, formatPrice } from "@/lib/pricing";
 import { SHIPPING_COUNTRIES } from "@/lib/checkout-constants";
+import {
+  setReferralCookie,
+  getReferralCookie,
+} from "@/lib/referral-cookie";
+
+let __mockReferralCookie: string | null = null;
+
+vi.mock("@/lib/referral-cookie", () => ({
+  setReferralCookie: vi.fn((code: string) => {
+    __mockReferralCookie = code.trim() || null;
+  }),
+  getReferralCookie: vi.fn(() => __mockReferralCookie),
+  removeReferralCookie: vi.fn(() => {
+    __mockReferralCookie = null;
+  }),
+}));
 
 let __mockUser: {
   id: string;
@@ -122,6 +138,7 @@ describe("CheckoutPage", () => {
 
   beforeEach(() => {
     __mockUser = null;
+    __mockReferralCookie = null;
     vi.stubGlobal("fetch", createFetchMock());
     sessionStorage.clear();
   });
@@ -987,4 +1004,145 @@ describe("CheckoutPage", () => {
       expect(screen.getByText(tr("upload.slotLeft"))).toBeDefined();
     });
   });
+
+  describe("referral cookie auto-fill", () => {
+    const COUPON_VALID_RESPONSE = {
+      valid: true,
+      code: "PARTNER10",
+      discountType: "percentage" as const,
+      discountValue: 10,
+      discountAmount: Math.round(CANVAS_PRINT_UNIT_PRICE * 0.1),
+    };
+
+    const COUPON_INVALID_RESPONSE = {
+      valid: false,
+      reason: "Coupon not found.",
+    };
+
+    function createFetchWithCoupon(couponResponse: Record<string, unknown>) {
+      return vi.fn((url: string) => {
+        if (url.includes("validate-coupon")) {
+          return Promise.resolve(
+            new Response(JSON.stringify(couponResponse), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return createFetchMock()(url);
+      });
+    }
+
+    it("auto-fills coupon code from referral cookie on mount", async () => {
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
+      setReferralCookie("PARTNER10");
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(/PARTNER10/),
+        ).toBeDefined();
+      });
+    });
+
+    it("auto-applies valid referral coupon and shows discount", async () => {
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
+      setReferralCookie("PARTNER10");
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText(/PARTNER10/)).toBeDefined();
+        expect(screen.getByText(/-10%/)).toBeDefined();
+      }, { timeout: 5000 });
+    });
+
+    it("pre-fills but shows error for invalid referral coupon", async () => {
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_INVALID_RESPONSE));
+      setReferralCookie("INVALID");
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText("Coupon not found.")).toBeDefined();
+      });
+
+      const couponInput = document.querySelector(
+        'input[placeholder="' + tr("checkout.coupon.placeholder") + '"]',
+      ) as HTMLInputElement | null;
+      expect(couponInput).not.toBeNull();
+      expect(couponInput!.value).toBe("INVALID");
+    });
+
+    it("does not auto-fill when no referral cookie is set", () => {
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
+      renderWithRouter();
+
+      const couponInput = document.querySelector(
+        'input[placeholder="' + tr("checkout.coupon.placeholder") + '"]',
+      ) as HTMLInputElement | null;
+      expect(couponInput).not.toBeNull();
+      expect(couponInput!.value).toBe("");
+    });
+
+    it("does not auto-fill when coupon is already stored in sessionStorage", async () => {
+      sessionStorage.setItem("checkout-coupon-code", "EXISTING");
+      sessionStorage.setItem(
+        "checkout-coupon-result",
+        JSON.stringify({
+          valid: true,
+          code: "EXISTING",
+          discountType: "percentage",
+          discountValue: 20,
+          discountAmount: Math.round(CANVAS_PRINT_UNIT_PRICE * 0.2),
+        }),
+      );
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
+      setReferralCookie("PARTNER10");
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText(/EXISTING/)).toBeDefined();
+        expect(screen.getByText(/-20%/)).toBeDefined();
+      }, { timeout: 3000 });
+    });
+
+    it("clears referral cookie after successful checkout", async () => {
+      vi.stubGlobal("fetch", createFetchWithCoupon(COUPON_VALID_RESPONSE));
+      setReferralCookie("PARTNER10");
+      stubLocationHref();
+      seedDraft({});
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(
+          (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+            .value,
+        ).toBe("Jane Doe");
+      });
+
+      const termsCheckbox = document.getElementById(
+        "termsAccepted",
+      ) as HTMLInputElement;
+      const privacyCheckbox = document.getElementById(
+        "privacyAccepted",
+      ) as HTMLInputElement;
+      if (termsCheckbox) await userEvent.click(termsCheckbox);
+      if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+      await userEvent.click(
+        screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+      );
+
+      await waitFor(() => {
+        expect(locationHrefSpy).toHaveBeenCalled();
+      }, { timeout: 5000 });
+
+      expect(getReferralCookie()).toBeNull();
+    });
+  });
 });
+
