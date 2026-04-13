@@ -71,6 +71,7 @@ import { ResetPasswordPage } from "./pages/auth-reset-password";
 import { UpdatePasswordPage } from "./pages/auth-update-password";
 import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
+import { setReferralCookie } from "@/lib/referral-cookie";
 import { Authenticated } from "@refinedev/core";
 import { AdminApp } from "./admin/AdminApp";
 import { AdminLayout } from "./admin/layout";
@@ -182,6 +183,18 @@ export function App() {
 }
 
 function StorefrontApp() {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref && ref.trim()) {
+      setReferralCookie(ref);
+      params.delete("ref");
+      const qs = params.toString();
+      const newPath = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
+      window.history.replaceState(window.history.state, "", newPath);
+    }
+  }, []);
+
   const [isLegalSheetOpen, setIsLegalSheetOpen] = useState(false);
   const [activeLegalSection, setActiveLegalSection] =
     useState<LegalMenuSection>("legal");
