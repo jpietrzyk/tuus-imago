@@ -86,6 +86,7 @@ const CouponShowPage = lazy(() => import("./admin/pages/coupon-show").then((m) =
 const CustomerListPage = lazy(() => import("./admin/pages/customer-list").then((m) => ({ default: m.CustomerListPage })));
 const CustomerShowPage = lazy(() => import("./admin/pages/customer-show").then((m) => ({ default: m.CustomerShowPage })));
 const AdminUsersPage = lazy(() => import("./admin/pages/admin-users-list").then((m) => ({ default: m.AdminUsersPage })));
+const AdminUserShowPage = lazy(() => import("./admin/pages/admin-user-show").then((m) => ({ default: m.AdminUserShowPage })));
 const PartnerListPage = lazy(() => import("./admin/pages/partner-list").then((m) => ({ default: m.PartnerListPage })));
 const PartnerShowPage = lazy(() => import("./admin/pages/partner-show").then((m) => ({ default: m.PartnerShowPage })));
 const PartnerCreatePage = lazy(() => import("./admin/pages/partner-create").then((m) => ({ default: m.PartnerCreatePage })));
@@ -167,7 +168,10 @@ export function App() {
             <Route path="partners/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PartnerEditPage /></Suspense>} />
             <Route path="customers" element={<Suspense fallback={<AdminPageLoader />}><CustomerListPage /></Suspense>} />
             <Route path="customers/:email" element={<Suspense fallback={<AdminPageLoader />}><CustomerShowPage /></Suspense>} />
-            <Route path="admin-users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage /></Suspense>} />
+            <Route path="users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={false} /></Suspense>} />
+            <Route path="users/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
+            <Route path="admins" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={true} /></Suspense>} />
+            <Route path="admins/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
           </Route>
         </Routes>
       </AdminApp>

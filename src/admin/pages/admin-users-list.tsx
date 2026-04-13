@@ -1,4 +1,5 @@
 import { useCustom, useUpdate } from "@refinedev/core";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +53,9 @@ function unwrapData<T>(raw: unknown): T[] {
   return [];
 }
 
-export function AdminUsersPage() {
+export function AdminUsersPage({ isAdminFilter }: { isAdminFilter?: boolean }) {
+  const navigate = useNavigate();
+  const basePath = isAdminFilter ? "/admin/admins" : "/admin/users";
   const [toggling, setToggling] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -81,15 +84,23 @@ export function AdminUsersPage() {
     [usersResult.data],
   );
 
+  const roleFiltered = useMemo(
+    () =>
+      isAdminFilter === undefined
+        ? allUsers
+        : allUsers.filter((u) => u.is_admin === isAdminFilter),
+    [allUsers, isAdminFilter],
+  );
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return allUsers;
+    if (!search.trim()) return roleFiltered;
     const q = search.toLowerCase();
-    return allUsers.filter(
+    return roleFiltered.filter(
       (u) =>
         u.email.toLowerCase().includes(q) ||
         (u.full_name && u.full_name.toLowerCase().includes(q)),
     );
-  }, [allUsers, search]);
+  }, [roleFiltered, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -175,10 +186,11 @@ export function AdminUsersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">
-          {t("admin.labels.userAccounts")}
+          {isAdminFilter ? t("admin.navigation.admins") : t("admin.navigation.users")}
         </h1>
         <span className="text-sm text-muted-foreground">
-          {filtered.length} {t("admin.labels.users")}
+          {filtered.length}{" "}
+          {isAdminFilter ? t("admin.labels.admins") : t("admin.labels.users")}
         </span>
       </div>
 
@@ -220,8 +232,12 @@ export function AdminUsersPage() {
               </TableRow>
             ) : (
               pageUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium text-sm">
+                <TableRow
+                  key={user.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`${basePath}/${user.id}`, { state: { from: basePath } })}
+                >
+                  <TableCell className="text-sm">
                     {user.email}
                   </TableCell>
                   <TableCell>
@@ -252,7 +268,10 @@ export function AdminUsersPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => openEdit(user)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEdit(user);
+                        }}
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
@@ -260,7 +279,10 @@ export function AdminUsersPage() {
                         size="sm"
                         variant={user.is_admin ? "destructive" : "outline"}
                         disabled={toggling === user.id}
-                        onClick={() => handleToggleAdmin(user)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleAdmin(user);
+                        }}
                       >
                         {user.is_admin ? (
                           <>

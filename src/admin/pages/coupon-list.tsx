@@ -95,14 +95,10 @@ export function CouponListPage() {
             <DataTableSorter column={column} />
           </div>
         ),
-        cell: ({ row, getValue }: { row: { original: CouponRow }; getValue: () => unknown }) => (
-          <button
-            type="button"
-            className="font-mono font-medium text-left hover:underline"
-            onClick={() => navigate(`/admin/coupons/${row.original.id}`)}
-          >
+        cell: ({ getValue }: { getValue: () => unknown }) => (
+          <span className="font-mono font-medium">
             {getValue() as string}
-          </button>
+          </span>
         ),
       },
       {
@@ -279,7 +275,7 @@ export function CouponListPage() {
         </div>
       </div>
 
-      <DataTable table={table} />
+      <DataTable table={table} onRowClick={(row) => navigate(`/admin/coupons/${row.id}`)} />
     </div>
   );
 }
