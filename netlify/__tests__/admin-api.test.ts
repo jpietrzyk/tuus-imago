@@ -517,6 +517,11 @@ describe("admin-api handler", () => {
             const ordersSelect = vi.fn().mockReturnValue({ in: ordersIn });
             return { select: ordersSelect } as never;
           }
+          case "partner_refs": {
+            const refsEq = vi.fn().mockResolvedValue({ data: [], error: null });
+            const refsSelect = vi.fn().mockReturnValue({ eq: refsEq });
+            return { select: refsSelect } as never;
+          }
           default:
             throw new Error(`Unexpected table: ${table}`);
         }

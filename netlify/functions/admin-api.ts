@@ -46,6 +46,7 @@ const ALLOWED_RESOURCES = new Set([
   "coupon_usages",
   "profiles",
   "partners",
+  "partner_refs",
 ]);
 
 const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
@@ -723,6 +724,41 @@ async function handlePartnerStats(
       }
     }
 
+    const { data: refs, error: refsError } = await supabase
+      .from("partner_refs")
+      .select("id, ref_code, label, is_active, created_at")
+      .eq("partner_id", partnerId);
+
+    if (refsError) {
+      return jsonResponse(500, { error: refsError.message });
+    }
+
+    const refIds = (refs ?? []).map((r) => r.id);
+
+    let totalRefEvents = 0;
+    const refEventCounts = new Map<string, number>();
+
+    if (refIds.length > 0) {
+      const { data: refEvents, error: refEventsError } = await supabase
+        .from("referral_events")
+        .select("partner_ref_id")
+        .in("partner_ref_id", refIds);
+
+      if (refEventsError) {
+        return jsonResponse(500, { error: refEventsError.message });
+      }
+
+      totalRefEvents = refEvents?.length ?? 0;
+      for (const e of refEvents ?? []) {
+        refEventCounts.set(e.partner_ref_id, (refEventCounts.get(e.partner_ref_id) ?? 0) + 1);
+      }
+    }
+
+    const refsWithEvents = (refs ?? []).map((r) => ({
+      ...r,
+      event_count: refEventCounts.get(r.id) ?? 0,
+    }));
+
     return jsonResponse(200, {
       data: {
         partner_id: partnerId,
@@ -731,6 +767,9 @@ async function handlePartnerStats(
         total_orders: totalOrders,
         total_revenue: totalRevenue,
         last_order_date: lastOrderDate,
+        ref_count: refs?.length ?? 0,
+        refs: refsWithEvents,
+        total_ref_events: totalRefEvents,
       },
     });
   }
@@ -749,6 +788,21 @@ async function handlePartnerStats(
 
   if (allCouponsError) {
     return jsonResponse(500, { error: allCouponsError.message });
+  }
+
+  const { data: allRefs, error: allRefsError } = await supabase
+    .from("partner_refs")
+    .select("id, partner_id");
+
+  if (allRefsError) {
+    return jsonResponse(500, { error: allRefsError.message });
+  }
+
+  const refPartnerMap = new Map<string, number>();
+  for (const r of allRefs ?? []) {
+    if (r.partner_id) {
+      refPartnerMap.set(r.partner_id, (refPartnerMap.get(r.partner_id) ?? 0) + 1);
+    }
   }
 
   const couponPartnerMap = new Map<string, string[]>();
@@ -834,6 +888,7 @@ async function handlePartnerStats(
       company_name: p.company_name,
       is_active: p.is_active,
       coupon_count: couponCount,
+      ref_count: refPartnerMap.get(p.id) ?? 0,
       total_orders: totalOrders,
       total_revenue: totalRevenue,
       last_order_date: lastOrderDate,

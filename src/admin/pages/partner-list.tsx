@@ -35,6 +35,7 @@ type PartnerStat = {
   company_name: string;
   is_active: boolean;
   coupon_count: number;
+  ref_count: number;
   total_orders: number;
   total_revenue: number;
   last_order_date: string | null;
@@ -137,6 +138,17 @@ export function PartnerListPage() {
         accessorFn: (_row: PartnerRow) => {
           const stat = statsMap.get(_row.id);
           return stat?.coupon_count ?? 0;
+        },
+        cell: ({ getValue }: { getValue: () => unknown }) => (
+          <span>{getValue() as number}</span>
+        ),
+      },
+      {
+        id: "ref_count",
+        header: t("admin.labels.partnerRefs"),
+        accessorFn: (_row: PartnerRow) => {
+          const stat = statsMap.get(_row.id);
+          return stat?.ref_count ?? 0;
         },
         cell: ({ getValue }: { getValue: () => unknown }) => (
           <span>{getValue() as number}</span>
