@@ -709,7 +709,7 @@ export function UploadPage({
             {/* Upload Widget */}
             {!uploadedImage && (
               <div className="relative flex h-full min-h-0 w-full flex-col items-center gap-4">
-                <div className="relative h-full min-h-0 w-full">
+                <div className="relative h-full min-h-0 w-full lg:pb-20 xl:pb-28">
                   <ImageUploader
                     ref={uploaderRef}
                     onUploadSuccess={handleUploadSuccess}
