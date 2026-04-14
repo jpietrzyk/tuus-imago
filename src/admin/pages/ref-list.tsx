@@ -294,7 +294,7 @@ export function RefListPage() {
         </div>
       </div>
 
-      <DataTable table={table} />
+      <DataTable table={table} onRowClick={(row) => navigate(`/admin/refs/${row.id}`)} />
 
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
