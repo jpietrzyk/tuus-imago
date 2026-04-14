@@ -685,7 +685,11 @@
       "couponTitle": "Kupony",
       "couponSearchCode": "Szukaj kodu...",
       "couponAllTypes": "Wszystkie typy",
-      "couponNewCoupon": "Nowy kupon"
+      "couponNewCoupon": "Nowy kupon",
+      "refQrTitle": "Kod QR",
+      "refQrDownload": "Pobierz QR",
+      "refQrCopyLink": "Kopiuj link",
+      "refQrLinkCopied": "Skopiowano!"
     }
   }
 }

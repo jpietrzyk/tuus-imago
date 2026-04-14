@@ -20,8 +20,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, QrCode } from "lucide-react";
 import { useState, useMemo, useCallback } from "react";
+import { RefQrCodeDialog } from "@/admin/components/ref-qr-code-dialog";
 import { useNavigate } from "react-router-dom";
 import type { CrudFilter } from "@refinedev/core";
 import { formatDateTime } from "@/lib/format";
@@ -52,6 +53,8 @@ export function RefListPage() {
   const [newRefLabel, setNewRefLabel] = useState("");
   const [newRefPartnerId, setNewRefPartnerId] = useState("__none__");
   const [newRefSaving, setNewRefSaving] = useState(false);
+
+  const [qrDialogCode, setQrDialogCode] = useState<string | null>(null);
 
   const { mutateAsync: createRef } = useCreate();
   const { mutateAsync: deleteRef } = useDelete();
@@ -162,17 +165,30 @@ export function RefListPage() {
         id: "actions",
         header: "",
         cell: ({ row }: { row: { original: RefRow } }) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteRef(row.original.id);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                setQrDialogCode(row.original.ref_code);
+              }}
+            >
+              <QrCode className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteRef(row.original.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         ),
       },
     ],
@@ -345,6 +361,14 @@ export function RefListPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RefQrCodeDialog
+        refCode={qrDialogCode ?? ""}
+        open={qrDialogCode !== null}
+        onOpenChange={(open) => {
+          if (!open) setQrDialogCode(null);
+        }}
+      />
     </div>
   );
 }
