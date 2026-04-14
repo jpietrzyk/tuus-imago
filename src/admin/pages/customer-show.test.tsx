@@ -86,4 +86,12 @@ describe("CustomerShowPage", () => {
 
     expect(screen.getByText(/nobody@example.com/)).toBeInTheDocument();
   });
+
+  it("renders summary stats with total spent and order count", () => {
+    setupMocks();
+    renderCustomerShow();
+
+    const orderCountElements = screen.getAllByText("2");
+    expect(orderCountElements.length).toBeGreaterThanOrEqual(1);
+  });
 });

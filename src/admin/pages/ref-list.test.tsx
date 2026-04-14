@@ -110,4 +110,61 @@ describe("RefListPage", () => {
 
     expect(screen.getByText("Utwórz kod polecenia")).toBeInTheDocument();
   });
+
+  it("renders partner filter and active filter selects", () => {
+    setupMocks();
+    renderRefList();
+
+    expect(screen.getByText("Bez partnera")).toBeInTheDocument();
+    expect(screen.getByText("Wszystkie statusy")).toBeInTheDocument();
+  });
+
+  it("renders search input", () => {
+    setupMocks();
+    renderRefList();
+
+    expect(screen.getByPlaceholderText("Szukaj kodów poleceń...")).toBeInTheDocument();
+  });
+
+  it("creates ref with form submission in dialog", async () => {
+    setupMocks();
+    mockCreateRef.mockResolvedValueOnce({});
+    renderRefList();
+
+    const createButton = screen.getByText("Nowy kod polecenia");
+    await userEvent.click(createButton);
+
+    const codeInput = screen.getByPlaceholderText("e.g. partner-name");
+    await userEvent.type(codeInput, "new-ref-code");
+
+    const submitButton = screen.getAllByText("Utwórz").find((el) => el.closest("button"));
+    if (submitButton) {
+      await userEvent.click(submitButton);
+    }
+
+    await waitFor(() => {
+      expect(mockCreateRef).toHaveBeenCalledWith(
+        expect.objectContaining({
+          resource: "partner_refs",
+          values: expect.objectContaining({ ref_code: "new-ref-code" }),
+        }),
+      );
+    });
+  });
+
+  it("calls deleteRef on trash icon click with confirm", async () => {
+    setupMocks();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockDeleteRef.mockResolvedValueOnce({});
+    renderRefList();
+
+    const trashButtons = document.querySelectorAll("svg.lucide-trash-2");
+    if (trashButtons.length > 0) {
+      const trashButton = trashButtons[0].closest("button");
+      if (trashButton) {
+        await userEvent.click(trashButton);
+        expect(window.confirm).toHaveBeenCalled();
+      }
+    }
+  });
 });

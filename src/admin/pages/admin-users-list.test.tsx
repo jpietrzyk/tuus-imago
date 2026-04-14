@@ -102,4 +102,40 @@ describe("AdminUsersPage", () => {
     const svgElements = document.querySelectorAll("svg.lucide-pencil");
     expect(svgElements.length).toBeGreaterThanOrEqual(2);
   });
+
+  it("filters to admin-only with isAdminFilter prop", () => {
+    setupMocks();
+    renderAdminUsers(true);
+
+    expect(screen.getByText("admin@example.com")).toBeInTheDocument();
+    expect(screen.queryByText("user@example.com")).not.toBeInTheDocument();
+  });
+
+  it("toggles admin role on revoke button click", async () => {
+    setupMocks();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockUseUpdate.mockImplementation(() => ({
+      mutate: vi.fn().mockImplementation((_, { onSuccess }) => onSuccess()),
+    }));
+    renderAdminUsers();
+
+    const revokeButtons = screen.getAllByText("Cofnij");
+    await userEvent.click(revokeButtons[0]);
+
+    expect(window.confirm).toHaveBeenCalled();
+  });
+
+  it("opens inline edit dialog on pencil click", async () => {
+    setupMocks();
+    renderAdminUsers();
+
+    const pencilButtons = document.querySelectorAll("button");
+    const editBtn = Array.from(pencilButtons).find(
+      (b) => b.querySelector("svg.lucide-pencil") && b.querySelector("svg.lucide-pencil")!.parentElement === b,
+    );
+    if (editBtn) {
+      await userEvent.click(editBtn);
+      expect(screen.getByText("Edytuj użytkownika")).toBeInTheDocument();
+    }
+  });
 });

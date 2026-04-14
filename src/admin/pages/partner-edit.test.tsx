@@ -80,6 +80,28 @@ describe("PartnerEditPage", () => {
     });
   });
 
+  it("tracks dirty fields on edit and submit", async () => {
+    setupMocks();
+    mockMutate.mockImplementation((_, { onSuccess }) => onSuccess());
+    renderPartnerEdit();
+
+    const cityInput = screen.getByDisplayValue("Warsaw");
+    await userEvent.clear(cityInput);
+    await userEvent.type(cityInput, "Krakow");
+
+    const submitButton = screen.getByText("Zapisz zmiany");
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          values: expect.objectContaining({ city: "Krakow" }),
+        }),
+        expect.any(Object),
+      );
+    });
+  });
+
   it("shows not found when partner is null", () => {
     mockUseOne.mockReturnValue({
       query: { isFetching: false },
@@ -88,5 +110,15 @@ describe("PartnerEditPage", () => {
     renderPartnerEdit("nonexistent");
 
     expect(screen.getByText("Partner not found.")).toBeInTheDocument();
+  });
+
+  it("shows loading spinner while fetching", () => {
+    mockUseOne.mockReturnValue({
+      query: { isFetching: true },
+      result: null,
+    });
+    renderPartnerEdit();
+
+    expect(document.querySelector(".animate-spin")).toBeInTheDocument();
   });
 });

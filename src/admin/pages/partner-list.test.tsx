@@ -144,4 +144,26 @@ describe("PartnerListPage", () => {
       );
     });
   });
+
+  it("calls useCustom with partner_stats aggregate function", () => {
+    setupMocks();
+    renderPartnerList();
+
+    expect(mockUseCustom).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          payload: expect.objectContaining({
+            meta: expect.objectContaining({ aggregateFunction: "partner_stats" }),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it("renders search input for company name", () => {
+    setupMocks();
+    renderPartnerList();
+
+    expect(screen.getByPlaceholderText("Szukaj firmy...")).toBeInTheDocument();
+  });
 });

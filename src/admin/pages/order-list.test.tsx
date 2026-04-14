@@ -147,4 +147,88 @@ describe("OrderListPage", () => {
       );
     });
   });
+
+  it("renders pagination info from useTable", () => {
+    mockUseTable.mockReturnValue({
+      refineCore: {
+        tableQuery: { data: { data: ORDERS, total: 75 } },
+        currentPage: 1,
+        setCurrentPage: vi.fn(),
+        pageCount: 3,
+        pageSize: 25,
+        setPageSize: vi.fn(),
+      },
+    });
+    mockUseList.mockReturnValue({ result: { data: [] } });
+    renderOrderList();
+
+    expect(mockUseTable).toHaveBeenCalledWith(
+      expect.objectContaining({
+        refineCoreProps: expect.objectContaining({
+          pagination: expect.objectContaining({ pageSize: 25 }),
+        }),
+      }),
+    );
+  });
+
+  it("renders clear filters button when filters are active", async () => {
+    setupMocks();
+    renderOrderList();
+
+    const searchInput = screen.getByPlaceholderText("Szukaj po emailu...");
+    await userEvent.type(searchInput, "john");
+
+    expect(screen.getByText("Wyczyść filtry")).toBeInTheDocument();
+  });
+
+  it("clears filters on clear button click", async () => {
+    setupMocks();
+    renderOrderList();
+
+    const searchInput = screen.getByPlaceholderText("Szukaj po emailu...");
+    await userEvent.type(searchInput, "john");
+
+    expect(searchInput).toHaveValue("john");
+
+    const clearButton = screen.getByText("Wyczyść filtry");
+    await userEvent.click(clearButton);
+
+    expect(screen.getByPlaceholderText("Szukaj po emailu...")).toHaveValue("");
+  });
+
+  it("renders status filter select trigger", () => {
+    setupMocks();
+    renderOrderList();
+
+    expect(screen.getByText("Wszystkie statusy")).toBeInTheDocument();
+  });
+
+  it("renders payment filter select trigger", () => {
+    setupMocks();
+    renderOrderList();
+
+    expect(screen.getByText("Wszystkie płatności")).toBeInTheDocument();
+  });
+
+  it("renders shipment filter select trigger", () => {
+    setupMocks();
+    renderOrderList();
+
+    expect(screen.getByText("Wszystkie wysyłki")).toBeInTheDocument();
+  });
+
+  it("does not show bulk action bar when no rows selected", () => {
+    setupMocks();
+    renderOrderList();
+
+    expect(screen.queryByText("Zastosuj")).not.toBeInTheDocument();
+  });
+
+  it("renders filter select components count", () => {
+    setupMocks();
+    renderOrderList();
+
+    const selectTriggers = document.querySelectorAll("[role='combobox']");
+    expect(selectTriggers.length).toBeGreaterThanOrEqual(3);
+  });
 });

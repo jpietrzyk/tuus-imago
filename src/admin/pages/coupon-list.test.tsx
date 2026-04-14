@@ -31,6 +31,13 @@ vi.mock("@/components/refine-ui/data-table", () => ({
   },
 }));
 
+vi.mock("@/admin/lib/get-auth-headers", () => ({
+  getAuthHeaders: vi.fn().mockResolvedValue({ Authorization: "Bearer test" }),
+}));
+
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
+
 import { CouponListPage } from "./coupon-list";
 
 const COUPONS = [
@@ -102,5 +109,42 @@ describe("CouponListPage", () => {
     renderCouponList();
 
     expect(screen.getByPlaceholderText("Szukaj kodu...")).toBeInTheDocument();
+  });
+
+  it("renders CSV export button", () => {
+    setupMocks();
+    renderCouponList();
+
+    expect(screen.getByText("Eksportuj CSV")).toBeInTheDocument();
+  });
+
+  it("triggers CSV export on button click", async () => {
+    setupMocks();
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      text: () => Promise.resolve("code\nSUMMER20"),
+    });
+    renderCouponList();
+
+    const exportButton = screen.getByText("Eksportuj CSV");
+    await userEvent.click(exportButton);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/.netlify/functions/admin-api",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('"export":true'),
+        }),
+      );
+    });
+  });
+
+  it("renders type and active filter select triggers", () => {
+    setupMocks();
+    renderCouponList();
+
+    expect(screen.getByText("Wszystkie typy")).toBeInTheDocument();
+    expect(screen.getByText("Wszystkie statusy")).toBeInTheDocument();
   });
 });

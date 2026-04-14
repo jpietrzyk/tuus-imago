@@ -89,4 +89,24 @@ describe("AdminUserShowPage", () => {
 
     expect(screen.getByText("Użytkownik nie znaleziony.")).toBeInTheDocument();
   });
+
+  it("toggles admin role on button click", async () => {
+    setupMocks();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const mockMutate = vi.fn().mockImplementation((_, { onSuccess }) => onSuccess());
+    mockUseUpdate.mockImplementation(() => ({ mutate: mockMutate }));
+    renderUserShow();
+
+    const toggleButton = screen.getByText("Cofnij");
+    await userEvent.click(toggleButton);
+
+    expect(window.confirm).toHaveBeenCalled();
+  });
+
+  it("renders created and last sign-in dates", () => {
+    setupMocks();
+    renderUserShow();
+
+    expect(screen.getByText(/2024/)).toBeInTheDocument();
+  });
 });

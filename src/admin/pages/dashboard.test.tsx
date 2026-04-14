@@ -149,4 +149,36 @@ describe("DashboardPage", () => {
     expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
   });
+
+  it("calls useCustom with correct aggregateFunction values", () => {
+    setupMocks();
+    renderDashboard();
+
+    const calls = mockUseCustom.mock.calls;
+    const fns = calls.map(
+      (call: [unknown]) => {
+        const config = (call[0] as { config?: { payload?: { meta?: Record<string, unknown> } } }).config;
+        return config?.payload?.meta?.aggregateFunction;
+      },
+    ).filter(Boolean);
+    expect(fns).toContain("count");
+    expect(fns).toContain("sum");
+    expect(fns).toContain("revenue_over_time");
+    expect(fns).toContain("revenue_by_month");
+  });
+
+  it("renders revenue chart containers with data", () => {
+    setupMocks({
+      revenueOverTimeResult: {
+        data: [{ date: "2025-01-15", revenue: 500, count: 3 }],
+      },
+      revenueByMonthResult: {
+        data: [{ month: "2025-01", revenue: 3000, count: 15 }],
+      },
+    });
+    renderDashboard();
+
+    const containers = screen.getAllByTestId("responsive-container");
+    expect(containers.length).toBeGreaterThanOrEqual(2);
+  });
 });

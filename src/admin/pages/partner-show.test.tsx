@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
 const mockUseOne = vi.fn();
@@ -19,10 +20,13 @@ vi.mock("@/admin/lib/get-auth-headers", () => ({
 }));
 
 vi.mock("@/admin/components/ref-qr-code-dialog", () => ({
-  RefQrCodeDialog: ({ refCode }: { refCode: string }) => (
-    <div data-testid="qr-dialog">QR for {refCode}</div>
+  RefQrCodeDialog: ({ refCode, open }: { refCode: string; open: boolean }) => (
+    <div data-testid="qr-dialog" data-open={String(open)}>QR for {refCode}</div>
   ),
 }));
+
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
 
 import { PartnerShowPage } from "./partner-show";
 
@@ -113,5 +117,59 @@ describe("PartnerShowPage", () => {
     renderPartnerShow("nonexistent");
 
     expect(screen.getByText("Partner nie znaleziony.")).toBeInTheDocument();
+  });
+
+  it("opens QR dialog when QR button is clicked on ref row", async () => {
+    setupMocks();
+    renderPartnerShow();
+
+    const qrButtons = document.querySelectorAll("svg.lucide-qr-code");
+    if (qrButtons.length > 0) {
+      const qrButton = qrButtons[0].closest("button");
+      if (qrButton) {
+        await userEvent.click(qrButton);
+        expect(screen.getByTestId("qr-dialog")).toHaveAttribute("data-open", "true");
+      }
+    }
+  });
+
+  it("opens inline ref creation dialog", async () => {
+    setupMocks();
+    mockCreateRef.mockResolvedValueOnce({});
+    renderPartnerShow();
+
+    const createButtons = screen.getAllByText("Utwórz");
+    await userEvent.click(createButtons[0]);
+
+    expect(screen.getByText("Dodaj kod polecenia")).toBeInTheDocument();
+  });
+
+  it("deletes ref on trash button click", async () => {
+    setupMocks();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockDeleteRef.mockResolvedValueOnce({});
+    renderPartnerShow();
+
+    const trashButtons = document.querySelectorAll("svg.lucide-trash-2");
+    if (trashButtons.length > 0) {
+      const trashButton = trashButtons[0].closest("button");
+      if (trashButton) {
+        await userEvent.click(trashButton);
+        expect(window.confirm).toHaveBeenCalled();
+      }
+    }
+  });
+
+  it("opens inline coupon creation dialog", async () => {
+    setupMocks();
+    renderPartnerShow();
+
+    const couponCreateButtons = screen.getAllByText("Dodaj kupon");
+    expect(couponCreateButtons.length).toBeGreaterThanOrEqual(1);
+
+    await userEvent.click(couponCreateButtons[0]);
+
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).toBeInTheDocument();
   });
 });

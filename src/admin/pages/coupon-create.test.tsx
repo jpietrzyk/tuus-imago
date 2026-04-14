@@ -86,4 +86,35 @@ describe("CouponCreatePage", () => {
       expect(screen.getByText("Duplicate code")).toBeInTheDocument();
     });
   });
+
+  it("uppercases code on submit", async () => {
+    setupMocks();
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ data: { id: "new" } }) });
+    renderCouponCreate();
+
+    await userEvent.type(screen.getByLabelText("Kod"), "summer20");
+    await userEvent.type(screen.getByLabelText("Wartość rabatu"), "20");
+
+    const submitButton = screen.getByText("Utwórz kupon");
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/.netlify/functions/admin-api",
+        expect.objectContaining({
+          body: expect.stringContaining('"code":"SUMMER20"'),
+        }),
+      );
+    });
+  });
+
+  it("does not submit without required fields", async () => {
+    setupMocks();
+    renderCouponCreate();
+
+    const submitButton = screen.getByText("Utwórz kupon");
+    await userEvent.click(submitButton);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 });

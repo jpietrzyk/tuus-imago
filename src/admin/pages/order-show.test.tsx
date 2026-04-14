@@ -194,4 +194,55 @@ describe("OrderShowPage", () => {
 
     expect(document.querySelector(".animate-spin")).toBeInTheDocument();
   });
+
+  it("sends shipment update with tracking number", async () => {
+    setupMocks();
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({}) });
+    renderOrderShow();
+
+    const trackingInput = screen.getByPlaceholderText("Enter tracking number");
+    await userEvent.type(trackingInput, "TRACK123");
+
+    const inTransitButton = screen.getByText(/Mark as In Transit/);
+    await userEvent.click(inTransitButton);
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/.netlify/functions/admin-api",
+        expect.objectContaining({
+          method: "PATCH",
+          body: expect.stringContaining('"shipment_status":"in_transit"'),
+        }),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/.netlify/functions/admin-api",
+        expect.objectContaining({
+          body: expect.stringContaining('"tracking_number":"TRACK123"'),
+        }),
+      );
+    });
+  });
+
+  it("shows different shipment buttons for in_transit status", () => {
+    setupMocks({
+      ...ORDER_DETAIL,
+      shipment_status: "in_transit",
+    });
+    renderOrderShow();
+
+    expect(screen.getByText(/Mark as Delivered/)).toBeInTheDocument();
+    expect(screen.getByText(/Mark as Failed Delivery/)).toBeInTheDocument();
+    expect(screen.getByText(/Mark as Returned/)).toBeInTheDocument();
+    expect(screen.queryByText(/Mark as In Transit/)).not.toBeInTheDocument();
+  });
+
+  it("opens image preview dialog on Preview button click", async () => {
+    setupMocks();
+    renderOrderShow();
+
+    const previewButtons = screen.getAllByText("Preview");
+    await userEvent.click(previewButtons[0]);
+
+    expect(screen.getByText("Slot 1 of 1")).toBeInTheDocument();
+  });
 });

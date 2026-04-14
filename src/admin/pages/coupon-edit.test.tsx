@@ -86,6 +86,28 @@ describe("CouponEditPage", () => {
     });
   });
 
+  it("tracks dirty fields on edit and submit", async () => {
+    setupMocks();
+    mockMutate.mockImplementation((_, { onSuccess }) => onSuccess());
+    renderCouponEdit();
+
+    const codeInput = screen.getByDisplayValue("SUMMER20");
+    await userEvent.clear(codeInput);
+    await userEvent.type(codeInput, "WINTER50");
+
+    const submitButton = screen.getByText("Zapisz zmiany");
+    await userEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          values: expect.objectContaining({ code: "WINTER50" }),
+        }),
+        expect.any(Object),
+      );
+    });
+  });
+
   it("shows not found when coupon is null", () => {
     mockUseOne.mockReturnValue({
       query: { isFetching: false },
