@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Download } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import type { CrudFilter } from "@refinedev/core";
 import { formatPrice } from "@/lib/pricing";
@@ -61,7 +61,9 @@ export function PartnerListPage() {
     },
   });
 
-  const statsMap = useMemo(() => {
+  const statsMapRef = useRef<Map<string, PartnerStat>>(new Map());
+
+  useMemo(() => {
     const rawData = statsResult.data;
     let stats: PartnerStat[] = [];
     if (Array.isArray(rawData)) {
@@ -74,7 +76,7 @@ export function PartnerListPage() {
     for (const s of stats) {
       map.set(s.partner_id, s);
     }
-    return map;
+    statsMapRef.current = map;
   }, [statsResult.data]);
 
   const filters = useMemo((): CrudFilter[] => {
@@ -135,46 +137,34 @@ export function PartnerListPage() {
       {
         id: "coupon_count",
         header: t("admin.labels.partnerCoupons"),
-        accessorFn: (_row: PartnerRow) => {
-          const stat = statsMap.get(_row.id);
-          return stat?.coupon_count ?? 0;
+        cell: ({ row }: { row: { original: PartnerRow } }) => {
+          const stat = statsMapRef.current.get(row.original.id);
+          return <span>{stat?.coupon_count ?? 0}</span>;
         },
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <span>{getValue() as number}</span>
-        ),
       },
       {
         id: "ref_count",
         header: t("admin.labels.partnerRefs"),
-        accessorFn: (_row: PartnerRow) => {
-          const stat = statsMap.get(_row.id);
-          return stat?.ref_count ?? 0;
+        cell: ({ row }: { row: { original: PartnerRow } }) => {
+          const stat = statsMapRef.current.get(row.original.id);
+          return <span>{stat?.ref_count ?? 0}</span>;
         },
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <span>{getValue() as number}</span>
-        ),
       },
       {
         id: "total_orders",
         header: t("admin.labels.partnerOrders"),
-        accessorFn: (_row: PartnerRow) => {
-          const stat = statsMap.get(_row.id);
-          return stat?.total_orders ?? 0;
+        cell: ({ row }: { row: { original: PartnerRow } }) => {
+          const stat = statsMapRef.current.get(row.original.id);
+          return <span>{stat?.total_orders ?? 0}</span>;
         },
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <span>{getValue() as number}</span>
-        ),
       },
       {
         id: "total_revenue",
         header: t("admin.labels.partnerRevenue"),
-        accessorFn: (_row: PartnerRow) => {
-          const stat = statsMap.get(_row.id);
-          return stat?.total_revenue ?? 0;
+        cell: ({ row }: { row: { original: PartnerRow } }) => {
+          const stat = statsMapRef.current.get(row.original.id);
+          return <span>{formatPrice(stat?.total_revenue ?? 0)}</span>;
         },
-        cell: ({ getValue }: { getValue: () => unknown }) => (
-          <span>{formatPrice(getValue() as number)}</span>
-        ),
       },
       {
         id: "is_active",
@@ -187,7 +177,7 @@ export function PartnerListPage() {
         ),
       },
     ],
-    [statsMap],
+    [],
   );
 
   const table = useTable({
