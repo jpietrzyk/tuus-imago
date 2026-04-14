@@ -36,9 +36,11 @@ import {
   Plus,
   Trash2,
   Eye,
+  QrCode,
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { RefQrCodeDialog } from "@/admin/components/ref-qr-code-dialog";
 
 type Partner = {
   id: string;
@@ -107,6 +109,8 @@ export function PartnerShowPage() {
   const [newCouponDiscountValue, setNewCouponDiscountValue] = useState("");
   const [newCouponSaving, setNewCouponSaving] = useState(false);
   const [newCouponError, setNewCouponError] = useState<string | null>(null);
+
+  const [qrDialogCode, setQrDialogCode] = useState<string | null>(null);
 
   const { query: partnerQuery, result: partner } = useOne<Partner>({
     resource: "partners",
@@ -399,9 +403,16 @@ export function PartnerShowPage() {
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Eye className="h-3 w-3" /> {ref.event_count}
                       </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 ml-auto"
+                        onClick={() => setQrDialogCode(ref.ref_code)}
+                      >
+                        <QrCode className="h-4 w-4" />
+                      </Button>
                       <Badge
                         variant={ref.is_active ? "default" : "secondary"}
-                        className="ml-auto"
                       >
                         {ref.is_active
                           ? t("admin.labels.active")
@@ -648,6 +659,14 @@ export function PartnerShowPage() {
           </Card>
         </div>
       </div>
+
+      <RefQrCodeDialog
+        refCode={qrDialogCode ?? ""}
+        open={qrDialogCode !== null}
+        onOpenChange={(open) => {
+          if (!open) setQrDialogCode(null);
+        }}
+      />
     </div>
   );
 }

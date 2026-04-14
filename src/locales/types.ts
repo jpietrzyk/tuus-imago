@@ -535,6 +535,8 @@ export interface Translations {
       revenue: string;
       pendingShipments: string;
       activeCoupons: string;
+      affiliate: string;
+      activeRefs: string;
       revenueLast30Days: string;
       ordersByStatus: string;
       noRevenueData: string;

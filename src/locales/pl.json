@@ -536,6 +536,8 @@
       "revenue": "Przychody",
       "pendingShipments": "Oczekujące wysyłki",
       "activeCoupons": "Aktywne kupony",
+      "affiliate": "Afiliacja",
+      "activeRefs": "Aktywne refy",
       "revenueLast30Days": "Przychody (ostatnie 30 dni)",
       "ordersByStatus": "Zamówienia wg statusu",
       "noRevenueData": "Brak danych o przychodach",
@@ -685,7 +687,11 @@
       "couponTitle": "Kupony",
       "couponSearchCode": "Szukaj kodu...",
       "couponAllTypes": "Wszystkie typy",
-      "couponNewCoupon": "Nowy kupon"
+      "couponNewCoupon": "Nowy kupon",
+      "refQrTitle": "Kod QR",
+      "refQrDownload": "Pobierz QR",
+      "refQrCopyLink": "Kopiuj link",
+      "refQrLinkCopied": "Skopiowano!"
     }
   }
 }

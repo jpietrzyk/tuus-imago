@@ -536,6 +536,8 @@
       "revenue": "Revenue",
       "pendingShipments": "Pending Shipments",
       "activeCoupons": "Active Coupons",
+      "affiliate": "Affiliation",
+      "activeRefs": "Active Refs",
       "revenueLast30Days": "Revenue (Last 30 Days)",
       "ordersByStatus": "Orders by Status",
       "noRevenueData": "No revenue data",
@@ -685,7 +687,11 @@
       "couponTitle": "Coupons",
       "couponSearchCode": "Search code...",
       "couponAllTypes": "All Types",
-      "couponNewCoupon": "New Coupon"
+      "couponNewCoupon": "New Coupon",
+      "refQrTitle": "QR Code",
+      "refQrDownload": "Download QR",
+      "refQrCopyLink": "Copy link",
+      "refQrLinkCopied": "Copied!"
     }
   }
 }
