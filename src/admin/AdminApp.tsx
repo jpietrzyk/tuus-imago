@@ -31,6 +31,8 @@ export function AdminApp({ children }: { children: ReactNode }) {
         {
           name: "partner_refs",
           list: "/admin/refs",
+          show: "/admin/refs/:id",
+          edit: "/admin/refs/:id/edit",
           meta: { label: "Referral Codes" },
         },
         {

@@ -612,6 +612,14 @@ export interface Translations {
       newRef: string;
       createRef: string;
       refDeleteConfirm: string;
+      refNotFound: string;
+      refBackToList: string;
+      refCodeInfo: string;
+      refDetails: string;
+      refDates: string;
+      updated: string;
+      editRef: string;
+      refUpdated: string;
       customers: string;
       customerExporting: string;
       customerExportCsv: string;

@@ -94,6 +94,8 @@ const PartnerShowPage = lazy(() => import("./admin/pages/partner-show").then((m)
 const PartnerCreatePage = lazy(() => import("./admin/pages/partner-create").then((m) => ({ default: m.PartnerCreatePage })));
 const PartnerEditPage = lazy(() => import("./admin/pages/partner-edit").then((m) => ({ default: m.PartnerEditPage })));
 const RefListPage = lazy(() => import("./admin/pages/ref-list").then((m) => ({ default: m.RefListPage })));
+const RefShowPage = lazy(() => import("./admin/pages/ref-show").then((m) => ({ default: m.RefShowPage })));
+const RefEditPage = lazy(() => import("./admin/pages/ref-edit").then((m) => ({ default: m.RefEditPage })));
 
 function AdminPageLoader() {
   return (
@@ -166,6 +168,8 @@ export function App() {
             <Route path="coupons/:id" element={<Suspense fallback={<AdminPageLoader />}><CouponShowPage /></Suspense>} />
             <Route path="coupons/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><CouponEditPage /></Suspense>} />
             <Route path="refs" element={<Suspense fallback={<AdminPageLoader />}><RefListPage /></Suspense>} />
+            <Route path="refs/:id" element={<Suspense fallback={<AdminPageLoader />}><RefShowPage /></Suspense>} />
+            <Route path="refs/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><RefEditPage /></Suspense>} />
             <Route path="partners" element={<Suspense fallback={<AdminPageLoader />}><PartnerListPage /></Suspense>} />
             <Route path="partners/new" element={<Suspense fallback={<AdminPageLoader />}><PartnerCreatePage /></Suspense>} />
             <Route path="partners/:id" element={<Suspense fallback={<AdminPageLoader />}><PartnerShowPage /></Suspense>} />
