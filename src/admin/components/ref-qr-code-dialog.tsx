@@ -28,12 +28,17 @@ export function RefQrCodeDialog({
   const url = `${window.location.origin}/?ref=${encodeURIComponent(refCode)}`;
 
   useEffect(() => {
-    if (!open || !canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, url, {
-      width: 256,
-      margin: 2,
-      color: { dark: "#000000", light: "#ffffff" },
+    if (!open) return;
+    // Dialog is open, canvas is in the DOM. Defer one frame for layout.
+    const raf = requestAnimationFrame(() => {
+      if (!canvasRef.current) return;
+      QRCode.toCanvas(canvasRef.current, url, {
+        width: 256,
+        margin: 2,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
     });
+    return () => cancelAnimationFrame(raf);
   }, [open, url]);
 
   const handleOpenChange = useCallback(
@@ -70,15 +75,17 @@ export function RefQrCodeDialog({
             {t("admin.labels.refQrTitle")} — {refCode}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-4">
-          <canvas
-            ref={canvasRef}
-            className="rounded-lg border max-w-full"
-          />
-          <div className="w-full rounded-md border bg-muted/50 px-3 py-2 text-sm font-mono break-all select-all text-center">
-            {url}
+        {open && (
+          <div className="flex flex-col items-center gap-4">
+            <canvas
+              ref={canvasRef}
+              className="rounded-lg border max-w-full"
+            />
+            <div className="w-full rounded-md border bg-muted/50 px-3 py-2 text-sm font-mono break-all select-all text-center">
+              {url}
+            </div>
           </div>
-        </div>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={handleCopy}>
             {copied ? (
