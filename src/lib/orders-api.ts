@@ -23,6 +23,7 @@ export interface CreateOrderRequest {
   uploadedSlots: UploadedCheckoutSlot[];
   idempotencyKey: string;
   couponCode?: string;
+  refCode?: string;
   userId?: string;
 }
 

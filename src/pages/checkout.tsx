@@ -51,6 +51,7 @@ import {
 } from "@/lib/orders-api";
 import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import {
+  getReferralCookie,
   removeReferralCookie,
 } from "@/lib/referral-cookie";
 
@@ -520,6 +521,7 @@ export function CheckoutPage() {
         uploadedSlots,
         idempotencyKey: submissionKey,
         couponCode: couponResult?.valid ? couponResult.code : undefined,
+        refCode: getReferralCookie() ?? undefined,
         userId: user?.id,
       });
 
