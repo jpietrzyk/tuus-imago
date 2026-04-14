@@ -63,8 +63,7 @@ export function PartnerListPage() {
 
   const statsMapRef = useRef<Map<string, PartnerStat>>(new Map());
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _statsMap = useMemo(() => {
+  useMemo(() => {
     const rawData = statsResult.data;
     let stats: PartnerStat[] = [];
     if (Array.isArray(rawData)) {
@@ -78,7 +77,6 @@ export function PartnerListPage() {
       map.set(s.partner_id, s);
     }
     statsMapRef.current = map;
-    return map;
   }, [statsResult.data]);
 
   const filters = useMemo((): CrudFilter[] => {
