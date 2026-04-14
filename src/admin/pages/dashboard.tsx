@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
-import { ShoppingCart, DollarSign, Package, Tag } from "lucide-react";
+import { ShoppingCart, DollarSign, Package, Users } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   AreaChart,
@@ -79,6 +79,12 @@ export function DashboardPage() {
 
   const { result: couponsResult } = useList({
     resource: "coupons",
+    pagination: { pageSize: 1 },
+    filters: [{ field: "is_active", operator: "eq", value: true }],
+  });
+
+  const { result: activeRefsResult } = useList({
+    resource: "partner_refs",
     pagination: { pageSize: 1 },
     filters: [{ field: "is_active", operator: "eq", value: true }],
   });
@@ -159,6 +165,7 @@ export function DashboardPage() {
   const totalOrders = countData?.count ?? 0;
   const totalRevenue = revenueData?.total_price ?? 0;
   const activeCoupons = couponsResult.total ?? 0;
+  const activeRefs = activeRefsResult.total ?? 0;
   const pendingShipments = pendingShipmentsResult.total ?? 0;
   const orders = recentOrdersResult.data ?? [];
 
@@ -219,19 +226,26 @@ export function DashboardPage() {
           </Card>
         </Link>
 
-        <Link to="/admin/coupons">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                {t("admin.labels.activeCoupons")}
-              </CardTitle>
-              <Tag className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeCoupons}</div>
-            </CardContent>
-          </Card>
-        </Link>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              {t("admin.labels.affiliate")}
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("admin.labels.activeCoupons")}</span>
+                <span className="text-lg font-bold">{activeCoupons}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("admin.labels.activeRefs")}</span>
+                <span className="text-lg font-bold">{activeRefs}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
