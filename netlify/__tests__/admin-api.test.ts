@@ -479,14 +479,18 @@ describe("admin-api handler", () => {
   });
 
   describe("aggregation: partner_stats (single)", () => {
-    it("returns stats for a single partner", async () => {
+    it("returns stats for a single partner including referral orders", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
 
       const couponsData = [
         { id: "c1", code: "PARTNER10", discount_type: "percentage", discount_value: 10, used_count: 3, is_active: true },
       ];
-      const usagesData = [{ order_id: "o1", coupon_id: "c1" }, { order_id: "o2", coupon_id: "c1" }];
-      const ordersData = [
+      const usagesData = [{ order_id: "o1", coupon_id: "c1" }];
+      const refsData = [
+        { id: "r1", ref_code: "partner-1-ref", label: null, is_active: true, created_at: "2026-01-01" },
+      ];
+      const refOrdersData = [{ id: "o2" }];
+      const allOrdersData = [
         { id: "o1", total_price: 100, created_at: "2026-03-01T00:00:00Z" },
         { id: "o2", total_price: 200, created_at: "2026-04-01T00:00:00Z" },
       ];
@@ -494,6 +498,7 @@ describe("admin-api handler", () => {
       const { client } = setupClient({});
 
       const fromSpy = client.from;
+      let ordersCallCount = 0;
       fromSpy.mockImplementation((table: string) => {
         switch (table) {
           case "profiles": {
@@ -513,14 +518,25 @@ describe("admin-api handler", () => {
             return { select: usagesSelect } as never;
           }
           case "orders": {
-            const ordersIn = vi.fn().mockResolvedValue({ data: ordersData, error: null });
+            ordersCallCount++;
+            if (ordersCallCount === 1) {
+              const ordersIn = vi.fn().mockResolvedValue({ data: refOrdersData, error: null });
+              const ordersSelect = vi.fn().mockReturnValue({ in: ordersIn });
+              return { select: ordersSelect } as never;
+            }
+            const ordersIn = vi.fn().mockResolvedValue({ data: allOrdersData, error: null });
             const ordersSelect = vi.fn().mockReturnValue({ in: ordersIn });
             return { select: ordersSelect } as never;
           }
           case "partner_refs": {
-            const refsEq = vi.fn().mockResolvedValue({ data: [], error: null });
+            const refsEq = vi.fn().mockResolvedValue({ data: refsData, error: null });
             const refsSelect = vi.fn().mockReturnValue({ eq: refsEq });
             return { select: refsSelect } as never;
+          }
+          case "referral_events": {
+            const eventsIn = vi.fn().mockResolvedValue({ data: [], error: null });
+            const eventsSelect = vi.fn().mockReturnValue({ in: eventsIn });
+            return { select: eventsSelect } as never;
           }
           default:
             throw new Error(`Unexpected table: ${table}`);
@@ -539,6 +555,7 @@ describe("admin-api handler", () => {
       expect(response.statusCode).toBe(200);
       const body = readBody(response);
       expect(body.data.coupon_count).toBe(1);
+      expect(body.data.ref_count).toBe(1);
       expect(body.data.total_orders).toBe(2);
       expect(body.data.total_revenue).toBe(300);
       expect(body.data.last_order_date).toBe("2026-04-01T00:00:00Z");

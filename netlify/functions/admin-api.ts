@@ -685,45 +685,6 @@ async function handlePartnerStats(
       return jsonResponse(500, { error: couponsError.message });
     }
 
-    const couponIds = (coupons ?? []).map((c) => c.id);
-
-    let totalOrders = 0;
-    let totalRevenue = 0;
-    let lastOrderDate: string | null = null;
-
-    if (couponIds.length > 0) {
-      const { data: usages, error: usagesError } = await supabase
-        .from("coupon_usages")
-        .select("order_id, coupon_id")
-        .in("coupon_id", couponIds);
-
-      if (usagesError) {
-        return jsonResponse(500, { error: usagesError.message });
-      }
-
-      const orderIds = [...new Set((usages ?? []).map((u) => u.order_id))];
-
-      if (orderIds.length > 0) {
-        const { data: orders, error: ordersError } = await supabase
-          .from("orders")
-          .select("id, total_price, created_at")
-          .in("id", orderIds);
-
-        if (ordersError) {
-          return jsonResponse(500, { error: ordersError.message });
-        }
-
-        totalOrders = orders?.length ?? 0;
-        totalRevenue = (orders ?? []).reduce((sum, o) => sum + (Number(o.total_price) || 0), 0);
-        if (orders && orders.length > 0) {
-          const sorted = [...orders].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-          );
-          lastOrderDate = sorted[0].created_at;
-        }
-      }
-    }
-
     const { data: refs, error: refsError } = await supabase
       .from("partner_refs")
       .select("id, ref_code, label, is_active, created_at")
@@ -731,6 +692,71 @@ async function handlePartnerStats(
 
     if (refsError) {
       return jsonResponse(500, { error: refsError.message });
+    }
+
+    // Collect order IDs from coupon usages
+    const couponIds = (coupons ?? []).map((c) => c.id);
+    const couponOrderIds = new Set<string>();
+
+    if (couponIds.length > 0) {
+      const { data: usages, error: usagesError } = await supabase
+        .from("coupon_usages")
+        .select("order_id")
+        .in("coupon_id", couponIds);
+
+      if (usagesError) {
+        return jsonResponse(500, { error: usagesError.message });
+      }
+
+      for (const u of usages ?? []) {
+        couponOrderIds.add(u.order_id);
+      }
+    }
+
+    // Collect order IDs from referral codes
+    const refCodes = (refs ?? []).map((r) => r.ref_code);
+    const refOrderIds = new Set<string>();
+
+    if (refCodes.length > 0) {
+      const { data: refOrders, error: refOrdersError } = await supabase
+        .from("orders")
+        .select("id")
+        .in("ref_code", refCodes);
+
+      if (refOrdersError) {
+        return jsonResponse(500, { error: refOrdersError.message });
+      }
+
+      for (const o of refOrders ?? []) {
+        refOrderIds.add(o.id);
+      }
+    }
+
+    // Merge all unique order IDs
+    const allOrderIds = [...new Set([...couponOrderIds, ...refOrderIds])];
+
+    let totalOrders = 0;
+    let totalRevenue = 0;
+    let lastOrderDate: string | null = null;
+
+    if (allOrderIds.length > 0) {
+      const { data: orders, error: ordersError } = await supabase
+        .from("orders")
+        .select("id, total_price, created_at")
+        .in("id", allOrderIds);
+
+      if (ordersError) {
+        return jsonResponse(500, { error: ordersError.message });
+      }
+
+      totalOrders = orders?.length ?? 0;
+      totalRevenue = (orders ?? []).reduce((sum, o) => sum + (Number(o.total_price) || 0), 0);
+      if (orders && orders.length > 0) {
+        const sorted = [...orders].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        lastOrderDate = sorted[0].created_at;
+      }
     }
 
     const refIds = (refs ?? []).map((r) => r.id);
@@ -792,16 +818,18 @@ async function handlePartnerStats(
 
   const { data: allRefs, error: allRefsError } = await supabase
     .from("partner_refs")
-    .select("id, partner_id");
+    .select("id, partner_id, ref_code");
 
   if (allRefsError) {
     return jsonResponse(500, { error: allRefsError.message });
   }
 
   const refPartnerMap = new Map<string, number>();
+  const refCodePartnerMap = new Map<string, string>();
   for (const r of allRefs ?? []) {
     if (r.partner_id) {
       refPartnerMap.set(r.partner_id, (refPartnerMap.get(r.partner_id) ?? 0) + 1);
+      refCodePartnerMap.set(r.ref_code, r.partner_id);
     }
   }
 
@@ -814,6 +842,7 @@ async function handlePartnerStats(
     }
   }
 
+  // Collect order IDs from coupon usages
   const allCouponIds = (allCoupons ?? []).map((c) => c.id);
 
   const { data: allUsages, error: usagesError } = await supabase
@@ -833,7 +862,7 @@ async function handlePartnerStats(
   }
 
   const partnerOrderIds = new Map<string, Set<string>>();
-  for (const [partnerId, couponIds] of couponPartnerMap.entries()) {
+  for (const [pid, couponIds] of couponPartnerMap.entries()) {
     const orderSet = new Set<string>();
     for (const cid of couponIds) {
       const orders = couponOrderMap.get(cid);
@@ -841,7 +870,29 @@ async function handlePartnerStats(
         for (const oid of orders) orderSet.add(oid);
       }
     }
-    partnerOrderIds.set(partnerId, orderSet);
+    partnerOrderIds.set(pid, orderSet);
+  }
+
+  // Collect order IDs from referral codes
+  const allRefCodes = [...refCodePartnerMap.keys()];
+  if (allRefCodes.length > 0) {
+    const { data: refOrders, error: refOrdersError } = await supabase
+      .from("orders")
+      .select("id, ref_code")
+      .in("ref_code", allRefCodes);
+
+    if (refOrdersError) {
+      return jsonResponse(500, { error: refOrdersError.message });
+    }
+
+    for (const o of refOrders ?? []) {
+      const pid = refCodePartnerMap.get(o.ref_code);
+      if (pid) {
+        const orderSet = partnerOrderIds.get(pid) ?? new Set<string>();
+        orderSet.add(o.id);
+        partnerOrderIds.set(pid, orderSet);
+      }
+    }
   }
 
   const allOrderIds = new Set<string>();

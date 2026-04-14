@@ -48,6 +48,7 @@ type CreateOrderPayload = {
   uploadedSlots?: UploadedSlotInput[];
   idempotencyKey?: string;
   couponCode?: string;
+  refCode?: string;
   userId?: string;
 };
 
@@ -262,6 +263,11 @@ export const handler = async (event: NetlifyEvent) => {
   if (couponId) {
     orderInsert.coupon_id = couponId;
     orderInsert.coupon_code = couponCode;
+  }
+
+  const refCodeInput = parsedBody.refCode?.trim();
+  if (refCodeInput) {
+    orderInsert.ref_code = refCodeInput;
   }
 
   const userIdInput = parsedBody.userId?.trim();
