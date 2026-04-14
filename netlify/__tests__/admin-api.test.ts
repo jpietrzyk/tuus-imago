@@ -1350,6 +1350,339 @@ describe("admin-api handler", () => {
     });
   });
 
+  describe("shipment status update", () => {
+    it("performs valid transition with tracking number", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const existingOrder = { id: "o1", order_number: "ORD-001", shipment_status: "pending_fulfillment" };
+      const updatedOrder = { id: "o1", order_number: "ORD-001", shipment_status: "in_transit", tracking_number: "TRACK123" };
+      const historyInsertMock = vi.fn().mockResolvedValue({ error: null });
+      const updateMock = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: updatedOrder, error: null }),
+          }),
+        }),
+      });
+
+      const { client } = setupClient({});
+      let ordersCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        switch (table) {
+          case "profiles": {
+            const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+            const eq = vi.fn().mockReturnValue({ single });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          case "orders": {
+            ordersCallCount++;
+            if (ordersCallCount === 1) {
+              const maybeSingle = vi.fn().mockResolvedValue({ data: existingOrder, error: null });
+              const eq = vi.fn().mockReturnValue({ maybeSingle });
+              const select = vi.fn().mockReturnValue({ eq });
+              return { select } as never;
+            }
+            return { update: updateMock } as never;
+          }
+          case "order_status_history":
+            return { insert: historyInsertMock } as never;
+          default:
+            throw new Error(`Unexpected table: ${table}`);
+        }
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "o1",
+          data: { shipment_status: "in_transit", tracking_number: "TRACK123" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = readBody(response);
+      expect(body.data).toEqual({ id: "o1", order_number: "ORD-001", shipment_status: "in_transit", tracking_number: "TRACK123" });
+      expect(body.meta.allowedNextShipmentStatuses).toEqual(["delivered", "failed_delivery", "returned"]);
+      expect(updateMock).toHaveBeenCalledWith({ shipment_status: "in_transit", tracking_number: "TRACK123" });
+      expect(historyInsertMock).toHaveBeenCalledWith({
+        order_id: "o1",
+        status_type: "shipment",
+        status: "in_transit",
+        note: "Shipment status changed from pending_fulfillment to in_transit.",
+      });
+    });
+
+    it("returns 409 for invalid transition (returned -> in_transit)", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const existingOrder = { id: "o1", order_number: "ORD-001", shipment_status: "returned" };
+
+      const { client } = setupClient({});
+      client.from.mockImplementation((table: string) => {
+        switch (table) {
+          case "profiles": {
+            const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+            const eq = vi.fn().mockReturnValue({ single });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          case "orders": {
+            const maybeSingle = vi.fn().mockResolvedValue({ data: existingOrder, error: null });
+            const eq = vi.fn().mockReturnValue({ maybeSingle });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          default:
+            throw new Error(`Unexpected table: ${table}`);
+        }
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "o1",
+          data: { shipment_status: "in_transit" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(readBody(response).error).toContain("Invalid shipment status transition from returned to in_transit");
+    });
+
+    it("returns 400 for invalid shipment status value", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const { client } = setupClient({});
+      client.from.mockImplementation((table: string) => {
+        if (table === "profiles") {
+          const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+          const eq = vi.fn().mockReturnValue({ single });
+          const select = vi.fn().mockReturnValue({ eq });
+          return { select } as never;
+        }
+        throw new Error(`Unexpected table: ${table}`);
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "o1",
+          data: { shipment_status: "unknown_status" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      const error = readBody(response).error;
+      expect(error).toContain("Invalid shipmentStatus");
+      expect(error).toContain("pending_fulfillment, in_transit, delivered, failed_delivery, returned");
+    });
+
+    it("returns 404 when order not found", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const { client } = setupClient({});
+      client.from.mockImplementation((table: string) => {
+        switch (table) {
+          case "profiles": {
+            const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+            const eq = vi.fn().mockReturnValue({ single });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          case "orders": {
+            const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+            const eq = vi.fn().mockReturnValue({ maybeSingle });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          default:
+            throw new Error(`Unexpected table: ${table}`);
+        }
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "nonexistent",
+          data: { shipment_status: "in_transit" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(readBody(response).error).toBe("Order not found.");
+    });
+
+    it("allows same status update (idempotent)", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const existingOrder = { id: "o1", order_number: "ORD-001", shipment_status: "in_transit" };
+      const updatedOrder = { id: "o1", order_number: "ORD-001", shipment_status: "in_transit", tracking_number: null };
+      const historyInsertMock = vi.fn().mockResolvedValue({ error: null });
+
+      const { client } = setupClient({});
+      let ordersCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        switch (table) {
+          case "profiles": {
+            const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+            const eq = vi.fn().mockReturnValue({ single });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          case "orders": {
+            ordersCallCount++;
+            if (ordersCallCount === 1) {
+              const maybeSingle = vi.fn().mockResolvedValue({ data: existingOrder, error: null });
+              const eq = vi.fn().mockReturnValue({ maybeSingle });
+              const select = vi.fn().mockReturnValue({ eq });
+              return { select } as never;
+            }
+            const single = vi.fn().mockResolvedValue({ data: updatedOrder, error: null });
+            const select = vi.fn().mockReturnValue({ single });
+            const eq = vi.fn().mockReturnValue({ select });
+            const update = vi.fn().mockReturnValue({ eq });
+            return { update } as never;
+          }
+          case "order_status_history":
+            return { insert: historyInsertMock } as never;
+          default:
+            throw new Error(`Unexpected table: ${table}`);
+        }
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "o1",
+          data: { shipment_status: "in_transit" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(readBody(response).data.shipment_status).toBe("in_transit");
+      expect(historyInsertMock).toHaveBeenCalledWith(
+        expect.objectContaining({ note: "Shipment details updated." }),
+      );
+    });
+
+    it("clears tracking number when empty string provided", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const existingOrder = { id: "o1", order_number: "ORD-001", shipment_status: "pending_fulfillment" };
+      const updatedOrder = { id: "o1", order_number: "ORD-001", shipment_status: "in_transit", tracking_number: null };
+      const historyInsertMock = vi.fn().mockResolvedValue({ error: null });
+      const updateMock = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: updatedOrder, error: null }),
+          }),
+        }),
+      });
+
+      const { client } = setupClient({});
+      let ordersCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        switch (table) {
+          case "profiles": {
+            const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+            const eq = vi.fn().mockReturnValue({ single });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          case "orders": {
+            ordersCallCount++;
+            if (ordersCallCount === 1) {
+              const maybeSingle = vi.fn().mockResolvedValue({ data: existingOrder, error: null });
+              const eq = vi.fn().mockReturnValue({ maybeSingle });
+              const select = vi.fn().mockReturnValue({ eq });
+              return { select } as never;
+            }
+            return { update: updateMock } as never;
+          }
+          case "order_status_history":
+            return { insert: historyInsertMock } as never;
+          default:
+            throw new Error(`Unexpected table: ${table}`);
+        }
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "o1",
+          data: { shipment_status: "in_transit", tracking_number: "" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(updateMock).toHaveBeenCalledWith({ shipment_status: "in_transit", tracking_number: null });
+    });
+
+    it("returns 500 when history insert fails after shipment update", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const existingOrder = { id: "o1", order_number: "ORD-001", shipment_status: "pending_fulfillment" };
+      const updatedOrder = { id: "o1", order_number: "ORD-001", shipment_status: "in_transit", tracking_number: null };
+
+      const { client } = setupClient({});
+      let ordersCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        switch (table) {
+          case "profiles": {
+            const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+            const eq = vi.fn().mockReturnValue({ single });
+            const select = vi.fn().mockReturnValue({ eq });
+            return { select } as never;
+          }
+          case "orders": {
+            ordersCallCount++;
+            if (ordersCallCount === 1) {
+              const maybeSingle = vi.fn().mockResolvedValue({ data: existingOrder, error: null });
+              const eq = vi.fn().mockReturnValue({ maybeSingle });
+              const select = vi.fn().mockReturnValue({ eq });
+              return { select } as never;
+            }
+            const single = vi.fn().mockResolvedValue({ data: updatedOrder, error: null });
+            const select = vi.fn().mockReturnValue({ single });
+            const eq = vi.fn().mockReturnValue({ select });
+            const update = vi.fn().mockReturnValue({ eq });
+            return { update } as never;
+          }
+          case "order_status_history":
+            return { insert: vi.fn().mockResolvedValue({ error: { message: "FK violation" } }) } as never;
+          default:
+            throw new Error(`Unexpected table: ${table}`);
+        }
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          id: "o1",
+          data: { shipment_status: "in_transit" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(readBody(response).error).toBe("Shipment updated but history insert failed.");
+    });
+  });
+
   describe("export CSV", () => {
     it("returns CSV response with correct headers", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
