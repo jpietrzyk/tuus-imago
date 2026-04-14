@@ -81,7 +81,11 @@ export function AdminLayout() {
   const { mutate: logout } = useLogout();
 
   const handleLogout = () => {
-    logout();
+    logout(undefined, {
+      onSuccess: () => {
+        navigate("/admin/login");
+      },
+    });
   };
 
   const isActive = (path: string) => {

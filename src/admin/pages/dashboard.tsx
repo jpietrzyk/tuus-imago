@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { formatPrice } from "@/lib/pricing";
 import { formatDate } from "@/lib/format";
-import { ShoppingCart, DollarSign, Package, Users } from "lucide-react";
+import { ShoppingCart, DollarSign, Package, Users, Tag, Link2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   AreaChart,
@@ -235,14 +235,14 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t("admin.labels.activeCoupons")}</span>
+              <Link to="/admin/coupons" className="flex items-center justify-between hover:underline">
+                <span className="flex items-center gap-1.5 text-sm text-muted-foreground"><Tag className="h-3.5 w-3.5" />{t("admin.labels.activeCoupons")}</span>
                 <span className="text-lg font-bold">{activeCoupons}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{t("admin.labels.activeRefs")}</span>
+              </Link>
+              <Link to="/admin/refs" className="flex items-center justify-between hover:underline">
+                <span className="flex items-center gap-1.5 text-sm text-muted-foreground"><Link2 className="h-3.5 w-3.5" />{t("admin.labels.activeRefs")}</span>
                 <span className="text-lg font-bold">{activeRefs}</span>
-              </div>
+              </Link>
             </div>
           </CardContent>
         </Card>

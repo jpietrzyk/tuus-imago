@@ -537,7 +537,7 @@
       "pendingShipments": "Oczekujące wysyłki",
       "activeCoupons": "Aktywne kupony",
       "affiliate": "Afiliacja",
-      "activeRefs": "Aktywne refy",
+      "activeRefs": "Aktywne kody poleceń",
       "revenueLast30Days": "Przychody (ostatnie 30 dni)",
       "ordersByStatus": "Zamówienia wg statusu",
       "noRevenueData": "Brak danych o przychodach",
