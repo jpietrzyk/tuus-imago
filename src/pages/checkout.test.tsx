@@ -98,6 +98,7 @@ const P24_SESSION_RESPONSE = {
 function createFetchMock(
   orderResponse = ORDER_RESPONSE,
   p24Response = P24_SESSION_RESPONSE,
+  promotionResponse: unknown = { active: false },
 ) {
   return vi.fn((url: string) => {
     if (url.includes("create-order")) {
@@ -119,6 +120,14 @@ function createFetchMock(
     if (url.includes("customer-addresses")) {
       return Promise.resolve(
         new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    }
+    if (url.includes("active-promotion")) {
+      return Promise.resolve(
+        new Response(JSON.stringify(promotionResponse), {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
@@ -685,11 +694,13 @@ describe("CheckoutPage", () => {
   it("keeps sessionStorage draft and shows an error when order API fails", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: "Could not create order." }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }),
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ error: "Could not create order." }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }),
+        ),
       ),
     );
 
@@ -1155,6 +1166,45 @@ describe("CheckoutPage", () => {
       }, { timeout: 5000 });
 
       expect(getReferralCookie()).toBeNull();
+    });
+  });
+
+  describe("promotion discount display", () => {
+    it("displays promotion discount in order summary when active", async () => {
+      vi.stubGlobal(
+        "fetch",
+        createFetchMock(
+          ORDER_RESPONSE,
+          P24_SESSION_RESPONSE,
+          {
+            active: true,
+            id: "promo-1",
+            name: "Spring Sale",
+            slogan: "Spring Sale -20%!",
+            discountType: "percentage",
+            discountValue: 20,
+            minOrderAmount: null,
+            minSlots: null,
+          },
+        ),
+      );
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("checkout.promotionDiscount"))).toBeInTheDocument();
+      }, { timeout: 3000 });
+    });
+
+    it("does not show promotion discount when no promotion is active", () => {
+      vi.stubGlobal(
+        "fetch",
+        createFetchMock(ORDER_RESPONSE, P24_SESSION_RESPONSE, { active: false }),
+      );
+
+      renderWithRouter();
+
+      expect(screen.queryByText(tr("checkout.promotionDiscount"))).not.toBeInTheDocument();
     });
   });
 });

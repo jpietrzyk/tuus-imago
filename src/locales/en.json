@@ -351,7 +351,8 @@
       "applied": "Code applied",
       "subtotal": "Subtotal",
       "discount": "Discount"
-    }
+    },
+    "promotionDiscount": "Promotion discount"
   },
   "complaint": {
     "title": "Complaint Form",
@@ -464,6 +465,7 @@
       "dashboard": "Dashboard",
       "orders": "Orders",
       "coupons": "Coupons",
+      "promotions": "Promotions",
       "referralCodes": "Referral Codes",
       "partners": "Partners",
       "customers": "Customers",
@@ -699,7 +701,25 @@
       "refQrTitle": "QR Code",
       "refQrDownload": "Download QR",
       "refQrCopyLink": "Copy link",
-      "refQrLinkCopied": "Copied!"
+      "refQrLinkCopied": "Copied!",
+      "promotions": "Promotions",
+      "newPromotion": "New Promotion",
+      "createPromotion": "Create Promotion",
+      "editPromotion": "Edit Promotion",
+      "promotionName": "Name",
+      "promotionSlogan": "Slogan",
+      "minSlots": "Min Slots",
+      "promotionNotFound": "Promotion not found.",
+      "promotionBackToPromotions": "Back to Promotions",
+      "promotionDetails": "Details",
+      "promotionDiscount": "Discount",
+      "promotionValidity": "Validity",
+      "activatePromotion": "Activate",
+      "deactivatePromotion": "Deactivate",
+      "promotionActive": "Active",
+      "promotionInactive": "Inactive",
+      "promotionConditions": "Conditions",
+      "promotionSearchName": "Search name..."
     }
   }
 }

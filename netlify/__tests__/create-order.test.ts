@@ -30,6 +30,13 @@ function buildCustomer() {
   };
 }
 
+function createPromotionsNoActiveMock() {
+  const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const select = vi.fn().mockReturnValue({ eq });
+  return { select, eq, maybeSingle };
+}
+
 describe("create-order handler", () => {
   beforeEach(() => {
     process.env.SUPABASE_URL = "https://example.supabase.co";
@@ -91,6 +98,7 @@ describe("create-order handler", () => {
       order_status_history: {
         insert: historyInsert,
       },
+      promotions: createPromotionsNoActiveMock(),
     });
 
     const response = await handler({
@@ -199,6 +207,7 @@ describe("create-order handler", () => {
       order_status_history: {
         insert: vi.fn(),
       },
+      promotions: createPromotionsNoActiveMock(),
     });
 
     const response = await handler({
@@ -257,6 +266,7 @@ describe("create-order handler", () => {
       order_status_history: {
         insert: vi.fn(),
       },
+      promotions: createPromotionsNoActiveMock(),
     });
 
     const response = await handler({
@@ -315,6 +325,7 @@ describe("create-order handler", () => {
       order_status_history: {
         insert: historyInsert,
       },
+      promotions: createPromotionsNoActiveMock(),
     });
 
     const response = await handler({
@@ -333,5 +344,329 @@ describe("create-order handler", () => {
     expect(orderDelete).toHaveBeenCalled();
     expect(rollbackEq).toHaveBeenCalledWith("id", "order-1");
     expect(historyInsert).toHaveBeenCalled();
+  });
+
+  describe("promotion discount", () => {
+    function buildBaseMocks() {
+      const { insert: orderInsert } = createInsertSelectSingle({
+        data: {
+          id: "order-promo-1",
+          order_number: "TI-2026-000100",
+          status: "pending_payment",
+        },
+        error: null,
+      });
+      const orderItemsInsert = vi.fn().mockResolvedValue({ error: null });
+      const historyInsert = vi.fn().mockResolvedValue({ error: null });
+      const promotionsMaybeSingle = vi.fn();
+      const promotionsEq = vi.fn().mockReturnValue({ maybeSingle: promotionsMaybeSingle });
+      const promotionsSelect = vi.fn().mockReturnValue({ eq: promotionsEq });
+
+      return {
+        orderInsert,
+        orderItemsInsert,
+        historyInsert,
+        promotionsSelect,
+        promotionsEq,
+        promotionsMaybeSingle,
+      };
+    }
+
+    function setupMocksWithPromotion(
+      mocks: ReturnType<typeof buildBaseMocks>,
+      promotionData: unknown,
+    ) {
+      mocks.promotionsMaybeSingle.mockResolvedValue({ data: promotionData, error: null });
+
+      mockSupabaseClient(createClientMock, {
+        orders: {
+          insert: mocks.orderInsert,
+          select: vi.fn(),
+          delete: vi.fn(),
+        },
+        order_items: {
+          insert: mocks.orderItemsInsert,
+        },
+        order_status_history: {
+          insert: mocks.historyInsert,
+        },
+        coupons: {
+          select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) }) }),
+        },
+        promotions: {
+          select: mocks.promotionsSelect,
+        },
+      });
+    }
+
+    it("applies promotion percentage discount on subtotal", async () => {
+      const mocks = buildBaseMocks();
+      setupMocksWithPromotion(mocks, {
+        id: "promo-1",
+        discount_type: "percentage",
+        discount_value: 10,
+        min_order_amount: null,
+        min_slots: null,
+        valid_from: null,
+        valid_until: null,
+        is_active: true,
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-1",
+          uploadedSlots: [],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          promotion_id: "promo-1",
+          promotion_discount_amount: 20,
+          total_price: 180,
+          discount_amount: 0,
+        }),
+      );
+    });
+
+    it("applies promotion fixed_amount discount on subtotal", async () => {
+      const mocks = buildBaseMocks();
+      setupMocksWithPromotion(mocks, {
+        id: "promo-2",
+        discount_type: "fixed_amount",
+        discount_value: 50,
+        min_order_amount: null,
+        min_slots: null,
+        valid_from: null,
+        valid_until: null,
+        is_active: true,
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-2",
+          uploadedSlots: [],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          promotion_id: "promo-2",
+          promotion_discount_amount: 50,
+          total_price: 150,
+        }),
+      );
+    });
+
+    it("does not apply promotion when min_slots is not met", async () => {
+      const mocks = buildBaseMocks();
+      setupMocksWithPromotion(mocks, {
+        id: "promo-3",
+        discount_type: "percentage",
+        discount_value: 20,
+        min_order_amount: null,
+        min_slots: 2,
+        valid_from: null,
+        valid_until: null,
+        is_active: true,
+      });
+
+      await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-3",
+          uploadedSlots: [],
+        }),
+      });
+
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          promotion_discount_amount: 0,
+          total_price: 200,
+        }),
+      );
+    });
+
+    it("does not apply promotion when min_order_amount is not met", async () => {
+      const mocks = buildBaseMocks();
+      setupMocksWithPromotion(mocks, {
+        id: "promo-4",
+        discount_type: "fixed_amount",
+        discount_value: 30,
+        min_order_amount: 400,
+        min_slots: null,
+        valid_from: null,
+        valid_until: null,
+        is_active: true,
+      });
+
+      await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-4",
+          uploadedSlots: [],
+        }),
+      });
+
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          promotion_discount_amount: 0,
+          total_price: 200,
+        }),
+      );
+    });
+
+    it("stacks promotion discount with coupon discount", async () => {
+      const mocks = buildBaseMocks();
+      mocks.promotionsMaybeSingle.mockResolvedValue({
+        data: {
+          id: "promo-5",
+          discount_type: "percentage",
+          discount_value: 10,
+          min_order_amount: null,
+          min_slots: null,
+          valid_from: null,
+          valid_until: null,
+          is_active: true,
+        },
+        error: null,
+      });
+
+      const couponMaybeSingle = vi.fn().mockResolvedValue({
+        data: {
+          id: "coupon-1",
+          code: "SAVE10",
+          discount_type: "percentage",
+          discount_value: 10,
+          min_order_amount: null,
+          max_uses: null,
+          used_count: 0,
+          valid_from: null,
+          valid_until: null,
+          is_active: true,
+        },
+        error: null,
+      });
+      const couponEq2 = vi.fn().mockReturnValue({ maybeSingle: couponMaybeSingle });
+      const couponEq = vi.fn().mockReturnValue({ eq: couponEq2 });
+      const couponSelect = vi.fn().mockReturnValue({ eq: couponEq });
+
+      const rpcMock = vi.fn().mockResolvedValue({ error: null });
+      const couponUsagesInsert = vi.fn().mockResolvedValue({ error: null });
+
+      const supabaseMock = {
+        from: vi.fn((table: string) => {
+          const tables: Record<string, unknown> = {
+            orders: {
+              insert: mocks.orderInsert,
+              select: vi.fn(),
+              delete: vi.fn(),
+            },
+            order_items: {
+              insert: mocks.orderItemsInsert,
+            },
+            order_status_history: {
+              insert: mocks.historyInsert,
+            },
+            coupons: {
+              select: couponSelect,
+            },
+            promotions: {
+              select: mocks.promotionsSelect,
+            },
+            coupon_usages: {
+              insert: couponUsagesInsert,
+            },
+          };
+          if (!(table in tables)) {
+            throw new Error(`Unexpected table: ${table}`);
+          }
+          return tables[table] as never;
+        }),
+        rpc: rpcMock,
+      };
+
+      createClientMock.mockReturnValue(supabaseMock as never);
+
+      await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-5",
+          uploadedSlots: [],
+          couponCode: "SAVE10",
+        }),
+      });
+
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coupon_id: "coupon-1",
+          coupon_code: "SAVE10",
+          discount_amount: 20,
+          promotion_id: "promo-5",
+          promotion_discount_amount: 20,
+          total_price: 160,
+        }),
+      );
+    });
+
+    it("clamps total_price to 0 when discounts exceed subtotal", async () => {
+      const mocks = buildBaseMocks();
+      setupMocksWithPromotion(mocks, {
+        id: "promo-6",
+        discount_type: "fixed_amount",
+        discount_value: 300,
+        min_order_amount: null,
+        min_slots: null,
+        valid_from: null,
+        valid_until: null,
+        is_active: true,
+      });
+
+      await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-6",
+          uploadedSlots: [],
+        }),
+      });
+
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          promotion_discount_amount: 200,
+          total_price: 0,
+        }),
+      );
+    });
+
+    it("does not apply promotion when no active promotion exists", async () => {
+      const mocks = buildBaseMocks();
+      setupMocksWithPromotion(mocks, null);
+
+      await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "promo-test-none",
+          uploadedSlots: [],
+        }),
+      });
+
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          promotion_discount_amount: 0,
+          total_price: 200,
+        }),
+      );
+    });
   });
 });

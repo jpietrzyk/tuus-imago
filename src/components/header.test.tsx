@@ -5,6 +5,11 @@ import { MemoryRouter } from "react-router-dom";
 
 vi.mock("@/components/legal-navigation-sheet", () => ({}));
 
+vi.mock("@/components/current-promotion-banner", () => ({
+  CurrentPromotionBanner: ({ slogan }: { slogan: string | null }) =>
+    slogan ? <span data-testid="promotion-banner">{slogan}</span> : null,
+}));
+
 vi.mock("@/locales/i18n", () => ({
   t: (key: string) => key,
 }));
@@ -32,11 +37,11 @@ vi.mock("react-router-dom", async (importOriginal) => {
 let mockAuthState: { user: { email: string } | null; loading: boolean };
 let mockLocationState: { pathname: string };
 
-function renderHeader(onOpenLegalMenu?: () => void) {
+function renderHeader(onOpenLegalMenu?: () => void, promotionSlogan?: string | null) {
   const legalMenuFn = onOpenLegalMenu ?? vi.fn();
   const result = render(
     <MemoryRouter>
-      <HeaderStub onOpenLegalMenu={legalMenuFn} />
+      <HeaderStub onOpenLegalMenu={legalMenuFn} promotionSlogan={promotionSlogan} />
     </MemoryRouter>,
   );
   return { ...result, legalMenuFn };
@@ -136,8 +141,30 @@ describe("Header", () => {
     await userEvent.click(screen.getByLabelText("auth.accountMenu"));
     expect(screen.getByText("user@test.com")).toBeInTheDocument();
   });
+
+  it("renders TI logo instead of TuusImago", () => {
+    renderHeader();
+    const logo = screen.getByLabelText("Tuus Imago – home");
+    expect(logo).toBeInTheDocument();
+    expect(logo.textContent).toBe("TI");
+  });
+
+  it("shows promotion banner when promotionSlogan is provided", () => {
+    renderHeader(undefined, "Spring Sale -20%!");
+    expect(screen.getByTestId("promotion-banner")).toHaveTextContent("Spring Sale -20%!");
+  });
+
+  it("hides promotion banner when promotionSlogan is null", () => {
+    renderHeader(undefined, null);
+    expect(screen.queryByTestId("promotion-banner")).not.toBeInTheDocument();
+  });
+
+  it("hides promotion banner when promotionSlogan is undefined", () => {
+    renderHeader(undefined, undefined);
+    expect(screen.queryByTestId("promotion-banner")).not.toBeInTheDocument();
+  });
 });
 
-function HeaderStub({ onOpenLegalMenu }: { onOpenLegalMenu: (section: "legal" | "payments") => void }) {
-  return <Header onOpenLegalMenu={onOpenLegalMenu} />;
+function HeaderStub({ onOpenLegalMenu, promotionSlogan }: { onOpenLegalMenu: (section: "legal" | "payments") => void; promotionSlogan?: string | null }) {
+  return <Header onOpenLegalMenu={onOpenLegalMenu} promotionSlogan={promotionSlogan} />;
 }

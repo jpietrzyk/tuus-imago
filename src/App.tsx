@@ -73,6 +73,7 @@ import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
 import { setReferralCookie } from "@/lib/referral-cookie";
 import { useReferralTracking } from "@/lib/use-referral-tracking";
+import { getActivePromotion, type ActivePromotionResponse } from "@/lib/orders-api";
 import { Authenticated } from "@refinedev/core";
 import { AdminApp } from "./admin/AdminApp";
 import { AdminLayout } from "./admin/layout";
@@ -96,6 +97,10 @@ const PartnerEditPage = lazy(() => import("./admin/pages/partner-edit").then((m)
 const RefListPage = lazy(() => import("./admin/pages/ref-list").then((m) => ({ default: m.RefListPage })));
 const RefShowPage = lazy(() => import("./admin/pages/ref-show").then((m) => ({ default: m.RefShowPage })));
 const RefEditPage = lazy(() => import("./admin/pages/ref-edit").then((m) => ({ default: m.RefEditPage })));
+const PromotionListPage = lazy(() => import("./admin/pages/promotion-list").then((m) => ({ default: m.PromotionListPage })));
+const PromotionCreatePage = lazy(() => import("./admin/pages/promotion-create").then((m) => ({ default: m.PromotionCreatePage })));
+const PromotionShowPage = lazy(() => import("./admin/pages/promotion-show").then((m) => ({ default: m.PromotionShowPage })));
+const PromotionEditPage = lazy(() => import("./admin/pages/promotion-edit").then((m) => ({ default: m.PromotionEditPage })));
 
 function AdminPageLoader() {
   return (
@@ -180,6 +185,10 @@ export function App() {
             <Route path="users/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
             <Route path="admins" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={true} /></Suspense>} />
             <Route path="admins/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
+            <Route path="promotions" element={<Suspense fallback={<AdminPageLoader />}><PromotionListPage /></Suspense>} />
+            <Route path="promotions/new" element={<Suspense fallback={<AdminPageLoader />}><PromotionCreatePage /></Suspense>} />
+            <Route path="promotions/:id" element={<Suspense fallback={<AdminPageLoader />}><PromotionShowPage /></Suspense>} />
+            <Route path="promotions/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PromotionEditPage /></Suspense>} />
           </Route>
         </Routes>
       </AdminApp>
@@ -191,6 +200,20 @@ export function App() {
 
 function StorefrontApp() {
   useReferralTracking();
+
+  const [activePromotion, setActivePromotion] = useState<ActivePromotionResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getActivePromotion()
+      .then((result) => {
+        if (!cancelled && result.active) {
+          setActivePromotion(result);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -407,7 +430,7 @@ function StorefrontApp() {
         backgroundAttachment: "fixed",
       }}
     >
-      <Header onOpenLegalMenu={openLegalSheet} />
+      <Header onOpenLegalMenu={openLegalSheet} promotionSlogan={activePromotion?.slogan} />
       <main className="flex-1 overflow-auto relative">
         <Routes>
           <Route path="/" element={<HomeUploadEntryPage />} />

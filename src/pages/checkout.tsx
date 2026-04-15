@@ -46,8 +46,10 @@ import {
   validateCoupon,
   getCustomerAddresses,
   getOrderStatus,
+  getActivePromotion,
   type ValidateCouponResponse,
   type CustomerAddress,
+  type ActivePromotionResponse,
 } from "@/lib/orders-api";
 import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import {
@@ -320,6 +322,20 @@ export function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
 
+  const [promotionData, setPromotionData] = useState<ActivePromotionResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getActivePromotion()
+      .then((result) => {
+        if (!cancelled && result.active) {
+          setPromotionData(result);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     sessionStorage.setItem(CHECKOUT_COUPON_CODE_STORAGE, couponCode);
   }, [couponCode]);
@@ -409,7 +425,19 @@ export function CheckoutPage() {
   const discountAmount = couponResult?.valid && couponResult.discountAmount
     ? couponResult.discountAmount
     : 0;
-  const finalPrice = totalPrice - discountAmount;
+
+  const promotionDiscountAmount = (() => {
+    if (!promotionData?.active) return 0;
+    const meetsMinAmount = promotionData.minOrderAmount == null || totalPrice >= promotionData.minOrderAmount;
+    const meetsMinSlots = promotionData.minSlots == null || itemCount >= promotionData.minSlots;
+    if (!meetsMinAmount || !meetsMinSlots) return 0;
+    if (promotionData.discountType === "percentage") {
+      return Math.round(totalPrice * ((promotionData.discountValue ?? 0) / 100) * 100) / 100;
+    }
+    return Math.min(promotionData.discountValue ?? 0, totalPrice);
+  })();
+
+  const finalPrice = totalPrice - discountAmount - promotionDiscountAmount;
 
   useEffect(() => {
     if (!user) return;
@@ -740,16 +768,24 @@ export function CheckoutPage() {
             </div>
           </div>
 
-          {discountAmount > 0 && (
+          {(discountAmount > 0 || promotionDiscountAmount > 0) && (
             <div className="max-w-2xl mx-auto mt-2 bg-blue-50 rounded-lg p-3 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>{t("checkout.coupon.subtotal")}</span>
                 <span>{formatPrice(totalPrice)}</span>
               </div>
-              <div className="flex justify-between text-green-600">
-                <span>{t("checkout.coupon.discount")}</span>
-                <span>-{formatPrice(discountAmount)}</span>
-              </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>{t("checkout.coupon.discount")}</span>
+                  <span>-{formatPrice(discountAmount)}</span>
+                </div>
+              )}
+              {promotionDiscountAmount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>{t("checkout.promotionDiscount")}</span>
+                  <span>-{formatPrice(promotionDiscountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-gray-900 border-t pt-1 mt-1">
                 <span>{t("checkout.total")}</span>
                 <span className="text-blue-600">{formatPrice(finalPrice)}</span>
