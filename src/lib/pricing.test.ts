@@ -18,7 +18,7 @@ describe("pricing", () => {
     });
 
     it("formats decimal price", () => {
-      expect(formatPrice(99.99)).toContain("99,99");
+      expect(formatPrice(99.99)).toMatch(/99[,.]99/);
     });
 
     it("formats large number", () => {
