@@ -31,7 +31,7 @@ export function PromotionShowPage() {
   const navigate = useNavigate();
   const [toggling, setToggling] = useState(false);
 
-  const { query: promotionQuery, result: promotion, invalidate } = useOne<Promotion>({
+  const { query: promotionQuery, result: promotion } = useOne<Promotion>({
     resource: "promotions",
     id: id ?? "",
     meta: { select: "*" },
@@ -82,7 +82,7 @@ export function PromotionShowPage() {
         const err = (await response.json()) as { error?: string };
         throw new Error(err.error ?? "Update failed");
       }
-      invalidate();
+      promotionQuery.refetch();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Update failed");
     } finally {

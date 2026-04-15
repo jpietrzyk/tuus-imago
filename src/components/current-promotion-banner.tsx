@@ -1,5 +1,5 @@
 export interface CurrentPromotionBannerProps {
-  slogan: string | null;
+  slogan?: string | null;
 }
 
 export function CurrentPromotionBanner({ slogan }: CurrentPromotionBannerProps) {

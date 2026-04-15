@@ -37,7 +37,6 @@ function setupMocks(promotion: Record<string, unknown> | null = PROMOTION) {
   mockUseOne.mockReturnValue({
     query: { isFetching: false },
     result: promotion,
-    invalidate: vi.fn(),
   });
 }
 
@@ -107,7 +106,6 @@ describe("PromotionShowPage", () => {
     mockUseOne.mockReturnValue({
       query: { isFetching: false },
       result: null,
-      invalidate: vi.fn(),
     });
     renderPromotionShow("nonexistent");
 
