@@ -26,7 +26,26 @@ export const handler = async (event: NetlifyEvent) => {
     };
   }
 
-  const supabase = createServiceClient();
+  let supabase;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ active: false, error: "Supabase client init failed", detail: e instanceof Error ? e.message : String(e) }),
+    };
+  }
+
+  const { data: allPromotions, error: listError } = await supabase
+    .from("promotions")
+    .select("id, name, is_active");
+
+  if (listError) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ active: false, error: "List query failed", detail: listError.message }),
+    };
+  }
 
   const { data: promotion, error: fetchError } = await supabase
     .from("promotions")
@@ -34,10 +53,21 @@ export const handler = async (event: NetlifyEvent) => {
     .eq("is_active", true)
     .maybeSingle();
 
-  if (fetchError || !promotion) {
+  if (fetchError) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ active: false, error: "Query failed", detail: fetchError.message }),
+    };
+  }
+
+  if (!promotion) {
     return {
       statusCode: 200,
-      body: JSON.stringify({ active: false }),
+      body: JSON.stringify({
+        active: false,
+        reason: "no active promotion found",
+        debug_allPromotions: allPromotions,
+      }),
     };
   }
 
