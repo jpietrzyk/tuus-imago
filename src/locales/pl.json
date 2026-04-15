@@ -296,7 +296,8 @@
       "applied": "Kod zastosowany",
       "subtotal": "Suma częściowa",
       "discount": "Rabat"
-    }
+    },
+    "promotionDiscount": "Rabat promocyjny"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -464,6 +465,7 @@
       "dashboard": "Panel główny",
       "orders": "Zamówienia",
       "coupons": "Kupony",
+      "promotions": "Promocje",
       "referralCodes": "Kody poleceń",
       "partners": "Partnerzy",
       "customers": "Klienci",
@@ -699,7 +701,25 @@
       "refQrTitle": "Kod QR",
       "refQrDownload": "Pobierz QR",
       "refQrCopyLink": "Kopiuj link",
-      "refQrLinkCopied": "Skopiowano!"
+      "refQrLinkCopied": "Skopiowano!",
+      "promotions": "Promocje",
+      "newPromotion": "Nowa promocja",
+      "createPromotion": "Utwórz promocję",
+      "editPromotion": "Edytuj promocję",
+      "promotionName": "Nazwa",
+      "promotionSlogan": "Slogan",
+      "minSlots": "Minimalna liczba slotów",
+      "promotionNotFound": "Promocja nie znaleziona.",
+      "promotionBackToPromotions": "Powrót do promocji",
+      "promotionDetails": "Szczegóły",
+      "promotionDiscount": "Rabat",
+      "promotionValidity": "Ważność",
+      "activatePromotion": "Aktywuj",
+      "deactivatePromotion": "Dezaktywuj",
+      "promotionActive": "Aktywna",
+      "promotionInactive": "Nieaktywna",
+      "promotionConditions": "Warunki",
+      "promotionSearchName": "Szukaj nazwy..."
     }
   }
 }

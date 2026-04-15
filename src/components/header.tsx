@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { t } from "@/locales/i18n";
 import { useAuth } from "@/lib/auth-context";
+import { CurrentPromotionBanner } from "@/components/current-promotion-banner";
 
 interface HeaderProps {
   onOpenLegalMenu: (section: LegalMenuSection) => void;
+  promotionSlogan?: string | null;
 }
 
-export function Header({ onOpenLegalMenu }: HeaderProps) {
+export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,10 +41,12 @@ export function Header({ onOpenLegalMenu }: HeaderProps) {
           className="inline-flex items-center"
         >
           <span className="text-3xl font-bold leading-none">
-            <span className="text-slate-900">Tuus</span>
-            <span className="text-blue-500">Imago</span>
+            <span className="text-slate-900">T</span>
+            <span className="text-blue-500">I</span>
           </span>
         </Link>
+
+        <CurrentPromotionBanner slogan={promotionSlogan} />
 
         <div className="flex items-center gap-1 sm:gap-2">
           {!loading &&

@@ -133,6 +133,24 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return data;
 }
 
+export interface ActivePromotionResponse {
+  active: boolean;
+  id?: string;
+  name?: string;
+  slogan?: string;
+  discountType?: "percentage" | "fixed_amount";
+  discountValue?: number;
+  minOrderAmount?: number;
+  minSlots?: number;
+  validFrom?: string;
+  validUntil?: string;
+}
+
+export async function getActivePromotion(): Promise<ActivePromotionResponse> {
+  const response = await fetch("/.netlify/functions/active-promotion");
+  return parseJsonResponse<ActivePromotionResponse>(response);
+}
+
 export async function createOrder(
   payload: CreateOrderRequest,
   signal?: AbortSignal,

@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.coupons"),
     icon: <Tag className="h-5 w-5" />,
     path: "/admin/coupons",
+  },
+  {
+    label: t("admin.navigation.promotions"),
+    icon: <Megaphone className="h-5 w-5" />,
+    path: "/admin/promotions",
   },
   {
     label: t("admin.navigation.referralCodes"),

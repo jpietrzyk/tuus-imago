@@ -47,6 +47,7 @@ const ALLOWED_RESOURCES = new Set([
   "profiles",
   "partners",
   "partner_refs",
+  "promotions",
 ]);
 
 const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
@@ -405,6 +406,14 @@ export const handler = async (event: NetlifyEvent) => {
 
         if (!data) {
           return jsonResponse(400, { error: "Missing data payload." });
+        }
+
+        if (resource === "promotions" && data.is_active === true) {
+          await adminClient
+            .from("promotions")
+            .update({ is_active: false })
+            .neq("id", id)
+            .eq("is_active", true);
         }
 
         const { data: updated, error } = await adminClient

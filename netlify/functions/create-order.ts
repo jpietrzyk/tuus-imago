@@ -235,7 +235,33 @@ export const handler = async (event: NetlifyEvent) => {
     }
   }
 
-  const totalPrice = Math.max(subtotal - discountAmount, 0);
+  let promotionId: string | null = null;
+  let promotionDiscountAmount = 0;
+
+  const { data: activePromotion } = await supabase
+    .from("promotions")
+    .select("id, discount_type, discount_value, min_order_amount, min_slots, valid_from, valid_until, is_active")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (activePromotion) {
+    const now = new Date();
+    const isValidFrom = !activePromotion.valid_from || new Date(activePromotion.valid_from) <= now;
+    const isValidUntil = !activePromotion.valid_until || new Date(activePromotion.valid_until) >= now;
+    const meetsMinAmount = activePromotion.min_order_amount === null || subtotal >= activePromotion.min_order_amount;
+    const meetsMinSlots = activePromotion.min_slots === null || itemCount >= activePromotion.min_slots;
+
+    if (isValidFrom && isValidUntil && meetsMinAmount && meetsMinSlots) {
+      promotionId = activePromotion.id;
+      if (activePromotion.discount_type === "percentage") {
+        promotionDiscountAmount = Math.round(subtotal * (activePromotion.discount_value / 100) * 100) / 100;
+      } else {
+        promotionDiscountAmount = Math.min(activePromotion.discount_value, subtotal);
+      }
+    }
+  }
+
+  const totalPrice = Math.max(subtotal - discountAmount - promotionDiscountAmount, 0);
 
   const orderInsert: Record<string, unknown> = {
     customer_name: parsedBody.customer.name.trim(),
@@ -258,11 +284,16 @@ export const handler = async (event: NetlifyEvent) => {
     unit_price: CANVAS_PRINT_UNIT_PRICE,
     total_price: totalPrice,
     discount_amount: discountAmount,
+    promotion_discount_amount: promotionDiscountAmount,
   };
 
   if (couponId) {
     orderInsert.coupon_id = couponId;
     orderInsert.coupon_code = couponCode;
+  }
+
+  if (promotionId) {
+    orderInsert.promotion_id = promotionId;
   }
 
   const refCodeInput = parsedBody.refCode?.trim();
