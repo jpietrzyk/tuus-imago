@@ -84,8 +84,20 @@ describe("ContentDrawer", () => {
         <div>Test content</div>
       </ContentDrawer>,
     );
-    // Check for close icon (X)
-    const closeIcon = document.querySelector(".lucide-x");
-    expect(closeIcon).not.toBeNull();
+    expect(
+      screen.getByRole("button", { name: /close/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onOpenChange(false) when close button is clicked", () => {
+    const onOpenChange = vi.fn();
+    render(
+      <ContentDrawer open={true} onOpenChange={onOpenChange}>
+        <div>Test content</div>
+      </ContentDrawer>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

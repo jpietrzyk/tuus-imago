@@ -50,7 +50,6 @@ describe("LandingPage Component", () => {
       </MemoryRouter>,
     );
 
-    // There are multiple elements with "Prześlij" text on the page
-    expect(screen.getAllByText(/Prześlij/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(tr("landing.cta.button")).length).toBeGreaterThan(0);
   });
 });

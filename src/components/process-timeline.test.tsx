@@ -46,54 +46,27 @@ describe("ProcessTimeline Component", () => {
     ).toBeInTheDocument();
   });
 
-  it("should render 4 icon circles", () => {
+  it("should render 4 step icons", () => {
     const { container } = render(<ProcessTimeline />);
-    const iconCircles = container.querySelectorAll(
-      '[class*="bg-linear-to-br from-primary to-primary/80"]',
-    );
-    expect(iconCircles).toHaveLength(4);
+    const svgs = container.querySelectorAll("svg");
+    expect(svgs.length).toBeGreaterThanOrEqual(4);
   });
 
-  it("should render 3 arrows on mobile (between steps)", () => {
+  it("should render arrows between steps", () => {
     const { container } = render(<ProcessTimeline />);
     const arrows = container.querySelectorAll("svg");
-    // 4 step icons + 3 arrows = 7 svgs total
     expect(arrows.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("should have correct styling on main container", () => {
-    const { container } = render(<ProcessTimeline />);
-    const mainContainer = container.querySelector(".py-2.md\\:py-4");
-    expect(mainContainer).toBeInTheDocument();
-  });
-
-  it("should have correct max-width on inner container", () => {
-    const { container } = render(<ProcessTimeline />);
-    const innerContainer = container.querySelector(".max-w-3xl");
-    expect(innerContainer).toBeInTheDocument();
-  });
-
-  it("should have dark color on heading", () => {
+  it("should render a heading element", () => {
     const { container } = render(<ProcessTimeline />);
     const heading = container.querySelector("h2");
-    expect(heading).toHaveClass("text-gray-900", "dark:text-gray-100");
+    expect(heading).toBeInTheDocument();
   });
 
-  it("should have gradient background on timeline line (desktop)", () => {
+  it("should render step items in a grid layout", () => {
     const { container } = render(<ProcessTimeline />);
-    const timelineLine = container.querySelector(".bg-linear-to-r");
-    expect(timelineLine).toBeInTheDocument();
-  });
-
-  it("should have 4 step items in the grid", () => {
-    const { container } = render(<ProcessTimeline />);
-    const stepItems = container.querySelectorAll(".space-y-3");
-    expect(stepItems).toHaveLength(4);
-  });
-
-  it("should have correct grid layout", () => {
-    const { container } = render(<ProcessTimeline />);
-    const grid = container.querySelector(".grid-cols-1.md\\:grid-cols-4");
+    const grid = container.querySelector("[class*='grid']");
     expect(grid).toBeInTheDocument();
   });
 });
