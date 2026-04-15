@@ -9,14 +9,31 @@ import {
   SHIPMENT_STATUS_VARIANTS,
 } from "./badges";
 
+const ORDER_STATUSES = [
+  ["pending_payment", "outline"],
+  ["paid", "default"],
+  ["cancelled", "destructive"],
+  ["refunded", "secondary"],
+] as [string, string][];
+
+const PAYMENT_STATUSES = [
+  ["pending", "outline"],
+  ["registered", "secondary"],
+  ["verified", "default"],
+  ["failed", "destructive"],
+] as [string, string][];
+
+const SHIPMENT_STATUSES = [
+  ["pending_fulfillment", "outline"],
+  ["in_transit", "default"],
+  ["delivered", "secondary"],
+  ["failed_delivery", "destructive"],
+  ["returned", "destructive"],
+] as [string, string][];
+
 describe("OrderStatusBadge", () => {
-  it.each([
-    ["pending_payment", "outline"],
-    ["paid", "default"],
-    ["cancelled", "destructive"],
-    ["refunded", "secondary"],
-  ] as const)("renders '%s' status with correct variant", (...[status]: readonly [status: string]) => {
-    render(<OrderStatusBadge status={status} />);
+  it.each(ORDER_STATUSES)("renders '%s' status with correct variant", (status) => {
+    render(<OrderStatusBadge status={status as "pending_payment" | "paid" | "cancelled" | "refunded"} />);
     const badge = screen.getByText(/./);
     expect(badge).toBeInTheDocument();
     expect(badge.textContent).toBeTruthy();
@@ -38,13 +55,8 @@ describe("OrderStatusBadge", () => {
 });
 
 describe("PaymentStatusBadge", () => {
-  it.each([
-    ["pending", "outline"],
-    ["registered", "secondary"],
-    ["verified", "default"],
-    ["failed", "destructive"],
-  ] as const)("renders '%s' status with correct variant", (...[status]: readonly [status: string]) => {
-    render(<PaymentStatusBadge status={status} />);
+  it.each(PAYMENT_STATUSES)("renders '%s' status with correct variant", (status) => {
+    render(<PaymentStatusBadge status={status as "pending" | "registered" | "verified" | "failed"} />);
     const badge = screen.getByText(/./);
     expect(badge).toBeInTheDocument();
   });
@@ -65,14 +77,8 @@ describe("PaymentStatusBadge", () => {
 });
 
 describe("ShipmentStatusBadge", () => {
-  it.each([
-    ["pending_fulfillment", "outline"],
-    ["in_transit", "default"],
-    ["delivered", "secondary"],
-    ["failed_delivery", "destructive"],
-    ["returned", "destructive"],
-  ] as const)("renders '%s' status with correct variant", (...[status]: readonly [status: string]) => {
-    render(<ShipmentStatusBadge status={status} />);
+  it.each(SHIPMENT_STATUSES)("renders '%s' status with correct variant", (status) => {
+    render(<ShipmentStatusBadge status={status as "pending_fulfillment" | "in_transit" | "delivered" | "failed_delivery" | "returned"} />);
     const badge = screen.getByText(/./);
     expect(badge).toBeInTheDocument();
   });
