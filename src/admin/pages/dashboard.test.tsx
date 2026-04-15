@@ -57,7 +57,6 @@ function setupMocks(overrides: Record<string, unknown> = {}) {
 
   mockUseCustom.mockImplementation(({ config }: { config: { payload: { meta: Record<string, unknown> } } }) => {
     const fn = config.payload.meta.aggregateFunction;
-    const aggregate = config.payload.meta.aggregate;
     if (fn === "count" && !config.payload.meta.groupBy) return { result: { data: data.ordersCountResult.data } };
     if (fn === "sum") return { result: { data: data.paidOrdersResult.data } };
     if (fn === "count" && config.payload.meta.groupBy) return { result: { data: data.statusBreakdownResult.data } };

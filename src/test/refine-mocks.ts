@@ -1,1 +1,1 @@
-import { vi } from "vitest";
+import type {} from "vitest";

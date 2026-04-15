@@ -192,7 +192,7 @@ export function RefListPage() {
         ),
       },
     ],
-    [partnerLookup, navigate],
+    [partnerLookup, navigate, handleDeleteRef],
   );
 
   const table = useTable({
