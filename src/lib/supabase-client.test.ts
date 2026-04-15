@@ -1,10 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 describe("supabase-client", () => {
-  const originalEnv = { ...import.meta.env };
-
   afterEach(() => {
-    Object.assign(import.meta.env, originalEnv);
+    vi.unstubAllEnvs();
     vi.resetModules();
   });
 
@@ -12,7 +10,7 @@ describe("supabase-client", () => {
     vi.stubEnv("VITE_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "pk-test-123");
 
-    const mod = await import("./supabase-client?with-env");
+    const mod = await import("./supabase-client");
     expect(mod.supabase).toBeDefined();
     expect(mod.supabase.auth).toBeDefined();
   });
@@ -21,7 +19,7 @@ describe("supabase-client", () => {
     vi.stubEnv("VITE_SUPABASE_URL", "");
     vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "pk-test");
 
-    await expect(import("./supabase-client?missing-url")).rejects.toThrow(
+    await expect(import("./supabase-client")).rejects.toThrow(
       "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY",
     );
   });
@@ -30,7 +28,7 @@ describe("supabase-client", () => {
     vi.stubEnv("VITE_SUPABASE_URL", "https://example.supabase.co");
     vi.stubEnv("VITE_SUPABASE_PUBLISHABLE_KEY", "");
 
-    await expect(import("./supabase-client?missing-key")).rejects.toThrow(
+    await expect(import("./supabase-client")).rejects.toThrow(
       "Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY",
     );
   });

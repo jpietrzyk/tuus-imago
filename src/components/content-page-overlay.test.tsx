@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ContentPageOverlay } from "@/components/content-page-overlay";
+import type { LegalPageData } from "@/lib/content-loader";
 import { t } from "@/locales/i18n";
 
 vi.mock("@/locales/i18n", () => ({
@@ -9,14 +10,20 @@ vi.mock("@/locales/i18n", () => ({
 
 vi.mock("@/lib/content-loader", () => ({}));
 
+const fullPage: LegalPageData = {
+  title: "Test Title",
+  subtitle: "Test Subtitle",
+  slug: "test",
+  icon: "FileText",
+  menuSection: "legal",
+  menuOrder: 1,
+  lastUpdated: "2025-01-01",
+  body: "# Hello\n\nSome **bold** text.",
+};
+
 describe("ContentPageOverlay", () => {
   const onClose = vi.fn();
-  const page = {
-    title: "Test Title",
-    subtitle: "Test Subtitle",
-    body: "# Hello\n\nSome **bold** text.",
-    lastUpdated: "2025-01-01",
-  };
+  const page = fullPage;
 
   beforeEach(() => {
     onClose.mockReset();

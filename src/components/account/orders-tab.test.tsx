@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { OrdersTab } from "./orders-tab";
@@ -174,7 +174,7 @@ describe("OrdersTab", () => {
       expect(screen.getByText("ORD-001")).toBeInTheDocument();
     });
 
-    screen.getByText("ORD-001").closest("[class]")?.click();
+    fireEvent.click(screen.getByText("ORD-001"));
 
     expect(mockNavigate).toHaveBeenCalledWith("/account/orders/order-1");
   });

@@ -34,10 +34,25 @@ function renderPage() {
   );
 }
 
+const noop = vi.fn();
+const mockAuthValue = {
+  user: null,
+  session: null,
+  loading: false,
+  signUp: noop,
+  signIn: noop,
+  signOut: noop,
+  signInWithOAuth: noop,
+  signInWithOtp: noop,
+  resetPassword: noop,
+  updatePassword: noop,
+};
+
 beforeEach(() => {
   vi.mocked(useAuth).mockReturnValue({
+    ...mockAuthValue,
     resetPassword: mockResetPassword,
-  } as ReturnType<typeof useAuth>);
+  });
   vi.mocked(useNavigate).mockReturnValue(mockNavigate);
   mockResetPassword.mockReset();
   mockNavigate.mockReset();

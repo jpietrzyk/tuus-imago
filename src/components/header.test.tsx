@@ -138,6 +138,6 @@ describe("Header", () => {
   });
 });
 
-function HeaderStub({ onOpenLegalMenu }: { onOpenLegalMenu: (section: "legal") => void }) {
+function HeaderStub({ onOpenLegalMenu }: { onOpenLegalMenu: (section: "legal" | "payments") => void }) {
   return <Header onOpenLegalMenu={onOpenLegalMenu} />;
 }
