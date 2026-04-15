@@ -139,6 +139,29 @@ describe("LegalNavigationSheet", () => {
     expect(onOpenContentPage).toHaveBeenCalledWith(companyPages[0].slug);
   });
 
+  it("calls onOpenContentPage with correct slug when a payment link is clicked", () => {
+    const onOpenChange = vi.fn();
+    const onOpenContentPage = vi.fn();
+    renderSheet({ onOpenChange, onOpenContentPage });
+
+    fireEvent.click(screen.getByRole("button", { name: paymentPages[0].title }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onOpenContentPage).toHaveBeenCalledWith(paymentPages[0].slug);
+  });
+
+  it("renders external P24 links with correct href and target", () => {
+    renderSheet();
+
+    const p24Links = screen.getAllByRole("link").filter(
+      (link) => link.getAttribute("href")?.includes("przelewy24"),
+    );
+    expect(p24Links.length).toBeGreaterThan(0);
+    p24Links.forEach((link) => {
+      expect(link).toHaveAttribute("target", "_blank");
+    });
+  });
+
   it("legal nav button has secondary variant when activeSection is legal", () => {
     renderSheet({ activeSection: "legal" });
 

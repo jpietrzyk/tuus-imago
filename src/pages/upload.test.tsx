@@ -8,6 +8,7 @@ import {
   getTransformedPreviewUrl,
 } from "@/lib/image-transformations";
 import type { UploadResult } from "@/components/cloudinary-upload-widget";
+import { tr } from "@/test/i18n-test";
 
 describe("UploadPage Component", () => {
   it("should render drag and drop area", () => {
@@ -43,7 +44,7 @@ describe("UploadPage Component", () => {
 
     // Success message should not be visible initially
     expect(
-      screen.queryByText(/Photo uploaded successfully!/i),
+      screen.queryByText(tr("upload.success")),
     ).not.toBeInTheDocument();
   });
 
