@@ -61,7 +61,7 @@ const STATS = {
   total_ref_events: 42,
 };
 
-function setupMocks(partner: Record<string, unknown> | null = PARTNER, stats = STATS) {
+function setupMocks(partner: Record<string, unknown> | null = PARTNER, stats: typeof STATS | null = STATS) {
   mockUseOne.mockReturnValue({
     query: { isFetching: false },
     result: partner,

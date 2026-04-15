@@ -15,7 +15,7 @@ describe("OrderStatusBadge", () => {
     ["paid", "default"],
     ["cancelled", "destructive"],
     ["refunded", "secondary"],
-  ] as const)("renders '%s' status with correct variant", (status) => {
+  ] as const)("renders '%s' status with correct variant", (status, _variant) => {
     render(<OrderStatusBadge status={status} />);
     const badge = screen.getByText(/./);
     expect(badge).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe("PaymentStatusBadge", () => {
     ["registered", "secondary"],
     ["verified", "default"],
     ["failed", "destructive"],
-  ] as const)("renders '%s' status with correct variant", (status) => {
+  ] as const)("renders '%s' status with correct variant", (status, _variant) => {
     render(<PaymentStatusBadge status={status} />);
     const badge = screen.getByText(/./);
     expect(badge).toBeInTheDocument();
@@ -71,7 +71,7 @@ describe("ShipmentStatusBadge", () => {
     ["delivered", "secondary"],
     ["failed_delivery", "destructive"],
     ["returned", "destructive"],
-  ] as const)("renders '%s' status with correct variant", (status) => {
+  ] as const)("renders '%s' status with correct variant", (status, _variant) => {
     render(<ShipmentStatusBadge status={status} />);
     const badge = screen.getByText(/./);
     expect(badge).toBeInTheDocument();

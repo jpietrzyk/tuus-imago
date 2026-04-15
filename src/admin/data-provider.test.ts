@@ -133,7 +133,7 @@ describe("adminDataProvider", () => {
     it("builds filter with ids", async () => {
       mockFetchOk({ data: [{ id: "1" }, { id: "2" }] });
 
-      const result = await adminDataProvider.getMany({
+      const result = await adminDataProvider.getMany!({
         resource: "partners",
         ids: ["1", "2"],
       });

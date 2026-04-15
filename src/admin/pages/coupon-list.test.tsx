@@ -15,13 +15,13 @@ vi.mock("@refinedev/core", () => ({
 }));
 
 vi.mock("@/components/refine-ui/data-table", () => ({
-  DataTable: ({ table }: { table: { refineCore: { tableQuery: { data: { data: Array<Record<string, unknown>> } } } }; onRowClick: (row: Record<string, unknown>) => void }) => {
+  DataTable: ({ table, onRowClick }: { table: { refineCore: { tableQuery: { data: { data: Array<Record<string, unknown>> } } } }; onRowClick?: (row: Record<string, unknown>) => void }) => {
     const rows = table.refineCore.tableQuery.data?.data ?? [];
     return (
       <table>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} data-testid="table-row" onClick={() => onRowClick(row)}>
+            <tr key={i} data-testid="table-row" onClick={() => onRowClick?.(row)}>
               <td>{row.code as string}</td>
             </tr>
           ))}

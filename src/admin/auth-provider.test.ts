@@ -115,7 +115,7 @@ describe("adminAuthProvider", () => {
     it("signs out and redirects to login", async () => {
       mockSignOut.mockResolvedValueOnce({ error: null } as never);
 
-      const result = await adminAuthProvider.logout();
+      const result = await adminAuthProvider.logout({});
 
       expect(result).toEqual({ success: true, redirectTo: "/admin/login" });
       expect(mockSignOut).toHaveBeenCalled();
@@ -256,7 +256,7 @@ describe("adminAuthProvider", () => {
       const select = vi.fn().mockReturnValue({ eq });
       mockFrom.mockReturnValue({ select } as never);
 
-      const result = await adminAuthProvider.getIdentity();
+      const result = await adminAuthProvider.getIdentity!();
 
       expect(result).toEqual({
         id: "u1",
@@ -271,7 +271,7 @@ describe("adminAuthProvider", () => {
         data: { session: null },
       } as never);
 
-      const result = await adminAuthProvider.getIdentity();
+      const result = await adminAuthProvider.getIdentity!();
 
       expect(result).toBeNull();
     });
@@ -288,7 +288,7 @@ describe("adminAuthProvider", () => {
       const select = vi.fn().mockReturnValue({ eq });
       mockFrom.mockReturnValue({ select } as never);
 
-      const result = await adminAuthProvider.getIdentity();
+      const result = await adminAuthProvider.getIdentity!();
 
       expect(result).toEqual({
         id: "u1",

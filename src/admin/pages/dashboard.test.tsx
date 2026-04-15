@@ -155,7 +155,7 @@ describe("DashboardPage", () => {
 
     const calls = mockUseCustom.mock.calls;
     const fns = calls.map(
-      (call: [unknown]) => {
+      (call: unknown[]) => {
         const config = (call[0] as { config?: { payload?: { meta?: Record<string, unknown> } } }).config;
         return config?.payload?.meta?.aggregateFunction;
       },
