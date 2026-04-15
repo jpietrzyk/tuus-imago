@@ -38,6 +38,11 @@ vi.mock("@refinedev/core", () => ({
 import { DashboardPage } from "./dashboard";
 import { tr } from "@/test/i18n-test";
 
+vi.mock("@/lib/pricing", () => ({
+  formatPrice: (price: number) => `${price.toFixed(2).replace(".", ",")} zł`,
+  CANVAS_PRINT_UNIT_PRICE: 200,
+}));
+
 function setupMocks(overrides: Record<string, unknown> = {}) {
   const defaults = {
     ordersCountResult: { data: { count: 42 } },
