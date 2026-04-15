@@ -156,7 +156,7 @@ export function PartnerShowPage() {
     } finally {
       setNewRefSaving(false);
     }
-  }, [newRefCode, newRefLabel, id, createRef, statsQuery.refetch]);
+  }, [newRefCode, newRefLabel, id, createRef, statsQuery]);
 
   const handleDeleteRef = useCallback(async (refId: string) => {
     if (!confirm(t("admin.labels.partnerRefDeleteConfirm"))) return;
@@ -169,7 +169,7 @@ export function PartnerShowPage() {
     } catch {
       // error handled by refine
     }
-  }, [deleteRef, statsQuery.refetch]);
+  }, [deleteRef, statsQuery]);
 
   const handleAddCoupon = useCallback(async () => {
     if (!newCouponCode.trim() || !newCouponDiscountValue || !id) return;
@@ -206,7 +206,7 @@ export function PartnerShowPage() {
     } finally {
       setNewCouponSaving(false);
     }
-  }, [newCouponCode, newCouponDiscountType, newCouponDiscountValue, id, statsQuery.refetch]);
+  }, [newCouponCode, newCouponDiscountType, newCouponDiscountValue, id, statsQuery]);
 
   if (partnerQuery.isFetching) {
     return (

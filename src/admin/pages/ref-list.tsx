@@ -93,6 +93,15 @@ export function RefListPage() {
     return f;
   }, [search, partnerFilter, activeFilter]);
 
+  const handleDeleteRef = useCallback(async (refId: string) => {
+    if (!confirm(t("admin.labels.refDeleteConfirm"))) return;
+    try {
+      await deleteRef({ resource: "partner_refs", id: refId });
+    } catch {
+      // error handled by refine
+    }
+  }, [deleteRef]);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const columns = useMemo<ColumnDef<RefRow, any>[]>(
     () => [
@@ -192,7 +201,7 @@ export function RefListPage() {
         ),
       },
     ],
-    [partnerLookup, navigate],
+    [partnerLookup, navigate, handleDeleteRef],
   );
 
   const table = useTable({
@@ -232,15 +241,6 @@ export function RefListPage() {
       setNewRefSaving(false);
     }
   }, [newRefCode, newRefLabel, newRefPartnerId, createRef]);
-
-  const handleDeleteRef = useCallback(async (refId: string) => {
-    if (!confirm(t("admin.labels.refDeleteConfirm"))) return;
-    try {
-      await deleteRef({ resource: "partner_refs", id: refId });
-    } catch {
-      // error handled by refine
-    }
-  }, [deleteRef]);
 
   return (
     <div className="space-y-4">
