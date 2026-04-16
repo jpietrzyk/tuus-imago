@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
+import { cn } from "@/lib/utils";
 import { SplitSquareVertical, TriangleAlert } from "lucide-react";
 import UploaderSlotSwitcher from "./uploader-slot-switcher";
 import UploaderTools from "./uploader-tools";
@@ -100,7 +101,10 @@ export function UploaderPreviewToolsPanel({
   );
 
   return (
-    <div className="mx-auto w-full md:w-1/2 rounded-xl border border-border/60 px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5">
+    <div className={cn(
+      "mx-auto w-full rounded-xl border border-border/60 bg-background px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5 shadow-md",
+      !isEditMode && "md:w-1/2",
+    )}>
       <div className="w-full">
         <UploaderSlotSwitcher
           slots={slots}
