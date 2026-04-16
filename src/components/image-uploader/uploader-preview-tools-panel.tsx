@@ -71,13 +71,13 @@ export function UploaderPreviewToolsPanel({
     <Button
       type="button"
       variant="secondary"
-      size="lg"
+      size="icon"
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      className="px-6 py-4 lg:px-5 lg:py-3 shadow-lg border-2"
+      className="h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
     >
-      <SplitSquareVertical className="h-10 w-10" />
+      <SplitSquareVertical className="h-6 w-6 sm:h-7 sm:w-7" />
     </Button>
   );
 
