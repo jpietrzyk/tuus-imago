@@ -62,13 +62,13 @@ export function UploaderTools({
           <Button
             type="button"
             variant="secondary"
-            size="lg"
+            size="icon"
             data-testid="image-proportions-dropdown-trigger"
-            className="px-8 py-6 shadow-lg border-2"
+            className="relative h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
             aria-label={PROPORTION_LABELS[selectedProportion]}
           >
-            <SelectedIcon className="h-10 w-10" />
-            <ChevronDown className="ml-2 h-10 w-10" />
+            <SelectedIcon className="h-6 w-6 sm:h-7 sm:w-7" />
+            <ChevronDown className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 opacity-60" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">

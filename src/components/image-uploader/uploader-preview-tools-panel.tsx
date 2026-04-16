@@ -71,18 +71,18 @@ export function UploaderPreviewToolsPanel({
     <Button
       type="button"
       variant="secondary"
-      size="lg"
+      size="icon"
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      className="px-6 py-4 lg:px-5 lg:py-3 shadow-lg border-2"
+      className="h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
     >
-      <SplitSquareVertical className="h-10 w-10" />
+      <SplitSquareVertical className="h-6 w-6 sm:h-7 sm:w-7" />
     </Button>
   );
 
   return (
-    <div className="mx-auto grid w-full sm:w-1/2 grid-cols-3 items-center gap-y-2 sm:gap-y-3 rounded-xl border border-border/60 px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5">
+    <div className="mx-auto grid w-full md:w-1/2 grid-cols-3 items-center gap-y-2 sm:gap-y-3 rounded-xl border border-border/60 px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5">
       <div className="col-span-3 w-full">
         <UploaderSlotSwitcher
           slots={slots}

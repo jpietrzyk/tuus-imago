@@ -62,14 +62,14 @@ export function UploaderEffectsPopover({
         <Button
           type="button"
           variant="secondary"
-          size="lg"
+          size="icon"
           disabled={disabled}
           aria-label={t("uploader.previewEffectsButton")}
-          className="px-8 py-6 shadow-lg border-2"
+          className="relative h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
           title={t("uploader.previewEffectsDescription")}
         >
-          <Settings className="h-10 w-10" />
-          <ChevronUp className="ml-2 h-10 w-10" />
+          <Settings className="h-6 w-6 sm:h-7 sm:w-7" />
+          <ChevronUp className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
