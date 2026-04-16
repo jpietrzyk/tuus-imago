@@ -32,7 +32,16 @@ vi.mock("./side-slot-preview", () => ({
 }));
 
 vi.mock("./painting-preview-slot", () => ({
-  default: () => <div data-testid="mock-painting-slot" />,
+  default: ({
+    swipeDisabled,
+  }: {
+    swipeDisabled?: boolean;
+  }) => (
+    <div
+      data-testid="mock-painting-slot"
+      data-swipe-disabled={swipeDisabled ? "true" : undefined}
+    />
+  ),
 }));
 
 const createItem = (name: string): SelectedImageItem => ({
@@ -89,5 +98,26 @@ describe("UploaderPreviewSlider", () => {
     fireEvent.click(screen.getByTestId("mock-side-left"));
 
     expect(props.onSelectSlot).toHaveBeenCalledWith(0);
+  });
+
+  it("passes swipeDisabled to painting preview slot", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} swipeDisabled={true} />);
+
+    expect(screen.getByTestId("mock-painting-slot")).toHaveAttribute(
+      "data-swipe-disabled",
+      "true",
+    );
+  });
+
+  it("does not set swipe-disabled attribute when swipeDisabled is false", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} swipeDisabled={false} />);
+
+    expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
+      "data-swipe-disabled",
+    );
   });
 });

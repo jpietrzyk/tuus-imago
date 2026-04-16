@@ -67,7 +67,7 @@ describe("UploaderPreviewToolsPanel", () => {
     vi.clearAllMocks();
   });
 
-  it("renders slot switcher, split button, effects button, and tools", () => {
+  it("renders slot switcher, split button, effects button, and tools in normal mode", () => {
     const props = createProps();
     render(<UploaderPreviewToolsPanel {...props} />);
 
@@ -176,9 +176,92 @@ describe("UploaderPreviewToolsPanel", () => {
     });
     fireEvent.click(splitButton);
 
-    // Dialog should appear
     expect(
       screen.getByText(t("uploader.splitSlotsConfirmTitle")),
     ).toBeInTheDocument();
+  });
+
+  it("does not show effects content by default", () => {
+    const props = createProps();
+    render(<UploaderPreviewToolsPanel {...props} />);
+
+    expect(
+      screen.queryByText(t("uploader.previewEffectsTitle")),
+    ).not.toBeInTheDocument();
+  });
+
+  it("enters edit mode when cog button is clicked, hiding split and proportion buttons", () => {
+    const props = createProps();
+    render(<UploaderPreviewToolsPanel {...props} />);
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    expect(
+      screen.getByText(t("uploader.previewEffectsTitle")),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: t("uploader.splitSelectedImage") }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-uploader-tools")).not.toBeInTheDocument();
+  });
+
+  it("exits edit mode when close button is clicked, restoring buttons", () => {
+    const props = createProps();
+    render(<UploaderPreviewToolsPanel {...props} />);
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    const closeButton = screen.getByRole("button", {
+      name: t("uploader.effectsClose"),
+    });
+    fireEvent.click(closeButton);
+
+    expect(
+      screen.queryByText(t("uploader.previewEffectsTitle")),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.splitSelectedImage") }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("mock-uploader-tools")).toBeInTheDocument();
+  });
+
+  it("keeps slot switcher visible in both modes", () => {
+    const props = createProps();
+    render(<UploaderPreviewToolsPanel {...props} />);
+
+    expect(screen.getByTestId("mock-slot-switcher")).toBeInTheDocument();
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    expect(screen.getByTestId("mock-slot-switcher")).toBeInTheDocument();
+  });
+
+  it("calls onEditModeChange when entering and exiting edit mode", () => {
+    const onEditModeChange = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel {...props} onEditModeChange={onEditModeChange} />,
+    );
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+    expect(onEditModeChange).toHaveBeenCalledWith(true);
+
+    const closeButton = screen.getByRole("button", {
+      name: t("uploader.effectsClose"),
+    });
+    fireEvent.click(closeButton);
+    expect(onEditModeChange).toHaveBeenCalledWith(false);
   });
 });

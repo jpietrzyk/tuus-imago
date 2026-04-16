@@ -1222,7 +1222,7 @@ describe("ImageUploader", () => {
     const effectsButton = screen.getByRole("button", {
       name: tr("uploader.previewEffectsButton"),
     });
-    fireEvent.pointerDown(effectsButton);
+    fireEvent.click(effectsButton);
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1237,6 +1237,11 @@ describe("ImageUploader", () => {
     });
 
     fireEvent.keyDown(document, { key: "Escape" });
+
+    const closeButton = screen.getByRole("button", {
+      name: tr("uploader.effectsClose"),
+    });
+    fireEvent.click(closeButton);
 
     const splitButton = await screen.findByRole("button", {
       name: tr("uploader.splitSelectedImage"),
@@ -1345,7 +1350,7 @@ describe("ImageUploader", () => {
     const effectsButton = screen.getByRole("button", {
       name: tr("uploader.previewEffectsButton"),
     });
-    fireEvent.pointerDown(effectsButton);
+    fireEvent.click(effectsButton);
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1361,6 +1366,11 @@ describe("ImageUploader", () => {
     });
 
     fireEvent.keyDown(document, { key: "Escape" });
+
+    const closeEffectsButton = screen.getByRole("button", {
+      name: tr("uploader.effectsClose"),
+    });
+    fireEvent.click(closeEffectsButton);
 
     // Add a second file to the right slot (no bg removal → no uploadedAsset)
     fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
