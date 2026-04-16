@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import bgProduction from "./assets/2.png";
+import bgDesktop from "./assets/bg_desktop.png";
+import bgMobile from "./assets/bg_mobile.png";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import {
@@ -393,10 +394,26 @@ function StorefrontApp() {
     });
   }, []);
 
+  const isDesktop = useState(
+    () => typeof window !== "undefined" ? window.matchMedia("(min-width: 768px)").matches : true,
+  )[0];
+  const [isDesktopSize, setIsDesktopSize] = useState(isDesktop);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 768px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktopSize(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
   const [useTestBackground, setUseTestBackground] = useState(false);
   const [showUploaderDebugData, setShowUploaderDebugData] = useState(false);
   const [bgDebugUrl, setBgDebugUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBgDebugUrl(null);
+  }, [isDesktopSize]);
 
   useEffect(() => {
     if (!isDebug || !useTestBackground || bgDebugUrl) {
@@ -404,8 +421,11 @@ function StorefrontApp() {
     }
 
     let isCancelled = false;
+    const testModule = isDesktopSize
+      ? import("./assets/bg_desktop_test.png")
+      : import("./assets/bg_mobile_test.png");
 
-    void import("./assets/testowe.png").then((module) => {
+    void testModule.then((module) => {
       if (!isCancelled) {
         setBgDebugUrl(module.default);
       }
@@ -414,9 +434,9 @@ function StorefrontApp() {
     return () => {
       isCancelled = true;
     };
-  }, [isDebug, useTestBackground, bgDebugUrl]);
+  }, [isDebug, useTestBackground, bgDebugUrl, isDesktopSize]);
 
-  const bgImage = useTestBackground && bgDebugUrl ? bgDebugUrl : bgProduction;
+  const bgImage = useTestBackground && bgDebugUrl ? bgDebugUrl : isDesktopSize ? bgDesktop : bgMobile;
 
   return (
     <div
