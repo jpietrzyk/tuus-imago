@@ -1,299 +1,202 @@
-# tuus-imago
+# Tuus Imago
 
-Tuus Imago front page
+Canvas photo printing e-commerce application. Customers upload photos, preview canvas prints with configurable proportions and optional AI effects, then order physical prints with payment via Przelewy24. Includes a partner/referral/coupon/promotion system and a full admin panel.
 
-## Legal Pages (Przelewy24.pl Requirements)
+## Tech Stack
 
-This section documents the legal pages required for Przelewy24.pl payment integration compliance.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TypeScript 5.9, Vite 7, Tailwind CSS 4, shadcn/ui |
+| Routing | react-router-dom 7 |
+| Backend | Supabase (Postgres, Auth, RLS), Netlify Functions |
+| Images | Cloudinary (signed upload via Netlify Functions) |
+| Payments | Przelewy24 (sandbox/production) |
+| CRM | HubSpot (non-blocking contact sync) |
+| CMS | Decap CMS (legal pages at `/admin/`) |
+| Admin | Refine framework with TanStack Table |
+| Testing | Vitest 4, Testing Library, jsdom |
+| Linting | ESLint 9 (flat config), typescript-eslint |
+| i18n | English + Polish |
+| Package manager | pnpm |
 
-### Completed Pages
+## Local Development
 
-| Page | File | Status | Description |
-|------|------|--------|-------------|
-| Payment Terms | `src/pages/payments.tsx` | ✅ Complete | BLIK, bank transfer, cards, installments, Przelewy24 info |
-| Shipping | `src/pages/shipping.tsx` | ✅ Complete | InPost, 14.99 PLN, 2-4 business days, no international |
-| Returns & Complaints | `src/pages/returns.tsx` | ✅ Complete | 14-day withdrawal, return process, contact info |
-| Complaint Form | `src/pages/complaint.tsx` | ✅ Complete | Full form with customer info, order details, photo upload |
-| Privacy Policy | `src/pages/privacy.tsx` | ✅ Complete | GDPR compliant, data processing, rights |
-| Terms and Conditions | `src/pages/terms.tsx` | ✅ Complete | Full terms with scope, ordering, pricing, liability, consumer rights |
+### Prerequisites
 
-### Pages Still Needed
+- Node.js 22+
+- pnpm
 
-| Page | File | Status | Required Info |
-|------|------|--------|---------------|
-| Cookie Policy | `src/pages/cookies.tsx` | ⚠️ Placeholder | Cookie list, third-party providers |
-| Company Information | `src/pages/contact.tsx` | ⚠️ Partial | NIP, REGON, KRS, bank details, VAT ID |
-| Checkout Checkboxes | `src/pages/checkout.tsx` | ⚠️ Missing | Terms/privacy/marketing checkboxes |
-
-### Placeholders
-
-Some pages contain `[PLACEHOLDER: ...]` markers for business-specific values that need to be filled:
-- Company name, address, NIP, REGON
-- Contact email and phone number
-- Complaint email
-- Bank account details
-
-### Managing Legal Pages via CMS
-
-Legal pages are stored as Markdown files in [content/legal/](content/legal/) and edited via Decap CMS (Netlify CMS).
-
-**Important: slug is derived from filename, not editable**
-
-The `slug` field determines the page URL (e.g., `terms.md` → `/terms`). It is **automatically calculated from the filename** and cannot be edited in CMS. This ensures routing remains valid and prevents accidentally breaking page links.
-
-**If you need to move or rename a page:**
-1. Rename the file in the repository (e.g., `terms.md` → `policies.md`)
-2. Update any code that references the old slug (routing, links, tests)
-3. Commit both changes together
-
-The CMS will always respect the filename-based slug, ignoring any stale `slug` value in the frontmatter.
-
-### Reordering pages in the menu
-
-Pages are ordered within each **menu section** (`legal`, `payments`, `company`) by the `menuOrder` frontmatter field (ascending, lower number = higher position).
-
-To change the order:
-
-1. Open Decap CMS at `/admin/`
-2. Edit the page you want to reposition
-3. Use the **−** / **+** buttons (or type a number) in the **Kolejność w menu** field
-4. Publish — the navigation updates on the next site build
-
-The field accepts values from 1 to 50. The default is `99` (appears last) if omitted.
-
-## Cloudinary setup (required for upload)
-
-This app uploads directly from browser to Cloudinary using a **signed upload** flow via Netlify Functions.
-
-### 1) Create upload preset in Cloudinary
-
-1. Open Cloudinary Dashboard.
-2. Go to **Settings → Upload → Upload presets**.
-3. Click **Add upload preset**.
-4. Set:
-   - **Signing Mode**: `Signed`
-   - **Folder**: `tuus-imago` (optional, but matches app defaults)
-   - **Allowed formats**: `jpg,jpeg,png,webp`
-   - **Max file size**: `10MB` (optional, UI already checks)
-5. Save and copy preset name.
-
-### 2) Configure `.env`
-
-Set these values:
-
-- `VITE_CLOUDINARY_CLOUD_NAME=<your_cloud_name>`
-- `VITE_CLOUDINARY_UPLOAD_PRESET=<your_signed_preset_name>`
-
-Optional (AI preview template):
-
-- `VITE_CLOUDINARY_AI_TEMPLATE=<your_named_transformation>`
-
-`VITE_CLOUDINARY_AI_TEMPLATE` should be the **name of a Cloudinary named transformation** (without the `t_` prefix).
-When set, the app adds this template to the post-upload preview URL before selected AI effects.
-
-Example:
-
-- `VITE_CLOUDINARY_AI_TEMPLATE=portrait_ai`
-
-In Cloudinary, create this under **Settings → Transformations** (or named transformations UI), then reference that exact name in `.env`.
-
-### 3) Configure Netlify function env vars
-
-Set server-side environment variables in Netlify:
-
-- `CLOUDINARY_API_KEY=<your_api_key>`
-- `CLOUDINARY_API_SECRET=<your_api_secret>`
-
-Local development note:
-
-- Run with `netlify dev` so `/.netlify/functions/cloudinary-signature` is available.
-- Keep these as non-`VITE_` variables because they are read by the Netlify Function runtime (`process.env`).
-
-### 4) Important security note
-
-Do **not** expose `CLOUDINARY_API_SECRET` in frontend `VITE_*` variables.
-For signed uploads or admin operations, use a backend endpoint that signs requests server-side.
-
-### 5) Troubleshooting
-
-- If you see `Missing CLOUDINARY_API_KEY or CLOUDINARY_API_SECRET in server environment`, verify you did not use `VITE_` (or `VITTE_`) prefix for function secrets.
-- Frontend reads only: `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET`.
-- Netlify Function reads only: `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
-
-## Supabase migrations
-
-### Run migrations from local dev
-
-Use:
-
-- `pnpm db:migrate:dev`
-
-This links the configured project and runs `supabase db push --linked`.
-The script automatically loads `.env.local` and `.env` (if present), so you can store local migration variables there.
-
-Required shell env vars for local run:
-
-- `SUPABASE_PROJECT_REF`
-- `SUPABASE_DB_PASSWORD`
-
-`SUPABASE_DB_PASSWORD` must be your Postgres database password (not `SUPABASE_SECRET_KEY` / `sb_secret_*`).
-
-Example:
+### Setup
 
 ```bash
-export SUPABASE_PROJECT_REF=bwwtoitwhkalbmlgxfgf
+pnpm install
+cp .env.example .env
+```
+
+Edit `.env` with your configuration values (see [Environment Variables](#environment-variables)).
+
+### Running
+
+```bash
+pnpm dev              # Frontend only (Vite dev server)
+pnpm dev:netlify      # Full stack with Netlify Functions
+pnpm build            # TypeScript check + production build
+pnpm preview          # Preview production build locally
+```
+
+Use `pnpm dev:netlify` when you need Netlify Functions (Cloudinary signed uploads, Przelewy24, etc.).
+
+### Testing
+
+```bash
+pnpm test             # Run tests (Vitest)
+```
+
+Tests use jsdom environment with polyfills for `ResizeObserver`, `HTMLCanvasElement` (2D context mock), pointer capture APIs, and `window.matchMedia`. Setup is in `vitest.setup.ts`.
+
+### Linting
+
+```bash
+pnpm lint             # ESLint
+```
+
+TypeScript checking runs as part of `pnpm build` (`tsc -b`).
+
+## Environment Variables
+
+All variables are documented in `.env.example`. Copy it to `.env` and fill in values.
+
+### Frontend (Vite — `VITE_` prefix)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_CLOUDINARY_CLOUD_NAME` | Yes | Cloudinary cloud name |
+| `VITE_CLOUDINARY_UPLOAD_PRESET` | Yes | Cloudinary signed upload preset name |
+| `VITE_CLOUDINARY_AI_TEMPLATE` | No | Cloudinary named transformation for AI preview (without `t_` prefix) |
+| `VITE_SHOW_UPLOADER_DEBUG` | No | Enable debug mode (`true`/`false`) |
+| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable (anon) key |
+
+### Netlify Functions (server-side — no `VITE_` prefix)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `CLOUDINARY_API_KEY` | Yes | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Yes | Cloudinary API secret (never expose in frontend) |
+| `SUPABASE_URL` | Yes | Supabase project URL (server-side) |
+| `SUPABASE_SECRET_KEY` | Yes | Supabase service role key |
+| `SITE_URL` | Yes | Public site URL (used for P24 return URLs) |
+| `ADMIN_SHIPMENT_TOKEN` | Yes | Token for admin shipment endpoints |
+
+### Przelewy24
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `P24_MERCHANT_ID` | Yes | Przelewy24 merchant ID |
+| `P24_POS_ID` | Yes | Przelewy24 POS ID |
+| `P24_CRC` | Yes | Przelewy24 CRC key |
+| `P24_API_KEY` | Yes | Przelewy24 REST API key |
+| `P24_API_BASE_URL` | Yes | `https://sandbox.przelewy24.pl/api/v1` (sandbox) or `https://secure.przelewy24.pl/api/v1` (production) |
+| `P24_STATUS_URL` | No | Override for Przelewy24 webhook target URL |
+
+### HubSpot CRM
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `HS_PRIVATE_APP_ACCESS_TOKEN` | No | HubSpot project-based app static token |
+| `HUBSPOT_API_BASE_URL` | No | Defaults to `https://api.hubapi.com`. Use `https://api.hubapi.eu` for EU data residency |
+
+### Debug
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DEBUG_ORDERS_ENABLED` | No | Enable debug orders endpoint (`true`/`false`) |
+| `DEBUG_ORDERS_TOKEN` | No | Token for debug orders endpoint |
+
+## Project Structure
+
+```
+src/
+  pages/              # Route page components (storefront + auth)
+  components/
+    image-uploader/   # Upload & canvas preview system
+    ui/               # shadcn/ui components (27 components)
+    admin/            # Refine-based admin pages (orders, coupons, partners, etc.)
+  lib/                # Business logic, API clients, utilities
+  locales/            # i18n translations (en.json, pl.json)
+  assets/             # Static assets (favicons, backgrounds)
+  admin/              # Admin app wrapper, auth/data providers, layout
+netlify/functions/    # Serverless functions (orders, payments, uploads, CRM)
+supabase/migrations/  # Database migration files
+content/legal/        # Markdown content for legal pages (managed via CMS)
+scripts/              # Dev scripts (Supabase migration helper)
+docs/                 # Development notes
+```
+
+## Database Migrations
+
+Migrations are stored in `supabase/migrations/` and managed via Supabase CLI.
+
+### Local development
+
+```bash
+export SUPABASE_PROJECT_REF=your_project_ref
 export SUPABASE_DB_PASSWORD=your_database_password
 pnpm db:migrate:dev
 ```
 
-### Deployment migration action
+The script (`scripts/supabase-migrate.sh`) links the project and runs `supabase db push --linked`. It loads `.env.local` and `.env` automatically.
 
-Repository runs migrations as part of [.github/workflows/run-checks.yml](.github/workflows/run-checks.yml):
+### Production
 
-- Job order: tests -> lint -> migrate
-- Migrate job runs only on `main`
-- Migrate job runs only when `supabase/migrations/**` changed in the push
+Migrations run automatically via CI when `supabase/migrations/**` files change on `main` (see [CI/CD](#cicd)).
 
-Required GitHub repository secrets:
+## CI/CD
 
-- `SUPABASE_ACCESS_TOKEN`
-- `SUPABASE_PROJECT_REF`
-- `SUPABASE_DB_PASSWORD`
+GitHub Actions workflow: `.github/workflows/run-checks.yml`
 
-The migration step executes `pnpm db:migrate:deploy`, which links the Supabase project and runs `supabase db push --linked`.
+Three sequential jobs on every push:
 
-## Admin shipment update endpoint
+1. **test** — `pnpm install --frozen-lockfile` → `pnpm test`
+2. **lint** — `pnpm lint`
+3. **migrate** (main branch only, when `supabase/migrations/**` changed) — `pnpm db:migrate:deploy`
 
-The repository includes an admin-only Netlify function for shipment operations:
+Required GitHub repository secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`.
 
-- Path: `/.netlify/functions/admin-update-shipment`
-- Method: `POST`
-- Auth header: `x-admin-token: <ADMIN_SHIPMENT_TOKEN>`
+## Infrastructure
 
-Shipment status helper endpoint:
+### Hosting
 
-- Path: `/.netlify/functions/admin-shipment-options?orderId=<ORDER_UUID>`
-- Method: `GET`
-- Auth header: `x-admin-token: <ADMIN_SHIPMENT_TOKEN>`
-- Returns current shipment status and allowed next statuses for that order
+- **Netlify** — SPA with serverless functions
+- SPA routing via `public/_redirects` (`/* → /index.html 200`)
 
-Required server env:
+### Database
 
-- `ADMIN_SHIPMENT_TOKEN`
+- **Supabase** — Postgres with Row Level Security (RLS), Auth, and real-time
+- 17 migrations covering orders, addresses, coupons, partners, referrals, promotions, and payment tracking
 
-Request body:
+### Image Pipeline
 
-- `orderId`: order UUID
-- `shipmentStatus`: one of `pending_fulfillment`, `in_transit`, `delivered`, `failed_delivery`, `returned`
-- `trackingNumber`: optional tracking value
-- `note`: optional history note
+- Direct browser-to-Cloudinary upload using **signed upload** flow
+- Netlify Function (`cloudinary-signature`) generates server-side signatures
+- `CLOUDINARY_API_SECRET` stays server-side only
 
-Behavior:
+### Payments
 
-- Validates shipment status transitions
-- Updates `orders.shipment_status` and `orders.tracking_number`
-- Appends `order_status_history` shipment event entry
+- Przelewy24 integration via two Netlify Functions:
+  - `create-przelewy24-session` — registers transaction, returns payment URL
+  - `przelewy24-webhook` — receives async notifications, verifies and marks orders as paid
 
-## Przelewy24 payment backend slice
+### CRM
 
-The repository now includes the first backend-only Przelewy24 integration slice:
+- HubSpot contact sync via `sync-hubspot-contact` Netlify Function
+- Non-blocking — sync failure does not prevent checkout or payment
+- Requires custom contact properties in HubSpot (see `.env.example` comments)
 
-- `/.netlify/functions/create-przelewy24-session`
-- `/.netlify/functions/przelewy24-webhook`
+## Legal Pages & CMS
 
-Current behavior:
+Legal pages are Markdown files in `content/legal/`, managed via **Decap CMS** at `/admin/`.
 
-- Loads an existing order from Supabase
-- Registers a Przelewy24 transaction via `transaction/register`
-- Stores payment session fields on `orders`
-- Verifies asynchronous notifications via `transaction/verify`
-- Marks orders as paid after successful verification
-- Appends `payment` and `order` entries into `order_status_history`
-
-Required server env:
-
-- `SITE_URL`
-- `P24_MERCHANT_ID`
-- `P24_POS_ID`
-- `P24_CRC`
-- `P24_API_KEY`
-- `P24_API_BASE_URL`
-
-Optional server env:
-
-- `P24_STATUS_URL`
-
-Suggested values:
-
-- Sandbox API: `https://sandbox.przelewy24.pl/api/v1`
-- Production API: `https://secure.przelewy24.pl/api/v1`
-
-Session creation endpoint:
-
-- Path: `/.netlify/functions/create-przelewy24-session`
-- Method: `POST`
-- Body: `{ "orderId": "<ORDER_UUID>", "language": "pl" | "en" }`
-- Response: `orderId`, `orderNumber`, `paymentSessionId`, `redirectUrl`
-
-Webhook endpoint:
-
-- Path: `/.netlify/functions/przelewy24-webhook`
-- Method: `POST`
-- Called by Przelewy24 with transaction notification JSON
-- Verifies Przelewy24 signature first, then confirms the payment via `transaction/verify`
-
-Database changes:
-
-- New migration: `supabase/migrations/202603250001_add_przelewy24_payment_fields.sql`
-- Adds payment tracking fields to `orders`
-- Extends `order_status_history.status_type` with `payment`
-
-Test coverage:
-
-- `netlify/functions/create-przelewy24-session.test.ts`
-- `netlify/functions/przelewy24-webhook.test.ts`
-- Shared Supabase test helper: `netlify/functions/test-utils/supabase-mocks.ts`
-
-## HubSpot CRM integration
-
-The checkout flow pushes customer data to HubSpot CRM as a Contact between order creation and Przelewy24 session creation. HubSpot sync is **non-blocking** — failure does not prevent checkout or payment.
-
-### Endpoints
-
-- `/.netlify/functions/sync-hubspot-contact`
-- Method: `POST`
-- Body: `{ "orderId": "<ORDER_UUID>" }`
-- Response: `{ "synced": true, "contactId": "<HUBSPOT_CONTACT_ID>" }`
-
-### HubSpot setup
-
-1. Create a **Project-based App** via HubSpot CLI: `hs project create` (or use an existing project)
-2. Grant scopes: `crm.objects.contacts.read`, `crm.objects.contacts.write`
-3. Deploy the project and generate a **static access token** from the project app settings
-4. Set `HS_PRIVATE_APP_ACCESS_TOKEN` in your environment
-5. Create a property group named `tuus_imago` in HubSpot (Contacts → Settings → Properties → Groups)
-6. Create these custom contact properties in the `tuus_imago` group:
-   - **tuus_imago_order_number** — Single-line text
-   - **tuus_imago_order_value** — Number
-   - **tuus_imago_items_count** — Number
-   - **tuus_imago_checkout_date** — Date picker
-   - **tuus_imago_marketing_consent** — Single-line text
-   - **tuus_imago_order_status** — Single-line text
-
-Custom properties must be created manually in HubSpot before first sync. They are **not** auto-created by the application.
-
-### Required server env
-
-- `HS_PRIVATE_APP_ACCESS_TOKEN` — Project-based app static access token
-- `HUBSPOT_API_BASE_URL` — Optional, defaults to `https://api.hubapi.com`. Use `https://api.hubapi.eu` for EU data residency.
-
-### Database changes
-
-- Migration: `supabase/migrations/202604040001_add_hubspot_crm_fields.sql`
-- Adds `hubspot_contact_id` and `hubspot_synced_at` columns to `orders`
-- Extends `order_status_history.status_type` with `crm`
-
-### Test coverage
-
-- `netlify/__tests__/sync-hubspot-contact.test.ts`
-- `netlify/__tests__/_shared/hubspot.test.ts`
+- **Slugs are derived from filenames** (e.g., `terms.md` → `/terms`). Renaming a file requires updating all references.
+- **Menu ordering** is controlled by the `menuOrder` frontmatter field within each menu section (`legal`, `payments`, `company`).
+- Pages containing `[PLACEHOLDER: ...]` markers need business-specific values filled in.
