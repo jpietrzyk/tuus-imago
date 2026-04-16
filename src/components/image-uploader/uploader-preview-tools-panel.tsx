@@ -82,7 +82,7 @@ export function UploaderPreviewToolsPanel({
   );
 
   return (
-    <div className="mx-auto grid w-full sm:w-1/2 grid-cols-3 items-center gap-y-2 sm:gap-y-3 rounded-xl border border-border/60 px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5">
+    <div className="mx-auto grid w-full md:w-1/2 grid-cols-3 items-center gap-y-2 sm:gap-y-3 rounded-xl border border-border/60 px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5">
       <div className="col-span-3 w-full">
         <UploaderSlotSwitcher
           slots={slots}
