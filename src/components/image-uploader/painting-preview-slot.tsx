@@ -139,7 +139,7 @@ export default function PaintingPreviewSlot({
   });
 
   return (
-    <div className="relative mx-0 flex h-full shrink-0 items-center justify-center">
+    <div className="relative mx-0 flex h-full max-h-full shrink-0 items-center justify-center">
       <div
         className={`group/preview-slot relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${frameAspectRatioClassName} ${
           isFocusPulseActive
