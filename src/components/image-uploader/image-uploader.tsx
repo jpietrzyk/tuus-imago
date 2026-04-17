@@ -970,13 +970,6 @@ export const ImageUploader = forwardRef<
     [updateActiveImage],
   );
 
-  const resetActiveImageCropAdjust = useCallback(() => {
-    updateActiveImage((image) => ({
-      ...image,
-      previewCropAdjust: undefined,
-    }));
-  }, [updateActiveImage]);
-
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
