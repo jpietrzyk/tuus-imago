@@ -206,6 +206,11 @@ export interface Translations {
     brightness: string;
     contrast: string;
     effectsReset: string;
+    effectsClose: string;
+    effectsApprove: string;
+    effectsCancel: string;
+    zoom: string;
+    zoomReset: string;
     rotation: string;
     rotateMinus90: string;
     rotatePlus90: string;

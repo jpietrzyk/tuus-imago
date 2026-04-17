@@ -784,18 +784,6 @@ export const ImageUploader = forwardRef<
     [onUploadError, setSlotEnhance, uploadSlotIfNeeded],
   );
 
-  const resetActiveImageEffects = useCallback(() => {
-    updateActiveImage((image) => ({
-      ...image,
-      previewEffects: {
-        brightness: 0,
-        contrast: 0,
-        removeBackground: false,
-        enhance: false,
-      },
-    }));
-  }, [updateActiveImage]);
-
   const updateActiveImageCropAdjust = useCallback(
     (adjust: { zoom: number; panX: number; panY: number } | undefined) => {
       updateActiveImage((image) => ({
@@ -1411,7 +1399,6 @@ export const ImageUploader = forwardRef<
           onUpdateEffect={updateActiveImageEffect}
           onToggleRemoveBackground={toggleActiveImageRemoveBackground}
           onToggleEnhance={toggleActiveImageEnhance}
-          onResetEffects={resetActiveImageEffects}
           activeImageEffects={activeImage?.previewEffects ?? null}
           canUpdateEffects={!!activeImage}
           isRemoveBackgroundBusy={

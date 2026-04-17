@@ -71,4 +71,36 @@ describe("UploaderSlotSwitcher", () => {
 
     expect(onSelectSlot).toHaveBeenCalledWith(2);
   });
+
+  it("hides the switcher when hidden prop is true", () => {
+    const slots = [createItem("a"), createItem("b"), null];
+
+    render(
+      <UploaderSlotSwitcher
+        slots={slots}
+        activeSlotIndex={0}
+        onSelectSlot={vi.fn()}
+        hidden={true}
+      />,
+    );
+
+    expect(screen.getByTestId("uploader-slot-dots")).toHaveAttribute("hidden");
+  });
+
+  it("does not hide the switcher when hidden prop is false", () => {
+    const slots = [createItem("a"), createItem("b"), null];
+
+    render(
+      <UploaderSlotSwitcher
+        slots={slots}
+        activeSlotIndex={0}
+        onSelectSlot={vi.fn()}
+        hidden={false}
+      />,
+    );
+
+    expect(screen.getByTestId("uploader-slot-dots")).not.toHaveAttribute(
+      "hidden",
+    );
+  });
 });

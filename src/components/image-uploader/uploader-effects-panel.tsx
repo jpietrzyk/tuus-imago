@@ -6,7 +6,6 @@ import {
   Settings,
   RotateCcw,
   Loader2,
-  X,
 } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { cn } from "@/lib/utils";
@@ -55,8 +54,6 @@ export interface UploaderEffectsPanelContentProps {
   ) => void;
   onToggleRemoveBackground: (enabled: boolean) => void;
   onToggleEnhance: (enabled: boolean) => void;
-  onResetEffects: () => void;
-  onClose: () => void;
   disabled?: boolean;
   isRemoveBackgroundBusy?: boolean;
   isEnhanceBusy?: boolean;
@@ -73,8 +70,6 @@ export function UploaderEffectsPanelContent({
   onUpdateEffect,
   onToggleRemoveBackground,
   onToggleEnhance,
-  onResetEffects,
-  onClose,
   disabled = false,
   isRemoveBackgroundBusy = false,
   isEnhanceBusy = false,
@@ -91,37 +86,11 @@ export function UploaderEffectsPanelContent({
     removeBackground: false,
     enhance: false,
   };
-  const hasEffects =
-    effectValues.brightness !== 0 ||
-    effectValues.contrast !== 0 ||
-    !!effectValues.removeBackground ||
-    !!effectValues.enhance;
 
   const isApplyingEffect = isRemoveBackgroundBusy || isEnhanceBusy;
 
   return (
-    <div className="space-y-3 pt-3">
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <h3 className="font-semibold text-sm">
-            {t("uploader.previewEffectsTitle")}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {t("uploader.previewEffectsDescription")}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          aria-label={t("uploader.effectsClose")}
-          className="h-8 w-8 shrink-0"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
+    <div className="space-y-3">
       {isZoomAvailable && onZoomChange && (
         <div className="space-y-2 rounded-md border border-border/70 p-3">
           <Label className="flex items-center justify-between">
@@ -246,20 +215,6 @@ export function UploaderEffectsPanelContent({
           )}
         </div>
       </div>
-
-      {hasEffects && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onResetEffects}
-          disabled={disabled}
-          className="w-full"
-        >
-          <RotateCcw className="h-3.5 w-3.5 mr-2" />
-          {t("uploader.effectsReset")}
-        </Button>
-      )}
     </div>
   );
 }

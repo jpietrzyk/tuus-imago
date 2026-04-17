@@ -142,35 +142,12 @@ describe("UploaderEffectsPanelContent", () => {
     vi.clearAllMocks();
   });
 
-  it("renders effects title and description", () => {
-    render(
-      <UploaderEffectsPanelContent
-        onUpdateEffect={vi.fn()}
-        onToggleRemoveBackground={vi.fn()}
-        onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
-        effects={{ brightness: 0, contrast: 0 }}
-        disabled={false}
-      />,
-    );
-
-    expect(
-      screen.getByText(t("uploader.previewEffectsTitle")),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(t("uploader.previewEffectsDescription")),
-    ).toBeInTheDocument();
-  });
-
   it("renders brightness and contrast sliders", () => {
     render(
       <UploaderEffectsPanelContent
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
       />,
@@ -186,8 +163,6 @@ describe("UploaderEffectsPanelContent", () => {
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
       />,
@@ -208,8 +183,6 @@ describe("UploaderEffectsPanelContent", () => {
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={onToggleRemoveBackground}
         onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
         effects={{ brightness: 0, contrast: 0, removeBackground: false }}
         disabled={false}
       />,
@@ -223,50 +196,12 @@ describe("UploaderEffectsPanelContent", () => {
     expect(onToggleRemoveBackground).toHaveBeenCalledWith(true);
   });
 
-  it("shows reset button when effects are active", () => {
-    render(
-      <UploaderEffectsPanelContent
-        onUpdateEffect={vi.fn()}
-        onToggleRemoveBackground={vi.fn()}
-        onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
-        effects={{ brightness: 50, contrast: 0 }}
-        disabled={false}
-      />,
-    );
-
-    expect(
-      screen.getByText(t("uploader.effectsReset")),
-    ).toBeInTheDocument();
-  });
-
-  it("hides reset button when no effects are active", () => {
-    render(
-      <UploaderEffectsPanelContent
-        onUpdateEffect={vi.fn()}
-        onToggleRemoveBackground={vi.fn()}
-        onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
-        effects={{ brightness: 0, contrast: 0 }}
-        disabled={false}
-      />,
-    );
-
-    expect(
-      screen.queryByText(t("uploader.effectsReset")),
-    ).not.toBeInTheDocument();
-  });
-
   it("shows applying effect indicator when busy", () => {
     render(
       <UploaderEffectsPanelContent
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
         isRemoveBackgroundBusy={true}
@@ -278,44 +213,36 @@ describe("UploaderEffectsPanelContent", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders close button", () => {
+  it("does not render close button", () => {
     render(
       <UploaderEffectsPanelContent
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={vi.fn()}
         effects={{ brightness: 0, contrast: 0 }}
         disabled={false}
       />,
     );
 
     expect(
-      screen.getByRole("button", { name: t("uploader.effectsClose") }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: t("uploader.effectsClose") }),
+    ).not.toBeInTheDocument();
   });
 
-  it("calls onClose when close button is clicked", () => {
-    const onClose = vi.fn();
+  it("does not render reset effects button", () => {
     render(
       <UploaderEffectsPanelContent
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        onResetEffects={vi.fn()}
-        onClose={onClose}
-        effects={{ brightness: 0, contrast: 0 }}
+        effects={{ brightness: 50, contrast: 0 }}
         disabled={false}
       />,
     );
 
-    const closeButton = screen.getByRole("button", {
-      name: t("uploader.effectsClose"),
-    });
-    fireEvent.click(closeButton);
-
-    expect(onClose).toHaveBeenCalledOnce();
+    expect(
+      screen.queryByRole("button", { name: t("uploader.effectsReset") }),
+    ).not.toBeInTheDocument();
   });
 
   describe("zoom controls", () => {
@@ -325,8 +252,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           isZoomAvailable={false}
@@ -342,8 +267,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           isZoomAvailable={true}
@@ -360,8 +283,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           zoom={2}
@@ -379,8 +300,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           isZoomAvailable={true}
@@ -397,8 +316,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           zoom={1.5}
@@ -423,8 +340,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           zoom={2}
@@ -445,8 +360,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           zoom={1}
@@ -468,8 +381,6 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          onResetEffects={vi.fn()}
-          onClose={vi.fn()}
           effects={{ brightness: 0, contrast: 0 }}
           disabled={false}
           zoom={2}
