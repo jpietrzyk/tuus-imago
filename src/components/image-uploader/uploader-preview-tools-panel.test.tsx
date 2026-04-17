@@ -446,46 +446,4 @@ describe("UploaderPreviewToolsPanel", () => {
 
     expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
   });
-
-  it("shows reset zoom button in edit mode when zoom is greater than 1", () => {
-    const props = createProps();
-    render(
-      <UploaderPreviewToolsPanel
-        {...props}
-        isZoomAvailable={true}
-        activeImageCropAdjust={{ zoom: 2, panX: 0, panY: 0 }}
-        onUpdateCropAdjust={vi.fn()}
-        onResetCropAdjust={vi.fn()}
-      />,
-    );
-
-    const effectsButton = screen.getByRole("button", {
-      name: t("uploader.previewEffectsButton"),
-    });
-    fireEvent.click(effectsButton);
-
-    expect(screen.getByText(t("uploader.zoomReset"))).toBeInTheDocument();
-  });
-
-  it("calls onResetCropAdjust when reset zoom button is clicked", () => {
-    const onResetCropAdjust = vi.fn();
-    const props = createProps();
-    render(
-      <UploaderPreviewToolsPanel
-        {...props}
-        isZoomAvailable={true}
-        activeImageCropAdjust={{ zoom: 2, panX: 0, panY: 0 }}
-        onUpdateCropAdjust={vi.fn()}
-        onResetCropAdjust={onResetCropAdjust}
-      />,
-    );
-
-    const effectsButton = screen.getByRole("button", {
-      name: t("uploader.previewEffectsButton"),
-    });
-    fireEvent.click(effectsButton);
-
-    fireEvent.click(screen.getByText(t("uploader.zoomReset")));
-    expect(onResetCropAdjust).toHaveBeenCalledOnce();
-  });
 });

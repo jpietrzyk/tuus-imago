@@ -259,6 +259,9 @@ export interface Translations {
     restoreDescription: string;
     flipHorizontal: string;
     flipVertical: string;
+    cropGroupTitle: string;
+    adjustGroupTitle: string;
+    transformGroupTitle: string;
   };
   checkout: {
     title: string;

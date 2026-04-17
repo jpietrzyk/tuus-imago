@@ -208,7 +208,10 @@
     "upscaleDescription": "Zwiększa rozdzielczość obrazu za pomocą skalowania AI.",
     "restoreDescription": "Przywraca detale i redukuje artefakty za pomocą AI.",
     "flipHorizontal": "Odbij poziomo",
-    "flipVertical": "Odbij pionowo"
+    "flipVertical": "Odbij pionowo",
+    "cropGroupTitle": "Kadr",
+    "adjustGroupTitle": "Korekty",
+    "transformGroupTitle": "Przekształcenia"
   },
   "checkout": {
     "title": "Zamówienie",

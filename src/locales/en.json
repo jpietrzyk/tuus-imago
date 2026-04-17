@@ -263,7 +263,10 @@
     "upscaleDescription": "Increases image resolution using AI upscaling.",
     "restoreDescription": "Restores details and reduces artifacts using AI.",
     "flipHorizontal": "Flip Horizontal",
-    "flipVertical": "Flip Vertical"
+    "flipVertical": "Flip Vertical",
+    "cropGroupTitle": "Crop",
+    "adjustGroupTitle": "Adjustments",
+    "transformGroupTitle": "Transform"
   },
   "checkout": {
     "title": "Checkout",
