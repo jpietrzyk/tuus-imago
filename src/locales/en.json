@@ -255,7 +255,18 @@
     "debugRectangleCoverage": "Rectangle visible area",
     "debugUnknown": "Unknown",
     "maxImagesError": "You can select up to 3 images",
-    "applyingEffect": "Applying effect..."
+    "applyingEffect": "Applying effect...",
+    "tabAdjust": "Adjust",
+    "tabAiEffects": "AI Effects",
+    "tabTransform": "Transform",
+    "grayscale": "Grayscale",
+    "upscaleDescription": "Increases image resolution using AI upscaling.",
+    "restoreDescription": "Restores details and reduces artifacts using AI.",
+    "flipHorizontal": "Flip Horizontal",
+    "flipVertical": "Flip Vertical",
+    "cropGroupTitle": "Crop",
+    "adjustGroupTitle": "Adjustments",
+    "transformGroupTitle": "Transform"
   },
   "checkout": {
     "title": "Checkout",

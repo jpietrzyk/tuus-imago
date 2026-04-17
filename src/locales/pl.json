@@ -200,7 +200,18 @@
     "debugRectangleCoverage": "Widoczny obszar prostokątny",
     "debugUnknown": "Nieznane",
     "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia",
-    "applyingEffect": "Stosowanie efektu..."
+    "applyingEffect": "Stosowanie efektu...",
+    "tabAdjust": "Korekty",
+    "tabAiEffects": "Efekty AI",
+    "tabTransform": "Przekształcenia",
+    "grayscale": "Skala szarości",
+    "upscaleDescription": "Zwiększa rozdzielczość obrazu za pomocą skalowania AI.",
+    "restoreDescription": "Przywraca detale i redukuje artefakty za pomocą AI.",
+    "flipHorizontal": "Odbij poziomo",
+    "flipVertical": "Odbij pionowo",
+    "cropGroupTitle": "Kadr",
+    "adjustGroupTitle": "Korekty",
+    "transformGroupTitle": "Przekształcenia"
   },
   "checkout": {
     "title": "Zamówienie",

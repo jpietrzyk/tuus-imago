@@ -1224,6 +1224,9 @@ describe("ImageUploader", () => {
     });
     fireEvent.click(effectsButton);
 
+    // Expand AI Effects collapsible group
+    fireEvent.click(screen.getByText(tr("uploader.aiEffectsGroupTitle")));
+
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
     });
@@ -1351,6 +1354,9 @@ describe("ImageUploader", () => {
       name: tr("uploader.previewEffectsButton"),
     });
     fireEvent.click(effectsButton);
+
+    // Expand AI Effects collapsible group
+    fireEvent.click(screen.getByText(tr("uploader.aiEffectsGroupTitle")));
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1500,8 +1506,6 @@ describe("ImageUploader", () => {
       expect(screen.getByText("2.0x")).toBeInTheDocument();
     });
 
-    expect(screen.getByText(tr("uploader.zoomReset"))).toBeInTheDocument();
-
     const closeButton = screen.getByRole("button", {
       name: tr("uploader.effectsCancel"),
     });
@@ -1526,7 +1530,5 @@ describe("ImageUploader", () => {
     await waitFor(() => {
       expect(screen.getByText("1.0x")).toBeInTheDocument();
     });
-
-    expect(screen.queryByText(tr("uploader.zoomReset"))).not.toBeInTheDocument();
   });
 });

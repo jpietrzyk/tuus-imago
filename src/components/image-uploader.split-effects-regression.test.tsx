@@ -14,11 +14,12 @@ let latestToolsPanelProps: {
   activeImageEffects: {
     brightness: number;
     contrast: number;
+    grayscale: number;
     removeBackground?: boolean;
     enhance?: boolean;
   } | null;
   onUpdateEffect: (
-    effectName: "brightness" | "contrast",
+    effectName: "brightness" | "contrast" | "grayscale",
     value: number,
   ) => void;
   onSplitImage: () => void;
@@ -36,11 +37,12 @@ vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
     activeImageEffects: {
       brightness: number;
       contrast: number;
+      grayscale: number;
       removeBackground?: boolean;
       enhance?: boolean;
     } | null;
     onUpdateEffect: (
-      effectName: "brightness" | "contrast",
+      effectName: "brightness" | "contrast" | "grayscale",
       value: number,
     ) => void;
     onSplitImage: () => void;
@@ -119,14 +121,20 @@ describe("ImageUploader split effects regression", () => {
       expect(latestToolsPanelProps?.activeImageEffects).toEqual({
         brightness: 40,
         contrast: 0,
+        grayscale: 0,
         removeBackground: false,
         enhance: false,
+        upscale: false,
+        restore: false,
       });
       expect(latestToolsPanelProps?.slots[1]?.previewEffects).toEqual({
         brightness: 40,
         contrast: 0,
+        grayscale: 0,
         removeBackground: false,
         enhance: false,
+        upscale: false,
+        restore: false,
       });
     });
   });
