@@ -31,6 +31,7 @@ export interface CloudinaryUploadedAsset {
 export interface CloudinaryDirectUploadInput {
   file: File;
   transformations: ImageTransformations;
+  customCoordinates?: string;
   aiAdjustments?: AiAdjustments | null;
   context?: string;
   signal?: AbortSignal;
@@ -78,6 +79,7 @@ async function requestUploadSignature(
 export async function uploadImageToCloudinary({
   file,
   transformations,
+  customCoordinates,
   aiAdjustments,
   context,
   signal,
@@ -205,7 +207,7 @@ export async function uploadImageToCloudinary({
     transformedUrl: getTransformedPreviewUrl(
       data.secure_url,
       transformations,
-      undefined,
+      customCoordinates,
       aiAdjustments,
     ),
     transformations,

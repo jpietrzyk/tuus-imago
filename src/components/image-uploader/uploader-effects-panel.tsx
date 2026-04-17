@@ -60,6 +60,12 @@ export interface UploaderEffectsPanelContentProps {
   disabled?: boolean;
   isRemoveBackgroundBusy?: boolean;
   isEnhanceBusy?: boolean;
+  zoom?: number;
+  minZoom?: number;
+  maxZoom?: number;
+  isZoomAvailable?: boolean;
+  onZoomChange?: (zoom: number) => void;
+  onResetZoom?: () => void;
 }
 
 export function UploaderEffectsPanelContent({
@@ -72,6 +78,12 @@ export function UploaderEffectsPanelContent({
   disabled = false,
   isRemoveBackgroundBusy = false,
   isEnhanceBusy = false,
+  zoom = 1,
+  minZoom = 1,
+  maxZoom = 3,
+  isZoomAvailable = false,
+  onZoomChange,
+  onResetZoom,
 }: UploaderEffectsPanelContentProps) {
   const effectValues = effects || {
     brightness: 0,
@@ -109,6 +121,38 @@ export function UploaderEffectsPanelContent({
           <X className="h-4 w-4" />
         </Button>
       </div>
+
+      {isZoomAvailable && onZoomChange && (
+        <div className="space-y-2 rounded-md border border-border/70 p-3">
+          <Label className="flex items-center justify-between">
+            <span>{t("uploader.zoom")}</span>
+            <span className="text-sm text-muted-foreground font-mono">
+              {zoom.toFixed(1)}x
+            </span>
+          </Label>
+          <Slider
+            min={minZoom}
+            max={maxZoom}
+            step={0.01}
+            value={zoom}
+            onChange={onZoomChange}
+            disabled={disabled}
+          />
+          {zoom > 1 && onResetZoom && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onResetZoom}
+              disabled={disabled}
+              className="h-7 text-xs"
+            >
+              <RotateCcw className="h-3 w-3 mr-1.5" />
+              {t("uploader.zoomReset")}
+            </Button>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
         <div className="space-y-3">

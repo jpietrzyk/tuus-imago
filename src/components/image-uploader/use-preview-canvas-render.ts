@@ -5,8 +5,10 @@ import {
   resolveImageDimensions,
 } from "./preview-canvas-utils";
 import { buildPreviewRenderPlan } from "./preview-render-plan";
+import { adjustCropForZoomPan } from "./use-crop-adjust";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import type { SelectedImageMetadata } from "./image-uploader";
+import type { CropAdjust } from "./use-crop-adjust";
 
 interface UsePreviewCanvasRenderArgs {
   previewUrl: string | null;
@@ -21,6 +23,7 @@ interface UsePreviewCanvasRenderArgs {
     bestProportion: ImageDisplayProportion | null;
     userSelectedProportion: ImageDisplayProportion;
     previewEffects: { brightness: number; contrast: number } | null;
+    previewCropAdjust?: CropAdjust;
   }>;
   onMetadataResolved: (args: {
     metadata: SelectedImageMetadata;
@@ -63,11 +66,12 @@ export const usePreviewCanvasRender = ({
         bestProportion,
         userSelectedProportion,
         previewEffects,
+        previewCropAdjust,
       } = latestRenderConfigRef.current;
 
       const {
         metadata,
-        crop,
+        crop: baseCrop,
         nextDisplayImageProportion,
         shouldAutoSelectOptimalProportion,
       } = buildPreviewRenderPlan({
@@ -84,6 +88,15 @@ export const usePreviewCanvasRender = ({
         nextDisplayImageProportion,
         shouldAutoSelectOptimalProportion,
       });
+
+      const crop = previewCropAdjust
+        ? adjustCropForZoomPan(
+            baseCrop,
+            previewCropAdjust.zoom,
+            previewCropAdjust.panX,
+            previewCropAdjust.panY,
+          )
+        : baseCrop;
 
       drawCroppedImageToCanvas({
         canvas,
