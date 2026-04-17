@@ -29,6 +29,7 @@ interface UploaderPreviewSliderProps {
   rightSlotPreviewUrl?: string | null;
   onSelectSlot: (index: number) => void;
   swipeDisabled?: boolean;
+  isEditMode?: boolean;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -63,6 +64,7 @@ export default function UploaderPreviewSlider({
   rightSlotPreviewUrl,
   onSelectSlot,
   swipeDisabled = false,
+  isEditMode = false,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -103,6 +105,7 @@ export default function UploaderPreviewSlider({
         uploadingSlotIndex={uploadingSlotIndex}
         isEffectUploading={isEffectUploading}
         swipeDisabled={swipeDisabled}
+        isEditMode={isEditMode}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMetadataResolved={onMetadataResolved}
