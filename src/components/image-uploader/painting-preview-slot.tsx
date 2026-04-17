@@ -25,6 +25,7 @@ interface PaintingPreviewSlotProps {
   uploadingSlotIndex?: number | null;
   isEffectUploading?: boolean;
   swipeDisabled?: boolean;
+  isEditMode?: boolean;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -51,6 +52,7 @@ export default function PaintingPreviewSlot({
   uploadingSlotIndex = null,
   isEffectUploading = false,
   swipeDisabled = false,
+  isEditMode = false,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -200,7 +202,7 @@ export default function PaintingPreviewSlot({
           label={t("uploader.applyingEffect")}
         />
 
-        {selectedImage && onClearSlot && (
+        {selectedImage && onClearSlot && !isEditMode && (
           <button
             type="button"
             onClick={(e) => {

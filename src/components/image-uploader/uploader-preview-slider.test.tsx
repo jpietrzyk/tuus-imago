@@ -34,12 +34,15 @@ vi.mock("./side-slot-preview", () => ({
 vi.mock("./painting-preview-slot", () => ({
   default: ({
     swipeDisabled,
+    isEditMode,
   }: {
     swipeDisabled?: boolean;
+    isEditMode?: boolean;
   }) => (
     <div
       data-testid="mock-painting-slot"
       data-swipe-disabled={swipeDisabled ? "true" : undefined}
+      data-is-edit-mode={isEditMode ? "true" : undefined}
     />
   ),
 }));
@@ -118,6 +121,27 @@ describe("UploaderPreviewSlider", () => {
 
     expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
       "data-swipe-disabled",
+    );
+  });
+
+  it("passes isEditMode to painting preview slot", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} isEditMode={true} />);
+
+    expect(screen.getByTestId("mock-painting-slot")).toHaveAttribute(
+      "data-is-edit-mode",
+      "true",
+    );
+  });
+
+  it("does not set is-edit-mode attribute when isEditMode is false", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} isEditMode={false} />);
+
+    expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
+      "data-is-edit-mode",
     );
   });
 });

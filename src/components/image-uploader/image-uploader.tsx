@@ -1313,6 +1313,7 @@ export const ImageUploader = forwardRef<
               : null
           }
           swipeDisabled={isEffectsEditMode}
+          isEditMode={isEffectsEditMode}
           onSelectSlot={handlePreviewSlotSelect}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}

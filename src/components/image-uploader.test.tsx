@@ -1399,4 +1399,50 @@ describe("ImageUploader", () => {
       expect(uploadImageToCloudinary).toHaveBeenCalledTimes(2);
     });
   });
+
+  it("hides remove button when effects edit mode is active and restores on close", async () => {
+    render(<ImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+    if (!input) return;
+
+    fireEvent.change(input, { target: { files: [file] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    // With onClearSlot provided, the remove button should be present
+    expect(
+      screen.getByTestId("uploader-remove-active-image"),
+    ).toBeInTheDocument();
+
+    // Open effects panel to enter edit mode
+    const effectsButton = screen.getByRole("button", {
+      name: tr("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    // In edit mode, the remove button should be hidden
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId("uploader-remove-active-image"),
+      ).not.toBeInTheDocument();
+    });
+
+    // Close effects panel to exit edit mode
+    const closeButton = screen.getByRole("button", {
+      name: tr("uploader.effectsClose"),
+    });
+    fireEvent.click(closeButton);
+
+    // After exiting edit mode, the remove button should be visible again
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("uploader-remove-active-image"),
+      ).toBeInTheDocument();
+    });
+  });
 });
