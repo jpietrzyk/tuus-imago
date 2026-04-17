@@ -92,6 +92,7 @@ export default function UploaderPreviewSlider({
         uploadProgress={uploadProgress}
         uploadProgressLabel={uploadProgressLabel}
         uploadingSlotIndex={uploadingSlotIndex}
+        disabled={isEditMode}
         onSelectSlot={onSelectSlot}
       />
 
@@ -131,6 +132,7 @@ export default function UploaderPreviewSlider({
         uploadProgress={uploadProgress}
         uploadProgressLabel={uploadProgressLabel}
         uploadingSlotIndex={uploadingSlotIndex}
+        disabled={isEditMode}
         onSelectSlot={onSelectSlot}
       />
     </div>

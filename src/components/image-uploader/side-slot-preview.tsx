@@ -19,6 +19,7 @@ interface SideSlotPreviewProps {
   uploadProgress?: number;
   uploadProgressLabel?: string;
   uploadingSlotIndex?: number | null;
+  disabled?: boolean;
   onSelectSlot: (index: number) => void;
 }
 
@@ -33,6 +34,7 @@ export default function SideSlotPreview({
   uploadProgress = 0,
   uploadProgressLabel,
   uploadingSlotIndex = null,
+  disabled = false,
   onSelectSlot,
 }: SideSlotPreviewProps) {
   const isLeft = position === "left";
@@ -102,7 +104,7 @@ export default function SideSlotPreview({
           onSelectSlot(slotIndex);
         }
       }}
-      disabled={slotIndex === null}
+      disabled={slotIndex === null || disabled}
       data-testid={
         isLeft ? "uploader-slider-side-left" : "uploader-slider-side-right"
       }
