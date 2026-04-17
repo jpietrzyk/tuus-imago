@@ -1445,4 +1445,88 @@ describe("ImageUploader", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("shows zoom controls in edit mode for non-perfect-coverage images", async () => {
+    render(<ImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    if (!input) return;
+
+    fireEvent.change(input, { target: { files: [file] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = screen.getByRole("button", {
+      name: tr("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(tr("uploader.zoom"))).toBeInTheDocument();
+    });
+  });
+
+  it("resets zoom when proportion is changed", async () => {
+    render(<ImageUploader />);
+
+    const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    if (!input) return;
+
+    fireEvent.change(input, { target: { files: [file] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = screen.getByRole("button", {
+      name: tr("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(tr("uploader.zoom"))).toBeInTheDocument();
+    });
+
+    const zoomLabel = screen.getByText(tr("uploader.zoom"));
+    const sliderContainer = zoomLabel.closest(".space-y-2")!;
+    const rangeInput = sliderContainer.querySelector(
+      'input[type="range"]',
+    ) as HTMLInputElement;
+    fireEvent.change(rangeInput, { target: { value: "2" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("2.0x")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(tr("uploader.zoomReset"))).toBeInTheDocument();
+
+    const closeButton = screen.getByRole("button", {
+      name: tr("uploader.effectsClose"),
+    });
+    fireEvent.click(closeButton);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText(tr("uploader.previewEffectsTitle")),
+      ).not.toBeInTheDocument();
+    });
+
+    const dropdownTrigger = screen.getByTestId(
+      "image-proportions-dropdown-trigger",
+    );
+    fireEvent.pointerDown(dropdownTrigger);
+    fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
+
+    fireEvent.click(screen.getByRole("button", {
+      name: tr("uploader.previewEffectsButton"),
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByText("1.0x")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(tr("uploader.zoomReset"))).not.toBeInTheDocument();
+  });
 });
