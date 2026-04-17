@@ -22,7 +22,8 @@ const createImageItem = (name: string): SelectedImageItem => ({
   metadata: null,
   displayImageProportion: "horizontal",
   autoSelectOptimalPending: true,
-  previewEffects: { brightness: 0, contrast: 0 },
+  previewEffects: { brightness: 0, contrast: 0, grayscale: 0 },
+  previewTransform: { rotation: 0, flipHorizontal: false, flipVertical: false },
 });
 
 const createProps = () => ({
@@ -119,7 +120,7 @@ describe("PaintingPreviewSlot", () => {
       ...createProps(),
       selectedImage: {
         ...createImageItem("selected"),
-        previewEffects: { brightness: 35, contrast: -20 },
+        previewEffects: { brightness: 35, contrast: -20, grayscale: 0 },
       },
       useCloudPreview: true,
       previewUrl:

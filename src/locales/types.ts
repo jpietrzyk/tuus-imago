@@ -251,6 +251,14 @@ export interface Translations {
     debugUnknown: string;
     maxImagesError: string;
     applyingEffect: string;
+    tabAdjust: string;
+    tabAiEffects: string;
+    tabTransform: string;
+    grayscale: string;
+    upscaleDescription: string;
+    restoreDescription: string;
+    flipHorizontal: string;
+    flipVertical: string;
   };
   checkout: {
     title: string;

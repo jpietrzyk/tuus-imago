@@ -101,8 +101,16 @@ export interface SelectedImageItem {
   previewEffects: {
     brightness: number;
     contrast: number;
+    grayscale: number;
     removeBackground?: boolean;
     enhance?: boolean;
+    upscale?: boolean;
+    restore?: boolean;
+  };
+  previewTransform?: {
+    rotation: number;
+    flipHorizontal: boolean;
+    flipVertical: boolean;
   };
   previewCropAdjust?: {
     zoom: number;
@@ -155,12 +163,12 @@ function getUploadTransformations(
   image: SelectedImageItem,
 ): ImageTransformations & { custom_coordinates?: string } {
   const result: ImageTransformations & { custom_coordinates?: string } = {
-    rotation: 0,
-    flipHorizontal: false,
-    flipVertical: false,
+    rotation: image.previewTransform?.rotation ?? 0,
+    flipHorizontal: image.previewTransform?.flipHorizontal ?? false,
+    flipVertical: image.previewTransform?.flipVertical ?? false,
     brightness: image.previewEffects.brightness,
     contrast: image.previewEffects.contrast,
-    grayscale: 0,
+    grayscale: image.previewEffects.grayscale ?? 0,
     blur: 0,
   };
 
@@ -196,15 +204,20 @@ function getUploadTransformations(
 }
 
 function getAiAdjustments(image: SelectedImageItem): AiAdjustments | null {
-  if (!image.previewEffects.removeBackground && !image.previewEffects.enhance) {
+  if (
+    !image.previewEffects.removeBackground &&
+    !image.previewEffects.enhance &&
+    !image.previewEffects.upscale &&
+    !image.previewEffects.restore
+  ) {
     return null;
   }
 
   return {
     enhance: !!image.previewEffects.enhance,
     removeBackground: !!image.previewEffects.removeBackground,
-    upscale: false,
-    restore: false,
+    upscale: !!image.previewEffects.upscale,
+    restore: !!image.previewEffects.restore,
   };
 }
 
@@ -279,11 +292,19 @@ function buildRestoredSelectedImages(
       metadata: null,
       displayImageProportion: "horizontal",
       previewEffects: {
-        brightness: slot.transformations?.brightness ?? 0,
-        contrast: slot.transformations?.contrast ?? 0,
-        removeBackground: slot.aiAdjustments?.removeBackground ?? false,
-        enhance: slot.aiAdjustments?.enhance ?? false,
-      },
+          brightness: slot.transformations?.brightness ?? 0,
+          contrast: slot.transformations?.contrast ?? 0,
+          grayscale: slot.transformations?.grayscale ?? 0,
+          removeBackground: slot.aiAdjustments?.removeBackground ?? false,
+          enhance: slot.aiAdjustments?.enhance ?? false,
+          upscale: slot.aiAdjustments?.upscale ?? false,
+          restore: slot.aiAdjustments?.restore ?? false,
+        },
+        previewTransform: {
+          rotation: slot.transformations?.rotation ?? 0,
+          flipHorizontal: slot.transformations?.flipHorizontal ?? false,
+          flipVertical: slot.transformations?.flipVertical ?? false,
+        },
       uploadedAsset: {
         publicId: slot.publicId ?? "",
         secureUrl: slot.secureUrl,
@@ -403,8 +424,16 @@ export const ImageUploader = forwardRef<
         previewEffects: {
           brightness: 0,
           contrast: 0,
+          grayscale: 0,
           removeBackground: false,
           enhance: false,
+          upscale: false,
+          restore: false,
+        },
+        previewTransform: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
         },
       };
     },
@@ -604,7 +633,7 @@ export const ImageUploader = forwardRef<
   );
 
   const updateActiveImageEffect = useCallback(
-    (effectName: "brightness" | "contrast", value: number) => {
+    (effectName: "brightness" | "contrast" | "grayscale", value: number) => {
       updateActiveImage((image) => ({
         ...image,
         previewEffects: {
@@ -782,6 +811,153 @@ export const ImageUploader = forwardRef<
       });
     },
     [onUploadError, setSlotEnhance, uploadSlotIfNeeded],
+  );
+
+  const setSlotUpscale = useCallback((slotIndex: number, enabled: boolean) => {
+    setSelectedImages((prevImages) => {
+      const image = prevImages[slotIndex];
+
+      if (!image) {
+        return prevImages;
+      }
+
+      if ((image.previewEffects.upscale ?? false) === enabled) {
+        return prevImages;
+      }
+
+      const nextImages = [...prevImages];
+      nextImages[slotIndex] = {
+        ...image,
+        previewEffects: {
+          ...image.previewEffects,
+          upscale: enabled,
+        },
+      };
+
+      return nextImages;
+    });
+  }, []);
+
+  const toggleActiveImageUpscale = useCallback(
+    (enabled: boolean) => {
+      const slotIndex = activeImageIndexRef.current;
+      if (typeof slotIndex !== "number") {
+        return;
+      }
+
+      setSlotUpscale(slotIndex, enabled);
+
+      if (!enabled) {
+        return;
+      }
+
+      void uploadSlotIfNeeded(slotIndex).catch((error) => {
+        setSlotUpscale(slotIndex, false);
+        onUploadError?.(
+          error instanceof Error ? error.message : t("upload.uploadFailed"),
+        );
+      });
+    },
+    [onUploadError, setSlotUpscale, uploadSlotIfNeeded],
+  );
+
+  const setSlotRestore = useCallback((slotIndex: number, enabled: boolean) => {
+    setSelectedImages((prevImages) => {
+      const image = prevImages[slotIndex];
+
+      if (!image) {
+        return prevImages;
+      }
+
+      if ((image.previewEffects.restore ?? false) === enabled) {
+        return prevImages;
+      }
+
+      const nextImages = [...prevImages];
+      nextImages[slotIndex] = {
+        ...image,
+        previewEffects: {
+          ...image.previewEffects,
+          restore: enabled,
+        },
+      };
+
+      return nextImages;
+    });
+  }, []);
+
+  const toggleActiveImageRestore = useCallback(
+    (enabled: boolean) => {
+      const slotIndex = activeImageIndexRef.current;
+      if (typeof slotIndex !== "number") {
+        return;
+      }
+
+      setSlotRestore(slotIndex, enabled);
+
+      if (!enabled) {
+        return;
+      }
+
+      void uploadSlotIfNeeded(slotIndex).catch((error) => {
+        setSlotRestore(slotIndex, false);
+        onUploadError?.(
+          error instanceof Error ? error.message : t("upload.uploadFailed"),
+        );
+      });
+    },
+    [onUploadError, setSlotRestore, uploadSlotIfNeeded],
+  );
+
+  const updateActiveImageRotation = useCallback(
+    (degrees: number) => {
+      updateActiveImage((image) => ({
+        ...image,
+        previewTransform: {
+          ...(image.previewTransform ?? {
+            rotation: 0,
+            flipHorizontal: false,
+            flipVertical: false,
+          }),
+          rotation: degrees,
+        },
+      }));
+    },
+    [updateActiveImage],
+  );
+
+  const toggleActiveImageFlipHorizontal = useCallback(
+    (enabled: boolean) => {
+      updateActiveImage((image) => ({
+        ...image,
+        previewTransform: {
+          ...(image.previewTransform ?? {
+            rotation: 0,
+            flipHorizontal: false,
+            flipVertical: false,
+          }),
+          flipHorizontal: enabled,
+        },
+      }));
+    },
+    [updateActiveImage],
+  );
+
+  const toggleActiveImageFlipVertical = useCallback(
+    (enabled: boolean) => {
+      updateActiveImage((image) => ({
+        ...image,
+        previewTransform: {
+          ...(image.previewTransform ?? {
+            rotation: 0,
+            flipHorizontal: false,
+            flipVertical: false,
+          }),
+          flipVertical: enabled,
+        },
+      }));
+    },
+    [updateActiveImage],
   );
 
   const updateActiveImageCropAdjust = useCallback(
@@ -1399,13 +1575,29 @@ export const ImageUploader = forwardRef<
           onUpdateEffect={updateActiveImageEffect}
           onToggleRemoveBackground={toggleActiveImageRemoveBackground}
           onToggleEnhance={toggleActiveImageEnhance}
+          onToggleUpscale={toggleActiveImageUpscale}
+          onToggleRestore={toggleActiveImageRestore}
+          onUpdateRotation={updateActiveImageRotation}
+          onToggleFlipHorizontal={toggleActiveImageFlipHorizontal}
+          onToggleFlipVertical={toggleActiveImageFlipVertical}
           activeImageEffects={activeImage?.previewEffects ?? null}
+          activeImageTransform={
+            activeImage?.previewTransform ?? null
+          }
           canUpdateEffects={!!activeImage}
           isRemoveBackgroundBusy={
             typeof activeImageIndex === "number" &&
             busyBackgroundUploadSlots.has(activeImageIndex)
           }
           isEnhanceBusy={
+            typeof activeImageIndex === "number" &&
+            busyBackgroundUploadSlots.has(activeImageIndex)
+          }
+          isUpscaleBusy={
+            typeof activeImageIndex === "number" &&
+            busyBackgroundUploadSlots.has(activeImageIndex)
+          }
+          isRestoreBusy={
             typeof activeImageIndex === "number" &&
             busyBackgroundUploadSlots.has(activeImageIndex)
           }

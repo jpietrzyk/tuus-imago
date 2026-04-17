@@ -11,7 +11,8 @@ const createImageItem = (name: string): SelectedImageItem => ({
   metadata: null,
   displayImageProportion: "horizontal",
   autoSelectOptimalPending: false,
-  previewEffects: { brightness: 0, contrast: 0 },
+  previewEffects: { brightness: 0, contrast: 0, grayscale: 0 },
+  previewTransform: { rotation: 0, flipHorizontal: false, flipVertical: false },
 });
 
 const createProps = () => ({

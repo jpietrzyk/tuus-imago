@@ -44,7 +44,8 @@ const createImageItem = (name: string): SelectedImageItem => ({
   metadata: null,
   displayImageProportion: "horizontal",
   autoSelectOptimalPending: false,
-  previewEffects: { brightness: 0, contrast: 0 },
+  previewEffects: { brightness: 0, contrast: 0, grayscale: 0 },
+  previewTransform: { rotation: 0, flipHorizontal: false, flipVertical: false },
 });
 
 const createProps = () => ({
@@ -58,7 +59,13 @@ const createProps = () => ({
   onUpdateEffect: vi.fn(),
   onToggleRemoveBackground: vi.fn(),
   onToggleEnhance: vi.fn(),
-  activeImageEffects: { brightness: 0, contrast: 0 },
+  onToggleUpscale: vi.fn(),
+  onToggleRestore: vi.fn(),
+  onUpdateRotation: vi.fn(),
+  onToggleFlipHorizontal: vi.fn(),
+  onToggleFlipVertical: vi.fn(),
+  activeImageEffects: { brightness: 0, contrast: 0, grayscale: 0 },
+  activeImageTransform: { rotation: 0, flipHorizontal: false, flipVertical: false },
   canUpdateEffects: true,
   selectedProportion: "horizontal" as const,
 });
@@ -312,7 +319,7 @@ describe("UploaderPreviewToolsPanel", () => {
         onUpdateEffect={onUpdateEffect}
         onToggleRemoveBackground={onToggleRemoveBackground}
         onToggleEnhance={onToggleEnhance}
-        activeImageEffects={{ brightness: 30, contrast: -10, removeBackground: true, enhance: false }}
+        activeImageEffects={{ brightness: 30, contrast: -10, grayscale: 0, removeBackground: true, enhance: false }}
       />,
     );
 
@@ -339,7 +346,7 @@ describe("UploaderPreviewToolsPanel", () => {
       <UploaderPreviewToolsPanel
         {...props}
         onUpdateEffect={onUpdateEffect}
-        activeImageEffects={{ brightness: 50, contrast: 0 }}
+        activeImageEffects={{ brightness: 50, contrast: 0, grayscale: 0 }}
       />,
     );
 
@@ -367,7 +374,7 @@ describe("UploaderPreviewToolsPanel", () => {
       <UploaderPreviewToolsPanel
         {...props}
         onUpdateEffect={onUpdateEffect}
-        activeImageEffects={{ brightness: 50, contrast: 0 }}
+        activeImageEffects={{ brightness: 50, contrast: 0, grayscale: 0 }}
       />,
     );
 

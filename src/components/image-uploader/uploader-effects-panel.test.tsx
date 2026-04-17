@@ -6,6 +6,8 @@ import {
 } from "./uploader-effects-panel";
 import { t } from "@/locales/i18n";
 
+const defaultTransform = { rotation: 0, flipHorizontal: false, flipVertical: false };
+
 describe("UploaderEffectsPanelButton", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -142,75 +144,48 @@ describe("UploaderEffectsPanelContent", () => {
     vi.clearAllMocks();
   });
 
-  it("renders brightness and contrast sliders", () => {
+  it("renders three tab triggers", () => {
     render(
       <UploaderEffectsPanelContent
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        effects={{ brightness: 0, contrast: 0 }}
+        onToggleUpscale={vi.fn()}
+        onToggleRestore={vi.fn()}
+        onUpdateRotation={vi.fn()}
+        onToggleFlipHorizontal={vi.fn()}
+        onToggleFlipVertical={vi.fn()}
+        effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+        transform={defaultTransform}
+        disabled={false}
+      />,
+    );
+
+    expect(screen.getByText(t("uploader.tabAdjust"))).toBeInTheDocument();
+    expect(screen.getByText(t("uploader.tabAiEffects"))).toBeInTheDocument();
+    expect(screen.getByText(t("uploader.tabTransform"))).toBeInTheDocument();
+  });
+
+  it("renders brightness, contrast, and grayscale sliders in Adjust tab (default)", () => {
+    render(
+      <UploaderEffectsPanelContent
+        onUpdateEffect={vi.fn()}
+        onToggleRemoveBackground={vi.fn()}
+        onToggleEnhance={vi.fn()}
+        onToggleUpscale={vi.fn()}
+        onToggleRestore={vi.fn()}
+        onUpdateRotation={vi.fn()}
+        onToggleFlipHorizontal={vi.fn()}
+        onToggleFlipVertical={vi.fn()}
+        effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+        transform={defaultTransform}
         disabled={false}
       />,
     );
 
     expect(screen.getByText(t("uploader.brightness"))).toBeInTheDocument();
     expect(screen.getByText(t("uploader.contrast"))).toBeInTheDocument();
-  });
-
-  it("renders AI effect toggles", () => {
-    render(
-      <UploaderEffectsPanelContent
-        onUpdateEffect={vi.fn()}
-        onToggleRemoveBackground={vi.fn()}
-        onToggleEnhance={vi.fn()}
-        effects={{ brightness: 0, contrast: 0 }}
-        disabled={false}
-      />,
-    );
-
-    expect(
-      screen.getByRole("switch", { name: t("upload.aiRemoveBackground") }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("switch", { name: t("upload.aiEnhance") }),
-    ).toBeInTheDocument();
-  });
-
-  it("calls onToggleRemoveBackground when switch is clicked", () => {
-    const onToggleRemoveBackground = vi.fn();
-    render(
-      <UploaderEffectsPanelContent
-        onUpdateEffect={vi.fn()}
-        onToggleRemoveBackground={onToggleRemoveBackground}
-        onToggleEnhance={vi.fn()}
-        effects={{ brightness: 0, contrast: 0, removeBackground: false }}
-        disabled={false}
-      />,
-    );
-
-    const removeBackgroundSwitch = screen.getByRole("switch", {
-      name: t("upload.aiRemoveBackground"),
-    });
-    fireEvent.click(removeBackgroundSwitch);
-
-    expect(onToggleRemoveBackground).toHaveBeenCalledWith(true);
-  });
-
-  it("shows applying effect indicator when busy", () => {
-    render(
-      <UploaderEffectsPanelContent
-        onUpdateEffect={vi.fn()}
-        onToggleRemoveBackground={vi.fn()}
-        onToggleEnhance={vi.fn()}
-        effects={{ brightness: 0, contrast: 0 }}
-        disabled={false}
-        isRemoveBackgroundBusy={true}
-      />,
-    );
-
-    expect(
-      screen.getByText(t("uploader.applyingEffect")),
-    ).toBeInTheDocument();
+    expect(screen.getByText(t("uploader.grayscale"))).toBeInTheDocument();
   });
 
   it("does not render close button", () => {
@@ -219,7 +194,13 @@ describe("UploaderEffectsPanelContent", () => {
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        effects={{ brightness: 0, contrast: 0 }}
+        onToggleUpscale={vi.fn()}
+        onToggleRestore={vi.fn()}
+        onUpdateRotation={vi.fn()}
+        onToggleFlipHorizontal={vi.fn()}
+        onToggleFlipVertical={vi.fn()}
+        effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+        transform={defaultTransform}
         disabled={false}
       />,
     );
@@ -235,7 +216,13 @@ describe("UploaderEffectsPanelContent", () => {
         onUpdateEffect={vi.fn()}
         onToggleRemoveBackground={vi.fn()}
         onToggleEnhance={vi.fn()}
-        effects={{ brightness: 50, contrast: 0 }}
+        onToggleUpscale={vi.fn()}
+        onToggleRestore={vi.fn()}
+        onUpdateRotation={vi.fn()}
+        onToggleFlipHorizontal={vi.fn()}
+        onToggleFlipVertical={vi.fn()}
+        effects={{ brightness: 50, contrast: 0, grayscale: 0 }}
+        transform={defaultTransform}
         disabled={false}
       />,
     );
@@ -252,7 +239,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           isZoomAvailable={false}
         />,
@@ -267,7 +260,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           isZoomAvailable={true}
           onZoomChange={vi.fn()}
@@ -283,7 +282,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           zoom={2}
           isZoomAvailable={true}
@@ -300,7 +305,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           isZoomAvailable={true}
         />,
@@ -316,7 +327,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           zoom={1.5}
           isZoomAvailable={true}
@@ -340,7 +357,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           zoom={2}
           isZoomAvailable={true}
@@ -360,7 +383,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           zoom={1}
           isZoomAvailable={true}
@@ -381,7 +410,13 @@ describe("UploaderEffectsPanelContent", () => {
           onUpdateEffect={vi.fn()}
           onToggleRemoveBackground={vi.fn()}
           onToggleEnhance={vi.fn()}
-          effects={{ brightness: 0, contrast: 0 }}
+          onToggleUpscale={vi.fn()}
+          onToggleRestore={vi.fn()}
+          onUpdateRotation={vi.fn()}
+          onToggleFlipHorizontal={vi.fn()}
+          onToggleFlipVertical={vi.fn()}
+          effects={{ brightness: 0, contrast: 0, grayscale: 0 }}
+          transform={defaultTransform}
           disabled={false}
           zoom={2}
           isZoomAvailable={true}

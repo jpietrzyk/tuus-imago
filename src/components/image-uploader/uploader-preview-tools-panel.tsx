@@ -26,8 +26,14 @@ import type { CropAdjust } from "./use-crop-adjust";
 interface EffectsSnapshot {
   brightness: number;
   contrast: number;
+  grayscale: number;
   removeBackground: boolean;
   enhance: boolean;
+  upscale: boolean;
+  restore: boolean;
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
   cropAdjust: CropAdjust | undefined;
 }
 
@@ -40,20 +46,35 @@ interface UploaderPreviewToolsPanelProps {
   shouldConfirmSplit: boolean;
   onSelectProportion: (proportion: UploaderProportion) => void;
   onUpdateEffect: (
-    effectName: "brightness" | "contrast",
+    effectName: "brightness" | "contrast" | "grayscale",
     value: number,
   ) => void;
   onToggleRemoveBackground: (enabled: boolean) => void;
   onToggleEnhance: (enabled: boolean) => void;
+  onToggleUpscale: (enabled: boolean) => void;
+  onToggleRestore: (enabled: boolean) => void;
+  onUpdateRotation: (degrees: number) => void;
+  onToggleFlipHorizontal: (enabled: boolean) => void;
+  onToggleFlipVertical: (enabled: boolean) => void;
   activeImageEffects: {
     brightness: number;
     contrast: number;
+    grayscale: number;
     removeBackground?: boolean;
     enhance?: boolean;
+    upscale?: boolean;
+    restore?: boolean;
+  } | null;
+  activeImageTransform: {
+    rotation: number;
+    flipHorizontal: boolean;
+    flipVertical: boolean;
   } | null;
   canUpdateEffects: boolean;
   isRemoveBackgroundBusy?: boolean;
   isEnhanceBusy?: boolean;
+  isUpscaleBusy?: boolean;
+  isRestoreBusy?: boolean;
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
   showCoverageDetails?: boolean;
@@ -75,10 +96,18 @@ export function UploaderPreviewToolsPanel({
   onUpdateEffect,
   onToggleRemoveBackground,
   onToggleEnhance,
+  onToggleUpscale,
+  onToggleRestore,
+  onUpdateRotation,
+  onToggleFlipHorizontal,
+  onToggleFlipVertical,
   activeImageEffects,
+  activeImageTransform,
   canUpdateEffects,
   isRemoveBackgroundBusy = false,
   isEnhanceBusy = false,
+  isUpscaleBusy = false,
+  isRestoreBusy = false,
   coveragePercent,
   selectedProportion,
   showCoverageDetails = false,
@@ -95,14 +124,28 @@ export function UploaderPreviewToolsPanel({
     const effects = activeImageEffects ?? {
       brightness: 0,
       contrast: 0,
+      grayscale: 0,
       removeBackground: false,
       enhance: false,
+      upscale: false,
+      restore: false,
+    };
+    const trans = activeImageTransform ?? {
+      rotation: 0,
+      flipHorizontal: false,
+      flipVertical: false,
     };
     return {
       brightness: effects.brightness,
       contrast: effects.contrast,
+      grayscale: effects.grayscale ?? 0,
       removeBackground: !!effects.removeBackground,
       enhance: !!effects.enhance,
+      upscale: !!effects.upscale,
+      restore: !!effects.restore,
+      rotation: trans.rotation,
+      flipHorizontal: trans.flipHorizontal,
+      flipVertical: trans.flipVertical,
       cropAdjust: activeImageCropAdjust
         ? { ...activeImageCropAdjust }
         : undefined,
@@ -112,8 +155,14 @@ export function UploaderPreviewToolsPanel({
   const restoreSnapshot = (snap: EffectsSnapshot) => {
     onUpdateEffect("brightness", snap.brightness);
     onUpdateEffect("contrast", snap.contrast);
+    onUpdateEffect("grayscale", snap.grayscale);
     onToggleRemoveBackground(snap.removeBackground);
     onToggleEnhance(snap.enhance);
+    onToggleUpscale(snap.upscale);
+    onToggleRestore(snap.restore);
+    onUpdateRotation(snap.rotation);
+    onToggleFlipHorizontal(snap.flipHorizontal);
+    onToggleFlipVertical(snap.flipVertical);
     if (onUpdateCropAdjust) {
       onUpdateCropAdjust(snap.cropAdjust ?? { zoom: 1, panX: 0, panY: 0 });
     }
@@ -276,12 +325,20 @@ export function UploaderPreviewToolsPanel({
           <div className="overflow-y-auto px-4 pb-6 pt-3">
             <UploaderEffectsPanelContent
               effects={activeImageEffects}
+              transform={activeImageTransform}
               onUpdateEffect={onUpdateEffect}
               onToggleRemoveBackground={onToggleRemoveBackground}
               onToggleEnhance={onToggleEnhance}
+              onToggleUpscale={onToggleUpscale}
+              onToggleRestore={onToggleRestore}
+              onUpdateRotation={onUpdateRotation}
+              onToggleFlipHorizontal={onToggleFlipHorizontal}
+              onToggleFlipVertical={onToggleFlipVertical}
               disabled={!canUpdateEffects}
               isRemoveBackgroundBusy={isRemoveBackgroundBusy}
               isEnhanceBusy={isEnhanceBusy}
+              isUpscaleBusy={isUpscaleBusy}
+              isRestoreBusy={isRestoreBusy}
               zoom={activeImageCropAdjust?.zoom ?? 1}
               minZoom={1}
               maxZoom={3}
