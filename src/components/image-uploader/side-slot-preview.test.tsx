@@ -189,4 +189,48 @@ describe("SideSlotPreview", () => {
       screen.getByTestId("uploader-slider-side-left-preview-frame"),
     ).toHaveClass("aspect-square");
   });
+
+  it("disables slot button when disabled prop is true", () => {
+    const props = {
+      ...createProps(),
+      slotIndex: 2,
+      position: "right" as const,
+      image: createImageItem("img"),
+      disabled: true,
+    };
+
+    render(<SideSlotPreview {...props} />);
+
+    expect(screen.getByTestId("uploader-slider-side-right")).toBeDisabled();
+  });
+
+  it("does not call onSelectSlot when disabled and clicked", () => {
+    const props = {
+      ...createProps(),
+      slotIndex: 2,
+      position: "right" as const,
+      image: createImageItem("img"),
+      disabled: true,
+    };
+
+    render(<SideSlotPreview {...props} />);
+
+    fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+    expect(props.onSelectSlot).not.toHaveBeenCalled();
+  });
+
+  it("enables slot button when disabled prop is false", () => {
+    const props = {
+      ...createProps(),
+      slotIndex: 2,
+      position: "right" as const,
+      image: createImageItem("img"),
+      disabled: false,
+    };
+
+    render(<SideSlotPreview {...props} />);
+
+    expect(screen.getByTestId("uploader-slider-side-right")).not.toBeDisabled();
+  });
 });

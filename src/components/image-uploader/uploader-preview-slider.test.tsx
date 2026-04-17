@@ -13,14 +13,17 @@ vi.mock("./side-slot-preview", () => ({
     position,
     onSelectSlot,
     slotIndex,
+    disabled,
   }: {
     position: string;
     onSelectSlot: (index: number) => void;
     slotIndex: number | null;
+    disabled?: boolean;
   }) => (
     <button
       type="button"
       data-testid={`mock-side-${position}`}
+      data-disabled={disabled ? "true" : undefined}
       onClick={() => {
         if (typeof slotIndex === "number") {
           onSelectSlot(slotIndex);
@@ -205,6 +208,34 @@ describe("UploaderPreviewSlider", () => {
 
     expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
       "data-has-crop-adjust-callback",
+    );
+  });
+
+  it("passes disabled=true to side slots when isEditMode is true", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} isEditMode={true} />);
+
+    expect(screen.getByTestId("mock-side-left")).toHaveAttribute(
+      "data-disabled",
+      "true",
+    );
+    expect(screen.getByTestId("mock-side-right")).toHaveAttribute(
+      "data-disabled",
+      "true",
+    );
+  });
+
+  it("does not set disabled on side slots when isEditMode is false", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} isEditMode={false} />);
+
+    expect(screen.getByTestId("mock-side-left")).not.toHaveAttribute(
+      "data-disabled",
+    );
+    expect(screen.getByTestId("mock-side-right")).not.toHaveAttribute(
+      "data-disabled",
     );
   });
 });
