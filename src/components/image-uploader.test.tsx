@@ -1239,7 +1239,7 @@ describe("ImageUploader", () => {
     fireEvent.keyDown(document, { key: "Escape" });
 
     const closeButton = screen.getByRole("button", {
-      name: tr("uploader.effectsClose"),
+      name: tr("uploader.effectsCancel"),
     });
     fireEvent.click(closeButton);
 
@@ -1368,7 +1368,7 @@ describe("ImageUploader", () => {
     fireEvent.keyDown(document, { key: "Escape" });
 
     const closeEffectsButton = screen.getByRole("button", {
-      name: tr("uploader.effectsClose"),
+      name: tr("uploader.effectsCancel"),
     });
     fireEvent.click(closeEffectsButton);
 
@@ -1434,7 +1434,7 @@ describe("ImageUploader", () => {
 
     // Close effects panel to exit edit mode
     const closeButton = screen.getByRole("button", {
-      name: tr("uploader.effectsClose"),
+      name: tr("uploader.effectsCancel"),
     });
     fireEvent.click(closeButton);
 
@@ -1503,7 +1503,7 @@ describe("ImageUploader", () => {
     expect(screen.getByText(tr("uploader.zoomReset"))).toBeInTheDocument();
 
     const closeButton = screen.getByRole("button", {
-      name: tr("uploader.effectsClose"),
+      name: tr("uploader.effectsCancel"),
     });
     fireEvent.click(closeButton);
 
