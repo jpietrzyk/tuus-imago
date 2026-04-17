@@ -351,9 +351,8 @@ export function UploaderPreviewToolsPanel({
                         panX: activeImageCropAdjust?.panX ?? 0,
                         panY: activeImageCropAdjust?.panY ?? 0,
                       })
-                  : undefined
-              }
-              onResetZoom={onResetCropAdjust}
+                   : undefined
+               }
             />
           </div>
         </div>

@@ -86,7 +86,6 @@ export interface UploaderEffectsPanelContentProps {
   maxZoom?: number;
   isZoomAvailable?: boolean;
   onZoomChange?: (zoom: number) => void;
-  onResetZoom?: () => void;
 }
 
 function GroupTrigger({ title }: { title: string }) {
@@ -119,7 +118,6 @@ export function UploaderEffectsPanelContent({
   maxZoom = 3,
   isZoomAvailable = false,
   onZoomChange,
-  onResetZoom,
 }: UploaderEffectsPanelContentProps) {
   const effectValues = effects ?? {
     brightness: 0,

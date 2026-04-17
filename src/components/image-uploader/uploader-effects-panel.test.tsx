@@ -256,7 +256,6 @@ describe("UploaderEffectsPanelContent", () => {
       zoom: 2,
       isZoomAvailable: true,
       onZoomChange: vi.fn(),
-      onResetZoom: vi.fn(),
     });
 
     expect(
