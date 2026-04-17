@@ -230,7 +230,7 @@ export function UploaderPreviewToolsPanel({
         <div
           role="dialog"
           aria-label={t("uploader.previewEffectsTitle")}
-          className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-auto max-h-[70dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
+          className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
         >
           <div className="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto shrink-0" />
           <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2 border-b">

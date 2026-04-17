@@ -3,9 +3,15 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Settings,
   RotateCcw,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { cn } from "@/lib/utils";
