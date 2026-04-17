@@ -172,6 +172,7 @@ export default function PaintingPreviewSlot({
     bestProportion,
     userSelectedProportion,
     previewEffects: effectivePreviewEffects,
+    previewCropAdjust,
     latestRenderConfigRef,
     onMetadataResolved: handleMetadataResolved,
   });

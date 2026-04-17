@@ -339,6 +339,57 @@ describe("PaintingPreviewSlot", () => {
     expect(canvas.style.cursor).not.toBe("grab");
   });
 
+  it("redraws canvas when previewCropAdjust changes without reloading image", async () => {
+    const props = {
+      ...createProps(),
+      selectedImageMetadata: {
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      },
+      previewCropAdjust: { zoom: 1, panX: 0, panY: 0 } as CropAdjust,
+      onCropAdjustChange: vi.fn(),
+      isEditMode: true,
+    };
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mockReturnValue(
+      true,
+    );
+
+    const { rerender } = render(<PaintingPreviewSlot {...props} />);
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
+
+    vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mockClear();
+
+    rerender(
+      <PaintingPreviewSlot
+        {...props}
+        previewCropAdjust={{ zoom: 2, panX: 0, panY: 0 }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
+  });
+
   it("renders canvas without crop adjust when previewCropAdjust is undefined", async () => {
     const props = {
       ...createProps(),

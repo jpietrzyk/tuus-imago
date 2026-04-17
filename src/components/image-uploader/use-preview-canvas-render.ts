@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   drawCroppedImageToCanvas,
   loadImageElement,
@@ -18,6 +18,7 @@ interface UsePreviewCanvasRenderArgs {
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   previewEffects: { brightness: number; contrast: number } | null;
+  previewCropAdjust?: CropAdjust;
   latestRenderConfigRef: React.MutableRefObject<{
     selectedImageMetadata: SelectedImageMetadata | null;
     bestProportion: ImageDisplayProportion | null;
@@ -40,9 +41,17 @@ export const usePreviewCanvasRender = ({
   bestProportion,
   userSelectedProportion,
   previewEffects,
+  previewCropAdjust,
   latestRenderConfigRef,
   onMetadataResolved,
 }: UsePreviewCanvasRenderArgs) => {
+  const imageCacheRef = useRef<{
+    url: string;
+    image: HTMLImageElement;
+    sourceWidth: number;
+    sourceHeight: number;
+  } | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
 
@@ -123,6 +132,15 @@ export const usePreviewCanvasRender = ({
 
     const renderPreview = async () => {
       try {
+        const cached = imageCacheRef.current;
+        if (cached && cached.url === previewUrl) {
+          loadedImage = cached.image;
+          sourceWidth = cached.sourceWidth;
+          sourceHeight = cached.sourceHeight;
+          drawPreview();
+          return;
+        }
+
         const image = await loadImageElement(previewUrl);
         if (!isActive) {
           return;
@@ -136,6 +154,13 @@ export const usePreviewCanvasRender = ({
         if (sourceWidth <= 0 || sourceHeight <= 0) {
           return;
         }
+
+        imageCacheRef.current = {
+          url: previewUrl,
+          image,
+          sourceWidth,
+          sourceHeight,
+        };
 
         drawPreview();
       } catch {
@@ -171,5 +196,6 @@ export const usePreviewCanvasRender = ({
     userSelectedProportion,
     selectedImageMetadata,
     previewEffects,
+    previewCropAdjust,
   ]);
 };
