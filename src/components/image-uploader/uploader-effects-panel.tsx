@@ -1,17 +1,48 @@
-import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Settings, ChevronUp, RotateCcw, Loader2 } from "lucide-react";
+import {
+  Settings,
+  RotateCcw,
+  Loader2,
+  X,
+} from "lucide-react";
 import { t } from "@/locales/i18n";
+import { cn } from "@/lib/utils";
 
-interface UploaderEffectsPopoverProps {
+export interface UploaderEffectsPanelButtonProps {
+  disabled?: boolean;
+  isEditMode: boolean;
+  onEnterEditMode: () => void;
+}
+
+export function UploaderEffectsPanelButton({
+  disabled = false,
+  isEditMode,
+  onEnterEditMode,
+}: UploaderEffectsPanelButtonProps) {
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      size="icon"
+      disabled={disabled}
+      aria-label={t("uploader.previewEffectsButton")}
+      aria-pressed={isEditMode}
+      onClick={onEnterEditMode}
+      className={cn(
+        "relative h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2",
+        isEditMode && "bg-primary/10 border-primary/40",
+      )}
+      title={t("uploader.previewEffectsDescription")}
+    >
+      <Settings className="h-6 w-6 sm:h-7 sm:w-7" />
+    </Button>
+  );
+}
+
+export interface UploaderEffectsPanelContentProps {
   effects: {
     brightness: number;
     contrast: number;
@@ -25,23 +56,23 @@ interface UploaderEffectsPopoverProps {
   onToggleRemoveBackground: (enabled: boolean) => void;
   onToggleEnhance: (enabled: boolean) => void;
   onResetEffects: () => void;
+  onClose: () => void;
   disabled?: boolean;
   isRemoveBackgroundBusy?: boolean;
   isEnhanceBusy?: boolean;
 }
 
-export function UploaderEffectsPopover({
+export function UploaderEffectsPanelContent({
   effects,
   onUpdateEffect,
   onToggleRemoveBackground,
   onToggleEnhance,
   onResetEffects,
+  onClose,
   disabled = false,
   isRemoveBackgroundBusy = false,
   isEnhanceBusy = false,
-}: UploaderEffectsPopoverProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
+}: UploaderEffectsPanelContentProps) {
   const effectValues = effects || {
     brightness: 0,
     contrast: 0,
@@ -57,27 +88,9 @@ export function UploaderEffectsPopover({
   const isApplyingEffect = isRemoveBackgroundBusy || isEnhanceBusy;
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          disabled={disabled}
-          aria-label={t("uploader.previewEffectsButton")}
-          className="relative h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
-          title={t("uploader.previewEffectsDescription")}
-        >
-          <Settings className="h-6 w-6 sm:h-7 sm:w-7" />
-          <ChevronUp className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 opacity-60" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="center"
-        className="w-72 p-4 space-y-4 bg-popover/95 backdrop-blur-sm"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="space-y-1">
+    <div className="space-y-3 pt-3">
+      <div className="flex items-center justify-between">
+        <div className="space-y-0.5">
           <h3 className="font-semibold text-sm">
             {t("uploader.previewEffectsTitle")}
           </h3>
@@ -85,7 +98,19 @@ export function UploaderEffectsPopover({
             {t("uploader.previewEffectsDescription")}
           </p>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label={t("uploader.effectsClose")}
+          className="h-8 w-8 shrink-0"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
         <div className="space-y-3">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             {t("uploader.canvasEffectsGroupTitle")}
@@ -143,9 +168,7 @@ export function UploaderEffectsPopover({
               </div>
               <Switch
                 checked={!!effectValues.removeBackground}
-                onCheckedChange={(checked) =>
-                  onToggleRemoveBackground(checked)
-                }
+                onCheckedChange={(checked) => onToggleRemoveBackground(checked)}
                 disabled={disabled || isRemoveBackgroundBusy}
                 aria-label={t("upload.aiRemoveBackground")}
               />
@@ -178,23 +201,21 @@ export function UploaderEffectsPopover({
             </div>
           )}
         </div>
+      </div>
 
-        {hasEffects && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onResetEffects}
-            disabled={disabled}
-            className="w-full"
-          >
-            <RotateCcw className="h-3.5 w-3.5 mr-2" />
-            {t("uploader.effectsReset")}
-          </Button>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      {hasEffects && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onResetEffects}
+          disabled={disabled}
+          className="w-full"
+        >
+          <RotateCcw className="h-3.5 w-3.5 mr-2" />
+          {t("uploader.effectsReset")}
+        </Button>
+      )}
+    </div>
   );
 }
-
-export default UploaderEffectsPopover;

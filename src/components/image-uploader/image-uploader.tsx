@@ -300,6 +300,7 @@ export const ImageUploader = forwardRef<
     Set<number>
   >(() => new Set());
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
+  const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
@@ -1311,6 +1312,7 @@ export const ImageUploader = forwardRef<
               ? getTransformedImagePreviewUrl(rightSlotImage)
               : null
           }
+          swipeDisabled={isEffectsEditMode}
           onSelectSlot={handlePreviewSlotSelect}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
@@ -1358,6 +1360,7 @@ export const ImageUploader = forwardRef<
               : displayImageProportion
           }
           showCoverageDetails={shouldShowUploaderDebugData}
+          onEditModeChange={setIsEffectsEditMode}
         />
 
         {shouldShowUploaderDebugData && selectedImageMetadata && (

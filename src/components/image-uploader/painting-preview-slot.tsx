@@ -24,6 +24,7 @@ interface PaintingPreviewSlotProps {
   uploadProgressLabel?: string;
   uploadingSlotIndex?: number | null;
   isEffectUploading?: boolean;
+  swipeDisabled?: boolean;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -49,6 +50,7 @@ export default function PaintingPreviewSlot({
   uploadProgressLabel,
   uploadingSlotIndex = null,
   isEffectUploading = false,
+  swipeDisabled = false,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -148,8 +150,8 @@ export default function PaintingPreviewSlot({
         }`}
         data-testid="selected-image-preview-frame"
         style={{ aspectRatio: String(previewFrameAspectRatio) }}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
+        onTouchStart={swipeDisabled ? undefined : onTouchStart}
+        onTouchEnd={swipeDisabled ? undefined : onTouchEnd}
       >
         {selectedImage ? (
           <canvas

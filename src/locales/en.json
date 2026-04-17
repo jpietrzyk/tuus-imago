@@ -211,6 +211,7 @@
     "brightness": "Brightness",
     "contrast": "Contrast",
     "effectsReset": "Reset Effects",
+    "effectsClose": "Close",
     "rotation": "Rotation",
     "rotateMinus90": "Rotate -90°",
     "rotatePlus90": "Rotate +90°",
