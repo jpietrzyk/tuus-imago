@@ -18,14 +18,14 @@ class MockTouch {
   force = 1;
 
   constructor(init: TouchInit) {
-    this.clientX = init.clientX;
-    this.clientY = init.clientY;
+    this.clientX = init.clientX ?? 0;
+    this.clientY = init.clientY ?? 0;
     this.identifier = init.identifier;
     this.target = init.target;
-    this.pageX = init.clientX;
-    this.pageY = init.clientY;
-    this.screenX = init.clientX;
-    this.screenY = init.clientY;
+    this.pageX = init.clientX ?? 0;
+    this.pageY = init.clientY ?? 0;
+    this.screenX = init.clientX ?? 0;
+    this.screenY = init.clientY ?? 0;
   }
 }
 

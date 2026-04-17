@@ -315,7 +315,7 @@ describe("PaintingPreviewSlot", () => {
       );
     });
 
-    const drawCall = previewCanvasUtils.drawCroppedImageToCanvas.mock
+    const drawCall = vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mock
       .calls[0][0] as { crop: { cropWidth: number; cropHeight: number } };
     expect(drawCall.crop.cropWidth).toBeLessThan(1200);
     expect(drawCall.crop.cropHeight).toBeLessThan(800);
@@ -365,7 +365,7 @@ describe("PaintingPreviewSlot", () => {
       expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalled();
     });
 
-    const drawCall = previewCanvasUtils.drawCroppedImageToCanvas.mock
+    const drawCall = vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mock
       .calls[0][0] as { crop: { cropWidth: number } };
     expect(drawCall.crop.cropWidth).toBe(1200);
   });
