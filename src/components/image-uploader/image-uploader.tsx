@@ -1611,7 +1611,6 @@ export const ImageUploader = forwardRef<
           onEditModeChange={setIsEffectsEditMode}
           activeImageCropAdjust={activeImage?.previewCropAdjust}
           onUpdateCropAdjust={updateActiveImageCropAdjust}
-          onResetCropAdjust={resetActiveImageCropAdjust}
           isZoomAvailable={
             !!selectedImageMetadata &&
             checkIsZoomAvailable(

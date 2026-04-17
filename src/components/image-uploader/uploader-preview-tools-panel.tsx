@@ -81,7 +81,6 @@ interface UploaderPreviewToolsPanelProps {
   onEditModeChange?: (isEditMode: boolean) => void;
   activeImageCropAdjust?: CropAdjust;
   onUpdateCropAdjust?: (adjust: CropAdjust | undefined) => void;
-  onResetCropAdjust?: () => void;
   isZoomAvailable?: boolean;
 }
 
@@ -114,7 +113,6 @@ export function UploaderPreviewToolsPanel({
   onEditModeChange,
   activeImageCropAdjust,
   onUpdateCropAdjust,
-  onResetCropAdjust,
   isZoomAvailable = false,
 }: UploaderPreviewToolsPanelProps) {
   const [isEditMode, setIsEditMode] = useState(false);
