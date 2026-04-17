@@ -187,6 +187,52 @@ describe("PaintingPreviewSlot", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("renders remove button when onClearSlot is provided and image is present", () => {
+    render(<PaintingPreviewSlot {...createProps()} onClearSlot={vi.fn()} />);
+
+    expect(
+      screen.getByTestId("uploader-remove-active-image"),
+    ).toBeInTheDocument();
+  });
+
+  it("hides remove button when isEditMode is true", () => {
+    render(
+      <PaintingPreviewSlot
+        {...createProps()}
+        onClearSlot={vi.fn()}
+        isEditMode={true}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId("uploader-remove-active-image"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows remove button when isEditMode is false", () => {
+    render(
+      <PaintingPreviewSlot
+        {...createProps()}
+        onClearSlot={vi.fn()}
+        isEditMode={false}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("uploader-remove-active-image"),
+    ).toBeInTheDocument();
+  });
+
+  it("hides remove button when isEditMode is true even without explicit onClearSlot", () => {
+    render(
+      <PaintingPreviewSlot {...createProps()} isEditMode={true} />,
+    );
+
+    expect(
+      screen.queryByTestId("uploader-remove-active-image"),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders placeholder when active center slot has no image", () => {
     render(<PaintingPreviewSlot {...createProps()} selectedImage={null} />);
 
