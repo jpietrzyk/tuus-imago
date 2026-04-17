@@ -22,11 +22,13 @@ import { usePreviewSliderSlots } from "./use-preview-slider-slots";
 import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
+  calculateMaxCenteredCrop,
   getOptimalDisplayProportion,
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
+import { isZoomAvailable as checkIsZoomAvailable } from "./use-crop-adjust";
 
 export interface ImageTransformations {
   rotation: number;
@@ -102,6 +104,11 @@ export interface SelectedImageItem {
     removeBackground?: boolean;
     enhance?: boolean;
   };
+  previewCropAdjust?: {
+    zoom: number;
+    panX: number;
+    panY: number;
+  };
   uploadedAsset?: {
     publicId: string;
     secureUrl: string;
@@ -146,8 +153,8 @@ const SLOT_KEYS: UploadSlotKey[] = ["left", "center", "right"];
 
 function getUploadTransformations(
   image: SelectedImageItem,
-): ImageTransformations {
-  return {
+): ImageTransformations & { custom_coordinates?: string } {
+  const result: ImageTransformations & { custom_coordinates?: string } = {
     rotation: 0,
     flipHorizontal: false,
     flipVertical: false,
@@ -156,6 +163,36 @@ function getUploadTransformations(
     grayscale: 0,
     blur: 0,
   };
+
+  if (
+    image.previewCropAdjust &&
+    image.previewCropAdjust.zoom > 1 &&
+    image.metadata
+  ) {
+    const baseCrop = calculateMaxCenteredCrop({
+      sourceWidth: image.metadata.width,
+      sourceHeight: image.metadata.height,
+      proportion: image.displayImageProportion,
+    });
+    const zoomScale = 1 / image.previewCropAdjust.zoom;
+    const adjustedWidth = baseCrop.cropWidth * zoomScale;
+    const adjustedHeight = baseCrop.cropHeight * zoomScale;
+    const maxPanOffsetX = (baseCrop.cropWidth - adjustedWidth) / 2;
+    const maxPanOffsetY = (baseCrop.cropHeight - adjustedHeight) / 2;
+    const centerX = baseCrop.cropX + baseCrop.cropWidth / 2;
+    const centerY = baseCrop.cropY + baseCrop.cropHeight / 2;
+    const offsetX = image.previewCropAdjust.panX * maxPanOffsetX;
+    const offsetY = image.previewCropAdjust.panY * maxPanOffsetY;
+    let cropX = centerX - adjustedWidth / 2 + offsetX;
+    let cropY = centerY - adjustedHeight / 2 + offsetY;
+    const maxX = image.metadata.width - adjustedWidth;
+    const maxY = image.metadata.height - adjustedHeight;
+    cropX = Math.max(0, Math.min(cropX, maxX));
+    cropY = Math.max(0, Math.min(cropY, maxY));
+    result.custom_coordinates = `${Math.round(cropX)},${Math.round(cropY)},${Math.round(adjustedWidth)},${Math.round(adjustedHeight)}`;
+  }
+
+  return result;
 }
 
 function getAiAdjustments(image: SelectedImageItem): AiAdjustments | null {
@@ -203,15 +240,24 @@ function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
     return image.previewUrl;
   }
 
-  // Restored slots use previewUrl which is already the transformedUrl
   if (reusableUploadedAsset.sourceFingerprint === "") {
     return image.previewUrl;
   }
 
+  const transformations = getUploadTransformations(image);
+
   return getTransformedPreviewUrl(
     reusableUploadedAsset.secureUrl,
-    null,
-    undefined,
+    {
+      rotation: transformations.rotation,
+      flipHorizontal: transformations.flipHorizontal,
+      flipVertical: transformations.flipVertical,
+      brightness: transformations.brightness,
+      contrast: transformations.contrast,
+      grayscale: transformations.grayscale,
+      blur: transformations.blur,
+    },
+    transformations.custom_coordinates,
     getAiAdjustments(image),
   );
 }
@@ -627,6 +673,7 @@ export const ImageUploader = forwardRef<
         const uploaded = await uploadImageToCloudinary({
           file: currentImage.file,
           transformations,
+          customCoordinates: transformations.custom_coordinates,
           aiAdjustments,
           context: `slot=${slotKey}`,
         });
@@ -746,6 +793,23 @@ export const ImageUploader = forwardRef<
         removeBackground: false,
         enhance: false,
       },
+    }));
+  }, [updateActiveImage]);
+
+  const updateActiveImageCropAdjust = useCallback(
+    (adjust: { zoom: number; panX: number; panY: number } | undefined) => {
+      updateActiveImage((image) => ({
+        ...image,
+        previewCropAdjust: adjust,
+      }));
+    },
+    [updateActiveImage],
+  );
+
+  const resetActiveImageCropAdjust = useCallback(() => {
+    updateActiveImage((image) => ({
+      ...image,
+      previewCropAdjust: undefined,
     }));
   }, [updateActiveImage]);
 
@@ -985,7 +1049,7 @@ export const ImageUploader = forwardRef<
             transformedUrl: getTransformedPreviewUrl(
               reusableUploadedAsset.secureUrl,
               transformations,
-              undefined,
+              transformations.custom_coordinates,
               aiAdjustments,
             ),
             publicId: reusableUploadedAsset.publicId,
@@ -1008,6 +1072,7 @@ export const ImageUploader = forwardRef<
           const uploaded = await uploadImageToCloudinary({
             file: image.file,
             transformations,
+            customCoordinates: transformations.custom_coordinates,
             aiAdjustments,
             context: `slot=${slotKey}|batch_id=${batchId}`,
             onUploadProgress: (slotProgressFraction) => {
@@ -1314,6 +1379,8 @@ export const ImageUploader = forwardRef<
           }
           swipeDisabled={isEffectsEditMode}
           isEditMode={isEffectsEditMode}
+          previewCropAdjust={activeImage?.previewCropAdjust}
+          onCropAdjustChange={updateActiveImageCropAdjust}
           onSelectSlot={handlePreviewSlotSelect}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
@@ -1338,6 +1405,7 @@ export const ImageUploader = forwardRef<
               ...image,
               displayImageProportion:
                 proportion === "rectangle" ? "square" : proportion,
+              previewCropAdjust: undefined,
             }));
           }}
           onUpdateEffect={updateActiveImageEffect}
@@ -1362,6 +1430,19 @@ export const ImageUploader = forwardRef<
           }
           showCoverageDetails={shouldShowUploaderDebugData}
           onEditModeChange={setIsEffectsEditMode}
+          activeImageCropAdjust={activeImage?.previewCropAdjust}
+          onUpdateCropAdjust={updateActiveImageCropAdjust}
+          onResetCropAdjust={resetActiveImageCropAdjust}
+          isZoomAvailable={
+            !!selectedImageMetadata &&
+            checkIsZoomAvailable(
+              calculateMaxCenteredCrop({
+                sourceWidth: selectedImageMetadata.width,
+                sourceHeight: selectedImageMetadata.height,
+                proportion: displayImageProportion,
+              }).coveragePercent,
+            )
+          }
         />
 
         {shouldShowUploaderDebugData && selectedImageMetadata && (

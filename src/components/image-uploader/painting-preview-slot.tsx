@@ -5,10 +5,12 @@ import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
+import { useCanvasPanZoom } from "./use-canvas-pan-zoom";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
 } from "./image-uploader";
+import type { CropAdjust } from "./use-crop-adjust";
 
 interface PaintingPreviewSlotProps {
   selectedImage: SelectedImageItem | null;
@@ -26,6 +28,8 @@ interface PaintingPreviewSlotProps {
   isEffectUploading?: boolean;
   swipeDisabled?: boolean;
   isEditMode?: boolean;
+  previewCropAdjust?: CropAdjust;
+  onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -53,6 +57,8 @@ export default function PaintingPreviewSlot({
   isEffectUploading = false,
   swipeDisabled = false,
   isEditMode = false,
+  previewCropAdjust,
+  onCropAdjustChange,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -76,6 +82,41 @@ export default function PaintingPreviewSlot({
     bestProportion,
     userSelectedProportion,
     previewEffects: effectivePreviewEffects,
+    previewCropAdjust,
+  });
+
+  const handleZoomChange = useCallback(
+    (newZoom: number) => {
+      if (!onCropAdjustChange) return;
+      onCropAdjustChange({
+        zoom: newZoom,
+        panX: previewCropAdjust?.panX ?? 0,
+        panY: previewCropAdjust?.panY ?? 0,
+      });
+    },
+    [onCropAdjustChange, previewCropAdjust],
+  );
+
+  const handlePanChange = useCallback(
+    (newPanX: number, newPanY: number) => {
+      if (!onCropAdjustChange) return;
+      onCropAdjustChange({
+        zoom: previewCropAdjust?.zoom ?? 1,
+        panX: newPanX,
+        panY: newPanY,
+      });
+    },
+    [onCropAdjustChange, previewCropAdjust],
+  );
+
+  useCanvasPanZoom({
+    canvasRef: previewCanvasRef,
+    isEditMode: isEditMode && !!onCropAdjustChange,
+    zoom: previewCropAdjust?.zoom ?? 1,
+    panX: previewCropAdjust?.panX ?? 0,
+    panY: previewCropAdjust?.panY ?? 0,
+    onZoomChange: handleZoomChange,
+    onPanChange: handlePanChange,
   });
 
   useEffect(() => {
@@ -102,17 +143,12 @@ export default function PaintingPreviewSlot({
     userSelectedProportion,
   ]);
 
-  // Track the last cloud URL that has been successfully rendered on canvas.
-  // Updated via onMetadataResolved callback (fires after canvas draw).
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
   );
 
   const handleMetadataResolved = useCallback(
     (args: Parameters<typeof onMetadataResolved>[0]) => {
-      // Mark current cloud URL as rendered. Using a functional update to avoid
-      // capturing effectivePreviewUrl in a stale closure, and letting React
-      // bail out if the value hasn't changed (prevents infinite re-renders).
       setConfirmedCloudUrl((prev) => {
         const next = effectivePreviewUrl;
         return prev === next ? prev : next;
@@ -122,8 +158,6 @@ export default function PaintingPreviewSlot({
     [onMetadataResolved, effectivePreviewUrl],
   );
 
-  // Derive loading state: cloud preview is active but the URL hasn't been
-  // confirmed as rendered yet (it changed since last onMetadataResolved).
   const isEffectImageLoading =
     useCloudPreview &&
     effectivePreviewUrl !== null &&
@@ -165,6 +199,7 @@ export default function PaintingPreviewSlot({
             style={{
               userSelect: "none",
               WebkitUserSelect: "none",
+              ...(isEditMode ? { cursor: "grab" } : {}),
             }}
           />
         ) : (

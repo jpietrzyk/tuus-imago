@@ -212,6 +212,8 @@
     "contrast": "Contrast",
     "effectsReset": "Reset Effects",
     "effectsClose": "Close",
+    "zoom": "Zoom",
+    "zoomReset": "Reset Zoom",
     "rotation": "Rotation",
     "rotateMinus90": "Rotate -90°",
     "rotatePlus90": "Rotate +90°",

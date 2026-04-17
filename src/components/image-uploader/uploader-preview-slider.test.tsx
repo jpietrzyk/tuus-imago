@@ -6,6 +6,7 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import type { CropAdjust } from "./use-crop-adjust";
 
 vi.mock("./side-slot-preview", () => ({
   default: ({
@@ -35,14 +36,20 @@ vi.mock("./painting-preview-slot", () => ({
   default: ({
     swipeDisabled,
     isEditMode,
+    previewCropAdjust,
+    onCropAdjustChange,
   }: {
     swipeDisabled?: boolean;
     isEditMode?: boolean;
+    previewCropAdjust?: CropAdjust;
+    onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
   }) => (
     <div
       data-testid="mock-painting-slot"
       data-swipe-disabled={swipeDisabled ? "true" : undefined}
       data-is-edit-mode={isEditMode ? "true" : undefined}
+      data-crop-adjust={previewCropAdjust ? JSON.stringify(previewCropAdjust) : undefined}
+      data-has-crop-adjust-callback={onCropAdjustChange ? "true" : undefined}
     />
   ),
 }));
@@ -142,6 +149,62 @@ describe("UploaderPreviewSlider", () => {
 
     expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
       "data-is-edit-mode",
+    );
+  });
+
+  it("passes previewCropAdjust to painting preview slot", () => {
+    const props = createProps();
+    const cropAdjust: CropAdjust = { zoom: 2, panX: 0.5, panY: -0.3 };
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        previewCropAdjust={cropAdjust}
+        onCropAdjustChange={vi.fn()}
+      />,
+    );
+
+    const slot = screen.getByTestId("mock-painting-slot");
+    expect(slot).toHaveAttribute(
+      "data-crop-adjust",
+      JSON.stringify(cropAdjust),
+    );
+  });
+
+  it("does not set crop-adjust attribute when previewCropAdjust is undefined", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} />);
+
+    expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
+      "data-crop-adjust",
+    );
+  });
+
+  it("passes onCropAdjustChange callback to painting preview slot", () => {
+    const props = createProps();
+    const onCropAdjustChange = vi.fn();
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        onCropAdjustChange={onCropAdjustChange}
+      />,
+    );
+
+    expect(screen.getByTestId("mock-painting-slot")).toHaveAttribute(
+      "data-has-crop-adjust-callback",
+      "true",
+    );
+  });
+
+  it("does not set crop-adjust-callback when onCropAdjustChange is undefined", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} />);
+
+    expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
+      "data-has-crop-adjust-callback",
     );
   });
 });

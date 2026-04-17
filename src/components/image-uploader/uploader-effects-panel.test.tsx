@@ -317,4 +317,170 @@ describe("UploaderEffectsPanelContent", () => {
 
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  describe("zoom controls", () => {
+    it("does not render zoom slider when isZoomAvailable is false", () => {
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          isZoomAvailable={false}
+        />,
+      );
+
+      expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
+    });
+
+    it("renders zoom slider when isZoomAvailable is true and onZoomChange is provided", () => {
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          isZoomAvailable={true}
+          onZoomChange={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText(t("uploader.zoom"))).toBeInTheDocument();
+    });
+
+    it("displays current zoom value", () => {
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          zoom={2}
+          isZoomAvailable={true}
+          onZoomChange={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText("2.0x")).toBeInTheDocument();
+    });
+
+    it("does not render zoom slider when onZoomChange is not provided", () => {
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          isZoomAvailable={true}
+        />,
+      );
+
+      expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
+    });
+
+    it("calls onZoomChange when zoom slider value changes", () => {
+      const onZoomChange = vi.fn();
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          zoom={1.5}
+          isZoomAvailable={true}
+          onZoomChange={onZoomChange}
+        />,
+      );
+
+      const zoomLabel = screen.getByText(t("uploader.zoom"));
+      const sliderContainer = zoomLabel.closest(".space-y-2")!;
+      const rangeInput = sliderContainer.querySelector(
+        'input[type="range"]',
+      ) as HTMLInputElement;
+      expect(rangeInput).toBeInTheDocument();
+      fireEvent.change(rangeInput, { target: { value: "2" } });
+      expect(onZoomChange).toHaveBeenCalledWith(2);
+    });
+
+    it("renders reset zoom button when zoom is greater than 1", () => {
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          zoom={2}
+          isZoomAvailable={true}
+          onZoomChange={vi.fn()}
+          onResetZoom={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.getByText(t("uploader.zoomReset")),
+      ).toBeInTheDocument();
+    });
+
+    it("does not render reset zoom button when zoom is 1", () => {
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          zoom={1}
+          isZoomAvailable={true}
+          onZoomChange={vi.fn()}
+          onResetZoom={vi.fn()}
+        />,
+      );
+
+      expect(
+        screen.queryByText(t("uploader.zoomReset")),
+      ).not.toBeInTheDocument();
+    });
+
+    it("calls onResetZoom when reset button is clicked", () => {
+      const onResetZoom = vi.fn();
+      render(
+        <UploaderEffectsPanelContent
+          onUpdateEffect={vi.fn()}
+          onToggleRemoveBackground={vi.fn()}
+          onToggleEnhance={vi.fn()}
+          onResetEffects={vi.fn()}
+          onClose={vi.fn()}
+          effects={{ brightness: 0, contrast: 0 }}
+          disabled={false}
+          zoom={2}
+          isZoomAvailable={true}
+          onZoomChange={vi.fn()}
+          onResetZoom={onResetZoom}
+        />,
+      );
+
+      fireEvent.click(screen.getByText(t("uploader.zoomReset")));
+      expect(onResetZoom).toHaveBeenCalledOnce();
+    });
+  });
 });

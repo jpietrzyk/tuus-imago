@@ -5,6 +5,7 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import type { CropAdjust } from "./use-crop-adjust";
 
 interface UploaderPreviewSliderProps {
   activeImage: SelectedImageItem | null;
@@ -30,6 +31,8 @@ interface UploaderPreviewSliderProps {
   onSelectSlot: (index: number) => void;
   swipeDisabled?: boolean;
   isEditMode?: boolean;
+  previewCropAdjust?: CropAdjust;
+  onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
   onMetadataResolved: (args: {
@@ -65,6 +68,8 @@ export default function UploaderPreviewSlider({
   onSelectSlot,
   swipeDisabled = false,
   isEditMode = false,
+  previewCropAdjust,
+  onCropAdjustChange,
   onTouchStart,
   onTouchEnd,
   onMetadataResolved,
@@ -106,6 +111,8 @@ export default function UploaderPreviewSlider({
         isEffectUploading={isEffectUploading}
         swipeDisabled={swipeDisabled}
         isEditMode={isEditMode}
+        previewCropAdjust={previewCropAdjust}
+        onCropAdjustChange={onCropAdjustChange}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onMetadataResolved={onMetadataResolved}

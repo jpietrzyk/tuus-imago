@@ -22,6 +22,7 @@ import {
 } from "./uploader-effects-panel";
 import type { SelectedImageItem } from "./image-uploader";
 import type { UploaderProportion } from "./uploader-tools";
+import type { CropAdjust } from "./use-crop-adjust";
 
 interface UploaderPreviewToolsPanelProps {
   slots: Array<SelectedImageItem | null>;
@@ -51,6 +52,10 @@ interface UploaderPreviewToolsPanelProps {
   selectedProportion: UploaderProportion;
   showCoverageDetails?: boolean;
   onEditModeChange?: (isEditMode: boolean) => void;
+  activeImageCropAdjust?: CropAdjust;
+  onUpdateCropAdjust?: (adjust: CropAdjust | undefined) => void;
+  onResetCropAdjust?: () => void;
+  isZoomAvailable?: boolean;
 }
 
 export function UploaderPreviewToolsPanel({
@@ -73,6 +78,10 @@ export function UploaderPreviewToolsPanel({
   selectedProportion,
   showCoverageDetails = false,
   onEditModeChange,
+  activeImageCropAdjust,
+  onUpdateCropAdjust,
+  onResetCropAdjust,
+  isZoomAvailable = false,
 }: UploaderPreviewToolsPanelProps) {
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -124,6 +133,16 @@ export function UploaderPreviewToolsPanel({
           disabled={!canUpdateEffects}
           isRemoveBackgroundBusy={isRemoveBackgroundBusy}
           isEnhanceBusy={isEnhanceBusy}
+          zoom={activeImageCropAdjust?.zoom ?? 1}
+          minZoom={1}
+          maxZoom={3}
+          isZoomAvailable={isZoomAvailable}
+          onZoomChange={onUpdateCropAdjust ? (z) => onUpdateCropAdjust({
+            zoom: z,
+            panX: activeImageCropAdjust?.panX ?? 0,
+            panY: activeImageCropAdjust?.panY ?? 0,
+          }) : undefined}
+          onResetZoom={onResetCropAdjust}
         />
       ) : (
         <div className="grid grid-cols-3 items-center gap-y-2 sm:gap-y-3 mt-2 sm:mt-3">

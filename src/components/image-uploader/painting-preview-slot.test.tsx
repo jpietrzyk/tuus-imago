@@ -6,6 +6,7 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import type { CropAdjust } from "./use-crop-adjust";
 import * as proportionCalculator from "./image-proportion-calculator";
 import * as previewCanvasUtils from "./preview-canvas-utils";
 
@@ -280,4 +281,92 @@ describe("PaintingPreviewSlot", () => {
       );
     },
   );
+
+  it("passes previewCropAdjust to canvas render pipeline", async () => {
+    const props = {
+      ...createProps(),
+      selectedImageMetadata: {
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      },
+      previewCropAdjust: { zoom: 2, panX: 0, panY: 0 } as CropAdjust,
+    };
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mockReturnValue(
+      true,
+    );
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledWith(
+        expect.objectContaining({
+          crop: expect.objectContaining({
+            cropWidth: expect.any(Number),
+          }),
+        }),
+      );
+    });
+
+    const drawCall = vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mock
+      .calls[0][0] as { crop: { cropWidth: number; cropHeight: number } };
+    expect(drawCall.crop.cropWidth).toBeLessThan(1200);
+    expect(drawCall.crop.cropHeight).toBeLessThan(800);
+  });
+
+  it("applies grab cursor when isEditMode is true", () => {
+    render(
+      <PaintingPreviewSlot {...createProps()} isEditMode={true} />,
+    );
+
+    const canvas = screen.getByTestId("selected-image-preview-canvas");
+    expect(canvas.style.cursor).toBe("grab");
+  });
+
+  it("does not apply grab cursor when isEditMode is false", () => {
+    render(
+      <PaintingPreviewSlot {...createProps()} isEditMode={false} />,
+    );
+
+    const canvas = screen.getByTestId("selected-image-preview-canvas");
+    expect(canvas.style.cursor).not.toBe("grab");
+  });
+
+  it("renders canvas without crop adjust when previewCropAdjust is undefined", async () => {
+    const props = {
+      ...createProps(),
+      selectedImageMetadata: {
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      },
+    };
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mockReturnValue(
+      true,
+    );
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalled();
+    });
+
+    const drawCall = vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mock
+      .calls[0][0] as { crop: { cropWidth: number } };
+    expect(drawCall.crop.cropWidth).toBe(1200);
+  });
 });
