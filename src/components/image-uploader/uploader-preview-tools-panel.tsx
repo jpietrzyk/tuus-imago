@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,13 +10,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Drawer,
-  DrawerDescription,
-  DrawerPortal,
-  DrawerTitle,
-} from "@/components/ui/drawer";
-import { Drawer as DrawerPrimitive } from "vaul";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import { Check, RotateCcw, SplitSquareVertical, TriangleAlert, X } from "lucide-react";
@@ -97,7 +90,6 @@ export function UploaderPreviewToolsPanel({
 }: UploaderPreviewToolsPanelProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
-  const closingRef = useRef(false);
 
   const captureSnapshot = (): EffectsSnapshot => {
     const effects = activeImageEffects ?? {
@@ -128,7 +120,6 @@ export function UploaderPreviewToolsPanel({
   };
 
   const closeDrawer = (restore: boolean) => {
-    closingRef.current = true;
     if (restore && snapshot) {
       restoreSnapshot(snapshot);
     }
@@ -138,7 +129,6 @@ export function UploaderPreviewToolsPanel({
   };
 
   const enterEditMode = () => {
-    closingRef.current = false;
     setSnapshot(captureSnapshot());
     setIsEditMode(true);
     onEditModeChange?.(true);
@@ -155,12 +145,6 @@ export function UploaderPreviewToolsPanel({
   const handleReset = () => {
     if (snapshot) {
       restoreSnapshot(snapshot);
-    }
-  };
-
-  const handleDrawerOpenChange = (open: boolean) => {
-    if (open) {
-      closingRef.current = false;
     }
   };
 
@@ -242,20 +226,14 @@ export function UploaderPreviewToolsPanel({
         </div>
       </div>
 
-      <Drawer
-        direction="bottom"
-        open={isEditMode}
-        onOpenChange={handleDrawerOpenChange}
-        modal={false}
-        dismissible={false}
-      >
-        <DrawerPortal>
-          <DrawerPrimitive.Content
-            data-slot="drawer-content"
-            className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-auto max-h-[70dvh] flex-col rounded-t-xl border-t text-sm shadow-lg"
-          >
-            <div className="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto shrink-0" />
-            <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2 border-b">
+      {isEditMode && (
+        <div
+          role="dialog"
+          aria-label={t("uploader.previewEffectsTitle")}
+          className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-auto max-h-[70dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
+        >
+          <div className="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto shrink-0" />
+          <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2 border-b">
             <Button
               type="button"
               variant="ghost"
@@ -267,9 +245,9 @@ export function UploaderPreviewToolsPanel({
               <X className="h-4 w-4" />
               {t("uploader.effectsCancel")}
             </Button>
-            <DrawerTitle className="text-sm font-medium">
+            <span className="text-sm font-medium">
               {t("uploader.previewEffectsTitle")}
-            </DrawerTitle>
+            </span>
             <div className="flex items-center gap-1.5">
               <Button
                 type="button"
@@ -295,9 +273,6 @@ export function UploaderPreviewToolsPanel({
               </Button>
             </div>
           </div>
-          <DrawerDescription className="sr-only">
-            {t("uploader.previewEffectsDescription")}
-          </DrawerDescription>
           <div className="overflow-y-auto px-4 pb-6 pt-3">
             <UploaderEffectsPanelContent
               effects={activeImageEffects}
@@ -324,9 +299,8 @@ export function UploaderPreviewToolsPanel({
               onResetZoom={onResetCropAdjust}
             />
           </div>
-          </DrawerPrimitive.Content>
-        </DrawerPortal>
-      </Drawer>
+        </div>
+      )}
     </>
   );
 }

@@ -267,6 +267,9 @@ describe("UploaderPreviewToolsPanel", () => {
     fireEvent.click(cancelButton);
     expect(onEditModeChange).toHaveBeenCalledWith(false);
 
+    expect(
+      screen.queryByRole("button", { name: t("uploader.effectsCancel") }),
+    ).not.toBeInTheDocument();
     const slotSwitcher = screen.getByTestId("mock-slot-switcher");
     expect(slotSwitcher).not.toHaveAttribute("hidden");
   });
@@ -292,6 +295,10 @@ describe("UploaderPreviewToolsPanel", () => {
     });
     fireEvent.click(approveButton);
     expect(onEditModeChange).toHaveBeenCalledWith(false);
+
+    expect(
+      screen.queryByRole("button", { name: t("uploader.effectsApprove") }),
+    ).not.toBeInTheDocument();
   });
 
   it("restores effects snapshot on cancel", () => {
