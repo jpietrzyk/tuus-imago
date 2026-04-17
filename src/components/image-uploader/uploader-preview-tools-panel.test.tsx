@@ -22,11 +22,13 @@ vi.mock("./uploader-slot-switcher", () => ({
   default: ({
     slots,
     onSelectSlot,
+    hidden,
   }: {
     slots: Array<SelectedImageItem | null>;
     onSelectSlot: (index: number) => void;
+    hidden?: boolean;
   }) => (
-    <div data-testid="mock-slot-switcher">
+    <div data-testid="mock-slot-switcher" hidden={hidden}>
       {slots.map((_, i) => (
         <button key={i} onClick={() => onSelectSlot(i)}>
           Slot {i}
@@ -56,7 +58,6 @@ const createProps = () => ({
   onUpdateEffect: vi.fn(),
   onToggleRemoveBackground: vi.fn(),
   onToggleEnhance: vi.fn(),
-  onResetEffects: vi.fn(),
   activeImageEffects: { brightness: 0, contrast: 0 },
   canUpdateEffects: true,
   selectedProportion: "horizontal" as const,
@@ -181,16 +182,16 @@ describe("UploaderPreviewToolsPanel", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not show effects content by default", () => {
+  it("does not show effects drawer by default", () => {
     const props = createProps();
     render(<UploaderPreviewToolsPanel {...props} />);
 
     expect(
-      screen.queryByText(t("uploader.previewEffectsTitle")),
+      screen.queryByRole("button", { name: t("uploader.effectsCancel") }),
     ).not.toBeInTheDocument();
   });
 
-  it("enters edit mode when cog button is clicked, hiding split and proportion buttons", () => {
+  it("opens drawer with effects controls when cog button is clicked", () => {
     const props = createProps();
     render(<UploaderPreviewToolsPanel {...props} />);
 
@@ -200,49 +201,180 @@ describe("UploaderPreviewToolsPanel", () => {
     fireEvent.click(effectsButton);
 
     expect(
-      screen.getByText(t("uploader.previewEffectsTitle")),
+      screen.getByRole("button", { name: t("uploader.effectsCancel") }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: t("uploader.splitSelectedImage") }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByTestId("mock-uploader-tools")).not.toBeInTheDocument();
+      screen.getByRole("button", { name: t("uploader.effectsApprove") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.effectsReset") }),
+    ).toBeInTheDocument();
   });
 
-  it("exits edit mode when close button is clicked, restoring buttons", () => {
+  it("keeps toolbar buttons visible when drawer is open", () => {
+    const onSplitImage = vi.fn();
     const props = createProps();
-    render(<UploaderPreviewToolsPanel {...props} />);
+    render(
+      <UploaderPreviewToolsPanel {...props} onSplitImage={onSplitImage} />,
+    );
+
+    const splitButtonBefore = screen.getByRole("button", {
+      name: t("uploader.splitSelectedImage"),
+    });
+    expect(splitButtonBefore).toBeInTheDocument();
 
     const effectsButton = screen.getByRole("button", {
       name: t("uploader.previewEffectsButton"),
     });
     fireEvent.click(effectsButton);
 
-    const closeButton = screen.getByRole("button", {
-      name: t("uploader.effectsClose"),
-    });
-    fireEvent.click(closeButton);
-
-    expect(
-      screen.queryByText(t("uploader.previewEffectsTitle")),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: t("uploader.splitSelectedImage") }),
-    ).toBeInTheDocument();
+    expect(splitButtonBefore).toBeInTheDocument();
     expect(screen.getByTestId("mock-uploader-tools")).toBeInTheDocument();
   });
 
-  it("keeps slot switcher visible in both modes", () => {
+  it("hides slot switcher when drawer is open", () => {
     const props = createProps();
     render(<UploaderPreviewToolsPanel {...props} />);
-
-    expect(screen.getByTestId("mock-slot-switcher")).toBeInTheDocument();
 
     const effectsButton = screen.getByRole("button", {
       name: t("uploader.previewEffectsButton"),
     });
     fireEvent.click(effectsButton);
 
-    expect(screen.getByTestId("mock-slot-switcher")).toBeInTheDocument();
+    const slotSwitcher = screen.getByTestId("mock-slot-switcher");
+    expect(slotSwitcher).toHaveAttribute("hidden");
+  });
+
+  it("exits edit mode when cancel button is clicked", () => {
+    const onEditModeChange = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        onEditModeChange={onEditModeChange}
+      />,
+    );
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+    expect(onEditModeChange).toHaveBeenCalledWith(true);
+
+    const cancelButton = screen.getByRole("button", {
+      name: t("uploader.effectsCancel"),
+    });
+    fireEvent.click(cancelButton);
+    expect(onEditModeChange).toHaveBeenCalledWith(false);
+
+    const slotSwitcher = screen.getByTestId("mock-slot-switcher");
+    expect(slotSwitcher).not.toHaveAttribute("hidden");
+  });
+
+  it("exits edit mode when approve button is clicked", () => {
+    const onEditModeChange = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        onEditModeChange={onEditModeChange}
+      />,
+    );
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+    expect(onEditModeChange).toHaveBeenCalledWith(true);
+
+    const approveButton = screen.getByRole("button", {
+      name: t("uploader.effectsApprove"),
+    });
+    fireEvent.click(approveButton);
+    expect(onEditModeChange).toHaveBeenCalledWith(false);
+  });
+
+  it("restores effects snapshot on cancel", () => {
+    const onUpdateEffect = vi.fn();
+    const onToggleRemoveBackground = vi.fn();
+    const onToggleEnhance = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        onUpdateEffect={onUpdateEffect}
+        onToggleRemoveBackground={onToggleRemoveBackground}
+        onToggleEnhance={onToggleEnhance}
+        activeImageEffects={{ brightness: 30, contrast: -10, removeBackground: true, enhance: false }}
+      />,
+    );
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    const cancelButton = screen.getByRole("button", {
+      name: t("uploader.effectsCancel"),
+    });
+    fireEvent.click(cancelButton);
+
+    expect(onUpdateEffect).toHaveBeenCalledWith("brightness", 30);
+    expect(onUpdateEffect).toHaveBeenCalledWith("contrast", -10);
+    expect(onToggleRemoveBackground).toHaveBeenCalledWith(true);
+    expect(onToggleEnhance).toHaveBeenCalledWith(false);
+  });
+
+  it("restores effects snapshot on reset but keeps drawer open", () => {
+    const onUpdateEffect = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        onUpdateEffect={onUpdateEffect}
+        activeImageEffects={{ brightness: 50, contrast: 0 }}
+      />,
+    );
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    const resetButton = screen.getByRole("button", {
+      name: t("uploader.effectsReset"),
+    });
+    fireEvent.click(resetButton);
+
+    expect(onUpdateEffect).toHaveBeenCalledWith("brightness", 50);
+    expect(onUpdateEffect).toHaveBeenCalledWith("contrast", 0);
+    expect(
+      screen.getByRole("button", { name: t("uploader.effectsCancel") }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not restore effects snapshot on approve", () => {
+    const onUpdateEffect = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        onUpdateEffect={onUpdateEffect}
+        activeImageEffects={{ brightness: 50, contrast: 0 }}
+      />,
+    );
+
+    const effectsButton = screen.getByRole("button", {
+      name: t("uploader.previewEffectsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    const approveButton = screen.getByRole("button", {
+      name: t("uploader.effectsApprove"),
+    });
+    fireEvent.click(approveButton);
+
+    expect(onUpdateEffect).not.toHaveBeenCalledWith("brightness", expect.anything());
   });
 
   it("calls onEditModeChange when entering and exiting edit mode", () => {
@@ -258,10 +390,10 @@ describe("UploaderPreviewToolsPanel", () => {
     fireEvent.click(effectsButton);
     expect(onEditModeChange).toHaveBeenCalledWith(true);
 
-    const closeButton = screen.getByRole("button", {
-      name: t("uploader.effectsClose"),
+    const cancelButton = screen.getByRole("button", {
+      name: t("uploader.effectsCancel"),
     });
-    fireEvent.click(closeButton);
+    fireEvent.click(cancelButton);
     expect(onEditModeChange).toHaveBeenCalledWith(false);
   });
 

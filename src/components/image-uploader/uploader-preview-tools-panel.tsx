@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,10 +10,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerDescription,
+  DrawerPortal,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { Drawer as DrawerPrimitive } from "vaul";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
-import { cn } from "@/lib/utils";
-import { SplitSquareVertical, TriangleAlert } from "lucide-react";
+import { Check, RotateCcw, SplitSquareVertical, TriangleAlert, X } from "lucide-react";
 import UploaderSlotSwitcher from "./uploader-slot-switcher";
 import UploaderTools from "./uploader-tools";
 import {
@@ -23,6 +29,14 @@ import {
 import type { SelectedImageItem } from "./image-uploader";
 import type { UploaderProportion } from "./uploader-tools";
 import type { CropAdjust } from "./use-crop-adjust";
+
+interface EffectsSnapshot {
+  brightness: number;
+  contrast: number;
+  removeBackground: boolean;
+  enhance: boolean;
+  cropAdjust: CropAdjust | undefined;
+}
 
 interface UploaderPreviewToolsPanelProps {
   slots: Array<SelectedImageItem | null>;
@@ -38,7 +52,6 @@ interface UploaderPreviewToolsPanelProps {
   ) => void;
   onToggleRemoveBackground: (enabled: boolean) => void;
   onToggleEnhance: (enabled: boolean) => void;
-  onResetEffects: () => void;
   activeImageEffects: {
     brightness: number;
     contrast: number;
@@ -69,7 +82,6 @@ export function UploaderPreviewToolsPanel({
   onUpdateEffect,
   onToggleRemoveBackground,
   onToggleEnhance,
-  onResetEffects,
   activeImageEffects,
   canUpdateEffects,
   isRemoveBackgroundBusy = false,
@@ -84,15 +96,72 @@ export function UploaderPreviewToolsPanel({
   isZoomAvailable = false,
 }: UploaderPreviewToolsPanelProps) {
   const [isEditMode, setIsEditMode] = useState(false);
+  const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
+  const closingRef = useRef(false);
+
+  const captureSnapshot = (): EffectsSnapshot => {
+    const effects = activeImageEffects ?? {
+      brightness: 0,
+      contrast: 0,
+      removeBackground: false,
+      enhance: false,
+    };
+    return {
+      brightness: effects.brightness,
+      contrast: effects.contrast,
+      removeBackground: !!effects.removeBackground,
+      enhance: !!effects.enhance,
+      cropAdjust: activeImageCropAdjust
+        ? { ...activeImageCropAdjust }
+        : undefined,
+    };
+  };
+
+  const restoreSnapshot = (snap: EffectsSnapshot) => {
+    onUpdateEffect("brightness", snap.brightness);
+    onUpdateEffect("contrast", snap.contrast);
+    onToggleRemoveBackground(snap.removeBackground);
+    onToggleEnhance(snap.enhance);
+    if (onUpdateCropAdjust) {
+      onUpdateCropAdjust(snap.cropAdjust ?? { zoom: 1, panX: 0, panY: 0 });
+    }
+  };
+
+  const closeDrawer = (restore: boolean) => {
+    closingRef.current = true;
+    if (restore && snapshot) {
+      restoreSnapshot(snapshot);
+    }
+    setSnapshot(null);
+    setIsEditMode(false);
+    onEditModeChange?.(false);
+  };
 
   const enterEditMode = () => {
+    closingRef.current = false;
+    setSnapshot(captureSnapshot());
     setIsEditMode(true);
     onEditModeChange?.(true);
   };
 
-  const exitEditMode = () => {
-    setIsEditMode(false);
-    onEditModeChange?.(false);
+  const handleApprove = () => {
+    closeDrawer(false);
+  };
+
+  const handleCancel = () => {
+    closeDrawer(true);
+  };
+
+  const handleReset = () => {
+    if (snapshot) {
+      restoreSnapshot(snapshot);
+    }
+  };
+
+  const handleDrawerOpenChange = (open: boolean) => {
+    if (open) {
+      closingRef.current = false;
+    }
   };
 
   const splitButton = (
@@ -110,41 +179,17 @@ export function UploaderPreviewToolsPanel({
   );
 
   return (
-    <div className={cn(
-      "mx-auto w-full rounded-xl border border-border/60 bg-background px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5 shadow-md",
-      !isEditMode && "md:w-1/2",
-    )}>
-      <div className="w-full">
-        <UploaderSlotSwitcher
-          slots={slots}
-          activeSlotIndex={activeSlotIndex}
-          onSelectSlot={onSelectSlot}
-        />
-      </div>
+    <>
+      <div className="mx-auto w-full rounded-xl border border-border/60 bg-background px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5 shadow-md md:w-1/2">
+        <div className="w-full">
+          <UploaderSlotSwitcher
+            slots={slots}
+            activeSlotIndex={activeSlotIndex}
+            onSelectSlot={onSelectSlot}
+            hidden={isEditMode}
+          />
+        </div>
 
-      {isEditMode ? (
-        <UploaderEffectsPanelContent
-          effects={activeImageEffects}
-          onUpdateEffect={onUpdateEffect}
-          onToggleRemoveBackground={onToggleRemoveBackground}
-          onToggleEnhance={onToggleEnhance}
-          onResetEffects={onResetEffects}
-          onClose={exitEditMode}
-          disabled={!canUpdateEffects}
-          isRemoveBackgroundBusy={isRemoveBackgroundBusy}
-          isEnhanceBusy={isEnhanceBusy}
-          zoom={activeImageCropAdjust?.zoom ?? 1}
-          minZoom={1}
-          maxZoom={3}
-          isZoomAvailable={isZoomAvailable}
-          onZoomChange={onUpdateCropAdjust ? (z) => onUpdateCropAdjust({
-            zoom: z,
-            panX: activeImageCropAdjust?.panX ?? 0,
-            panY: activeImageCropAdjust?.panY ?? 0,
-          }) : undefined}
-          onResetZoom={onResetCropAdjust}
-        />
-      ) : (
         <div className="grid grid-cols-3 items-center gap-y-2 sm:gap-y-3 mt-2 sm:mt-3">
           <div className="col-start-1 flex justify-start">
             {shouldConfirmSplit ? (
@@ -195,8 +240,94 @@ export function UploaderPreviewToolsPanel({
             />
           </div>
         </div>
-      )}
-    </div>
+      </div>
+
+      <Drawer
+        direction="bottom"
+        open={isEditMode}
+        onOpenChange={handleDrawerOpenChange}
+        modal={false}
+        dismissible={false}
+      >
+        <DrawerPortal>
+          <DrawerPrimitive.Content
+            data-slot="drawer-content"
+            className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-auto max-h-[70dvh] flex-col rounded-t-xl border-t text-sm shadow-lg"
+          >
+            <div className="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto shrink-0" />
+            <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2 border-b">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancel}
+              className="h-8 gap-1.5 text-muted-foreground"
+              aria-label={t("uploader.effectsCancel")}
+            >
+              <X className="h-4 w-4" />
+              {t("uploader.effectsCancel")}
+            </Button>
+            <DrawerTitle className="text-sm font-medium">
+              {t("uploader.previewEffectsTitle")}
+            </DrawerTitle>
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="h-8 gap-1.5"
+                aria-label={t("uploader.effectsReset")}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t("uploader.effectsReset")}
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                onClick={handleApprove}
+                className="h-8 gap-1.5"
+                aria-label={t("uploader.effectsApprove")}
+              >
+                <Check className="h-4 w-4" />
+                {t("uploader.effectsApprove")}
+              </Button>
+            </div>
+          </div>
+          <DrawerDescription className="sr-only">
+            {t("uploader.previewEffectsDescription")}
+          </DrawerDescription>
+          <div className="overflow-y-auto px-4 pb-6 pt-3">
+            <UploaderEffectsPanelContent
+              effects={activeImageEffects}
+              onUpdateEffect={onUpdateEffect}
+              onToggleRemoveBackground={onToggleRemoveBackground}
+              onToggleEnhance={onToggleEnhance}
+              disabled={!canUpdateEffects}
+              isRemoveBackgroundBusy={isRemoveBackgroundBusy}
+              isEnhanceBusy={isEnhanceBusy}
+              zoom={activeImageCropAdjust?.zoom ?? 1}
+              minZoom={1}
+              maxZoom={3}
+              isZoomAvailable={isZoomAvailable}
+              onZoomChange={
+                onUpdateCropAdjust
+                  ? (z) =>
+                      onUpdateCropAdjust({
+                        zoom: z,
+                        panX: activeImageCropAdjust?.panX ?? 0,
+                        panY: activeImageCropAdjust?.panY ?? 0,
+                      })
+                  : undefined
+              }
+              onResetZoom={onResetCropAdjust}
+            />
+          </div>
+          </DrawerPrimitive.Content>
+        </DrawerPortal>
+      </Drawer>
+    </>
   );
 }
 
