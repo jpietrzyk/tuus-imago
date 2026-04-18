@@ -203,15 +203,15 @@ export function UploaderPreviewToolsPanel({
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      className="h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
+      className="h-10 w-10 sm:h-12 sm:w-14 shadow-lg border-2"
     >
-      <SplitSquareVertical className="h-6 w-6 sm:h-7 sm:w-7" />
+      <SplitSquareVertical className="h-5 w-5 sm:h-6 sm:w-7" />
     </Button>
   );
 
   return (
     <>
-      <div className="mx-auto w-full rounded-xl border border-border/60 bg-background px-2 py-2 sm:px-3 lg:px-3 lg:py-1.5 shadow-md md:w-1/2">
+      <div className="mx-auto w-full rounded-xl border border-border/60 bg-background px-2 py-1 sm:px-3 sm:py-2 lg:px-3 lg:py-1.5 shadow-md md:w-1/2">
         <div className="w-full">
           <UploaderSlotSwitcher
             slots={slots}
@@ -277,7 +277,7 @@ export function UploaderPreviewToolsPanel({
         <div
           role="dialog"
           aria-label={t("uploader.previewEffectsTitle")}
-          className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
+          className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[70dvh] sm:h-[40dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
         >
         <div className="mx-auto w-full md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-screen-sm flex flex-col min-h-0 flex-1">
           <div className="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto shrink-0" />
