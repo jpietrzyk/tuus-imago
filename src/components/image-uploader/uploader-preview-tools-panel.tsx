@@ -279,8 +279,9 @@ export function UploaderPreviewToolsPanel({
           aria-label={t("uploader.previewEffectsTitle")}
           className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[40dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
         >
+        <div className="mx-auto w-full md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-screen-sm flex flex-col min-h-0 flex-1">
           <div className="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto shrink-0" />
-          <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2 border-b">
+          <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-2 bg-muted/40 border-b border-border/60 shadow-sm">
             <Button
               type="button"
               variant="ghost"
@@ -292,7 +293,7 @@ export function UploaderPreviewToolsPanel({
               <X className="h-4 w-4" />
               {t("uploader.effectsCancel")}
             </Button>
-            <span className="text-sm font-medium">
+            <span className="text-sm font-semibold">
               {t("uploader.previewEffectsTitle")}
             </span>
             <div className="flex items-center gap-1.5">
@@ -320,7 +321,7 @@ export function UploaderPreviewToolsPanel({
               </Button>
             </div>
           </div>
-          <div className="overflow-y-auto px-4 pb-6 pt-3">
+          <div className="overflow-y-auto px-4 lg:px-3 pb-6 pt-3">
             <UploaderEffectsPanelContent
               effects={activeImageEffects}
               transform={activeImageTransform}
@@ -353,6 +354,7 @@ export function UploaderPreviewToolsPanel({
                }
             />
           </div>
+        </div>
         </div>
       )}
     </>
