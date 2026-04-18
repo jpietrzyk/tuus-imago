@@ -23,12 +23,50 @@ describe("adjustCropForZoomPan", () => {
     expect(result).toBe(baseCrop);
   });
 
-  it("zooms in even when image fits exactly (100% coverage)", () => {
+  it("zooms in even when horizontal image fits exactly (100% coverage)", () => {
     const baseCrop = createBaseCrop(1600, 900, "horizontal");
     const result = adjustCropForZoomPan(baseCrop, 2, 0, 0);
     expect(result).not.toBe(baseCrop);
     expect(result.cropWidth).toBeCloseTo(baseCrop.cropWidth / 2, 1);
     expect(result.cropHeight).toBeCloseTo(baseCrop.cropHeight / 2, 1);
+  });
+
+  it("zooms in even when vertical image fits exactly (100% coverage)", () => {
+    const baseCrop = createBaseCrop(800, 1200, "vertical");
+    expect(baseCrop.coveragePercent).toBeGreaterThanOrEqual(99.9);
+    const result = adjustCropForZoomPan(baseCrop, 2, 0, 0);
+    expect(result).not.toBe(baseCrop);
+    expect(result.cropWidth).toBeCloseTo(baseCrop.cropWidth / 2, 1);
+    expect(result.cropHeight).toBeCloseTo(baseCrop.cropHeight / 2, 1);
+  });
+
+  it("zooms in even when square image fits exactly (100% coverage)", () => {
+    const baseCrop = createBaseCrop(1000, 1000, "square");
+    expect(baseCrop.coveragePercent).toBeGreaterThanOrEqual(99.9);
+    const result = adjustCropForZoomPan(baseCrop, 2, 0, 0);
+    expect(result).not.toBe(baseCrop);
+    expect(result.cropWidth).toBeCloseTo(baseCrop.cropWidth / 2, 1);
+    expect(result.cropHeight).toBeCloseTo(baseCrop.cropHeight / 2, 1);
+  });
+
+  it("clamps vertical full-coverage zoom within source bounds", () => {
+    const baseCrop = createBaseCrop(800, 1200, "vertical");
+    const result = adjustCropForZoomPan(baseCrop, 2, 1, 1);
+    const sourceWidth = baseCrop.cropWidth / baseCrop.widthScale;
+    const sourceHeight = baseCrop.cropHeight / baseCrop.heightScale;
+    expect(result.cropX).toBeGreaterThanOrEqual(-0.5);
+    expect(result.cropY).toBeGreaterThanOrEqual(-0.5);
+    expect(result.cropX + result.cropWidth).toBeLessThanOrEqual(sourceWidth + 0.5);
+    expect(result.cropY + result.cropHeight).toBeLessThanOrEqual(sourceHeight + 0.5);
+  });
+
+  it("allows panning on vertical full-coverage zoom", () => {
+    const baseCrop = createBaseCrop(800, 1200, "vertical");
+    const centered = adjustCropForZoomPan(baseCrop, 2, 0, 0);
+    const pannedDown = adjustCropForZoomPan(baseCrop, 2, 0, 1);
+    const pannedUp = adjustCropForZoomPan(baseCrop, 2, 0, -1);
+    expect(pannedDown.cropY).toBeGreaterThan(centered.cropY);
+    expect(pannedUp.cropY).toBeLessThan(centered.cropY);
   });
 
   it("shrinks crop dimensions when zoomed in", () => {
