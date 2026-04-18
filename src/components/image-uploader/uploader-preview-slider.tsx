@@ -78,7 +78,7 @@ export default function UploaderPreviewSlider({
 }: UploaderPreviewSliderProps) {
   return (
     <div
-      className="flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 rounded-xl bg-transparent overflow-hidden max-h-[35vh] md:max-h-[42vh] lg:max-h-[45vh] xl:max-h-[50vh]"
+      className="flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 rounded-xl bg-transparent overflow-hidden max-h-[25vh] md:max-h-[42vh] lg:max-h-[45vh] xl:max-h-[50vh]"
       data-testid="uploader-preview-slider"
     >
       <SideSlotPreview
