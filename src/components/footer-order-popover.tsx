@@ -1,4 +1,4 @@
-import { ShoppingBag } from "lucide-react";
+import { ChevronUp, ShoppingBag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,7 +66,7 @@ export function CheckoutOrderDropup({
         <Button
           type="button"
           size="sm"
-          className="h-9 gap-2 rounded-full px-4 text-xs font-semibold tracking-[0.01em] shadow-sm sm:text-sm"
+          className="h-9 gap-1.5 rounded-full px-2 text-xs font-semibold tracking-[0.01em] shadow-sm sm:px-4 sm:text-sm"
           aria-label={
             rows.length > 0
               ? `${t("checkout.openCheckout")} · ${formatPrice(totalPrice)}`
@@ -74,16 +74,19 @@ export function CheckoutOrderDropup({
           }
         >
           <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-          {t("checkout.openCheckout")}
-          {rows.length > 0 ? (
-            <>
-              <span className="text-[10px] font-normal opacity-70">·</span>
-              <span className="text-xs font-semibold">{formatPrice(totalPrice)}</span>
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 text-[10px] font-bold leading-none">
-                {checkedCount}
-              </span>
-            </>
-          ) : null}
+          <ChevronUp className="h-3.5 w-3.5 sm:hidden" aria-hidden="true" />
+          <span className="hidden items-center gap-2 sm:inline-flex">
+            {t("checkout.openCheckout")}
+            {rows.length > 0 ? (
+              <>
+                <span className="text-[10px] font-normal opacity-70">·</span>
+                <span className="text-xs font-semibold">{formatPrice(totalPrice)}</span>
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 text-[10px] font-bold leading-none">
+                  {checkedCount}
+                </span>
+              </>
+            ) : null}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
