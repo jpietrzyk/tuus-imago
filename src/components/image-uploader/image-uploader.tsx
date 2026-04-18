@@ -28,7 +28,6 @@ import {
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
-import { isZoomAvailable as checkIsZoomAvailable } from "./use-crop-adjust";
 
 export interface ImageTransformations {
   rotation: number;
@@ -1604,16 +1603,7 @@ export const ImageUploader = forwardRef<
           onEditModeChange={setIsEffectsEditMode}
           activeImageCropAdjust={activeImage?.previewCropAdjust}
           onUpdateCropAdjust={updateActiveImageCropAdjust}
-          isZoomAvailable={
-            !!selectedImageMetadata &&
-            checkIsZoomAvailable(
-              calculateMaxCenteredCrop({
-                sourceWidth: selectedImageMetadata.width,
-                sourceHeight: selectedImageMetadata.height,
-                proportion: displayImageProportion,
-              }).coveragePercent,
-            )
-          }
+          isZoomAvailable={!!selectedImageMetadata}
         />
 
         {shouldShowUploaderDebugData && selectedImageMetadata && (
