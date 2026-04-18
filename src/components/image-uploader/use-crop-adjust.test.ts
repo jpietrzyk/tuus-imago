@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { adjustCropForZoomPan, isZoomAvailable } from "./use-crop-adjust";
+import { adjustCropForZoomPan } from "./use-crop-adjust";
 import { calculateMaxCenteredCrop } from "./image-proportion-calculator";
 import type { CropCalculationResult } from "./image-proportion-calculator";
-
 function createBaseCrop(
   sourceWidth: number,
   sourceHeight: number,
@@ -24,10 +23,50 @@ describe("adjustCropForZoomPan", () => {
     expect(result).toBe(baseCrop);
   });
 
-  it("returns base crop when image fits exactly (100% coverage)", () => {
+  it("zooms in even when horizontal image fits exactly (100% coverage)", () => {
     const baseCrop = createBaseCrop(1600, 900, "horizontal");
     const result = adjustCropForZoomPan(baseCrop, 2, 0, 0);
-    expect(result).toBe(baseCrop);
+    expect(result).not.toBe(baseCrop);
+    expect(result.cropWidth).toBeCloseTo(baseCrop.cropWidth / 2, 1);
+    expect(result.cropHeight).toBeCloseTo(baseCrop.cropHeight / 2, 1);
+  });
+
+  it("zooms in even when vertical image fits exactly (100% coverage)", () => {
+    const baseCrop = createBaseCrop(800, 1200, "vertical");
+    expect(baseCrop.coveragePercent).toBeGreaterThanOrEqual(99.9);
+    const result = adjustCropForZoomPan(baseCrop, 2, 0, 0);
+    expect(result).not.toBe(baseCrop);
+    expect(result.cropWidth).toBeCloseTo(baseCrop.cropWidth / 2, 1);
+    expect(result.cropHeight).toBeCloseTo(baseCrop.cropHeight / 2, 1);
+  });
+
+  it("zooms in even when square image fits exactly (100% coverage)", () => {
+    const baseCrop = createBaseCrop(1000, 1000, "square");
+    expect(baseCrop.coveragePercent).toBeGreaterThanOrEqual(99.9);
+    const result = adjustCropForZoomPan(baseCrop, 2, 0, 0);
+    expect(result).not.toBe(baseCrop);
+    expect(result.cropWidth).toBeCloseTo(baseCrop.cropWidth / 2, 1);
+    expect(result.cropHeight).toBeCloseTo(baseCrop.cropHeight / 2, 1);
+  });
+
+  it("clamps vertical full-coverage zoom within source bounds", () => {
+    const baseCrop = createBaseCrop(800, 1200, "vertical");
+    const result = adjustCropForZoomPan(baseCrop, 2, 1, 1);
+    const sourceWidth = baseCrop.cropWidth / baseCrop.widthScale;
+    const sourceHeight = baseCrop.cropHeight / baseCrop.heightScale;
+    expect(result.cropX).toBeGreaterThanOrEqual(-0.5);
+    expect(result.cropY).toBeGreaterThanOrEqual(-0.5);
+    expect(result.cropX + result.cropWidth).toBeLessThanOrEqual(sourceWidth + 0.5);
+    expect(result.cropY + result.cropHeight).toBeLessThanOrEqual(sourceHeight + 0.5);
+  });
+
+  it("allows panning on vertical full-coverage zoom", () => {
+    const baseCrop = createBaseCrop(800, 1200, "vertical");
+    const centered = adjustCropForZoomPan(baseCrop, 2, 0, 0);
+    const pannedDown = adjustCropForZoomPan(baseCrop, 2, 0, 1);
+    const pannedUp = adjustCropForZoomPan(baseCrop, 2, 0, -1);
+    expect(pannedDown.cropY).toBeGreaterThan(centered.cropY);
+    expect(pannedUp.cropY).toBeLessThan(centered.cropY);
   });
 
   it("shrinks crop dimensions when zoomed in", () => {
@@ -155,40 +194,5 @@ describe("adjustCropForZoomPan", () => {
     expect(result.cropY).toBeGreaterThanOrEqual(-0.5);
     expect(result.cropX + result.cropWidth).toBeLessThanOrEqual(sourceWidth + 0.5);
     expect(result.cropY + result.cropHeight).toBeLessThanOrEqual(sourceHeight + 0.5);
-  });
-});
-
-describe("isZoomAvailable", () => {
-  it("returns false when coverage is 100%", () => {
-    expect(isZoomAvailable(100)).toBe(false);
-  });
-
-  it("returns false when coverage is 99.9 or above", () => {
-    expect(isZoomAvailable(99.95)).toBe(false);
-    expect(isZoomAvailable(99.9)).toBe(false);
-  });
-
-  it("returns true when coverage is below 99.9", () => {
-    expect(isZoomAvailable(99)).toBe(true);
-    expect(isZoomAvailable(84.38)).toBe(true);
-    expect(isZoomAvailable(50)).toBe(true);
-  });
-
-  it("returns true for typical cropped images", () => {
-    const crop = calculateMaxCenteredCrop({
-      sourceWidth: 1200,
-      sourceHeight: 800,
-      proportion: "horizontal",
-    });
-    expect(isZoomAvailable(crop.coveragePercent)).toBe(true);
-  });
-
-  it("returns false for perfect aspect match", () => {
-    const crop = calculateMaxCenteredCrop({
-      sourceWidth: 1600,
-      sourceHeight: 900,
-      proportion: "horizontal",
-    });
-    expect(isZoomAvailable(crop.coveragePercent)).toBe(false);
   });
 });

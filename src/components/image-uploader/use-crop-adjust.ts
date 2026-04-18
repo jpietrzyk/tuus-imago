@@ -19,13 +19,6 @@ export function adjustCropForZoomPan(
   const sourceWidth = baseCrop.cropWidth / baseCrop.widthScale;
   const sourceHeight = baseCrop.cropHeight / baseCrop.heightScale;
 
-  if (
-    baseCrop.cropWidth >= sourceWidth - 0.5 &&
-    baseCrop.cropHeight >= sourceHeight - 0.5
-  ) {
-    return baseCrop;
-  }
-
   const zoomScale = 1 / zoom;
   const adjustedWidth = baseCrop.cropWidth * zoomScale;
   const adjustedHeight = baseCrop.cropHeight * zoomScale;
@@ -67,6 +60,3 @@ export function adjustCropForZoomPan(
   };
 }
 
-export function isZoomAvailable(coveragePercent: number): boolean {
-  return coveragePercent < 99.9;
-}
