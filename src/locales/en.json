@@ -201,7 +201,7 @@
     "uploading": "Uploading...",
     "uploadingProgress": "Uploading... {percent}%",
     "imageAdjustments": "Image Adjustments",
-    "previewEffectsTitle": "Image Effects",
+    "previewEffectsTitle": "Edit",
     "previewEffectsDescription": "Adjust preview effects with sliders",
     "previewEffectsButton": "Effects",
     "removeBackgroundDescription": "Automatically removes the background, leaving only the main subject.",

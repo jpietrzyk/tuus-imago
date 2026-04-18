@@ -228,8 +228,8 @@ export function UploaderEffectsPanelContent({
         <GroupTrigger title={t("uploader.aiEffectsGroupTitle")} />
         <CollapsibleContent>
           <div className="space-y-2 pt-2 pb-1">
-            <div className="space-y-2 rounded-md border border-border/70 p-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2 rounded-md border border-border/70 p-2.5">
+              <div className="flex items-center justify-between gap-2">
                 <div className="space-y-1">
                   <Label>{t("upload.aiRemoveBackground")}</Label>
                   <p className="text-xs text-muted-foreground">
@@ -247,8 +247,8 @@ export function UploaderEffectsPanelContent({
               </div>
             </div>
 
-            <div className="space-y-2 rounded-md border border-border/70 p-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2 rounded-md border border-border/70 p-2.5">
+              <div className="flex items-center justify-between gap-2">
                 <div className="space-y-1">
                   <Label>{t("upload.aiEnhance")}</Label>
                   <p className="text-xs text-muted-foreground">
@@ -264,8 +264,8 @@ export function UploaderEffectsPanelContent({
               </div>
             </div>
 
-            <div className="space-y-2 rounded-md border border-border/70 p-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2 rounded-md border border-border/70 p-2.5">
+              <div className="flex items-center justify-between gap-2">
                 <div className="space-y-1">
                   <Label>{t("upload.aiUpscale")}</Label>
                   <p className="text-xs text-muted-foreground">
@@ -281,8 +281,8 @@ export function UploaderEffectsPanelContent({
               </div>
             </div>
 
-            <div className="space-y-2 rounded-md border border-border/70 p-3">
-              <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2 rounded-md border border-border/70 p-2.5">
+              <div className="flex items-center justify-between gap-2">
                 <div className="space-y-1">
                   <Label>{t("upload.aiRestore")}</Label>
                   <p className="text-xs text-muted-foreground">
