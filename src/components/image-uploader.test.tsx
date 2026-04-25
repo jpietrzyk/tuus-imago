@@ -105,6 +105,10 @@ describe("ImageUploader", () => {
         uploaderRef.current?.removeActiveImage();
       });
 
+      fireEvent.click(screen.getByRole("button", {
+        name: tr("uploader.removeSlotConfirmAction"),
+      }));
+
       await waitFor(() => {
         expect(
           screen.getByTestId("uploader-slider-side-left").querySelector("img"),
@@ -279,6 +283,10 @@ describe("ImageUploader", () => {
       act(() => {
         uploaderRef.current?.removeActiveImage();
       });
+
+      fireEvent.click(screen.getByRole("button", {
+        name: tr("uploader.removeSlotConfirmAction"),
+      }));
 
       await waitFor(() => {
         expect(onImageMetadataChange).toHaveBeenLastCalledWith(null);
@@ -798,6 +806,10 @@ describe("ImageUploader", () => {
       act(() => {
         uploaderRef.current?.removeActiveImage();
       });
+
+      fireEvent.click(screen.getByRole("button", {
+        name: tr("uploader.removeSlotConfirmAction"),
+      }));
 
       await waitFor(() => {
         expect(
@@ -1799,6 +1811,75 @@ describe("ImageUploader", () => {
       });
 
       expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+    });
+  });
+
+  describe("remove slot confirmation dialog", () => {
+    it("shows confirmation dialog when removing an image", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      const clearButton = screen.getByTestId("uploader-remove-active-image");
+      fireEvent.click(clearButton);
+
+      expect(screen.getByText(tr("uploader.removeSlotConfirmTitle"))).toBeInTheDocument();
+      expect(screen.getByText(tr("uploader.removeSlotConfirmDescription"))).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: tr("uploader.removeSlotConfirmAction") })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: tr("uploader.cancel") })).toBeInTheDocument();
+    });
+
+    it("removes the image after confirming the dialog", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      const clearButton = screen.getByTestId("uploader-remove-active-image");
+      fireEvent.click(clearButton);
+
+      fireEvent.click(screen.getByRole("button", {
+        name: tr("uploader.removeSlotConfirmAction"),
+      }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+      });
+      expect(screen.queryByText(tr("uploader.removeSlotConfirmTitle"))).not.toBeInTheDocument();
+    });
+
+    it("does not remove the image when canceling the dialog", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      const clearButton = screen.getByTestId("uploader-remove-active-image");
+      fireEvent.click(clearButton);
+
+      fireEvent.click(screen.getByRole("button", { name: tr("uploader.cancel") }));
+
+      await waitFor(() => {
+        expect(screen.queryByText(tr("uploader.removeSlotConfirmTitle"))).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
     });
   });
 });

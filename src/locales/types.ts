@@ -266,6 +266,9 @@ export interface Translations {
     addMoreImagesDescription: string;
     addMoreImagesYes: string;
     addMoreImagesNo: string;
+    removeSlotConfirmTitle: string;
+    removeSlotConfirmDescription: string;
+    removeSlotConfirmAction: string;
   };
   checkout: {
     title: string;

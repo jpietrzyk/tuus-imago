@@ -215,7 +215,10 @@
     "addMoreImagesTitle": "Dodać kolejne zdjęcie?",
     "addMoreImagesDescription": "Wybrano {count} z 3 zdjęć. Czy chcesz dodać kolejne?",
     "addMoreImagesYes": "Tak, dodaj kolejne",
-    "addMoreImagesNo": "Nie, to wszystko"
+    "addMoreImagesNo": "Nie, to wszystko",
+    "removeSlotConfirmTitle": "Usunąć to zdjęcie?",
+    "removeSlotConfirmDescription": "Tej operacji nie można cofnąć. Zdjęcie zostanie trwale usunięte ze slotu.",
+    "removeSlotConfirmAction": "Usuń"
   },
   "checkout": {
     "title": "Zamówienie",
