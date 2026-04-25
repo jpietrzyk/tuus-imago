@@ -48,6 +48,8 @@ import {
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
+import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
+import { validateImageFile } from "./image-file-validator";
 
 export interface ImageTransformations {
   rotation: number;
@@ -104,8 +106,8 @@ interface ImageUploaderProps {
   showDebugData?: boolean;
 }
 
-const MAX_SELECTED_IMAGES = 3;
-const CENTER_SLOT_INDEX = Math.floor(MAX_SELECTED_IMAGES / 2);
+const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
+const CENTER_SLOT_INDEX = Math.floor(IMAGE_VALIDATION_RULES.maxSelectedImages / 2);
 const SHOW_UPLOADER_DEBUG = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
 
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
@@ -543,23 +545,17 @@ export const ImageUploader = forwardRef<
   );
 
   const validateAndStoreFile = useCallback(
-    (file: File, preferredIndex?: number) => {
-      if (
-        file.type !== "image/jpeg" &&
-        file.type !== "image/png" &&
-        file.type !== "image/webp"
-      ) {
-        return;
-      }
+    async (file: File, preferredIndex?: number) => {
+      const violations = await validateImageFile(file, IMAGE_VALIDATION_RULES);
 
-      if (file.size > 10 * 1024 * 1024) {
-        onUploadError?.(t("upload.error"));
+      if (violations.length > 0) {
+        onUploadError?.(t(violations[0].messageKey, violations[0].params));
         return;
       }
 
       if (
         typeof preferredIndex !== "number" &&
-        selectedImageCount >= MAX_SELECTED_IMAGES
+        selectedImageCount >= IMAGE_VALIDATION_RULES.maxSelectedImages
       ) {
         onUploadError?.(t("uploader.maxImagesError"));
         return;
@@ -1011,23 +1007,21 @@ export const ImageUploader = forwardRef<
 
       if (files && files.length > 0) {
         if (files.length === 1) {
-          validateAndStoreFile(files[0], preferredIndex);
-          const nextCount = selectedImageCount < MAX_SELECTED_IMAGES
+          void validateAndStoreFile(files[0], preferredIndex);
+          const nextCount = selectedImageCount < IMAGE_VALIDATION_RULES.maxSelectedImages
             ? selectedImageCount + 1
             : selectedImageCount;
           checkShowAddMoreDialog(nextCount);
         } else {
           const validFiles: File[] = [];
           for (const file of Array.from(files)) {
-            if (
-              file.type === "image/jpeg" ||
-              file.type === "image/png" ||
-              file.type === "image/webp"
-            ) {
+            if (IMAGE_VALIDATION_RULES.acceptedMimeTypes.includes(
+              file.type as typeof IMAGE_VALIDATION_RULES.acceptedMimeTypes[number],
+            )) {
               validFiles.push(file);
             }
           }
-          const maxAllowed = MAX_SELECTED_IMAGES - selectedImageCount;
+          const maxAllowed = IMAGE_VALIDATION_RULES.maxSelectedImages - selectedImageCount;
           const filesToProcess = validFiles.slice(0, maxAllowed);
 
           let currentImages = [...selectedImagesRef.current];
@@ -1043,7 +1037,7 @@ export const ImageUploader = forwardRef<
           }
 
           const finalCount = currentImages.filter(Boolean).length;
-          checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES));
+          checkShowAddMoreDialog(Math.min(finalCount, IMAGE_VALIDATION_RULES.maxSelectedImages));
         }
       }
 
@@ -1068,15 +1062,13 @@ export const ImageUploader = forwardRef<
       if (files && files.length > 0) {
         const validFiles: File[] = [];
         for (const file of Array.from(files)) {
-          if (
-            file.type === "image/jpeg" ||
-            file.type === "image/png" ||
-            file.type === "image/webp"
-          ) {
+          if (IMAGE_VALIDATION_RULES.acceptedMimeTypes.includes(
+            file.type as typeof IMAGE_VALIDATION_RULES.acceptedMimeTypes[number],
+          )) {
             validFiles.push(file);
           }
         }
-        const maxAllowed = MAX_SELECTED_IMAGES - selectedImageCount;
+        const maxAllowed = IMAGE_VALIDATION_RULES.maxSelectedImages - selectedImageCount;
         const filesToProcess = validFiles.slice(0, maxAllowed);
 
         let currentImages = [...selectedImagesRef.current];
@@ -1092,7 +1084,7 @@ export const ImageUploader = forwardRef<
         }
 
         const finalCount = currentImages.filter(Boolean).length;
-        checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES));
+        checkShowAddMoreDialog(Math.min(finalCount, IMAGE_VALIDATION_RULES.maxSelectedImages));
       }
     },
     [selectedImageCount, checkShowAddMoreDialog, addOrReplaceSelection, buildSelectedImageItem],

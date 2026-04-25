@@ -188,7 +188,15 @@
     "slotRight": "Right slot",
     "slotUploadFailed": "Upload failed",
     "usedCloudinaryTools": "Used AI tools",
-    "noCloudinaryTools": "No AI tools selected"
+    "noCloudinaryTools": "No AI tools selected",
+    "validation": {
+      "minWidth": "Image must be at least {minWidth}px wide (current: {actualWidth}px)",
+      "minHeight": "Image must be at least {minHeight}px tall (current: {actualHeight}px)",
+      "minDpi": "Image resolution must be at least {minDpi} DPI (current: {actualDpi} DPI)",
+      "maxFileSize": "File size exceeds the {maxSizeMB} MB limit",
+      "invalidType": "Unsupported file format. Use JPG, PNG, or WebP",
+      "invalidImage": "Failed to load image. The file may be corrupted."
+    }
   },
   "uploader": {
     "cropImage": "Crop Image",

@@ -74,7 +74,7 @@
     }
   },
   "upload": {
-    "success": "Zdjęcie przesłane pomyślnie!",
+    "success": "Zdjęcie przesłano pomyślnie!",
     "error": "Rozmiar pliku przekracza limit 10 MB",
     "uploadFailed": "Przesyłanie nie powiodło się",
     "batchUploadSuccess": "Wybrane sloty zostały przesłane pomyślnie.",
@@ -133,7 +133,15 @@
     "slotRight": "Prawy slot",
     "slotUploadFailed": "Przesyłanie nie powiodło się",
     "usedCloudinaryTools": "Użyte narzędzia AI",
-    "noCloudinaryTools": "Nie wybrano narzędzi AI"
+    "noCloudinaryTools": "Nie wybrano narzędzi AI",
+    "validation": {
+      "minWidth": "Obraz musi mieć co najmniej {minWidth}px szerokości (aktualnie: {actualWidth}px)",
+      "minHeight": "Obraz musi mieć co najmniej {minHeight}px wysokości (aktualnie: {actualHeight}px)",
+      "minDpi": "Rozdzielczość obrazu musi wynosić co najmniej {minDpi} DPI (aktualnie: {actualDpi} DPI)",
+      "maxFileSize": "Rozmiar pliku przekracza limit {maxSizeMB} MB",
+      "invalidType": "Nieobsługiwany format pliku. Użyj JPG, PNG lub WebP",
+      "invalidImage": "Nie udało się wczytać obrazu. Plik może być uszkodzony."
+    }
   },
   "uploader": {
     "cropImage": "Przytnij obraz",
