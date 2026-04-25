@@ -1698,5 +1698,107 @@ describe("ImageUploader", () => {
         expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
       });
     });
+
+    it("shows add-more dialog when adding second image via slot click", async () => {
+      render(<ImageUploader />);
+
+      const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+      const secondFile = new File(["second"], "second.jpg", { type: "image/jpeg" });
+
+      const initialInput = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+
+      await waitFor(() => {
+        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText(tr("uploader.addMoreImagesNo")));
+
+      await waitFor(() => {
+        expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement;
+
+      expect(editorInput).toBeTruthy();
+
+      fireEvent.change(editorInput, { target: { files: [secondFile] } });
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(tr("uploader.addMoreImagesYes"))).toBeInTheDocument();
+      expect(screen.getByText(tr("uploader.addMoreImagesNo"))).toBeInTheDocument();
+    });
+
+    it("repeatedly shows add-more dialog after clicking Yes and selecting another image until 3 slots filled", async () => {
+      render(<ImageUploader />);
+
+      const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
+      const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
+      const file3 = new File(["c"], "c.jpg", { type: "image/jpeg" });
+
+      const initialInput = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(initialInput, { target: { files: [file1] } });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText(tr("uploader.addMoreImagesYes")));
+
+      await waitFor(() => {
+        expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+      });
+
+      const secondInput = document.querySelectorAll(
+        'input[type="file"][accept*="image/jpeg"]',
+      );
+      const fileInput = secondInput[secondInput.length - 1] as HTMLInputElement;
+      fireEvent.change(fileInput, { target: { files: [file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText(tr("uploader.addMoreImagesYes")));
+
+      await waitFor(() => {
+        expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+      });
+
+      const thirdInputs = document.querySelectorAll(
+        'input[type="file"][accept*="image/jpeg"]',
+      );
+      const thirdInput = thirdInputs[thirdInputs.length - 1] as HTMLInputElement;
+      fireEvent.change(thirdInput, { target: { files: [file3] } });
+
+      await waitFor(() => {
+        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+    });
   });
 });
