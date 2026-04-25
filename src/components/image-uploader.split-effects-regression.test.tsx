@@ -8,6 +8,21 @@ vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
 }));
 
+const mockLoadImageDimensions = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ width: 1200, height: 800 }),
+);
+const mockReadJpegExifResolution = vi.hoisted(() =>
+  vi.fn().mockResolvedValue(null),
+);
+
+vi.mock("./image-uploader/load-image-dimensions", () => ({
+  loadImageDimensions: mockLoadImageDimensions,
+}));
+
+vi.mock("./image-uploader/jpeg-exif-reader", () => ({
+  readJpegExifResolution: mockReadJpegExifResolution,
+}));
+
 let latestToolsPanelProps: {
   slots: Array<SelectedImageItem | null>;
   activeSlotIndex: number | null;
