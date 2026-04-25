@@ -980,8 +980,8 @@ export const ImageUploader = forwardRef<
   );
 
   const checkShowAddMoreDialog = useCallback(
-    (currentFilledCount: number, fromSlotClick: boolean) => {
-      if (!fromSlotClick && currentFilledCount > 0 && currentFilledCount < MAX_SELECTED_IMAGES) {
+    (currentFilledCount: number) => {
+      if (currentFilledCount > 0 && currentFilledCount < MAX_SELECTED_IMAGES) {
         requestAnimationFrame(() => {
           setShowAddMoreDialog(true);
         });
@@ -994,7 +994,6 @@ export const ImageUploader = forwardRef<
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       const preferredIndex = pendingSelectionSlotRef.current ?? undefined;
-      const fromSlotClick = typeof pendingSelectionSlotRef.current === "number";
 
       pendingSelectionSlotRef.current = null;
 
@@ -1004,7 +1003,7 @@ export const ImageUploader = forwardRef<
           const nextCount = selectedImageCount < MAX_SELECTED_IMAGES
             ? selectedImageCount + 1
             : selectedImageCount;
-          checkShowAddMoreDialog(nextCount, fromSlotClick);
+          checkShowAddMoreDialog(nextCount);
         } else {
           const validFiles: File[] = [];
           for (const file of Array.from(files)) {
@@ -1032,7 +1031,7 @@ export const ImageUploader = forwardRef<
           }
 
           const finalCount = currentImages.filter(Boolean).length;
-          checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES), fromSlotClick);
+          checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES));
         }
       }
 
@@ -1081,7 +1080,7 @@ export const ImageUploader = forwardRef<
         }
 
         const finalCount = currentImages.filter(Boolean).length;
-        checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES), false);
+        checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES));
       }
     },
     [selectedImageCount, checkShowAddMoreDialog, addOrReplaceSelection, buildSelectedImageItem],
