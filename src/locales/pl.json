@@ -211,7 +211,11 @@
     "flipVertical": "Odbij pionowo",
     "cropGroupTitle": "Kadr",
     "adjustGroupTitle": "Korekty",
-    "transformGroupTitle": "Przekształcenia"
+    "transformGroupTitle": "Przekształcenia",
+    "addMoreImagesTitle": "Dodać kolejne zdjęcie?",
+    "addMoreImagesDescription": "Wybrano {count} z 3 zdjęć. Czy chcesz dodać kolejne?",
+    "addMoreImagesYes": "Tak, dodaj kolejne",
+    "addMoreImagesNo": "Nie, to wszystko"
   },
   "checkout": {
     "title": "Zamówienie",

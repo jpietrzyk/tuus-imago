@@ -41,6 +41,7 @@ export function UploaderDropArea({
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
+        multiple
         onChange={onFileSelect}
         className="hidden"
       />

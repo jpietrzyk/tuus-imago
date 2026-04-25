@@ -266,7 +266,11 @@
     "flipVertical": "Flip Vertical",
     "cropGroupTitle": "Crop",
     "adjustGroupTitle": "Adjustments",
-    "transformGroupTitle": "Transform"
+    "transformGroupTitle": "Transform",
+    "addMoreImagesTitle": "Add another image?",
+    "addMoreImagesDescription": "You've selected {count} of 3 images. Would you like to add another?",
+    "addMoreImagesYes": "Yes, add another",
+    "addMoreImagesNo": "No, I'm done"
   },
   "checkout": {
     "title": "Checkout",

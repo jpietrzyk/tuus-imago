@@ -1531,4 +1531,172 @@ describe("ImageUploader", () => {
       expect(screen.getByText("1.0x")).toBeInTheDocument();
     });
   });
+
+  describe("multi-image batch upload", () => {
+    it("fills all 3 slots when selecting 3 files at once", async () => {
+      const onOrderableSlotsChange = vi.fn();
+      render(<ImageUploader onOrderableSlotsChange={onOrderableSlotsChange} />);
+
+      const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
+      const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
+      const file3 = new File(["c"], "c.jpg", { type: "image/jpeg" });
+
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      expect(input).toBeTruthy();
+
+      fireEvent.change(input, { target: { files: [file1, file2, file3] } });
+
+      await waitFor(() => {
+        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        const lastCall = onOrderableSlotsChange.mock.calls[onOrderableSlotsChange.mock.calls.length - 1];
+        expect(lastCall?.[0]).toHaveLength(3);
+      });
+    });
+
+    it("shows add-more dialog when selecting only 1 image", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      expect(screen.getByText(tr("uploader.addMoreImagesYes"))).toBeInTheDocument();
+      expect(screen.getByText(tr("uploader.addMoreImagesNo"))).toBeInTheDocument();
+    });
+
+    it("shows add-more dialog when selecting only 2 images", async () => {
+      render(<ImageUploader />);
+
+      const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
+      const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file1, file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+    });
+
+    it("does not show add-more dialog when selecting 3 images", async () => {
+      render(<ImageUploader />);
+
+      const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
+      const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
+      const file3 = new File(["c"], "c.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file1, file2, file3] } });
+
+      await waitFor(() => {
+        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+    });
+
+    it("closes dialog and opens file input when clicking 'Yes, add another'", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      const allFileInputs = document.querySelectorAll('input[type="file"][accept*="image/jpeg"]');
+      const lastInput = allFileInputs[allFileInputs.length - 1] as HTMLInputElement;
+      const clickSpy = vi.spyOn(lastInput, "click");
+
+      fireEvent.click(screen.getByText(tr("uploader.addMoreImagesYes")));
+
+      await waitFor(() => {
+        expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+      });
+      expect(clickSpy).toHaveBeenCalled();
+    });
+
+    it("closes dialog without opening file input when clicking 'No, I'm done'", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+
+      const clickSpy = vi.spyOn(input, "click");
+      clickSpy.mockClear();
+
+      fireEvent.click(screen.getByText(tr("uploader.addMoreImagesNo")));
+
+      expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
+      expect(clickSpy).not.toHaveBeenCalled();
+    });
+
+    it("filters out non-image files in a multi-select batch", async () => {
+      const onUploadError = vi.fn();
+      render(<ImageUploader onUploadError={onUploadError} />);
+
+      const imageFile = new File(["img"], "img.jpg", { type: "image/jpeg" });
+      const textFile = new File(["text"], "doc.pdf", { type: "application/pdf" });
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(input, { target: { files: [imageFile, textFile] } });
+
+      await waitFor(() => {
+        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+    });
+
+    it("shows add-more dialog after drag-and-drop of 1 file", async () => {
+      render(<ImageUploader />);
+
+      const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+      const dropArea = screen.getByText(tr("upload.clickToUpload")).closest("div")!;
+
+      const dataTransfer = {
+        files: [file],
+      };
+
+      fireEvent.drop(dropArea, { dataTransfer });
+
+      await waitFor(() => {
+        expect(screen.getByText(tr("uploader.addMoreImagesTitle"))).toBeInTheDocument();
+      });
+    });
+  });
 });
