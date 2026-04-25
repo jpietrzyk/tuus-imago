@@ -262,6 +262,10 @@ export interface Translations {
     cropGroupTitle: string;
     adjustGroupTitle: string;
     transformGroupTitle: string;
+    addMoreImagesTitle: string;
+    addMoreImagesDescription: string;
+    addMoreImagesYes: string;
+    addMoreImagesNo: string;
   };
   checkout: {
     title: string;

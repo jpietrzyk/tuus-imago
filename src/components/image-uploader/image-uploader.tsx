@@ -8,6 +8,15 @@ import {
   useImperativeHandle,
 } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import {
@@ -367,6 +376,7 @@ export const ImageUploader = forwardRef<
   >(() => new Set());
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
+  const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
@@ -969,20 +979,65 @@ export const ImageUploader = forwardRef<
     [updateActiveImage],
   );
 
+  const checkShowAddMoreDialog = useCallback(
+    (currentFilledCount: number) => {
+      if (currentFilledCount > 0 && currentFilledCount < MAX_SELECTED_IMAGES) {
+        requestAnimationFrame(() => {
+          setShowAddMoreDialog(true);
+        });
+      }
+    },
+    [],
+  );
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+      const files = e.target.files;
       const preferredIndex = pendingSelectionSlotRef.current ?? undefined;
 
       pendingSelectionSlotRef.current = null;
 
-      if (file) {
-        validateAndStoreFile(file, preferredIndex);
+      if (files && files.length > 0) {
+        if (files.length === 1) {
+          validateAndStoreFile(files[0], preferredIndex);
+          const nextCount = selectedImageCount < MAX_SELECTED_IMAGES
+            ? selectedImageCount + 1
+            : selectedImageCount;
+          checkShowAddMoreDialog(nextCount);
+        } else {
+          const validFiles: File[] = [];
+          for (const file of Array.from(files)) {
+            if (
+              file.type === "image/jpeg" ||
+              file.type === "image/png" ||
+              file.type === "image/webp"
+            ) {
+              validFiles.push(file);
+            }
+          }
+          const maxAllowed = MAX_SELECTED_IMAGES - selectedImageCount;
+          const filesToProcess = validFiles.slice(0, maxAllowed);
+
+          let currentImages = [...selectedImagesRef.current];
+          for (const file of filesToProcess) {
+            const insertionIndex = currentImages.findIndex((image) => image === null);
+            if (insertionIndex < 0) break;
+
+            addOrReplaceSelection(file, insertionIndex);
+            currentImages = [...currentImages];
+            currentImages[insertionIndex] = {
+              ...buildSelectedImageItem(file, true),
+            };
+          }
+
+          const finalCount = currentImages.filter(Boolean).length;
+          checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES));
+        }
       }
 
       e.currentTarget.value = "";
     },
-    [validateAndStoreFile],
+    [validateAndStoreFile, selectedImageCount, checkShowAddMoreDialog, addOrReplaceSelection, buildSelectedImageItem],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -997,13 +1052,53 @@ export const ImageUploader = forwardRef<
     (e: React.DragEvent) => {
       e.preventDefault();
 
-      const file = e.dataTransfer.files?.[0];
-      if (file) {
-        validateAndStoreFile(file);
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0) {
+        const validFiles: File[] = [];
+        for (const file of Array.from(files)) {
+          if (
+            file.type === "image/jpeg" ||
+            file.type === "image/png" ||
+            file.type === "image/webp"
+          ) {
+            validFiles.push(file);
+          }
+        }
+        const maxAllowed = MAX_SELECTED_IMAGES - selectedImageCount;
+        const filesToProcess = validFiles.slice(0, maxAllowed);
+
+        let currentImages = [...selectedImagesRef.current];
+        for (const file of filesToProcess) {
+          const insertionIndex = currentImages.findIndex((image) => image === null);
+          if (insertionIndex < 0) break;
+
+          addOrReplaceSelection(file, insertionIndex);
+          currentImages = [...currentImages];
+          currentImages[insertionIndex] = {
+            ...buildSelectedImageItem(file, true),
+          };
+        }
+
+        const finalCount = currentImages.filter(Boolean).length;
+        checkShowAddMoreDialog(Math.min(finalCount, MAX_SELECTED_IMAGES));
       }
     },
-    [validateAndStoreFile],
+    [selectedImageCount, checkShowAddMoreDialog, addOrReplaceSelection, buildSelectedImageItem],
   );
+
+  const handleAddMoreImages = useCallback(() => {
+    setShowAddMoreDialog(false);
+    const currentImages = selectedImagesRef.current;
+    const nextEmptySlotIndex = currentImages.findIndex((image) => image === null);
+    if (nextEmptySlotIndex >= 0) {
+      pendingSelectionSlotRef.current = nextEmptySlotIndex;
+    }
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleDeclineAddMore = useCallback(() => {
+    setShowAddMoreDialog(false);
+  }, []);
 
   const handlePreviewSlotSelect = useCallback(
     (index: number) => {
@@ -1106,6 +1201,7 @@ export const ImageUploader = forwardRef<
   }, [handleRemoveImageSlot]);
 
   const handleCancel = useCallback(() => {
+    setShowAddMoreDialog(false);
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
         revokePreviewUrls(prevImages);
@@ -1466,9 +1562,32 @@ export const ImageUploader = forwardRef<
     lastExternalResetTriggerRef.current = externalResetTrigger;
   }, [externalResetTrigger, handleCancel]);
 
+  const addMoreDialog = (
+    <Dialog open={showAddMoreDialog} onOpenChange={(open) => { if (!open) handleDeclineAddMore(); }} modal={false}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>{t("uploader.addMoreImagesTitle")}</DialogTitle>
+          <DialogDescription>
+            {t("uploader.addMoreImagesDescription", { count: String(selectedImageCount) })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={handleDeclineAddMore}>
+            {t("uploader.addMoreImagesNo")}
+          </Button>
+          <Button onClick={handleAddMoreImages}>
+            {t("uploader.addMoreImagesYes")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (selectedImageCount === 0) {
     return (
-      <UploaderDropArea
+      <>
+        {addMoreDialog}
+        <UploaderDropArea
         showIcons={showIcons}
         className={className}
         fileInputRef={fileInputRef}
@@ -1478,16 +1597,20 @@ export const ImageUploader = forwardRef<
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onShowIcons={() => setShowIcons(true)}
-      />
+        />
+      </>
     );
   }
 
   return (
-    <Card className="mx-auto flex h-full w-full max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
+    <>
+      {addMoreDialog}
+      <Card className="mx-auto flex h-full w-full max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
       <input
         ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp"
+        multiple
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -1652,6 +1775,7 @@ export const ImageUploader = forwardRef<
         )}
       </CardContent>
     </Card>
+    </>
   );
 });
 
