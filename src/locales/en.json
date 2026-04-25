@@ -270,7 +270,10 @@
     "addMoreImagesTitle": "Add another image?",
     "addMoreImagesDescription": "You've selected {count} of 3 images. Would you like to add another?",
     "addMoreImagesYes": "Yes, add another",
-    "addMoreImagesNo": "No, I'm done"
+    "addMoreImagesNo": "No, I'm done",
+    "removeSlotConfirmTitle": "Remove this image?",
+    "removeSlotConfirmDescription": "This action cannot be undone. The image will be permanently removed from the slot.",
+    "removeSlotConfirmAction": "Remove"
   },
   "checkout": {
     "title": "Checkout",

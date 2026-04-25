@@ -17,6 +17,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { TriangleAlert } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import {
@@ -377,6 +388,7 @@ export const ImageUploader = forwardRef<
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
+  const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
@@ -1194,14 +1206,26 @@ export const ImageUploader = forwardRef<
 
   const handleRemoveActiveImage = useCallback(() => {
     const currentActiveIndex = activeImageIndexRef.current;
+    if (typeof currentActiveIndex === "number") {
+      setShowRemoveSlotDialog(true);
+    }
+  }, []);
 
+  const handleConfirmRemoveSlot = useCallback(() => {
+    setShowRemoveSlotDialog(false);
+    const currentActiveIndex = activeImageIndexRef.current;
     if (typeof currentActiveIndex === "number") {
       handleRemoveImageSlot(currentActiveIndex);
     }
   }, [handleRemoveImageSlot]);
 
+  const handleCancelRemoveSlot = useCallback(() => {
+    setShowRemoveSlotDialog(false);
+  }, []);
+
   const handleCancel = useCallback(() => {
     setShowAddMoreDialog(false);
+    setShowRemoveSlotDialog(false);
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
         revokePreviewUrls(prevImages);
@@ -1583,6 +1607,28 @@ export const ImageUploader = forwardRef<
     </Dialog>
   );
 
+  const removeSlotDialog = (
+    <AlertDialog open={showRemoveSlotDialog} onOpenChange={(open) => { if (!open) handleCancelRemoveSlot(); }}>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <TriangleAlert className="h-4 w-4 text-destructive" aria-hidden="true" />
+            {t("uploader.removeSlotConfirmTitle")}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("uploader.removeSlotConfirmDescription")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("uploader.cancel")}</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onClick={handleConfirmRemoveSlot}>
+            {t("uploader.removeSlotConfirmAction")}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   if (selectedImageCount === 0) {
     return (
       <>
@@ -1605,6 +1651,7 @@ export const ImageUploader = forwardRef<
   return (
     <>
       {addMoreDialog}
+      {removeSlotDialog}
       <Card className="mx-auto flex h-full w-full max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
       <input
         ref={fileInputRef}
