@@ -701,6 +701,12 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
       fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
 
       const secondImageDropdown = screen.getByTestId(
@@ -795,6 +801,12 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
       const previewCanvas = screen.getByTestId(
         "selected-image-preview-canvas",
       ) as HTMLCanvasElement;
@@ -876,7 +888,13 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [secondFile] } });
       }
 
-      mockImageWidth = 700;
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
+        ).toBeTruthy();
+      });
+
+      mockImageWidth = 800;
       mockImageHeight = 1100;
       fireEvent.click(screen.getByTestId("uploader-slider-side-left"));
 

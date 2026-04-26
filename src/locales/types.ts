@@ -184,6 +184,14 @@ export interface Translations {
     slotUploadFailed: string;
     usedCloudinaryTools: string;
     noCloudinaryTools: string;
+    validation: {
+      minWidth: string;
+      minHeight: string;
+      minDpi: string;
+      maxFileSize: string;
+      invalidType: string;
+      invalidImage: string;
+    };
   };
   uploader: {
     cropImage: string;
