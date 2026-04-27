@@ -14,7 +14,9 @@
     "test": "vitest",
     "preview": "vite preview",
     "db:migrate:dev": "bash ./scripts/supabase-migrate.sh",
-    "db:migrate:deploy": "bash ./scripts/supabase-migrate.sh"
+    "db:migrate:deploy": "bash ./scripts/supabase-migrate.sh",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@base-ui/react": "^1.1.0",
@@ -71,10 +73,15 @@
     "netlify-cli": "^23.15.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "ui\n": "link:@vitest/ui\n",
+    "@vitest/ui": "^4.0.18",
     "vite": "^7.2.4",
     "vite-plugin-decap-cms": "^0.5.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "storybook": "^10.3.5",
+    "@storybook/react-vite": "^10.3.5",
+    "@storybook/addon-a11y": "^10.3.5",
+    "@storybook/addon-docs": "^10.3.5",
+    "eslint-plugin-storybook": "^10.3.5"
   },
   "pnpm": {
     "overrides": {
