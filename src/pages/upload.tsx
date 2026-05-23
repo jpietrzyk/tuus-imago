@@ -6,6 +6,8 @@ import {
   type OrderableSlotSummary,
   type UploadedSlotResult,
 } from "@/components/image-uploader";
+import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
+import { type ImageDebugData } from "@/components/image-debug-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -40,6 +42,8 @@ interface UploadPageProps {
   ) => void;
   imageDebugDataEnabled?: boolean;
   initialRestoredSlots?: UploadedSlotResult[];
+  onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
+  onDebugDataChange?: (data: ImageDebugData | null) => void;
 }
 
 const PREVIEW_LOADING_TIMEOUT_MS = 30000;
@@ -53,6 +57,8 @@ export function UploadPage({
   onCheckoutWithUpload,
   imageDebugDataEnabled = true,
   initialRestoredSlots = [],
+  onToolsPanelPropsChange,
+  onDebugDataChange,
 }: UploadPageProps = {}) {
   const restoredSlots = initialRestoredSlots;
   const uploaderRef = useRef<ImageUploaderHandle | null>(null);
@@ -729,6 +735,8 @@ export function UploadPage({
                     uploadProgressLabel={uploadProgressLabel}
                     uploadingSlotIndex={uploadingSlotIndex}
                     className="mx-auto h-full w-full max-w-sm pt-4 pb-6 text-lg font-semibold"
+                    onToolsPanelPropsChange={onToolsPanelPropsChange}
+                    onDebugDataChange={onDebugDataChange}
                   />
                 </div>
               </div>

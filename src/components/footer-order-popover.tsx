@@ -66,7 +66,7 @@ export function CheckoutOrderDropup({
         <Button
           type="button"
           size="sm"
-          className="h-9 gap-1.5 rounded-full px-2 text-xs font-semibold tracking-[0.01em] shadow-sm sm:px-4 sm:text-sm"
+          className="h-9 w-full lg:w-auto gap-1.5 rounded-full px-2 text-xs font-semibold tracking-[0.01em] shadow-sm sm:px-4 sm:text-sm"
           aria-label={
             rows.length > 0
               ? `${t("checkout.openCheckout")} · ${formatPrice(totalPrice)}`
