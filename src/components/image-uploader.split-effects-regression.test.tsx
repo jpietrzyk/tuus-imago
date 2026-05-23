@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { ImageUploader } from "./image-uploader";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import type { SelectedImageItem } from "./image-uploader/image-uploader";
+import {
+  FooterToolsBar,
+  type FooterToolsBarProps,
+} from "@/components/footer-tools-bar";
 
 vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
@@ -23,21 +28,10 @@ vi.mock("./image-uploader/jpeg-exif-reader", () => ({
   readJpegExifResolution: mockReadJpegExifResolution,
 }));
 
-let latestToolsPanelProps: {
-  slots: Array<SelectedImageItem | null>;
-  activeSlotIndex: number | null;
-  activeImageEffects: {
-    brightness: number;
-    contrast: number;
-    grayscale: number;
-    removeBackground?: boolean;
-    enhance?: boolean;
-  } | null;
-  onUpdateEffect: (
-    effectName: "brightness" | "contrast" | "grayscale",
-    value: number,
-  ) => void;
-  onSplitImage: () => void;
+let latestToolsBarProps: FooterToolsBarProps | null = null;
+let latestEffectsProps: {
+  activeImageEffects: SelectedImageItem["previewEffects"] | null;
+  onUpdateEffect: (name: "brightness" | "contrast" | "grayscale", val: number) => void;
 } | null = null;
 
 vi.mock("./image-uploader/uploader-preview-slider", () => ({
@@ -47,22 +41,11 @@ vi.mock("./image-uploader/uploader-preview-slider", () => ({
 
 vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
   default: (props: {
-    slots: Array<SelectedImageItem | null>;
-    activeSlotIndex: number | null;
-    activeImageEffects: {
-      brightness: number;
-      contrast: number;
-      grayscale: number;
-      removeBackground?: boolean;
-      enhance?: boolean;
-    } | null;
-    onUpdateEffect: (
-      effectName: "brightness" | "contrast" | "grayscale",
-      value: number,
-    ) => void;
-    onSplitImage: () => void;
+    activeImageEffects: SelectedImageItem["previewEffects"] | null;
+    onUpdateEffect: (name: "brightness" | "contrast" | "grayscale", val: number) => void;
+    externalEditMode?: boolean;
   }) => {
-    latestToolsPanelProps = props;
+    latestEffectsProps = props;
 
     return (
       <div>
@@ -73,6 +56,16 @@ vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
         >
           apply brightness
         </button>
+      </div>
+    );
+  },
+}));
+
+vi.mock("@/components/footer-tools-bar", () => ({
+  FooterToolsBar: (props: FooterToolsBarProps) => {
+    latestToolsBarProps = props;
+    return (
+      <div>
         <button
           type="button"
           data-testid="split-active-image"
@@ -85,10 +78,24 @@ vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
   },
 }));
 
+function TestWrapper() {
+  const [toolsBarProps, setToolsBarProps] = useState<FooterToolsBarProps | null>(null);
+
+  return (
+    <>
+      <ImageUploader
+        onToolsPanelPropsChange={setToolsBarProps}
+      />
+      {toolsBarProps && <FooterToolsBar {...toolsBarProps} />}
+    </>
+  );
+}
+
 describe("ImageUploader split effects regression", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    latestToolsPanelProps = null;
+    latestToolsBarProps = null;
+    latestEffectsProps = null;
   });
 
   it("keeps the applied effects on the newly active split slot", async () => {
@@ -105,7 +112,7 @@ describe("ImageUploader split effects regression", () => {
       splitPartFiles,
     );
 
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -131,9 +138,9 @@ describe("ImageUploader split effects regression", () => {
     });
 
     await waitFor(() => {
-      expect(latestToolsPanelProps?.slots).toHaveLength(3);
-      expect(latestToolsPanelProps?.activeSlotIndex).toBe(1);
-      expect(latestToolsPanelProps?.activeImageEffects).toEqual({
+      expect(latestToolsBarProps?.slots).toHaveLength(3);
+      expect(latestToolsBarProps?.activeSlotIndex).toBe(1);
+      expect(latestEffectsProps?.activeImageEffects).toEqual({
         brightness: 40,
         contrast: 0,
         grayscale: 0,
@@ -142,7 +149,7 @@ describe("ImageUploader split effects regression", () => {
         upscale: false,
         restore: false,
       });
-      expect(latestToolsPanelProps?.slots[1]?.previewEffects).toEqual({
+      expect(latestToolsBarProps?.slots[1]?.previewEffects).toEqual({
         brightness: 40,
         contrast: 0,
         grayscale: 0,
