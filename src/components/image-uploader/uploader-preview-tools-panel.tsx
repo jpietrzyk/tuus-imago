@@ -83,8 +83,6 @@ export function UploaderPreviewToolsPanel({
   const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
   const prevExternalEditMode = useRef(false);
 
-  const isEditMode = externalEditMode ?? internalEditMode;
-
   useEffect(() => {
     if (externalEditMode && !prevExternalEditMode.current) {
       const effects = activeImageEffects ?? {
@@ -119,38 +117,6 @@ export function UploaderPreviewToolsPanel({
     }
     prevExternalEditMode.current = !!externalEditMode;
   }, [externalEditMode, activeImageEffects, activeImageTransform, activeImageCropAdjust]);
-
-  const captureSnapshot = (): EffectsSnapshot => {
-    const effects = activeImageEffects ?? {
-      brightness: 0,
-      contrast: 0,
-      grayscale: 0,
-      removeBackground: false,
-      enhance: false,
-      upscale: false,
-      restore: false,
-    };
-    const trans = activeImageTransform ?? {
-      rotation: 0,
-      flipHorizontal: false,
-      flipVertical: false,
-    };
-    return {
-      brightness: effects.brightness,
-      contrast: effects.contrast,
-      grayscale: effects.grayscale ?? 0,
-      removeBackground: !!effects.removeBackground,
-      enhance: !!effects.enhance,
-      upscale: !!effects.upscale,
-      restore: !!effects.restore,
-      rotation: trans.rotation,
-      flipHorizontal: trans.flipHorizontal,
-      flipVertical: trans.flipVertical,
-      cropAdjust: activeImageCropAdjust
-        ? { ...activeImageCropAdjust }
-        : undefined,
-    };
-  };
 
   const restoreSnapshot = (snap: EffectsSnapshot) => {
     onUpdateEffect("brightness", snap.brightness);
