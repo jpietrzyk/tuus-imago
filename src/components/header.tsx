@@ -35,16 +35,28 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
   return (
     <header className="w-full h-(--app-shell-bar-height) bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
       <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
-        <Link
-          to="/"
-          aria-label="Tuus Imago – home"
-          className="inline-flex items-center"
-        >
-          <span className="text-3xl font-bold leading-none">
-            <span className="text-slate-900">T</span>
-            <span className="text-blue-500">I</span>
-          </span>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => onOpenLegalMenu("legal")}
+            aria-label={t("common.legalMenu")}
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </Button>
+
+          <Link
+            to="/"
+            aria-label="Tuus Imago – home"
+            className="inline-flex items-center"
+          >
+            <span className="text-3xl font-bold leading-none">
+              <span className="text-slate-900">T</span>
+              <span className="text-blue-500">I</span>
+            </span>
+          </Link>
+        </div>
 
         <CurrentPromotionBanner slogan={promotionSlogan} />
 
@@ -105,16 +117,6 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
                 <span className="hidden sm:inline">{t("auth.signIn")}</span>
               </Button>
             ))}
-
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            onClick={() => onOpenLegalMenu("legal")}
-            aria-label={t("common.legalMenu")}
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-          </Button>
         </div>
       </div>
     </header>
