@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import { Check, RotateCcw, X } from "lucide-react";
@@ -81,42 +81,49 @@ export function UploaderPreviewToolsPanel({
 }: UploaderPreviewToolsPanelProps) {
   const [internalEditMode, setInternalEditMode] = useState(false);
   const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
-  const prevExternalEditMode = useRef(false);
+  const [prevExternalEditMode, setPrevExternalEditMode] = useState(false);
 
-  useEffect(() => {
-    if (externalEditMode && !prevExternalEditMode.current) {
-      const effects = activeImageEffects ?? {
-        brightness: 0,
-        contrast: 0,
-        grayscale: 0,
-        removeBackground: false,
-        enhance: false,
-        upscale: false,
-        restore: false,
-      };
-      const trans = activeImageTransform ?? {
-        rotation: 0,
-        flipHorizontal: false,
-        flipVertical: false,
-      };
-      setSnapshot({
-        brightness: effects.brightness,
-        contrast: effects.contrast,
-        grayscale: effects.grayscale ?? 0,
-        removeBackground: !!effects.removeBackground,
-        enhance: !!effects.enhance,
-        upscale: !!effects.upscale,
-        restore: !!effects.restore,
-        rotation: trans.rotation,
-        flipHorizontal: trans.flipHorizontal,
-        flipVertical: trans.flipVertical,
-        cropAdjust: activeImageCropAdjust
-          ? { ...activeImageCropAdjust }
-          : undefined,
-      });
-    }
-    prevExternalEditMode.current = !!externalEditMode;
-  }, [externalEditMode, activeImageEffects, activeImageTransform, activeImageCropAdjust]);
+  const showDrawer = externalEditMode ?? internalEditMode;
+
+  const currentEffectsSnapshot = useMemo((): EffectsSnapshot => {
+    const effects = activeImageEffects ?? {
+      brightness: 0,
+      contrast: 0,
+      grayscale: 0,
+      removeBackground: false,
+      enhance: false,
+      upscale: false,
+      restore: false,
+    };
+    const trans = activeImageTransform ?? {
+      rotation: 0,
+      flipHorizontal: false,
+      flipVertical: false,
+    };
+    return {
+      brightness: effects.brightness,
+      contrast: effects.contrast,
+      grayscale: effects.grayscale ?? 0,
+      removeBackground: !!effects.removeBackground,
+      enhance: !!effects.enhance,
+      upscale: !!effects.upscale,
+      restore: !!effects.restore,
+      rotation: trans.rotation,
+      flipHorizontal: trans.flipHorizontal,
+      flipVertical: trans.flipVertical,
+      cropAdjust: activeImageCropAdjust
+        ? { ...activeImageCropAdjust }
+        : undefined,
+    };
+  }, [activeImageEffects, activeImageTransform, activeImageCropAdjust]);
+
+  if (externalEditMode && !prevExternalEditMode) {
+    setPrevExternalEditMode(true);
+    setSnapshot(currentEffectsSnapshot);
+  }
+  if (!externalEditMode && prevExternalEditMode) {
+    setPrevExternalEditMode(false);
+  }
 
   const restoreSnapshot = (snap: EffectsSnapshot) => {
     onUpdateEffect("brightness", snap.brightness);
@@ -156,8 +163,6 @@ export function UploaderPreviewToolsPanel({
       restoreSnapshot(snapshot);
     }
   };
-
-  const showDrawer = externalEditMode ?? internalEditMode;
 
   return (
     <>
