@@ -274,6 +274,10 @@ export interface Translations {
     addMoreImagesDescription: string;
     addMoreImagesYes: string;
     addMoreImagesNo: string;
+    shapeButton: string;
+    frameButton: string;
+    aiEditorButton: string;
+    settingsButton: string;
     removeSlotConfirmTitle: string;
     removeSlotConfirmDescription: string;
     removeSlotConfirmAction: string;

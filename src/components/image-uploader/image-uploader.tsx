@@ -108,6 +108,7 @@ interface ImageUploaderProps {
   showDebugData?: boolean;
   onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
+  onReset?: () => void;
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
@@ -372,6 +373,7 @@ export const ImageUploader = forwardRef<
     initialSlots,
     onToolsPanelPropsChange,
     onDebugDataChange,
+    onReset,
   }: ImageUploaderProps,
   ref,
 ) {
@@ -1555,9 +1557,16 @@ export const ImageUploader = forwardRef<
           ? "rectangle"
           : displayImageProportion,
       showCoverageDetails: shouldShowUploaderDebugData,
+      isZoomPanMode: false,
+      onToggleZoomPan: () => {},
+      canToggleZoomPan: false,
+      onEnterAiEditMode: () => {},
+      canUpdateAiEffects: false,
       canUpdateEffects: !!activeImage,
       isEditMode: isEffectsEditMode,
       onEnterEditMode: enterEffectsEditMode,
+      onReset: onReset ?? (() => {}),
+      canReset: !!onReset && selectedImageCount > 0,
     };
   }, [
     selectedImageCount,
@@ -1572,6 +1581,7 @@ export const ImageUploader = forwardRef<
     shouldShowUploaderDebugData,
     isEffectsEditMode,
     enterEffectsEditMode,
+    onReset,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);

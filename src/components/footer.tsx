@@ -1,17 +1,3 @@
-import { RotateCcw, TriangleAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { t } from "@/locales/i18n";
 import { type UploadSlotKey } from "@/components/image-uploader";
 import {
   CheckoutOrderDropup,
@@ -30,8 +16,6 @@ interface FooterProps {
   orderRows?: FooterOrderRow[];
   checkedOrderSlotKeys?: Set<UploadSlotKey>;
   onToggleOrderSlot?: (slotKey: UploadSlotKey) => void;
-  showReset?: boolean;
-  onReset?: () => void;
   toolsBarProps?: FooterToolsBarProps | null;
 }
 
@@ -43,8 +27,6 @@ export function Footer({
   orderRows = [],
   checkedOrderSlotKeys = new Set<UploadSlotKey>(),
   onToggleOrderSlot,
-  showReset = false,
-  onReset,
   toolsBarProps,
 }: FooterProps) {
   const hasTools = !!toolsBarProps;
@@ -67,48 +49,6 @@ export function Footer({
             >
               © TuusImago 2026 - paint that
             </button>
-
-            {showReset && onReset ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="h-9 rounded-full px-3 text-xs font-semibold sm:text-sm"
-                    aria-label={t("uploader.resetSlots")}
-                  >
-                    <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                    {t("uploader.resetShort")}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent size="sm">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <TriangleAlert
-                        className="h-4 w-4 text-destructive"
-                        aria-hidden="true"
-                      />
-                      {t("uploader.resetSlotsConfirmTitle")}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t("uploader.resetSlotsConfirmDescription")}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>
-                      {t("uploader.cancel")}
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      onClick={onReset}
-                      className="w-full sm:w-auto h-auto min-h-9 whitespace-normal wrap-break-word text-center leading-tight"
-                    >
-                      {t("uploader.resetSlotsConfirmAction")}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : null}
           </div>
 
           <div className="flex items-center justify-center gap-2 max-lg:w-full">

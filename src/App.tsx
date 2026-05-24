@@ -61,13 +61,6 @@ function restoreUploadSlots(): UploadedSlotResult[] {
   return [];
 }
 
-function clearUploadSlots() {
-  try {
-    sessionStorage.removeItem(UPLOAD_SLOTS_STORAGE);
-  } catch {
-    // ignore
-  }
-}
 import { AuthPage } from "./pages/auth";
 import { AuthCallbackPage } from "./pages/auth-callback";
 import { ResetPasswordPage } from "./pages/auth-reset-password";
@@ -217,8 +210,6 @@ function StorefrontApp() {
   );
   const [isFooterCheckoutAvailable, setIsFooterCheckoutAvailable] =
     useState(false);
-  const [isFooterResetAvailable, setIsFooterResetAvailable] = useState(false);
-  const [onFooterReset, setOnFooterReset] = useState<(() => void) | null>(null);
   const [successfulSlotsForCheckout, setSuccessfulSlotsForCheckout] = useState<
     UploadedSlotResult[]
   >([]);
@@ -242,7 +233,11 @@ function StorefrontApp() {
               activeSlotIndex: props.activeSlotIndex,
               canSplitImage: props.canSplitImage,
               canUpdateEffects: props.canUpdateEffects,
+              canToggleZoomPan: props.canToggleZoomPan,
+              canUpdateAiEffects: props.canUpdateAiEffects,
               isEditMode: props.isEditMode,
+              isZoomPanMode: props.isZoomPanMode,
+              canReset: props.canReset,
               selectedProportion: props.selectedProportion,
               shouldConfirmSplit: props.shouldConfirmSplit,
               showCoverageDetails: props.showCoverageDetails,
@@ -303,25 +298,8 @@ function StorefrontApp() {
     [],
   );
 
-  // Clear persisted upload slots on reset
-  const handleResetActionChange = useCallback(
-    (action: (() => void) | null) => {
-      if (action) {
-        setOnFooterReset(() => () => {
-          action();
-          clearUploadSlots();
-        });
-      } else {
-        setOnFooterReset(null);
-      }
-    },
-    [],
-  );
-
   const showFooterCheckout =
     location.pathname === "/upload" && isFooterCheckoutAvailable;
-  const showFooterReset =
-    location.pathname === "/upload" && isFooterResetAvailable;
 
   const footerOrderRows = useMemo(
     () =>
@@ -451,8 +429,6 @@ function StorefrontApp() {
               <UploadPage
                 key={uploadPageKey}
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
-                onResetAvailabilityChange={setIsFooterResetAvailable}
-                onResetActionChange={handleResetActionChange}
                 onSuccessfulSlotsChange={handleSuccessfulSlotsChange}
                 onOrderableSlotsChange={setOrderableSlots}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
@@ -516,8 +492,6 @@ function StorefrontApp() {
         orderRows={footerOrderRows}
         checkedOrderSlotKeys={checkedOrderSlotKeys}
         onToggleOrderSlot={toggleFooterOrderSlot}
-        showReset={showFooterReset}
-        onReset={onFooterReset ?? undefined}
         toolsBarProps={footerToolsBarProps}
       />
       <LegalNavigationSheet
