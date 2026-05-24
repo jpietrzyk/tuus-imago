@@ -283,6 +283,8 @@
     "frameButton": "Frame",
     "aiEditorButton": "AI Editor",
     "settingsButton": "Settings",
+    "aiEffectsTitle": "AI Editor",
+    "settingsEffectsTitle": "Settings",
     "removeSlotConfirmTitle": "Remove this image?",
     "removeSlotConfirmDescription": "This action cannot be undone. The image will be permanently removed from the slot.",
     "removeSlotConfirmAction": "Remove"

@@ -39,7 +39,10 @@ function TestWrapper({
               activeSlotIndex: props.activeSlotIndex,
               canSplitImage: props.canSplitImage,
               canUpdateEffects: props.canUpdateEffects,
+              canUpdateAiEffects: props.canUpdateAiEffects,
+              canToggleZoomPan: props.canToggleZoomPan,
               isEditMode: props.isEditMode,
+              isZoomPanMode: props.isZoomPanMode,
               selectedProportion: props.selectedProportion,
               shouldConfirmSplit: props.shouldConfirmSplit,
             }
@@ -1291,13 +1294,11 @@ describe("ImageUploader", () => {
     fireEvent.change(input, { target: { files: [sourceFile] } });
     await screen.findByRole("img", { name: "Preview" });
 
-    const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.settingsButton"),
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
     });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
     fireEvent.click(effectsButton);
-
-    // Expand AI Effects collapsible group
-    fireEvent.click(screen.getByText(tr("uploader.aiEffectsGroupTitle")));
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1422,13 +1423,11 @@ describe("ImageUploader", () => {
     fireEvent.change(input, { target: { files: [sourceFile] } });
     await screen.findByRole("img", { name: "Preview" });
 
-    const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.settingsButton"),
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
     });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
     fireEvent.click(effectsButton);
-
-    // Expand AI Effects collapsible group
-    fireEvent.click(screen.getByText(tr("uploader.aiEffectsGroupTitle")));
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1585,7 +1584,7 @@ describe("ImageUploader", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText(tr("uploader.previewEffectsTitle")),
+        screen.queryByText(tr("uploader.settingsEffectsTitle")),
       ).not.toBeInTheDocument();
     });
 

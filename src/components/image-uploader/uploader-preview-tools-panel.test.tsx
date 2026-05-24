@@ -181,4 +181,62 @@ describe("UploaderPreviewToolsPanel", () => {
 
     expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
   });
+
+  it("shows AI Effects title when effectsMode is ai", () => {
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        externalEditMode={true}
+        effectsMode="ai"
+      />,
+    );
+
+    expect(screen.getByText(t("uploader.aiEffectsTitle"))).toBeInTheDocument();
+    expect(screen.queryByText(t("uploader.settingsEffectsTitle"))).not.toBeInTheDocument();
+  });
+
+  it("shows Settings title when effectsMode is settings", () => {
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        externalEditMode={true}
+        effectsMode="settings"
+      />,
+    );
+
+    expect(screen.getByText(t("uploader.settingsEffectsTitle"))).toBeInTheDocument();
+    expect(screen.queryByText(t("uploader.aiEffectsTitle"))).not.toBeInTheDocument();
+  });
+
+  it("shows only AI Effects group content when effectsMode is ai", () => {
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        externalEditMode={true}
+        effectsMode="ai"
+      />,
+    );
+
+    expect(screen.getByText(t("uploader.aiEffectsGroupTitle"))).toBeInTheDocument();
+    expect(screen.queryByText(t("uploader.adjustGroupTitle"))).not.toBeInTheDocument();
+    expect(screen.queryByText(t("uploader.transformGroupTitle"))).not.toBeInTheDocument();
+  });
+
+  it("shows settings groups content when effectsMode is settings", () => {
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        externalEditMode={true}
+        effectsMode="settings"
+      />,
+    );
+
+    expect(screen.getByText(t("uploader.adjustGroupTitle"))).toBeInTheDocument();
+    expect(screen.getByText(t("uploader.transformGroupTitle"))).toBeInTheDocument();
+    expect(screen.queryByText(t("uploader.aiEffectsGroupTitle"))).not.toBeInTheDocument();
+  });
 });

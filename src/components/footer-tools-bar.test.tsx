@@ -192,6 +192,72 @@ describe("FooterToolsBar", () => {
     expect(onEnterEditMode).toHaveBeenCalled();
   });
 
+  it("enables AI editor button when canUpdateAiEffects is true", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={true} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    expect(aiButton).not.toBeDisabled();
+  });
+
+  it("disables AI editor button when canUpdateAiEffects is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={false} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    expect(aiButton).toBeDisabled();
+  });
+
+  it("calls onEnterAiEditMode when AI editor button is clicked", () => {
+    const onEnterAiEditMode = vi.fn();
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={true} onEnterAiEditMode={onEnterAiEditMode} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    fireEvent.click(aiButton);
+
+    expect(onEnterAiEditMode).toHaveBeenCalled();
+  });
+
+  it("enables frame button when canToggleZoomPan is true", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={true} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    expect(frameButton).not.toBeDisabled();
+  });
+
+  it("disables frame button when canToggleZoomPan is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={false} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    expect(frameButton).toBeDisabled();
+  });
+
+  it("calls onToggleZoomPan when frame button is clicked", () => {
+    const onToggleZoomPan = vi.fn();
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={true} onToggleZoomPan={onToggleZoomPan} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    fireEvent.click(frameButton);
+
+    expect(onToggleZoomPan).toHaveBeenCalled();
+  });
+
   it("calls onSelectSlot when slot switcher slot is clicked", () => {
     const onSelectSlot = vi.fn();
     const props = createProps();
@@ -221,6 +287,14 @@ describe("FooterToolsBar", () => {
   it("hides slot switcher when isEditMode is true", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} isEditMode={true} />);
+
+    const slotSwitcher = screen.getByTestId("mock-slot-switcher");
+    expect(slotSwitcher).toHaveAttribute("hidden");
+  });
+
+  it("hides slot switcher when isZoomPanMode is true", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} isZoomPanMode={true} />);
 
     const slotSwitcher = screen.getByTestId("mock-slot-switcher");
     expect(slotSwitcher).toHaveAttribute("hidden");

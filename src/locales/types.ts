@@ -205,6 +205,8 @@ export interface Translations {
     uploadingProgress: string;
     imageAdjustments: string;
     previewEffectsTitle: string;
+    aiEffectsTitle: string;
+    settingsEffectsTitle: string;
     previewEffectsDescription: string;
     previewEffectsButton: string;
     removeBackgroundDescription: string;

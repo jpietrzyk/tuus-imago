@@ -111,7 +111,7 @@ export function FooterToolsBar({
           slots={slots}
           activeSlotIndex={activeSlotIndex}
           onSelectSlot={onSelectSlot}
-          hidden={isEditMode}
+          hidden={isEditMode || isZoomPanMode}
         />
       </div>
 

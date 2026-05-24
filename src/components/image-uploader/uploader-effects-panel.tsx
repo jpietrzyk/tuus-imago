@@ -50,6 +50,8 @@ export function UploaderEffectsPanelButton({
   );
 }
 
+export type EffectsMode = "ai" | "settings";
+
 export interface UploaderEffectsPanelContentProps {
   effects: {
     brightness: number;
@@ -86,6 +88,7 @@ export interface UploaderEffectsPanelContentProps {
   maxZoom?: number;
   isZoomAvailable?: boolean;
   onZoomChange?: (zoom: number) => void;
+  effectsMode?: EffectsMode;
 }
 
 function GroupTrigger({ title }: { title: string }) {
@@ -118,6 +121,7 @@ export function UploaderEffectsPanelContent({
   maxZoom = 3,
   isZoomAvailable = false,
   onZoomChange,
+  effectsMode,
 }: UploaderEffectsPanelContentProps) {
   const effectValues = effects ?? {
     brightness: 0,
@@ -138,9 +142,14 @@ export function UploaderEffectsPanelContent({
   const isApplyingEffect =
     isRemoveBackgroundBusy || isEnhanceBusy || isUpscaleBusy || isRestoreBusy;
 
+  const showCropGroup = !effectsMode || effectsMode === "settings";
+  const showAdjustGroup = !effectsMode || effectsMode === "settings";
+  const showAiGroup = !effectsMode || effectsMode === "ai";
+  const showTransformGroup = !effectsMode || effectsMode === "settings";
+
   return (
     <div className="flex flex-col gap-2">
-      {isZoomAvailable && onZoomChange && (
+      {showCropGroup && isZoomAvailable && onZoomChange && (
         <Collapsible defaultOpen>
           <GroupTrigger title={t("uploader.cropGroupTitle")} />
           <CollapsibleContent>
@@ -164,6 +173,7 @@ export function UploaderEffectsPanelContent({
         </Collapsible>
       )}
 
+      {showAdjustGroup && (
       <Collapsible>
         <GroupTrigger title={t("uploader.adjustGroupTitle")} />
         <CollapsibleContent>
@@ -221,10 +231,12 @@ export function UploaderEffectsPanelContent({
               />
             </div>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+         </CollapsibleContent>
+       </Collapsible>
+      )}
 
-      <Collapsible>
+      {showAiGroup && (
+      <Collapsible defaultOpen={effectsMode === "ai"}>
         <GroupTrigger title={t("uploader.aiEffectsGroupTitle")} />
         <CollapsibleContent>
           <div className="space-y-2 pt-2 pb-1">
@@ -307,9 +319,11 @@ export function UploaderEffectsPanelContent({
               </div>
             )}
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+         </CollapsibleContent>
+       </Collapsible>
+      )}
 
+      {showTransformGroup && (
       <Collapsible>
         <GroupTrigger title={t("uploader.transformGroupTitle")} />
         <CollapsibleContent>
@@ -401,8 +415,9 @@ export function UploaderEffectsPanelContent({
               </div>
             </div>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+         </CollapsibleContent>
+       </Collapsible>
+      )}
     </div>
   );
 }

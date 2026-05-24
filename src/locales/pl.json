@@ -228,6 +228,8 @@
     "frameButton": "Kadr",
     "aiEditorButton": "Edytor AI",
     "settingsButton": "Ustawienia",
+    "aiEffectsTitle": "Edytor AI",
+    "settingsEffectsTitle": "Ustawienia",
     "removeSlotConfirmTitle": "Usunąć to zdjęcie?",
     "removeSlotConfirmDescription": "Tej operacji nie można cofnąć. Zdjęcie zostanie trwale usunięte ze slotu.",
     "removeSlotConfirmAction": "Usuń"
