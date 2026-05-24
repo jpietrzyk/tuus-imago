@@ -192,7 +192,7 @@ describe("UploaderPreviewToolsPanel", () => {
       />,
     );
 
-    expect(screen.getByText(t("uploader.aiEffectsTitle"))).toBeInTheDocument();
+    expect(screen.getByTestId("effects-drawer-title")).toHaveTextContent(t("uploader.aiEffectsTitle"));
     expect(screen.queryByText(t("uploader.settingsEffectsTitle"))).not.toBeInTheDocument();
   });
 

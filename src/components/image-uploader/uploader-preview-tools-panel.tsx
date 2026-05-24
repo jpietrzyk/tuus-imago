@@ -193,7 +193,7 @@ export function UploaderPreviewToolsPanel({
               <X className="h-4 w-4" />
               {t("uploader.effectsCancel")}
             </Button>
-            <span className="text-sm font-semibold">
+            <span className="text-sm font-semibold" data-testid="effects-drawer-title">
               {drawerTitle}
             </span>
             <div className="flex items-center gap-1.5">
