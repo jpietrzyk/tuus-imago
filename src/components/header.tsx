@@ -1,4 +1,4 @@
-import { Menu, User, LogOut, Package, MapPin } from "lucide-react";
+import { User, LogOut, Package, MapPin } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import type { LegalMenuSection } from "@/components/legal-navigation-sheet";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import {
 import { t } from "@/locales/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { CurrentPromotionBanner } from "@/components/current-promotion-banner";
+import IconMenu from "@/components/icons/icon-menu.svg?react";
+import IconLogo from "@/components/icons/icon-logo.svg?react";
 
 interface HeaderProps {
   onOpenLegalMenu: (section: LegalMenuSection) => void;
@@ -43,7 +45,7 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
             onClick={() => onOpenLegalMenu("legal")}
             aria-label={t("common.legalMenu")}
           >
-            <Menu className="h-5 w-5" aria-hidden="true" />
+            <IconMenu className="h-5 w-5" aria-hidden="true" />
           </Button>
 
           <Link
@@ -51,10 +53,7 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
             aria-label="Tuus Imago – home"
             className="inline-flex items-center"
           >
-            <span className="text-3xl font-bold leading-none">
-              <span className="text-slate-900">T</span>
-              <span className="text-blue-500">I</span>
-            </span>
+            <IconLogo className="h-8 w-8" />
           </Link>
         </div>
 

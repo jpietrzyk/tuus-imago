@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Upload, X } from "lucide-react";
+import IconAdd from "@/components/icons/icon-add.svg?react";
+import IconRemove from "@/components/icons/icon-remove.svg?react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
@@ -217,7 +218,7 @@ export default function PaintingPreviewSlot({
             }
             onClick={onSelectEmptySlot}
           >
-            <Upload className="h-8 w-8 text-muted-foreground/50" />
+            <IconAdd className="h-8 w-8 text-muted-foreground/50" />
           </button>
         )}
 
@@ -249,7 +250,7 @@ export default function PaintingPreviewSlot({
             data-testid="uploader-remove-active-image"
             className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full border border-border/70 bg-background/95 p-1.5 text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 opacity-0 group-hover/preview-slot:opacity-100 peer-active/preview-slot:opacity-100 max-[768px]:opacity-100"
           >
-            <X className="h-3.5 w-3.5" aria-hidden="true" />
+            <IconRemove className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
         )}
       </div>
