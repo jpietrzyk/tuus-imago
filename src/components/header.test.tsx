@@ -146,7 +146,7 @@ describe("Header", () => {
     renderHeader();
     const logo = screen.getByLabelText("Tuus Imago – home");
     expect(logo).toBeInTheDocument();
-    expect(logo.textContent).toBe("TI");
+    expect(logo.querySelector("svg")).toBeInTheDocument();
   });
 
   it("shows promotion banner when promotionSlogan is provided", () => {

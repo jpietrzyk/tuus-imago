@@ -15,11 +15,11 @@ import { TriangleAlert } from "lucide-react";
 import { UploaderSlotSwitcher } from "@/components/image-uploader/uploader-slot-switcher";
 import { UploaderTools, type UploaderProportion } from "@/components/image-uploader/uploader-tools";
 import type { SelectedImageItem } from "@/components/image-uploader/image-uploader";
-import IconShape from "@/components/icons/icon-shape.svg?react";
-import IconFrame from "@/components/icons/icon-frame.svg?react";
-import IconAiEditor from "@/components/icons/icon-ai-editor.svg?react";
-import IconSettings from "@/components/icons/icon-settings.svg?react";
-import IconTriptych from "@/components/icons/icon-triptych.svg?react";
+import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
+import IconFrame from "@/assets/icons/kadr_tool.svg?react";
+import IconAiEditor from "@/assets/icons/edytor_ai_tool.svg?react";
+import IconSettings from "@/assets/icons/ustawienia_tool.svg?react";
+import IconTriptych from "@/assets/icons/tryptyk_tool.svg?react";
 import IconReset from "@/components/icons/icon-reset.svg?react";
 
 export interface FooterToolsBarProps {
@@ -81,13 +81,13 @@ export function FooterToolsBar({
     <Button
       type="button"
       variant="secondary"
-      size="icon"
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      className={TOOLBAR_BUTTON_CLASS}
+      className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
     >
       <IconTriptych className={ICON_CLASS} />
+      <span className="text-[9px] leading-none">Tryptyk</span>
     </Button>
   );
 
@@ -95,12 +95,12 @@ export function FooterToolsBar({
     <Button
       type="button"
       variant="secondary"
-      size="icon"
       disabled={!canReset}
       aria-label={t("uploader.resetSlots")}
-      className={TOOLBAR_BUTTON_CLASS}
+      className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
     >
       <IconReset className={ICON_CLASS} />
+      <span className="text-[9px] leading-none">Reset</span>
     </Button>
   );
 
@@ -127,12 +127,12 @@ export function FooterToolsBar({
                 <Button
                   type="button"
                   variant="secondary"
-                  size="icon"
                   data-testid="image-proportions-dropdown-trigger"
                   aria-label={t("uploader.shapeButton")}
-                  className={TOOLBAR_BUTTON_CLASS}
+                  className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
                 >
                   <IconShape className={ICON_CLASS} />
+                  <span className="text-[9px] leading-none">Kształt</span>
                 </Button>
               }
             />
@@ -142,13 +142,13 @@ export function FooterToolsBar({
             <Button
               type="button"
               variant={isZoomPanMode ? "default" : "secondary"}
-              size="icon"
               disabled={!canToggleZoomPan}
               onClick={onToggleZoomPan}
               aria-label={t("uploader.frameButton")}
-              className={TOOLBAR_BUTTON_CLASS}
+              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
             >
               <IconFrame className={ICON_CLASS} />
+              <span className="text-[9px] leading-none">Kadr</span>
             </Button>
           </div>
 
@@ -156,13 +156,13 @@ export function FooterToolsBar({
             <Button
               type="button"
               variant="secondary"
-              size="icon"
               disabled={!canUpdateAiEffects}
               onClick={onEnterAiEditMode}
               aria-label={t("uploader.aiEditorButton")}
-              className={TOOLBAR_BUTTON_CLASS}
+              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
             >
               <IconAiEditor className={ICON_CLASS} />
+              <span className="text-[9px] leading-none">Edytor AI</span>
             </Button>
           </div>
 
@@ -170,13 +170,13 @@ export function FooterToolsBar({
             <Button
               type="button"
               variant={isEditMode ? "default" : "secondary"}
-              size="icon"
               disabled={!canUpdateEffects}
               onClick={onEnterEditMode}
               aria-label={t("uploader.settingsButton")}
-              className={TOOLBAR_BUTTON_CLASS}
+              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
             >
               <IconSettings className={ICON_CLASS} />
+              <span className="text-[9px] leading-none">Ustawienia</span>
             </Button>
           </div>
 

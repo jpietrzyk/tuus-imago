@@ -1584,7 +1584,7 @@ describe("ImageUploader", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText(tr("uploader.settingsEffectsTitle")),
+        screen.queryByTestId("effects-drawer-title"),
       ).not.toBeInTheDocument();
     });
 

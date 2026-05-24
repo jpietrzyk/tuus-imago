@@ -368,9 +368,9 @@ describe("FooterToolsBar", () => {
     });
     fireEvent.click(resetButton);
 
-    const confirmButton = screen.getByText(
-      t("uploader.resetSlotsConfirmAction"),
-    );
+    const confirmButton = screen.getByRole("button", {
+      name: t("uploader.resetSlotsConfirmAction"),
+    });
     fireEvent.click(confirmButton);
 
     expect(onReset).toHaveBeenCalled();
