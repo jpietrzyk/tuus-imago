@@ -82,5 +82,16 @@
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "eslint-plugin-storybook": "^10.3.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "canvas",
+      "esbuild",
+      "msw",
+      "netlify-cli",
+      "sharp",
+      "unix-dgram"
+    ]
   }
 }
