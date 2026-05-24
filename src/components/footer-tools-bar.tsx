@@ -52,8 +52,8 @@ export interface FooterToolsBarProps {
 }
 
 const TOOLBAR_BUTTON_CLASS =
-  "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-2xl shadow-lg border-2";
-const ICON_CLASS = "h-12 w-12 sm:h-14 sm:w-14";
+  "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-2xl shadow-lg border-2 p-1.5 overflow-hidden";
+const ICON_STYLE: React.CSSProperties = { width: "100%", height: "100%" };
 
 export function FooterToolsBar({
   slots,
@@ -86,7 +86,7 @@ export function FooterToolsBar({
       aria-label={t("uploader.splitSelectedImage")}
       className={TOOLBAR_BUTTON_CLASS}
     >
-      <IconTriptych className={ICON_CLASS} />
+      <IconTriptych style={ICON_STYLE} />
     </Button>
   );
 
@@ -98,7 +98,7 @@ export function FooterToolsBar({
       aria-label={t("uploader.resetSlots")}
       className={TOOLBAR_BUTTON_CLASS}
     >
-      <IconReset className={ICON_CLASS} />
+      <IconReset style={ICON_STYLE} />
     </Button>
   );
 
@@ -128,7 +128,7 @@ export function FooterToolsBar({
                 aria-label={t("uploader.shapeButton")}
                 className={TOOLBAR_BUTTON_CLASS}
               >
-                <IconShape className={ICON_CLASS} />
+                <IconShape style={ICON_STYLE} />
               </Button>
             }
           />
@@ -141,7 +141,7 @@ export function FooterToolsBar({
             aria-label={t("uploader.frameButton")}
             className={TOOLBAR_BUTTON_CLASS}
           >
-            <IconFrame className={ICON_CLASS} />
+            <IconFrame style={ICON_STYLE} />
           </Button>
 
           <Button
@@ -152,7 +152,7 @@ export function FooterToolsBar({
             aria-label={t("uploader.aiEditorButton")}
             className={TOOLBAR_BUTTON_CLASS}
           >
-            <IconAiEditor className={ICON_CLASS} />
+            <IconAiEditor style={ICON_STYLE} />
           </Button>
 
           <Button
@@ -163,7 +163,7 @@ export function FooterToolsBar({
             aria-label={t("uploader.settingsButton")}
             className={TOOLBAR_BUTTON_CLASS}
           >
-            <IconSettings className={ICON_CLASS} />
+            <IconSettings style={ICON_STYLE} />
           </Button>
 
           {shouldConfirmSplit ? (
