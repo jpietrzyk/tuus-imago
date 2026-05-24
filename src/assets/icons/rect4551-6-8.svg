@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="304.81485mm"
+   height="279.56381mm"
+   viewBox="0 0 304.81485 279.56381"
+   version="1.1"
+   id="svg4366"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs4360">
+    <rect
+       x="156.69858"
+       y="2737.8901"
+       width="199.54984"
+       height="57.59375"
+       id="rect5516-5-4-6-6" />
+  </defs>
+  <metadata
+     id="metadata4363">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     transform="translate(-1099.5021,-3027.9878)">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:2.07245;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4551-6-8"
+       width="304.81482"
+       height="279.56378"
+       x="1099.5022"
+       y="3027.9878"
+       ry="46.209393" />
+    <g
+       id="g1955-9"
+       style="stroke-width:0.299689;stroke-miterlimit:4;stroke-dasharray:none"
+       transform="matrix(14.020822,0,0,15.549334,4257.6391,4420.9153)">
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.299689;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m -219.73856,-85.10443 0.94874,0.0029"
+         id="path1876-1" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.299689;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m -219.70464,-78.968173 h 0.90144 m 0.27768,0 8.86131,-0.0014 m 0.23491,0.0014 0.94074,-4.8e-5"
+         id="path1876-6-8" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.299689;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m -218.34308,-77.516467 -8e-5,-0.973382 m 8e-5,-0.214047 v -6.662843 m -0.26322,0.264589 8.94357,-0.01154 m 0.25458,0.0037 0.88862,-3.73e-4 m -9.8247,-0.45445 0.001,-1.04152"
+         id="path1898-0-9" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.299689;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m -209.84569,-77.543967 0.006,-0.995939 m -0.002,-0.165161 -0.002,-6.672485 m -0.002,-0.168191 v -1.081849"
+         id="path1898-0-0-6" />
+    </g>
+    <text
+       xml:space="preserve"
+       id="text5514-2-4-7-1"
+       style="font-size:19.7556px;line-height:1.25;font-family:bungee;-inkscape-font-specification:bungee;white-space:pre;shape-inside:url(#rect5516-5-4-6-6);opacity:0.800654;stroke-width:0.698057;stroke-miterlimit:4;stroke-dasharray:none"
+       transform="matrix(3.0319742,0,0,3.0319742,722.6293,-5090.9696)"><tspan
+         x="156.69922"
+         y="2755.8658"
+         id="tspan4"><tspan
+           style="font-family:'Tw Cen MT';-inkscape-font-specification:'Tw Cen MT'"
+           id="tspan3">Kadr</tspan></tspan></text>
+  </g>
+</svg>
