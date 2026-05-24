@@ -1,26 +1,8 @@
-import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
-import { Check, RotateCcw, SplitSquareVertical, TriangleAlert, X } from "lucide-react";
-import UploaderSlotSwitcher from "./uploader-slot-switcher";
-import UploaderTools from "./uploader-tools";
-import {
-  UploaderEffectsPanelButton,
-  UploaderEffectsPanelContent,
-} from "./uploader-effects-panel";
-import type { SelectedImageItem } from "./image-uploader";
-import type { UploaderProportion } from "./uploader-tools";
+import { Check, RotateCcw, X } from "lucide-react";
+import { UploaderEffectsPanelContent } from "./uploader-effects-panel";
 import type { CropAdjust } from "./use-crop-adjust";
 
 interface EffectsSnapshot {
@@ -38,13 +20,6 @@ interface EffectsSnapshot {
 }
 
 interface UploaderPreviewToolsPanelProps {
-  slots: Array<SelectedImageItem | null>;
-  activeSlotIndex: number | null;
-  onSelectSlot: (index: number) => void;
-  onSplitImage: () => void;
-  canSplitImage: boolean;
-  shouldConfirmSplit: boolean;
-  onSelectProportion: (proportion: UploaderProportion) => void;
   onUpdateEffect: (
     effectName: "brightness" | "contrast" | "grayscale",
     value: number,
@@ -75,23 +50,14 @@ interface UploaderPreviewToolsPanelProps {
   isEnhanceBusy?: boolean;
   isUpscaleBusy?: boolean;
   isRestoreBusy?: boolean;
-  coveragePercent?: Partial<Record<UploaderProportion, number>>;
-  selectedProportion: UploaderProportion;
-  showCoverageDetails?: boolean;
   onEditModeChange?: (isEditMode: boolean) => void;
   activeImageCropAdjust?: CropAdjust;
   onUpdateCropAdjust?: (adjust: CropAdjust | undefined) => void;
   isZoomAvailable?: boolean;
+  externalEditMode?: boolean;
 }
 
 export function UploaderPreviewToolsPanel({
-  slots,
-  activeSlotIndex,
-  onSelectSlot,
-  onSplitImage,
-  canSplitImage,
-  shouldConfirmSplit,
-  onSelectProportion,
   onUpdateEffect,
   onToggleRemoveBackground,
   onToggleEnhance,
@@ -107,18 +73,19 @@ export function UploaderPreviewToolsPanel({
   isEnhanceBusy = false,
   isUpscaleBusy = false,
   isRestoreBusy = false,
-  coveragePercent,
-  selectedProportion,
-  showCoverageDetails = false,
   onEditModeChange,
   activeImageCropAdjust,
   onUpdateCropAdjust,
   isZoomAvailable = false,
+  externalEditMode,
 }: UploaderPreviewToolsPanelProps) {
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [internalEditMode, setInternalEditMode] = useState(false);
   const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
+  const [prevExternalEditMode, setPrevExternalEditMode] = useState(false);
 
-  const captureSnapshot = (): EffectsSnapshot => {
+  const showDrawer = externalEditMode ?? internalEditMode;
+
+  const currentEffectsSnapshot = useMemo((): EffectsSnapshot => {
     const effects = activeImageEffects ?? {
       brightness: 0,
       contrast: 0,
@@ -148,7 +115,15 @@ export function UploaderPreviewToolsPanel({
         ? { ...activeImageCropAdjust }
         : undefined,
     };
-  };
+  }, [activeImageEffects, activeImageTransform, activeImageCropAdjust]);
+
+  if (externalEditMode && !prevExternalEditMode) {
+    setPrevExternalEditMode(true);
+    setSnapshot(currentEffectsSnapshot);
+  }
+  if (!externalEditMode && prevExternalEditMode) {
+    setPrevExternalEditMode(false);
+  }
 
   const restoreSnapshot = (snap: EffectsSnapshot) => {
     onUpdateEffect("brightness", snap.brightness);
@@ -171,14 +146,8 @@ export function UploaderPreviewToolsPanel({
       restoreSnapshot(snapshot);
     }
     setSnapshot(null);
-    setIsEditMode(false);
+    setInternalEditMode(false);
     onEditModeChange?.(false);
-  };
-
-  const enterEditMode = () => {
-    setSnapshot(captureSnapshot());
-    setIsEditMode(true);
-    onEditModeChange?.(true);
   };
 
   const handleApprove = () => {
@@ -195,85 +164,9 @@ export function UploaderPreviewToolsPanel({
     }
   };
 
-  const splitButton = (
-    <Button
-      type="button"
-      variant="secondary"
-      size="icon"
-      onClick={shouldConfirmSplit ? undefined : onSplitImage}
-      disabled={!canSplitImage}
-      aria-label={t("uploader.splitSelectedImage")}
-      className="h-10 w-10 sm:h-12 sm:w-14 shadow-lg border-2"
-    >
-      <SplitSquareVertical className="h-5 w-5 sm:h-6 sm:w-7" />
-    </Button>
-  );
-
   return (
     <>
-      <div className="mx-auto w-full rounded-xl border border-border/60 bg-background px-2 py-1 sm:px-3 sm:py-2 lg:px-3 lg:py-1.5 shadow-md md:w-1/2">
-        <div className="w-full">
-          <UploaderSlotSwitcher
-            slots={slots}
-            activeSlotIndex={activeSlotIndex}
-            onSelectSlot={onSelectSlot}
-            hidden={isEditMode}
-          />
-        </div>
-
-        <div className="grid grid-cols-3 items-center gap-y-2 sm:gap-y-3 mt-2 sm:mt-3">
-          <div className="col-start-1 flex justify-start">
-            {shouldConfirmSplit ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>{splitButton}</AlertDialogTrigger>
-                <AlertDialogContent size="sm">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <TriangleAlert
-                        className="h-4 w-4 text-destructive"
-                        aria-hidden="true"
-                      />
-                      {t("uploader.splitSlotsConfirmTitle")}
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t("uploader.splitSlotsConfirmDescription")}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t("uploader.cancel")}</AlertDialogCancel>
-                    <AlertDialogAction
-                      variant="destructive"
-                      onClick={onSplitImage}
-                      className="w-full sm:w-auto h-auto min-h-9 whitespace-normal wrap-break-word text-center leading-tight"
-                    >
-                      {t("uploader.splitSlotsConfirmAction")}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            ) : (
-              splitButton
-            )}
-          </div>
-          <div className="col-start-2 flex justify-center">
-            <UploaderEffectsPanelButton
-              disabled={!canUpdateEffects}
-              isEditMode={isEditMode}
-              onEnterEditMode={enterEditMode}
-            />
-          </div>
-          <div className="col-start-3 flex justify-end">
-            <UploaderTools
-              onSelectProportion={onSelectProportion}
-              coveragePercent={coveragePercent}
-              selectedProportion={selectedProportion}
-              showCoverageDetails={showCoverageDetails}
-            />
-          </div>
-        </div>
-      </div>
-
-      {isEditMode && (
+      {showDrawer && (
         <div
           role="dialog"
           aria-label={t("uploader.previewEffectsTitle")}

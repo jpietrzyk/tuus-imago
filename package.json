@@ -82,10 +82,5 @@
     "@storybook/addon-a11y": "^10.3.5",
     "@storybook/addon-docs": "^10.3.5",
     "eslint-plugin-storybook": "^10.3.5"
-  },
-  "pnpm": {
-    "overrides": {
-      "html-encoding-sniffer": "^4.0.0"
-    }
   }
 }

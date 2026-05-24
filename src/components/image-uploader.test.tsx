@@ -6,11 +6,15 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
-import { createRef } from "react";
+import { createRef, useState, useCallback } from "react";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { t as tr } from "../locales/i18n";
+import {
+  FooterToolsBar,
+  type FooterToolsBarProps,
+} from "@/components/footer-tools-bar";
 
 vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
@@ -19,6 +23,46 @@ vi.mock("./image-uploader/split-image-into-thirds", () => ({
 vi.mock("@/lib/cloudinary-upload", () => ({
   uploadImageToCloudinary: vi.fn(),
 }));
+
+function TestWrapper({
+  uploaderRef,
+  ...uploaderProps
+}: { uploaderRef?: React.RefObject<ImageUploaderHandle | null> } & Omit<React.ComponentProps<typeof ImageUploader>, "ref">) {
+  const [toolsBarProps, setToolsBarProps] = useState<FooterToolsBarProps | null>(null);
+  const toolsBarPropsJsonRef = useState(() => ({ current: "" }))[0];
+
+  const stableSetToolsBarProps = useCallback(
+    (props: FooterToolsBarProps | null) => {
+      const json = JSON.stringify(
+        props
+          ? {
+              activeSlotIndex: props.activeSlotIndex,
+              canSplitImage: props.canSplitImage,
+              canUpdateEffects: props.canUpdateEffects,
+              isEditMode: props.isEditMode,
+              selectedProportion: props.selectedProportion,
+              shouldConfirmSplit: props.shouldConfirmSplit,
+            }
+          : null,
+      );
+      if (json === toolsBarPropsJsonRef.current) return;
+      toolsBarPropsJsonRef.current = json;
+      setToolsBarProps(props);
+    },
+    [toolsBarPropsJsonRef],
+  );
+
+  return (
+    <>
+      <ImageUploader
+        ref={uploaderRef}
+        {...uploaderProps}
+        onToolsPanelPropsChange={stableSetToolsBarProps}
+      />
+      {toolsBarProps && <FooterToolsBar {...toolsBarProps} />}
+    </>
+  );
+}
 
 let mockImageWidth = 1200;
 let mockImageHeight = 800;
@@ -66,7 +110,7 @@ describe("ImageUploader", () => {
     );
 
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} />);
+    render(<TestWrapper uploaderRef={uploaderRef} />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -140,7 +184,7 @@ describe("ImageUploader", () => {
       splitPartFiles,
     );
 
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -200,14 +244,14 @@ describe("ImageUploader", () => {
   });
 
   it("renders upload area when no file is selected", () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const uploadIcon = document.querySelector(".lucide-upload");
     expect(uploadIcon).toBeDefined();
   });
 
   it("shows selected image preview and hides editing controls", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -230,7 +274,7 @@ describe("ImageUploader", () => {
   });
 
   it("reads and displays selected image proportions", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -256,7 +300,7 @@ describe("ImageUploader", () => {
   it("calls onImageMetadataChange with proportions and null after cancel", async () => {
     const onImageMetadataChange = vi.fn();
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} onImageMetadataChange={onImageMetadataChange} />);
+    render(<TestWrapper uploaderRef={uploaderRef} onImageMetadataChange={onImageMetadataChange} />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -295,7 +339,7 @@ describe("ImageUploader", () => {
   });
 
   it("shows proportions dropdown with vertical, horizontal and rectangle options", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -328,7 +372,7 @@ describe("ImageUploader", () => {
   });
 
   it("changes displayed image proportion when dropdown option is selected", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -374,7 +418,7 @@ describe("ImageUploader", () => {
   });
 
   it("defaults to the optimal proportion based on image coverage", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     mockImageWidth = 800;
     mockImageHeight = 1200;
@@ -407,7 +451,7 @@ describe("ImageUploader", () => {
   });
 
   it("shows side slider frames around preview after first image selection", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -441,7 +485,7 @@ describe("ImageUploader", () => {
   });
 
   it("adds second image to the clicked right slot", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     mockImageWidth = 1200;
     mockImageHeight = 800;
@@ -496,7 +540,7 @@ describe("ImageUploader", () => {
   });
 
   it("auto-selects vertical proportion for vertical image added to side slot", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     mockImageWidth = 1200;
     mockImageHeight = 800;
@@ -551,7 +595,7 @@ describe("ImageUploader", () => {
   });
 
   it("adds second image to the clicked left slot", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     mockImageWidth = 1200;
     mockImageHeight = 800;
@@ -614,7 +658,7 @@ describe("ImageUploader", () => {
       .spyOn(URL, "revokeObjectURL")
       .mockImplementation(() => {});
 
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -665,7 +709,7 @@ describe("ImageUploader", () => {
   });
 
   it("shows non-active selected preview at main size clipped by side slot", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -743,7 +787,7 @@ describe("ImageUploader", () => {
 
   it("removes the active image and returns to upload area when it was the only one", async () => {
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} />);
+    render(<TestWrapper uploaderRef={uploaderRef} />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -769,7 +813,7 @@ describe("ImageUploader", () => {
 
   it("removes current active image and keeps remaining image in its slot", async () => {
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} />);
+    render(<TestWrapper uploaderRef={uploaderRef} />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -848,7 +892,7 @@ describe("ImageUploader", () => {
 
   it("keeps side slots populated after center removal", async () => {
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} />);
+    render(<TestWrapper uploaderRef={uploaderRef} />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -931,7 +975,7 @@ describe("ImageUploader", () => {
   });
 
   it("applies swipe threshold before changing active slot", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
@@ -1015,7 +1059,7 @@ describe("ImageUploader", () => {
   });
 
   it("initializes new images with neutral previewEffects (brightness: 0, contrast: 0)", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -1042,7 +1086,7 @@ describe("ImageUploader", () => {
   });
 
   it("persists per-slot effects independently when switching between slots", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file1 = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const file2 = new File(["second"], "second.jpg", { type: "image/jpeg" });
@@ -1100,7 +1144,7 @@ describe("ImageUploader", () => {
       splitPartFiles,
     );
 
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -1139,7 +1183,7 @@ describe("ImageUploader", () => {
   });
 
   it("allows updating effects on active slot independently", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -1234,7 +1278,7 @@ describe("ImageUploader", () => {
       });
 
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} />);
+    render(<TestWrapper uploaderRef={uploaderRef} />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -1365,7 +1409,7 @@ describe("ImageUploader", () => {
       });
 
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<ImageUploader ref={uploaderRef} />);
+    render(<TestWrapper uploaderRef={uploaderRef} />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -1437,7 +1481,7 @@ describe("ImageUploader", () => {
   });
 
   it("hides remove button when effects edit mode is active and restores on close", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -1483,7 +1527,7 @@ describe("ImageUploader", () => {
   });
 
   it("shows zoom controls in edit mode for non-perfect-coverage images", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -1505,7 +1549,7 @@ describe("ImageUploader", () => {
   });
 
   it("resets zoom when proportion is changed", async () => {
-    render(<ImageUploader />);
+    render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -1565,7 +1609,7 @@ describe("ImageUploader", () => {
   describe("multi-image batch upload", () => {
     it("fills all 3 slots when selecting 3 files at once", async () => {
       const onOrderableSlotsChange = vi.fn();
-      render(<ImageUploader onOrderableSlotsChange={onOrderableSlotsChange} />);
+      render(<TestWrapper onOrderableSlotsChange={onOrderableSlotsChange} />);
 
       const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
       const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
@@ -1590,7 +1634,7 @@ describe("ImageUploader", () => {
     });
 
     it("shows add-more dialog when selecting only 1 image", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const input = document.querySelector(
@@ -1608,7 +1652,7 @@ describe("ImageUploader", () => {
     });
 
     it("shows add-more dialog when selecting only 2 images", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
       const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
@@ -1624,7 +1668,7 @@ describe("ImageUploader", () => {
     });
 
     it("does not show add-more dialog when selecting 3 images", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
       const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
@@ -1643,7 +1687,7 @@ describe("ImageUploader", () => {
     });
 
     it("closes dialog and opens file input when clicking 'Yes, add another'", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const input = document.querySelector(
@@ -1669,7 +1713,7 @@ describe("ImageUploader", () => {
     });
 
     it("closes dialog without opening file input when clicking 'No, I'm done'", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const input = document.querySelector(
@@ -1693,7 +1737,7 @@ describe("ImageUploader", () => {
 
     it("filters out non-image files in a multi-select batch", async () => {
       const onUploadError = vi.fn();
-      render(<ImageUploader onUploadError={onUploadError} />);
+      render(<TestWrapper onUploadError={onUploadError} />);
 
       const imageFile = new File(["img"], "img.jpg", { type: "image/jpeg" });
       const textFile = new File(["text"], "doc.pdf", { type: "application/pdf" });
@@ -1713,7 +1757,7 @@ describe("ImageUploader", () => {
     });
 
     it("shows add-more dialog after drag-and-drop of 1 file", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const dropArea = screen.getByText(tr("upload.clickToUpload")).closest("div")!;
@@ -1730,7 +1774,7 @@ describe("ImageUploader", () => {
     });
 
     it("shows add-more dialog when adding second image via slot click", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
       const secondFile = new File(["second"], "second.jpg", { type: "image/jpeg" });
@@ -1780,7 +1824,7 @@ describe("ImageUploader", () => {
     });
 
     it("repeatedly shows add-more dialog after clicking Yes and selecting another image until 3 slots filled", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file1 = new File(["a"], "a.jpg", { type: "image/jpeg" });
       const file2 = new File(["b"], "b.jpg", { type: "image/jpeg" });
@@ -1834,7 +1878,7 @@ describe("ImageUploader", () => {
 
   describe("remove slot confirmation dialog", () => {
     it("shows confirmation dialog when removing an image", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const input = document.querySelector(
@@ -1854,7 +1898,7 @@ describe("ImageUploader", () => {
     });
 
     it("removes the image after confirming the dialog", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const input = document.querySelector(
@@ -1878,7 +1922,7 @@ describe("ImageUploader", () => {
     });
 
     it("does not remove the image when canceling the dialog", async () => {
-      render(<ImageUploader />);
+      render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
       const input = document.querySelector(

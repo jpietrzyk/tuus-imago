@@ -37,6 +37,8 @@ import {
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
+import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
+import type { ImageDebugData } from "@/components/image-debug-panel";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
 import { usePreviewSliderSlots } from "./use-preview-slider-slots";
 import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
@@ -104,6 +106,8 @@ interface ImageUploaderProps {
   initialSlots?: UploadedSlotResult[];
   externalResetTrigger?: number;
   showDebugData?: boolean;
+  onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
+  onDebugDataChange?: (data: ImageDebugData | null) => void;
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
@@ -366,6 +370,8 @@ export const ImageUploader = forwardRef<
     externalResetTrigger,
     showDebugData = true,
     initialSlots,
+    onToolsPanelPropsChange,
+    onDebugDataChange,
   }: ImageUploaderProps,
   ref,
 ) {
@@ -1477,30 +1483,6 @@ export const ImageUploader = forwardRef<
     };
   }, [selectedImageMetadata]);
 
-  const debugCoverageRows = useMemo(() => {
-    if (!coveragePercent) {
-      return [];
-    }
-
-    return [
-      {
-        key: "horizontal",
-        label: t("uploader.debugHorizontalCoverage"),
-        value: coveragePercent.horizontal,
-      },
-      {
-        key: "vertical",
-        label: t("uploader.debugVerticalCoverage"),
-        value: coveragePercent.vertical,
-      },
-      {
-        key: "rectangle",
-        label: t("uploader.debugRectangleCoverage"),
-        value: coveragePercent.rectangle,
-      },
-    ];
-  }, [coveragePercent]);
-
   const bestDisplayImageProportion = useMemo(() => {
     if (!selectedImageMetadata) {
       return null;
@@ -1512,10 +1494,93 @@ export const ImageUploader = forwardRef<
     );
   }, [selectedImageMetadata]);
 
+  const computedDebugData = useMemo((): ImageDebugData | null => {
+    if (!selectedImageMetadata) {
+      return null;
+    }
+
+    return {
+      metadata: selectedImageMetadata,
+      displayProportion: displayImageProportion,
+      suggestedProportion: bestDisplayImageProportion,
+      coveragePercent: coveragePercent ?? {},
+    };
+  }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent]);
+
+  const prevDebugDataRef = useRef<ImageDebugData | null>(null);
+  useEffect(() => {
+    if (!onDebugDataChange) return;
+    if (computedDebugData === prevDebugDataRef.current) return;
+    prevDebugDataRef.current = computedDebugData;
+    onDebugDataChange(computedDebugData);
+  }, [computedDebugData, onDebugDataChange]);
+
   const previewFrameAspectRatio = useMemo(
     () => getTargetAspectRatio(displayImageProportion),
     [displayImageProportion],
   );
+
+  const handleSelectProportion = useCallback(
+    (proportion: Parameters<FooterToolsBarProps["onSelectProportion"]>[0]) => {
+      updateActiveImage((image) => ({
+        ...image,
+        displayImageProportion:
+          proportion === "rectangle" ? "square" : proportion,
+        previewCropAdjust: undefined,
+      }));
+    },
+    [updateActiveImage],
+  );
+
+  const enterEffectsEditMode = useCallback(() => {
+    setIsEffectsEditMode(true);
+  }, []);
+
+  const computedToolsBarProps = useMemo((): FooterToolsBarProps | null => {
+    if (selectedImageCount === 0) {
+      return null;
+    }
+
+    return {
+      slots: selectedImages,
+      activeSlotIndex: activeImageIndex,
+      onSelectSlot: handlePreviewSlotSelect,
+      onSplitImage: () => void handleSplitActiveImage(),
+      canSplitImage: !!activeImage,
+      shouldConfirmSplit: selectedImageCount > 1,
+      onSelectProportion: handleSelectProportion,
+      coveragePercent,
+      selectedProportion:
+        displayImageProportion === "square"
+          ? "rectangle"
+          : displayImageProportion,
+      showCoverageDetails: shouldShowUploaderDebugData,
+      canUpdateEffects: !!activeImage,
+      isEditMode: isEffectsEditMode,
+      onEnterEditMode: enterEffectsEditMode,
+    };
+  }, [
+    selectedImageCount,
+    selectedImages,
+    activeImageIndex,
+    handlePreviewSlotSelect,
+    handleSplitActiveImage,
+    activeImage,
+    handleSelectProportion,
+    coveragePercent,
+    displayImageProportion,
+    shouldShowUploaderDebugData,
+    isEffectsEditMode,
+    enterEffectsEditMode,
+  ]);
+
+  const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);
+  useEffect(() => {
+    if (!onToolsPanelPropsChange) return;
+    if (computedToolsBarProps === prevToolsBarPropsRef.current) return;
+    prevToolsBarPropsRef.current = computedToolsBarProps;
+    onToolsPanelPropsChange(computedToolsBarProps);
+  }, [computedToolsBarProps, onToolsPanelPropsChange]);
 
   const { leftSlotIndex, rightSlotIndex, leftSlotImage, rightSlotImage } =
     usePreviewSliderSlots({
@@ -1712,20 +1777,6 @@ export const ImageUploader = forwardRef<
         />
 
         <UploaderPreviewToolsPanel
-          slots={selectedImages}
-          activeSlotIndex={activeImageIndex}
-          onSelectSlot={handlePreviewSlotSelect}
-          onSplitImage={() => void handleSplitActiveImage()}
-          canSplitImage={!!activeImage}
-          shouldConfirmSplit={selectedImageCount > 1}
-          onSelectProportion={(proportion) => {
-            updateActiveImage((image) => ({
-              ...image,
-              displayImageProportion:
-                proportion === "rectangle" ? "square" : proportion,
-              previewCropAdjust: undefined,
-            }));
-          }}
           onUpdateEffect={updateActiveImageEffect}
           onToggleRemoveBackground={toggleActiveImageRemoveBackground}
           onToggleEnhance={toggleActiveImageEnhance}
@@ -1755,63 +1806,12 @@ export const ImageUploader = forwardRef<
             typeof activeImageIndex === "number" &&
             busyBackgroundUploadSlots.has(activeImageIndex)
           }
-          coveragePercent={coveragePercent}
-          selectedProportion={
-            displayImageProportion === "square"
-              ? "rectangle"
-              : displayImageProportion
-          }
-          showCoverageDetails={shouldShowUploaderDebugData}
           onEditModeChange={setIsEffectsEditMode}
           activeImageCropAdjust={activeImage?.previewCropAdjust}
           onUpdateCropAdjust={updateActiveImageCropAdjust}
           isZoomAvailable={!!selectedImageMetadata}
+          externalEditMode={isEffectsEditMode}
         />
-
-        {shouldShowUploaderDebugData && selectedImageMetadata && (
-          <div
-            className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-950"
-            data-testid="uploader-proportion-debug"
-          >
-            <p className="font-semibold uppercase tracking-[0.12em] text-[11px] text-amber-700">
-              {t("uploader.debugTitle")}
-            </p>
-            <div className="mt-2 space-y-1.5">
-              <p>
-                <span className="font-medium">
-                  {t("uploader.debugImageSize")}:{" "}
-                </span>
-                {selectedImageMetadata.width} × {selectedImageMetadata.height}
-              </p>
-              <p>
-                <span className="font-medium">
-                  {t("uploader.debugImageRatio")}:{" "}
-                </span>
-                {selectedImageMetadata.aspectRatio}
-              </p>
-              <p>
-                <span className="font-medium">
-                  {t("uploader.debugCurrentFrame")}:{" "}
-                </span>
-                {displayImageProportion}
-              </p>
-              <p>
-                <span className="font-medium">
-                  {t("uploader.debugSuggestedFrame")}:{" "}
-                </span>
-                {bestDisplayImageProportion ?? t("uploader.debugUnknown")}
-              </p>
-              {debugCoverageRows.map(({ key, label, value }) => (
-                <p key={key}>
-                  <span className="font-medium">{label}: </span>
-                  {typeof value === "number" && !Number.isNaN(value)
-                    ? `${value.toFixed(2)}%`
-                    : t("uploader.debugUnknown")}
-                </p>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
     </>

@@ -1,9 +1,11 @@
-import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import bgDesktop from "./assets/bg_desktop.png";
 import bgMobile from "./assets/bg_mobile.png";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
+import { ImageDebugPanel, type ImageDebugData } from "@/components/image-debug-panel";
 import {
   LegalNavigationSheet,
   type LegalMenuSection,
@@ -107,44 +109,6 @@ function AdminPageLoader() {
   return (
     <div className="flex items-center justify-center h-64">
       <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-    </div>
-  );
-}
-
-interface DebugToggleProps {
-  label: string;
-  value: boolean;
-  onToggle: () => void;
-  ariaLabel: string;
-  activeText: string;
-  inactiveText: string;
-}
-
-function DebugToggle({
-  label,
-  value,
-  onToggle,
-  ariaLabel,
-  activeText,
-  inactiveText,
-}: DebugToggleProps) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="select-none min-w-12">{label}</span>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 ${value ? "bg-amber-500" : "bg-amber-200"}`}
-        aria-pressed={value}
-        aria-label={ariaLabel}
-      >
-        <span
-          className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${value ? "translate-x-4" : "translate-x-0"}`}
-        />
-      </button>
-      <span className="select-none text-amber-700">
-        {value ? activeText : inactiveText}
-      </span>
     </div>
   );
 }
@@ -267,6 +231,32 @@ function StorefrontApp() {
   const [onCheckoutWithUpload, setOnCheckoutWithUpload] = useState<
     (() => Promise<UploadedSlotResult[]>) | null
   >(null);
+  const [footerToolsBarProps, setFooterToolsBarProps] =
+    useState<FooterToolsBarProps | null>(null);
+  const footerToolsBarPropsJsonRef = useRef<string>("");
+  const stableSetFooterToolsBarProps = useCallback(
+    (props: FooterToolsBarProps | null) => {
+      const json = JSON.stringify(
+        props
+          ? {
+              activeSlotIndex: props.activeSlotIndex,
+              canSplitImage: props.canSplitImage,
+              canUpdateEffects: props.canUpdateEffects,
+              isEditMode: props.isEditMode,
+              selectedProportion: props.selectedProportion,
+              shouldConfirmSplit: props.shouldConfirmSplit,
+              showCoverageDetails: props.showCoverageDetails,
+            }
+          : null,
+      );
+      if (json === footerToolsBarPropsJsonRef.current) return;
+      footerToolsBarPropsJsonRef.current = json;
+      setFooterToolsBarProps(props);
+    },
+    [],
+  );
+  const [imageDebugData, setImageDebugData] =
+    useState<ImageDebugData | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [uploadPageKey, setUploadPageKey] = useState(0);
@@ -468,6 +458,8 @@ function StorefrontApp() {
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
                 initialRestoredSlots={uploadInitialSlots}
+                onToolsPanelPropsChange={stableSetFooterToolsBarProps}
+                onDebugDataChange={setImageDebugData}
               />
             }
           />
@@ -526,6 +518,7 @@ function StorefrontApp() {
         onToggleOrderSlot={toggleFooterOrderSlot}
         showReset={showFooterReset}
         onReset={onFooterReset ?? undefined}
+        toolsBarProps={footerToolsBarProps}
       />
       <LegalNavigationSheet
         open={isLegalSheetOpen}
@@ -540,24 +533,13 @@ function StorefrontApp() {
         />
       )}
       {isDebug && (
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50/95 px-3 py-2 text-xs font-medium text-amber-900 shadow-lg backdrop-blur-sm">
-          <DebugToggle
-            label="BG:"
-            value={useTestBackground}
-            onToggle={() => setUseTestBackground((value) => !value)}
-            ariaLabel="Toggle test background"
-            activeText="test"
-            inactiveText="prod"
-          />
-          <DebugToggle
-            label="IMG:"
-            value={showUploaderDebugData}
-            onToggle={() => setShowUploaderDebugData((value) => !value)}
-            ariaLabel="Toggle uploader image debug data"
-            activeText="debug"
-            inactiveText="off"
-          />
-        </div>
+        <ImageDebugPanel
+          debugData={imageDebugData}
+          showDebugData={showUploaderDebugData}
+          onToggleDebugData={() => setShowUploaderDebugData((value) => !value)}
+          useTestBackground={useTestBackground}
+          onToggleTestBackground={() => setUseTestBackground((value) => !value)}
+        />
       )}
     </div>
   );

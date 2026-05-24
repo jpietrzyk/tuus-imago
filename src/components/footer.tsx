@@ -17,6 +17,10 @@ import {
   CheckoutOrderDropup,
   type FooterOrderRow,
 } from "@/components/footer-order-popover";
+import {
+  FooterToolsBar,
+  type FooterToolsBarProps,
+} from "@/components/footer-tools-bar";
 
 interface FooterProps {
   onOpenContentPage?: (slug: string) => void;
@@ -28,6 +32,7 @@ interface FooterProps {
   onToggleOrderSlot?: (slotKey: UploadSlotKey) => void;
   showReset?: boolean;
   onReset?: () => void;
+  toolsBarProps?: FooterToolsBarProps | null;
 }
 
 export function Footer({
@@ -40,12 +45,20 @@ export function Footer({
   onToggleOrderSlot,
   showReset = false,
   onReset,
+  toolsBarProps,
 }: FooterProps) {
+  const hasTools = !!toolsBarProps;
+
   return (
-    <footer className="w-full h-(--app-shell-bar-height) border-t border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm">
-      <div className="w-full h-full px-4 sm:px-6 lg:px-8">
-        <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+    <footer
+      className={`w-full border-t border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm ${
+        hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"
+      }`}
+    >
+      {hasTools && <FooterToolsBar {...toolsBarProps} />}
+      <div className={`w-full px-4 sm:px-6 lg:px-8 ${hasTools ? "h-(--app-shell-bar-height)" : "h-full"}`}>
+        <div className={`grid h-full items-center gap-3 sm:gap-4 grid-cols-[1fr_auto_1fr] max-lg:grid-cols-1`}>
+          <div className="hidden lg:flex min-w-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
               className="text-xs sm:text-sm text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
@@ -98,7 +111,7 @@ export function Footer({
             ) : null}
           </div>
 
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2 max-lg:w-full">
             {showCheckout && onCheckout && onToggleOrderSlot ? (
               <CheckoutOrderDropup
                 rows={orderRows}
@@ -110,7 +123,7 @@ export function Footer({
             ) : null}
           </div>
 
-          <div className="flex justify-end gap-1 sm:gap-2">
+          <div className="hidden lg:flex justify-end gap-1 sm:gap-2">
           </div>
         </div>
       </div>
