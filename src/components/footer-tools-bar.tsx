@@ -52,8 +52,8 @@ export interface FooterToolsBarProps {
 }
 
 const TOOLBAR_BUTTON_CLASS =
-  "h-10 w-10 sm:h-12 sm:w-12 rounded-xl shadow-lg border-2";
-const ICON_CLASS = "h-5 w-5 sm:h-6 sm:w-6";
+  "h-14 w-14 sm:h-16 sm:w-16 rounded-2xl shadow-lg border-2";
+const ICON_CLASS = "h-6 w-6 sm:h-7 sm:w-7";
 
 export function FooterToolsBar({
   slots,
@@ -87,7 +87,7 @@ export function FooterToolsBar({
       className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
     >
       <IconTriptych className={ICON_CLASS} />
-      <span className="text-[9px] leading-none">Tryptyk</span>
+      <span className="text-[10px] leading-none sm:text-[10px]">Tryptyk</span>
     </Button>
   );
 
@@ -100,7 +100,7 @@ export function FooterToolsBar({
       className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
     >
       <IconReset className={ICON_CLASS} />
-      <span className="text-[9px] leading-none">Reset</span>
+      <span className="text-[10px] leading-none sm:text-[10px]">Reset</span>
     </Button>
   );
 
@@ -115,77 +115,68 @@ export function FooterToolsBar({
         />
       </div>
 
-      <div className="px-4 py-1">
-        <div className="grid grid-cols-6 items-center gap-1 sm:gap-2">
-          <div className="flex justify-center">
-            <UploaderTools
-              onSelectProportion={onSelectProportion}
-              coveragePercent={coveragePercent}
-              selectedProportion={selectedProportion}
-              showCoverageDetails={showCoverageDetails}
-              triggerButton={
-                <Button
-                  type="button"
-                  variant="secondary"
-                  data-testid="image-proportions-dropdown-trigger"
-                  aria-label={t("uploader.shapeButton")}
-                  className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
-                >
-                  <IconShape className={ICON_CLASS} />
-                  <span className="text-[9px] leading-none">Kształt</span>
-                </Button>
-              }
-            />
-          </div>
+      <div className="py-1">
+        <div className="flex items-center justify-center gap-1.5">
+          <UploaderTools
+            onSelectProportion={onSelectProportion}
+            coveragePercent={coveragePercent}
+            selectedProportion={selectedProportion}
+            showCoverageDetails={showCoverageDetails}
+            triggerButton={
+              <Button
+                type="button"
+                variant="secondary"
+                data-testid="image-proportions-dropdown-trigger"
+                aria-label={t("uploader.shapeButton")}
+                className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+              >
+                <IconShape className={ICON_CLASS} />
+                <span className="text-[10px] leading-none sm:text-[10px]">Kształt</span>
+              </Button>
+            }
+          />
 
-          <div className="flex justify-center">
-            <Button
-              type="button"
-              variant={isZoomPanMode ? "default" : "secondary"}
-              disabled={!canToggleZoomPan}
-              onClick={onToggleZoomPan}
-              aria-label={t("uploader.frameButton")}
-              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
-            >
-              <IconFrame className={ICON_CLASS} />
-              <span className="text-[9px] leading-none">Kadr</span>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant={isZoomPanMode ? "default" : "secondary"}
+            disabled={!canToggleZoomPan}
+            onClick={onToggleZoomPan}
+            aria-label={t("uploader.frameButton")}
+            className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+          >
+            <IconFrame className={ICON_CLASS} />
+            <span className="text-[10px] leading-none sm:text-[10px]">Kadr</span>
+          </Button>
 
-          <div className="flex justify-center">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={!canUpdateAiEffects}
-              onClick={onEnterAiEditMode}
-              aria-label={t("uploader.aiEditorButton")}
-              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
-            >
-              <IconAiEditor className={ICON_CLASS} />
-              <span className="text-[9px] leading-none">Edytor AI</span>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={!canUpdateAiEffects}
+            onClick={onEnterAiEditMode}
+            aria-label={t("uploader.aiEditorButton")}
+            className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+          >
+            <IconAiEditor className={ICON_CLASS} />
+            <span className="text-[10px] leading-none sm:text-[10px]">Edytor AI</span>
+          </Button>
 
-          <div className="flex justify-center">
-            <Button
-              type="button"
-              variant={isEditMode ? "default" : "secondary"}
-              disabled={!canUpdateEffects}
-              onClick={onEnterEditMode}
-              aria-label={t("uploader.settingsButton")}
-              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
-            >
-              <IconSettings className={ICON_CLASS} />
-              <span className="text-[9px] leading-none">Ustawienia</span>
-            </Button>
-          </div>
+          <Button
+            type="button"
+            variant={isEditMode ? "default" : "secondary"}
+            disabled={!canUpdateEffects}
+            onClick={onEnterEditMode}
+            aria-label={t("uploader.settingsButton")}
+            className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+          >
+            <IconSettings className={ICON_CLASS} />
+            <span className="text-[10px] leading-none sm:text-[10px]">Ustawienia</span>
+          </Button>
 
-          <div className="flex justify-center">
-            {shouldConfirmSplit ? (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  {triptychButton}
-                </AlertDialogTrigger>
+          {shouldConfirmSplit ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                {triptychButton}
+              </AlertDialogTrigger>
                 <AlertDialogContent size="sm">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
@@ -216,11 +207,9 @@ export function FooterToolsBar({
             ) : (
               triptychButton
             )}
-          </div>
 
-          <div className="flex justify-center">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>{resetButton}</AlertDialogTrigger>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>{resetButton}</AlertDialogTrigger>
               <AlertDialogContent size="sm">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
@@ -248,7 +237,6 @@ export function FooterToolsBar({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
         </div>
       </div>
     </div>
