@@ -39,7 +39,10 @@ function TestWrapper({
               activeSlotIndex: props.activeSlotIndex,
               canSplitImage: props.canSplitImage,
               canUpdateEffects: props.canUpdateEffects,
+              canUpdateAiEffects: props.canUpdateAiEffects,
+              canToggleZoomPan: props.canToggleZoomPan,
               isEditMode: props.isEditMode,
+              isZoomPanMode: props.isZoomPanMode,
               selectedProportion: props.selectedProportion,
               shouldConfirmSplit: props.shouldConfirmSplit,
             }
@@ -403,7 +406,6 @@ describe("ImageUploader", () => {
       await waitFor(() => {
         expect(previewCanvas.width).toBe(533);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger).toHaveAttribute("aria-label", "Vertical");
       });
 
       fireEvent.pointerDown(dropdownTrigger);
@@ -412,7 +414,6 @@ describe("ImageUploader", () => {
       await waitFor(() => {
         expect(previewCanvas.width).toBe(800);
         expect(previewCanvas.height).toBe(800);
-        expect(dropdownTrigger).toHaveAttribute("aria-label", "Rectangle");
       });
     }
   });
@@ -446,7 +447,7 @@ describe("ImageUploader", () => {
         "image-proportions-dropdown-trigger",
       );
 
-      expect(dropdownTrigger).toHaveAttribute("aria-label", "Vertical");
+      expect(dropdownTrigger).toBeInTheDocument();
     }
   });
 
@@ -1077,7 +1078,7 @@ describe("ImageUploader", () => {
       // Verify that the image was created with default effects
       // We can check this by attempting to apply effects and verifying the state is initialized
       const effectsButton = screen.queryByRole("button", {
-        name: tr("uploader.previewEffectsButton"),
+        name: tr("uploader.settingsButton"),
       });
 
       // The button should exist (meaning effects are supported)
@@ -1198,7 +1199,7 @@ describe("ImageUploader", () => {
 
       // Open effects popover
       const effectsButton = screen.getByRole("button", {
-        name: tr("uploader.previewEffectsButton"),
+        name: tr("uploader.settingsButton"),
       });
       expect(effectsButton).not.toBeDisabled();
       expect(effectsButton).toBeInTheDocument();
@@ -1293,13 +1294,11 @@ describe("ImageUploader", () => {
     fireEvent.change(input, { target: { files: [sourceFile] } });
     await screen.findByRole("img", { name: "Preview" });
 
-    const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.previewEffectsButton"),
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
     });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
     fireEvent.click(effectsButton);
-
-    // Expand AI Effects collapsible group
-    fireEvent.click(screen.getByText(tr("uploader.aiEffectsGroupTitle")));
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1424,13 +1423,11 @@ describe("ImageUploader", () => {
     fireEvent.change(input, { target: { files: [sourceFile] } });
     await screen.findByRole("img", { name: "Preview" });
 
-    const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.previewEffectsButton"),
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
     });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
     fireEvent.click(effectsButton);
-
-    // Expand AI Effects collapsible group
-    fireEvent.click(screen.getByText(tr("uploader.aiEffectsGroupTitle")));
 
     const removeBackgroundSwitch = await screen.findByRole("switch", {
       name: tr("upload.aiRemoveBackground"),
@@ -1501,7 +1498,7 @@ describe("ImageUploader", () => {
 
     // Open effects panel to enter edit mode
     const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.previewEffectsButton"),
+      name: tr("uploader.settingsButton"),
     });
     fireEvent.click(effectsButton);
 
@@ -1539,7 +1536,7 @@ describe("ImageUploader", () => {
     await screen.findByRole("img", { name: "Preview" });
 
     const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.previewEffectsButton"),
+      name: tr("uploader.settingsButton"),
     });
     fireEvent.click(effectsButton);
 
@@ -1561,7 +1558,7 @@ describe("ImageUploader", () => {
     await screen.findByRole("img", { name: "Preview" });
 
     const effectsButton = screen.getByRole("button", {
-      name: tr("uploader.previewEffectsButton"),
+      name: tr("uploader.settingsButton"),
     });
     fireEvent.click(effectsButton);
 
@@ -1587,7 +1584,7 @@ describe("ImageUploader", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByText(tr("uploader.previewEffectsTitle")),
+        screen.queryByText(tr("uploader.settingsEffectsTitle")),
       ).not.toBeInTheDocument();
     });
 
@@ -1598,7 +1595,7 @@ describe("ImageUploader", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
 
     fireEvent.click(screen.getByRole("button", {
-      name: tr("uploader.previewEffectsButton"),
+      name: tr("uploader.settingsButton"),
     }));
 
     await waitFor(() => {

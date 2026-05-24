@@ -680,4 +680,65 @@ describe("UploaderEffectsPanelContent", () => {
       expect(onZoomChange).toHaveBeenCalledWith(2);
     });
   });
+
+  describe("effectsMode filtering", () => {
+    it("shows all groups when effectsMode is undefined", () => {
+      renderContent({ effectsMode: undefined });
+
+      expect(screen.getByText(t("uploader.adjustGroupTitle"))).toBeInTheDocument();
+      expect(screen.getByText(t("uploader.aiEffectsGroupTitle"))).toBeInTheDocument();
+      expect(screen.getByText(t("uploader.transformGroupTitle"))).toBeInTheDocument();
+    });
+
+    describe("ai mode", () => {
+      it("shows only AI Effects group", () => {
+        renderContent({ effectsMode: "ai" });
+
+        expect(screen.getByText(t("uploader.aiEffectsGroupTitle"))).toBeInTheDocument();
+        expect(screen.queryByText(t("uploader.adjustGroupTitle"))).not.toBeInTheDocument();
+        expect(screen.queryByText(t("uploader.transformGroupTitle"))).not.toBeInTheDocument();
+      });
+
+      it("does not show Crop group even when zoom is available", () => {
+        renderContent({ effectsMode: "ai", isZoomAvailable: true, onZoomChange: vi.fn() });
+
+        expect(screen.queryByText(t("uploader.cropGroupTitle"))).not.toBeInTheDocument();
+      });
+
+      it("has AI Effects group expanded by default", () => {
+        renderContent({ effectsMode: "ai" });
+
+        expect(
+          screen.getByRole("switch", { name: t("upload.aiRemoveBackground") }),
+        ).toBeInTheDocument();
+      });
+    });
+
+    describe("settings mode", () => {
+      it("shows Crop, Adjustments, and Transform groups", () => {
+        renderContent({ effectsMode: "settings" });
+
+        expect(screen.getByText(t("uploader.adjustGroupTitle"))).toBeInTheDocument();
+        expect(screen.getByText(t("uploader.transformGroupTitle"))).toBeInTheDocument();
+      });
+
+      it("hides AI Effects group", () => {
+        renderContent({ effectsMode: "settings" });
+
+        expect(screen.queryByText(t("uploader.aiEffectsGroupTitle"))).not.toBeInTheDocument();
+      });
+
+      it("shows Crop group when zoom is available", () => {
+        renderContent({ effectsMode: "settings", isZoomAvailable: true, onZoomChange: vi.fn() });
+
+        expect(screen.getByText(t("uploader.cropGroupTitle"))).toBeInTheDocument();
+      });
+
+      it("hides Crop group when zoom is unavailable", () => {
+        renderContent({ effectsMode: "settings" });
+
+        expect(screen.queryByText(t("uploader.cropGroupTitle"))).not.toBeInTheDocument();
+      });
+    });
+  });
 });

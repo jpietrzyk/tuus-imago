@@ -33,8 +33,6 @@ interface PreviewCropArea {
 
 interface UploadPageProps {
   onCheckoutAvailabilityChange?: (available: boolean) => void;
-  onResetAvailabilityChange?: (available: boolean) => void;
-  onResetActionChange?: (action: (() => void) | null) => void;
   onSuccessfulSlotsChange?: (slots: UploadedSlotResult[]) => void;
   onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
   onCheckoutWithUpload?: (
@@ -50,8 +48,6 @@ const PREVIEW_LOADING_TIMEOUT_MS = 30000;
 
 export function UploadPage({
   onCheckoutAvailabilityChange,
-  onResetAvailabilityChange,
-  onResetActionChange,
   onSuccessfulSlotsChange,
   onOrderableSlotsChange,
   onCheckoutWithUpload,
@@ -276,7 +272,6 @@ export function UploadPage({
   const isCheckoutAvailable = Boolean(
     uploadedImage || successfulUploadedSlots.length > 0 || hasUploaderSelection,
   );
-  const isResetAvailable = hasUploaderSelection;
 
   const handleBatchUpload = useCallback(async () => {
     if (!uploaderRef.current) {
@@ -390,6 +385,12 @@ export function UploadPage({
 
   useEffect(() => {
     return () => {
+      onCheckoutAvailabilityChange?.(false);
+    };
+  }, [onCheckoutAvailabilityChange]);
+
+  useEffect(() => {
+    return () => {
       onOrderableSlotsChange?.([]);
     };
   }, [onOrderableSlotsChange]);
@@ -410,42 +411,26 @@ export function UploadPage({
     };
   }, [isCheckoutAvailable, onCheckoutAvailabilityChange]);
 
-  useEffect(() => {
-    onResetAvailabilityChange?.(isResetAvailable);
-
-    return () => {
-      onResetAvailabilityChange?.(false);
-    };
-  }, [isResetAvailable, onResetAvailabilityChange]);
-
-  useEffect(() => {
-    const handleFooterReset = () => {
-      setUploadedImage(null);
-      setHasUploaderSelection(false);
-      setUploadError(null);
-      setIsSuccess(false);
-      setUploadedSlots([]);
-      setIsBatchUploading(false);
-      setBatchUploadProgress(0);
-      setTransformations(null);
-      setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
-      setUseAiPreview(true);
-      setIsPreviewLoading(false);
-      setPreviewLoadProgress(0);
-      setPreviewError(null);
-      setCropMode("manual");
-      setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
-      setPreviewDisplayDimensions({ width: 0, height: 0 });
-      setAppliedManualCropCoordinates(undefined);
-      setUploaderResetVersion((previousVersion) => previousVersion + 1);
-    };
-
-    onResetActionChange?.(handleFooterReset);
-
-    return () => {
-      onResetActionChange?.(null);
-    };
-  }, [onResetActionChange]);
+  const handleFooterReset = useCallback(() => {
+    setUploadedImage(null);
+    setHasUploaderSelection(false);
+    setUploadError(null);
+    setIsSuccess(false);
+    setUploadedSlots([]);
+    setIsBatchUploading(false);
+    setBatchUploadProgress(0);
+    setTransformations(null);
+    setAiAdjustments(DEFAULT_AI_ADJUSTMENTS);
+    setUseAiPreview(true);
+    setIsPreviewLoading(false);
+    setPreviewLoadProgress(0);
+    setPreviewError(null);
+    setCropMode("manual");
+    setPreviewCropArea({ x: 0, y: 0, width: 0, height: 0 });
+    setPreviewDisplayDimensions({ width: 0, height: 0 });
+    setAppliedManualCropCoordinates(undefined);
+    setUploaderResetVersion((previousVersion) => previousVersion + 1);
+  }, []);
 
   useEffect(() => {
     if (
@@ -737,6 +722,7 @@ export function UploadPage({
                     className="mx-auto h-full w-full max-w-sm pt-4 pb-6 text-lg font-semibold"
                     onToolsPanelPropsChange={onToolsPanelPropsChange}
                     onDebugDataChange={onDebugDataChange}
+                    onReset={hasUploaderSelection ? handleFooterReset : undefined}
                   />
                 </div>
               </div>

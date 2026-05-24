@@ -224,6 +224,12 @@
     "addMoreImagesDescription": "Wybrano {count} z 3 zdjęć. Czy chcesz dodać kolejne?",
     "addMoreImagesYes": "Tak, dodaj kolejne",
     "addMoreImagesNo": "Nie, to wszystko",
+    "shapeButton": "Kształt",
+    "frameButton": "Kadr",
+    "aiEditorButton": "Edytor AI",
+    "settingsButton": "Ustawienia",
+    "aiEffectsTitle": "Edytor AI",
+    "settingsEffectsTitle": "Ustawienia",
     "removeSlotConfirmTitle": "Usunąć to zdjęcie?",
     "removeSlotConfirmDescription": "Tej operacji nie można cofnąć. Zdjęcie zostanie trwale usunięte ze slotu.",
     "removeSlotConfirmAction": "Usuń"

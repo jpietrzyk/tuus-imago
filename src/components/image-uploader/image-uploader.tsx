@@ -108,6 +108,7 @@ interface ImageUploaderProps {
   showDebugData?: boolean;
   onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
+  onReset?: () => void;
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
@@ -372,6 +373,7 @@ export const ImageUploader = forwardRef<
     initialSlots,
     onToolsPanelPropsChange,
     onDebugDataChange,
+    onReset,
   }: ImageUploaderProps,
   ref,
 ) {
@@ -395,6 +397,8 @@ export const ImageUploader = forwardRef<
   >(() => new Set());
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
+  const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">("settings");
+  const [isZoomPanMode, setIsZoomPanMode] = useState(false);
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1533,7 +1537,20 @@ export const ImageUploader = forwardRef<
   );
 
   const enterEffectsEditMode = useCallback(() => {
+    setEffectsEditMode("settings");
     setIsEffectsEditMode(true);
+    setIsZoomPanMode(false);
+  }, []);
+
+  const enterAiEditMode = useCallback(() => {
+    setEffectsEditMode("ai");
+    setIsEffectsEditMode(true);
+    setIsZoomPanMode(false);
+  }, []);
+
+  const toggleZoomPan = useCallback(() => {
+    setIsZoomPanMode((prev) => !prev);
+    setIsEffectsEditMode(false);
   }, []);
 
   const computedToolsBarProps = useMemo((): FooterToolsBarProps | null => {
@@ -1555,9 +1572,16 @@ export const ImageUploader = forwardRef<
           ? "rectangle"
           : displayImageProportion,
       showCoverageDetails: shouldShowUploaderDebugData,
+      isZoomPanMode: isZoomPanMode,
+      onToggleZoomPan: toggleZoomPan,
+      canToggleZoomPan: !!activeImage && !isEffectsEditMode,
+      onEnterAiEditMode: enterAiEditMode,
+      canUpdateAiEffects: !!activeImage,
       canUpdateEffects: !!activeImage,
       isEditMode: isEffectsEditMode,
       onEnterEditMode: enterEffectsEditMode,
+      onReset: onReset ?? (() => {}),
+      canReset: !!onReset && selectedImageCount > 0,
     };
   }, [
     selectedImageCount,
@@ -1571,7 +1595,11 @@ export const ImageUploader = forwardRef<
     displayImageProportion,
     shouldShowUploaderDebugData,
     isEffectsEditMode,
+    isZoomPanMode,
     enterEffectsEditMode,
+    enterAiEditMode,
+    toggleZoomPan,
+    onReset,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);
@@ -1760,8 +1788,8 @@ export const ImageUploader = forwardRef<
               ? getTransformedImagePreviewUrl(rightSlotImage)
               : null
           }
-          swipeDisabled={isEffectsEditMode}
-          isEditMode={isEffectsEditMode}
+          swipeDisabled={isEffectsEditMode || isZoomPanMode}
+          isEditMode={isEffectsEditMode || isZoomPanMode}
           previewCropAdjust={activeImage?.previewCropAdjust}
           onCropAdjustChange={updateActiveImageCropAdjust}
           onSelectSlot={handlePreviewSlotSelect}
@@ -1811,6 +1839,7 @@ export const ImageUploader = forwardRef<
           onUpdateCropAdjust={updateActiveImageCropAdjust}
           isZoomAvailable={!!selectedImageMetadata}
           externalEditMode={isEffectsEditMode}
+          effectsMode={effectsEditMode}
         />
       </CardContent>
     </Card>

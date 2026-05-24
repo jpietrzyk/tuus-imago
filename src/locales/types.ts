@@ -205,6 +205,8 @@ export interface Translations {
     uploadingProgress: string;
     imageAdjustments: string;
     previewEffectsTitle: string;
+    aiEffectsTitle: string;
+    settingsEffectsTitle: string;
     previewEffectsDescription: string;
     previewEffectsButton: string;
     removeBackgroundDescription: string;
@@ -274,6 +276,10 @@ export interface Translations {
     addMoreImagesDescription: string;
     addMoreImagesYes: string;
     addMoreImagesNo: string;
+    shapeButton: string;
+    frameButton: string;
+    aiEditorButton: string;
+    settingsButton: string;
     removeSlotConfirmTitle: string;
     removeSlotConfirmDescription: string;
     removeSlotConfirmAction: string;

@@ -24,6 +24,7 @@ interface UploaderToolsProps {
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
   showCoverageDetails?: boolean;
+  triggerButton?: React.ReactNode;
 }
 
 const PROPORTION_ICONS: Record<UploaderProportion, LucideIcon> = {
@@ -51,25 +52,30 @@ export function UploaderTools({
   coveragePercent,
   selectedProportion,
   showCoverageDetails = false,
+  triggerButton,
 }: UploaderToolsProps) {
   const selectedCoverage = coveragePercent?.[selectedProportion];
   const SelectedIcon = PROPORTION_ICONS[selectedProportion];
+
+  const defaultTrigger = (
+    <Button
+      type="button"
+      variant="secondary"
+      size="icon"
+      data-testid="image-proportions-dropdown-trigger"
+      className="relative h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
+      aria-label={PROPORTION_LABELS[selectedProportion]}
+    >
+      <SelectedIcon className="h-6 w-6 sm:h-7 sm:w-7" />
+      <ChevronDown className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 opacity-60" />
+    </Button>
+  );
 
   return (
     <div className="flex flex-col items-center gap-1">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            data-testid="image-proportions-dropdown-trigger"
-            className="relative h-12 w-12 sm:h-14 sm:w-14 shadow-lg border-2"
-            aria-label={PROPORTION_LABELS[selectedProportion]}
-          >
-            <SelectedIcon className="h-6 w-6 sm:h-7 sm:w-7" />
-            <ChevronDown className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 opacity-60" />
-          </Button>
+          {triggerButton ?? defaultTrigger}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center">
           {(Object.keys(PROPORTION_ICONS) as UploaderProportion[]).map(

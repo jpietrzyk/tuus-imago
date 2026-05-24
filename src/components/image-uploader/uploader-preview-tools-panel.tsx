@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import { Check, RotateCcw, X } from "lucide-react";
-import { UploaderEffectsPanelContent } from "./uploader-effects-panel";
+import { UploaderEffectsPanelContent, type EffectsMode } from "./uploader-effects-panel";
 import type { CropAdjust } from "./use-crop-adjust";
 
 interface EffectsSnapshot {
@@ -55,6 +55,7 @@ interface UploaderPreviewToolsPanelProps {
   onUpdateCropAdjust?: (adjust: CropAdjust | undefined) => void;
   isZoomAvailable?: boolean;
   externalEditMode?: boolean;
+  effectsMode?: EffectsMode;
 }
 
 export function UploaderPreviewToolsPanel({
@@ -78,10 +79,15 @@ export function UploaderPreviewToolsPanel({
   onUpdateCropAdjust,
   isZoomAvailable = false,
   externalEditMode,
+  effectsMode,
 }: UploaderPreviewToolsPanelProps) {
   const [internalEditMode, setInternalEditMode] = useState(false);
   const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
   const [prevExternalEditMode, setPrevExternalEditMode] = useState(false);
+
+  const drawerTitle = effectsMode === "ai"
+    ? t("uploader.aiEffectsTitle")
+    : t("uploader.settingsEffectsTitle");
 
   const showDrawer = externalEditMode ?? internalEditMode;
 
@@ -169,7 +175,7 @@ export function UploaderPreviewToolsPanel({
       {showDrawer && (
         <div
           role="dialog"
-          aria-label={t("uploader.previewEffectsTitle")}
+          aria-label={drawerTitle}
           className="bg-background fixed inset-x-0 bottom-0 z-50 flex h-[70dvh] sm:h-[40dvh] flex-col rounded-t-xl border-t text-sm shadow-lg animate-in slide-in-from-bottom duration-300"
         >
         <div className="mx-auto w-full md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-screen-sm flex flex-col min-h-0 flex-1">
@@ -187,7 +193,7 @@ export function UploaderPreviewToolsPanel({
               {t("uploader.effectsCancel")}
             </Button>
             <span className="text-sm font-semibold">
-              {t("uploader.previewEffectsTitle")}
+              {drawerTitle}
             </span>
             <div className="flex items-center gap-1.5">
               <Button
@@ -245,6 +251,7 @@ export function UploaderPreviewToolsPanel({
                       })
                    : undefined
                }
+              effectsMode={effectsMode}
             />
           </div>
         </div>

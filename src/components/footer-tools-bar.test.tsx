@@ -7,10 +7,16 @@ import type { SelectedImageItem } from "@/components/image-uploader/image-upload
 vi.mock("@/components/image-uploader/uploader-tools", () => ({
   UploaderTools: ({
     onSelectProportion,
+    triggerButton,
   }: {
     onSelectProportion: (p: string) => void;
+    triggerButton?: React.ReactNode;
+    coveragePercent?: unknown;
+    selectedProportion?: string;
+    showCoverageDetails?: boolean;
   }) => (
     <div data-testid="mock-uploader-tools">
+      {triggerButton}
       <button onClick={() => onSelectProportion("horizontal")}>
         Proportion
       </button>
@@ -38,23 +44,23 @@ vi.mock("@/components/image-uploader/uploader-slot-switcher", () => ({
   ),
 }));
 
-vi.mock("@/components/image-uploader/uploader-effects-panel", () => ({
-  UploaderEffectsPanelButton: ({
-    disabled,
-    onEnterEditMode,
-  }: {
-    disabled?: boolean;
-    isEditMode: boolean;
-    onEnterEditMode: () => void;
-  }) => (
-    <button
-      data-testid="mock-effects-button"
-      disabled={disabled}
-      onClick={onEnterEditMode}
-    >
-      {t("uploader.previewEffectsButton")}
-    </button>
-  ),
+vi.mock("@/components/icons/icon-shape.svg?react", () => ({
+  default: () => <svg data-testid="icon-shape" />,
+}));
+vi.mock("@/components/icons/icon-frame.svg?react", () => ({
+  default: () => <svg data-testid="icon-frame" />,
+}));
+vi.mock("@/components/icons/icon-ai-editor.svg?react", () => ({
+  default: () => <svg data-testid="icon-ai-editor" />,
+}));
+vi.mock("@/components/icons/icon-settings.svg?react", () => ({
+  default: () => <svg data-testid="icon-settings" />,
+}));
+vi.mock("@/components/icons/icon-triptych.svg?react", () => ({
+  default: () => <svg data-testid="icon-triptych" />,
+}));
+vi.mock("@/components/icons/icon-reset.svg?react", () => ({
+  default: () => <svg data-testid="icon-reset" />,
 }));
 
 const createImageItem = (name: string): SelectedImageItem => ({
@@ -76,9 +82,16 @@ const createProps = (): FooterToolsBarProps => ({
   shouldConfirmSplit: false,
   onSelectProportion: vi.fn(),
   selectedProportion: "horizontal",
+  isZoomPanMode: false,
+  onToggleZoomPan: vi.fn(),
+  canToggleZoomPan: false,
+  onEnterAiEditMode: vi.fn(),
+  canUpdateAiEffects: false,
   canUpdateEffects: true,
   isEditMode: false,
   onEnterEditMode: vi.fn(),
+  onReset: vi.fn(),
+  canReset: true,
 });
 
 describe("FooterToolsBar", () => {
@@ -86,16 +99,31 @@ describe("FooterToolsBar", () => {
     vi.clearAllMocks();
   });
 
-  it("renders slot switcher, split button, effects button, and tools", () => {
+  it("renders slot switcher and all 6 toolbar buttons", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} />);
 
     expect(screen.getByTestId("mock-slot-switcher")).toBeInTheDocument();
     expect(screen.getByTestId("mock-uploader-tools")).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("button", { name: t("uploader.shapeButton") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.frameButton") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.aiEditorButton") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.settingsButton") }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: t("uploader.splitSelectedImage") }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("mock-effects-button")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.resetSlots") }),
+    ).toBeInTheDocument();
   });
 
   it("enables split button when canSplitImage is true", () => {
@@ -131,31 +159,103 @@ describe("FooterToolsBar", () => {
     expect(onSplitImage).toHaveBeenCalled();
   });
 
-  it("enables effects button when canUpdateEffects is true", () => {
+  it("enables settings button when canUpdateEffects is true", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} />);
 
-    const effectsButton = screen.getByTestId("mock-effects-button");
-    expect(effectsButton).not.toBeDisabled();
+    const settingsButton = screen.getByRole("button", {
+      name: t("uploader.settingsButton"),
+    });
+    expect(settingsButton).not.toBeDisabled();
   });
 
-  it("disables effects button when canUpdateEffects is false", () => {
+  it("disables settings button when canUpdateEffects is false", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} canUpdateEffects={false} />);
 
-    const effectsButton = screen.getByTestId("mock-effects-button");
-    expect(effectsButton).toBeDisabled();
+    const settingsButton = screen.getByRole("button", {
+      name: t("uploader.settingsButton"),
+    });
+    expect(settingsButton).toBeDisabled();
   });
 
-  it("calls onEnterEditMode when effects button is clicked", () => {
+  it("calls onEnterEditMode when settings button is clicked", () => {
     const onEnterEditMode = vi.fn();
     const props = createProps();
     render(<FooterToolsBar {...props} onEnterEditMode={onEnterEditMode} />);
 
-    const effectsButton = screen.getByTestId("mock-effects-button");
-    fireEvent.click(effectsButton);
+    const settingsButton = screen.getByRole("button", {
+      name: t("uploader.settingsButton"),
+    });
+    fireEvent.click(settingsButton);
 
     expect(onEnterEditMode).toHaveBeenCalled();
+  });
+
+  it("enables AI editor button when canUpdateAiEffects is true", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={true} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    expect(aiButton).not.toBeDisabled();
+  });
+
+  it("disables AI editor button when canUpdateAiEffects is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={false} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    expect(aiButton).toBeDisabled();
+  });
+
+  it("calls onEnterAiEditMode when AI editor button is clicked", () => {
+    const onEnterAiEditMode = vi.fn();
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={true} onEnterAiEditMode={onEnterAiEditMode} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    fireEvent.click(aiButton);
+
+    expect(onEnterAiEditMode).toHaveBeenCalled();
+  });
+
+  it("enables frame button when canToggleZoomPan is true", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={true} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    expect(frameButton).not.toBeDisabled();
+  });
+
+  it("disables frame button when canToggleZoomPan is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={false} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    expect(frameButton).toBeDisabled();
+  });
+
+  it("calls onToggleZoomPan when frame button is clicked", () => {
+    const onToggleZoomPan = vi.fn();
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={true} onToggleZoomPan={onToggleZoomPan} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    fireEvent.click(frameButton);
+
+    expect(onToggleZoomPan).toHaveBeenCalled();
   });
 
   it("calls onSelectSlot when slot switcher slot is clicked", () => {
@@ -192,6 +292,14 @@ describe("FooterToolsBar", () => {
     expect(slotSwitcher).toHaveAttribute("hidden");
   });
 
+  it("hides slot switcher when isZoomPanMode is true", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} isZoomPanMode={true} />);
+
+    const slotSwitcher = screen.getByTestId("mock-slot-switcher");
+    expect(slotSwitcher).toHaveAttribute("hidden");
+  });
+
   it("shows split confirmation dialog when shouldConfirmSplit is true", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} shouldConfirmSplit={true} />);
@@ -204,5 +312,67 @@ describe("FooterToolsBar", () => {
     expect(
       screen.getByText(t("uploader.splitSlotsConfirmTitle")),
     ).toBeInTheDocument();
+  });
+
+  it("disables kadr button when canToggleZoomPan is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canToggleZoomPan={false} />);
+
+    const frameButton = screen.getByRole("button", {
+      name: t("uploader.frameButton"),
+    });
+    expect(frameButton).toBeDisabled();
+  });
+
+  it("disables AI editor button when canUpdateAiEffects is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canUpdateAiEffects={false} />);
+
+    const aiButton = screen.getByRole("button", {
+      name: t("uploader.aiEditorButton"),
+    });
+    expect(aiButton).toBeDisabled();
+  });
+
+  it("disables reset button when canReset is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} canReset={false} />);
+
+    const resetButton = screen.getByRole("button", {
+      name: t("uploader.resetSlots"),
+    });
+    expect(resetButton).toBeDisabled();
+  });
+
+  it("shows reset confirmation dialog when reset button is clicked", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} />);
+
+    const resetButton = screen.getByRole("button", {
+      name: t("uploader.resetSlots"),
+    });
+    fireEvent.click(resetButton);
+
+    expect(
+      screen.getByText(t("uploader.resetSlotsConfirmTitle")),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onReset when reset confirmation action is clicked", () => {
+    const onReset = vi.fn();
+    const props = createProps();
+    render(<FooterToolsBar {...props} onReset={onReset} />);
+
+    const resetButton = screen.getByRole("button", {
+      name: t("uploader.resetSlots"),
+    });
+    fireEvent.click(resetButton);
+
+    const confirmButton = screen.getByText(
+      t("uploader.resetSlotsConfirmAction"),
+    );
+    fireEvent.click(confirmButton);
+
+    expect(onReset).toHaveBeenCalled();
   });
 });
