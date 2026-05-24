@@ -17,7 +17,7 @@ import { UploaderTools, type UploaderProportion } from "@/components/image-uploa
 import type { SelectedImageItem } from "@/components/image-uploader/image-uploader";
 import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
 import IconFrame from "@/assets/icons/kadr_tool.svg?react";
-import IconAiEditor from "@/components/icons/icon-ai-editor.svg?react";
+import IconAiEditor from "@/assets/icons/edytor_ai_tool.svg?react";
 import IconSettings from "@/components/icons/icon-settings.svg?react";
 import IconTriptych from "@/components/icons/icon-triptych.svg?react";
 import IconReset from "@/components/icons/icon-reset.svg?react";
@@ -156,13 +156,13 @@ export function FooterToolsBar({
             <Button
               type="button"
               variant="secondary"
-              size="icon"
               disabled={!canUpdateAiEffects}
               onClick={onEnterAiEditMode}
               aria-label={t("uploader.aiEditorButton")}
-              className={TOOLBAR_BUTTON_CLASS}
+              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
             >
               <IconAiEditor className={ICON_CLASS} />
+              <span className="text-[9px] leading-none">Edytor AI</span>
             </Button>
           </div>
 
