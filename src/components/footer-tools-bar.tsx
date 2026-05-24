@@ -52,8 +52,8 @@ export interface FooterToolsBarProps {
 }
 
 const TOOLBAR_BUTTON_CLASS =
-  "h-14 w-14 sm:h-16 sm:w-16 rounded-2xl shadow-lg border-2";
-const ICON_CLASS = "h-6 w-6 sm:h-7 sm:w-7";
+  "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-2xl shadow-lg border-2";
+const ICON_CLASS = "h-12 w-12 sm:h-14 sm:w-14";
 
 export function FooterToolsBar({
   slots,
@@ -84,10 +84,9 @@ export function FooterToolsBar({
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+      className={TOOLBAR_BUTTON_CLASS}
     >
       <IconTriptych className={ICON_CLASS} />
-      <span className="text-[10px] leading-none sm:text-[10px]">Tryptyk</span>
     </Button>
   );
 
@@ -97,10 +96,9 @@ export function FooterToolsBar({
       variant="secondary"
       disabled={!canReset}
       aria-label={t("uploader.resetSlots")}
-      className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+      className={TOOLBAR_BUTTON_CLASS}
     >
       <IconReset className={ICON_CLASS} />
-      <span className="text-[10px] leading-none sm:text-[10px]">Reset</span>
     </Button>
   );
 
@@ -128,10 +126,9 @@ export function FooterToolsBar({
                 variant="secondary"
                 data-testid="image-proportions-dropdown-trigger"
                 aria-label={t("uploader.shapeButton")}
-                className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+                className={TOOLBAR_BUTTON_CLASS}
               >
                 <IconShape className={ICON_CLASS} />
-                <span className="text-[10px] leading-none sm:text-[10px]">Kształt</span>
               </Button>
             }
           />
@@ -142,10 +139,9 @@ export function FooterToolsBar({
             disabled={!canToggleZoomPan}
             onClick={onToggleZoomPan}
             aria-label={t("uploader.frameButton")}
-            className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+            className={TOOLBAR_BUTTON_CLASS}
           >
             <IconFrame className={ICON_CLASS} />
-            <span className="text-[10px] leading-none sm:text-[10px]">Kadr</span>
           </Button>
 
           <Button
@@ -154,10 +150,9 @@ export function FooterToolsBar({
             disabled={!canUpdateAiEffects}
             onClick={onEnterAiEditMode}
             aria-label={t("uploader.aiEditorButton")}
-            className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+            className={TOOLBAR_BUTTON_CLASS}
           >
             <IconAiEditor className={ICON_CLASS} />
-            <span className="text-[10px] leading-none sm:text-[10px]">Edytor AI</span>
           </Button>
 
           <Button
@@ -166,10 +161,9 @@ export function FooterToolsBar({
             disabled={!canUpdateEffects}
             onClick={onEnterEditMode}
             aria-label={t("uploader.settingsButton")}
-            className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
+            className={TOOLBAR_BUTTON_CLASS}
           >
             <IconSettings className={ICON_CLASS} />
-            <span className="text-[10px] leading-none sm:text-[10px]">Ustawienia</span>
           </Button>
 
           {shouldConfirmSplit ? (
