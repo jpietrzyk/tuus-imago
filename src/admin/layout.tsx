@@ -10,13 +10,13 @@ import {
   Shield,
   Building2,
   LogOut,
-  Menu,
   X,
   Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { t } from "@/locales/i18n";
+import IconMenu from "@/components/icons/icon-menu.svg?react";
 
 type NavItem = {
   label: string;
@@ -181,7 +181,7 @@ export function AdminLayout() {
             className="md:hidden"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="h-5 w-5" />
+            <IconMenu className="h-5 w-5" />
           </Button>
           <div className="flex-1" />
         </header>

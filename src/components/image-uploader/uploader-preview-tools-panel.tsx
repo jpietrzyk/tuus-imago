@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
-import { Check, RotateCcw, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import IconUndo from "@/components/icons/icon-undo.svg?react";
 import { UploaderEffectsPanelContent, type EffectsMode } from "./uploader-effects-panel";
 import type { CropAdjust } from "./use-crop-adjust";
 
@@ -204,7 +205,7 @@ export function UploaderPreviewToolsPanel({
                 className="h-8 gap-1.5"
                 aria-label={t("uploader.effectsReset")}
               >
-                <RotateCcw className="h-3.5 w-3.5" />
+                <IconUndo className="h-3.5 w-3.5" />
                 {t("uploader.effectsReset")}
               </Button>
               <Button
