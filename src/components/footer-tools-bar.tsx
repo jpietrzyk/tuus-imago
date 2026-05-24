@@ -18,8 +18,8 @@ import type { SelectedImageItem } from "@/components/image-uploader/image-upload
 import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
 import IconFrame from "@/assets/icons/kadr_tool.svg?react";
 import IconAiEditor from "@/assets/icons/edytor_ai_tool.svg?react";
-import IconSettings from "@/components/icons/icon-settings.svg?react";
-import IconTriptych from "@/components/icons/icon-triptych.svg?react";
+import IconSettings from "@/assets/icons/ustawienia_tool.svg?react";
+import IconTriptych from "@/assets/icons/tryptyk_tool.svg?react";
 import IconReset from "@/components/icons/icon-reset.svg?react";
 
 export interface FooterToolsBarProps {
@@ -81,13 +81,13 @@ export function FooterToolsBar({
     <Button
       type="button"
       variant="secondary"
-      size="icon"
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      className={TOOLBAR_BUTTON_CLASS}
+      className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
     >
       <IconTriptych className={ICON_CLASS} />
+      <span className="text-[9px] leading-none">Tryptyk</span>
     </Button>
   );
 
@@ -95,12 +95,12 @@ export function FooterToolsBar({
     <Button
       type="button"
       variant="secondary"
-      size="icon"
       disabled={!canReset}
       aria-label={t("uploader.resetSlots")}
-      className={TOOLBAR_BUTTON_CLASS}
+      className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
     >
       <IconReset className={ICON_CLASS} />
+      <span className="text-[9px] leading-none">Reset</span>
     </Button>
   );
 
@@ -170,13 +170,13 @@ export function FooterToolsBar({
             <Button
               type="button"
               variant={isEditMode ? "default" : "secondary"}
-              size="icon"
               disabled={!canUpdateEffects}
               onClick={onEnterEditMode}
               aria-label={t("uploader.settingsButton")}
-              className={TOOLBAR_BUTTON_CLASS}
+              className={TOOLBAR_BUTTON_CLASS + " flex-col gap-0.5"}
             >
               <IconSettings className={ICON_CLASS} />
+              <span className="text-[9px] leading-none">Ustawienia</span>
             </Button>
           </div>
 
