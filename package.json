@@ -83,5 +83,6 @@
     "vite-plugin-decap-cms": "^0.5.2",
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "^4.0.18"
-  }
+  },
+  "packageManager": "pnpm@11.3.0"
 }
