@@ -1,1 +1,8 @@
-onlyBuiltDependencies: '@parcel/watcher canvas esbuild msw netlify-cli sharp unix-dgram'
+allowBuilds:
+  '@parcel/watcher': true
+  canvas: true
+  esbuild: true
+  msw: true
+  netlify-cli: true
+  sharp: true
+  unix-dgram: true
