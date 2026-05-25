@@ -37,6 +37,7 @@ import {
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
+import { UploaderSlotSwitcher } from "./uploader-slot-switcher";
 import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
 import type { ImageDebugData } from "@/components/image-debug-panel";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
@@ -1559,9 +1560,6 @@ export const ImageUploader = forwardRef<
     }
 
     return {
-      slots: selectedImages,
-      activeSlotIndex: activeImageIndex,
-      onSelectSlot: handlePreviewSlotSelect,
       onSplitImage: () => void handleSplitActiveImage(),
       canSplitImage: !!activeImage,
       shouldConfirmSplit: selectedImageCount > 1,
@@ -1585,9 +1583,6 @@ export const ImageUploader = forwardRef<
     };
   }, [
     selectedImageCount,
-    selectedImages,
-    activeImageIndex,
-    handlePreviewSlotSelect,
     handleSplitActiveImage,
     activeImage,
     handleSelectProportion,
@@ -1803,6 +1798,15 @@ export const ImageUploader = forwardRef<
           }
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
         />
+
+        <div className="px-4">
+          <UploaderSlotSwitcher
+            slots={selectedImages}
+            activeSlotIndex={activeImageIndex}
+            onSelectSlot={handlePreviewSlotSelect}
+            hidden={isEffectsEditMode || isZoomPanMode}
+          />
+        </div>
 
         <UploaderPreviewToolsPanel
           onUpdateEffect={updateActiveImageEffect}
