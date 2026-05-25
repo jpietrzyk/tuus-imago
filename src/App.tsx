@@ -230,7 +230,6 @@ function StorefrontApp() {
       const json = JSON.stringify(
         props
           ? {
-              activeSlotIndex: props.activeSlotIndex,
               canSplitImage: props.canSplitImage,
               canUpdateEffects: props.canUpdateEffects,
               canToggleZoomPan: props.canToggleZoomPan,

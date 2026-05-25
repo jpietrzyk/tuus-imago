@@ -12,9 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import { TriangleAlert } from "lucide-react";
-import { UploaderSlotSwitcher } from "@/components/image-uploader/uploader-slot-switcher";
 import { UploaderTools, type UploaderProportion } from "@/components/image-uploader/uploader-tools";
-import type { SelectedImageItem } from "@/components/image-uploader/image-uploader";
+import { SizeSelector } from "@/components/image-uploader/size-selector";
 import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
 import IconFrame from "@/assets/icons/kadr_tool.svg?react";
 import IconAiEditor from "@/assets/icons/edytor_ai_tool.svg?react";
@@ -23,10 +22,6 @@ import IconTriptych from "@/assets/icons/tryptyk_tool.svg?react";
 import IconReset from "@/components/icons/icon-reset.svg?react";
 
 export interface FooterToolsBarProps {
-  slots: Array<SelectedImageItem | null>;
-  activeSlotIndex: number | null;
-  onSelectSlot: (index: number) => void;
-
   onSelectProportion: (proportion: UploaderProportion) => void;
   coveragePercent?: Partial<Record<UploaderProportion, number>>;
   selectedProportion: UploaderProportion;
@@ -56,9 +51,6 @@ const TOOLBAR_BUTTON_CLASS =
 const ICON_STYLE: React.CSSProperties = { width: "85%", height: "65%" };
 
 export function FooterToolsBar({
-  slots,
-  activeSlotIndex,
-  onSelectSlot,
   onSelectProportion,
   coveragePercent,
   selectedProportion,
@@ -106,14 +98,7 @@ export function FooterToolsBar({
 
   return (
     <div className="border-b border-gray-200">
-      <div className="px-4 py-1">
-        <UploaderSlotSwitcher
-          slots={slots}
-          activeSlotIndex={activeSlotIndex}
-          onSelectSlot={onSelectSlot}
-          hidden={isEditMode || isZoomPanMode}
-        />
-      </div>
+      <SizeSelector />
 
       <div className="py-1">
         <div className="flex items-center justify-center gap-1.5">
