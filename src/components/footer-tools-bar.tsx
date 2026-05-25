@@ -52,8 +52,8 @@ export interface FooterToolsBarProps {
 }
 
 const TOOLBAR_BUTTON_CLASS =
-  "h-[4.5rem] w-[4.5rem] sm:h-20 sm:w-20 rounded-2xl shadow-lg border-2 flex-col gap-0.5 p-1";
-const ICON_STYLE: React.CSSProperties = { width: "100%", height: "80%" };
+  "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-2xl shadow-lg border-2 flex-col gap-0.5 p-1";
+const ICON_STYLE: React.CSSProperties = { width: "85%", height: "65%" };
 
 export function FooterToolsBar({
   slots,
@@ -87,7 +87,7 @@ export function FooterToolsBar({
       className={TOOLBAR_BUTTON_CLASS}
     >
       <IconTriptych style={ICON_STYLE} />
-      <span className="text-[7px] leading-none truncate w-full text-center">Tryptyk</span>
+      <span className="text-[9px] leading-none truncate w-full text-center">Tryptyk</span>
     </Button>
   );
 
@@ -100,7 +100,7 @@ export function FooterToolsBar({
       className={TOOLBAR_BUTTON_CLASS}
     >
       <IconReset style={ICON_STYLE} />
-      <span className="text-[7px] leading-none truncate w-full text-center">Reset</span>
+      <span className="text-[9px] leading-none truncate w-full text-center">Reset</span>
     </Button>
   );
 
@@ -131,7 +131,7 @@ export function FooterToolsBar({
                 className={TOOLBAR_BUTTON_CLASS}
               >
                 <IconShape style={ICON_STYLE} />
-                <span className="text-[7px] leading-none truncate w-full text-center">Kształt</span>
+                <span className="text-[9px] leading-none truncate w-full text-center">Kształt</span>
               </Button>
             }
           />
@@ -145,7 +145,7 @@ export function FooterToolsBar({
             className={TOOLBAR_BUTTON_CLASS}
           >
             <IconFrame style={ICON_STYLE} />
-            <span className="text-[7px] leading-none truncate w-full text-center">Kadr</span>
+            <span className="text-[9px] leading-none truncate w-full text-center">Kadr</span>
           </Button>
 
           <Button
@@ -157,7 +157,7 @@ export function FooterToolsBar({
             className={TOOLBAR_BUTTON_CLASS}
           >
             <IconAiEditor style={ICON_STYLE} />
-            <span className="text-[7px] leading-none truncate w-full text-center">Edytor AI</span>
+            <span className="text-[9px] leading-none truncate w-full text-center">Edytor AI</span>
           </Button>
 
           <Button
@@ -169,7 +169,7 @@ export function FooterToolsBar({
             className={TOOLBAR_BUTTON_CLASS}
           >
             <IconSettings style={ICON_STYLE} />
-            <span className="text-[7px] leading-none truncate w-full text-center">Ustawienia</span>
+            <span className="text-[9px] leading-none truncate w-full text-center">Ustawienia</span>
           </Button>
 
           {shouldConfirmSplit ? (
