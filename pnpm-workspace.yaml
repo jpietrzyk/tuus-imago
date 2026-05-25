@@ -1,8 +1,1 @@
-onlyBuiltDependencies:
-  - "@parcel/watcher"
-  - canvas
-  - esbuild
-  - msw
-  - netlify-cli
-  - sharp
-  - unix-dgram
+onlyBuiltDependencies: '@parcel/watcher canvas esbuild msw netlify-cli sharp unix-dgram'
