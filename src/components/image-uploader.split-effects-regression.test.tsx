@@ -28,7 +28,6 @@ vi.mock("./image-uploader/jpeg-exif-reader", () => ({
   readJpegExifResolution: mockReadJpegExifResolution,
 }));
 
-let latestToolsBarProps: FooterToolsBarProps | null = null;
 let latestSlotSwitcherProps: {
   slots: Array<SelectedImageItem | null>;
   activeSlotIndex: number | null;
@@ -77,7 +76,6 @@ vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
 
 vi.mock("@/components/footer-tools-bar", () => ({
   FooterToolsBar: (props: FooterToolsBarProps) => {
-    latestToolsBarProps = props;
     return (
       <div>
         <button
@@ -108,7 +106,6 @@ function TestWrapper() {
 describe("ImageUploader split effects regression", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    latestToolsBarProps = null;
     latestSlotSwitcherProps = null;
     latestEffectsProps = null;
   });
