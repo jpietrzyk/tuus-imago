@@ -29,6 +29,10 @@ vi.mock("./image-uploader/jpeg-exif-reader", () => ({
 }));
 
 let latestToolsBarProps: FooterToolsBarProps | null = null;
+let latestSlotSwitcherProps: {
+  slots: Array<SelectedImageItem | null>;
+  activeSlotIndex: number | null;
+} | null = null;
 let latestEffectsProps: {
   activeImageEffects: SelectedImageItem["previewEffects"] | null;
   onUpdateEffect: (name: "brightness" | "contrast" | "grayscale", val: number) => void;
@@ -37,6 +41,16 @@ let latestEffectsProps: {
 vi.mock("./image-uploader/uploader-preview-slider", () => ({
   default: ({ activeImage }: { activeImage: SelectedImageItem | null }) =>
     activeImage ? <img alt="Preview" src={activeImage.previewUrl} /> : null,
+}));
+
+vi.mock("./image-uploader/uploader-slot-switcher", () => ({
+  UploaderSlotSwitcher: (props: {
+    slots: Array<SelectedImageItem | null>;
+    activeSlotIndex: number | null;
+  }) => {
+    latestSlotSwitcherProps = props;
+    return <div data-testid="mock-slot-switcher" />;
+  },
 }));
 
 vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
@@ -95,6 +109,7 @@ describe("ImageUploader split effects regression", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     latestToolsBarProps = null;
+    latestSlotSwitcherProps = null;
     latestEffectsProps = null;
   });
 
@@ -138,8 +153,8 @@ describe("ImageUploader split effects regression", () => {
     });
 
     await waitFor(() => {
-      expect(latestToolsBarProps?.slots).toHaveLength(3);
-      expect(latestToolsBarProps?.activeSlotIndex).toBe(1);
+      expect(latestSlotSwitcherProps?.slots).toHaveLength(3);
+      expect(latestSlotSwitcherProps?.activeSlotIndex).toBe(1);
       expect(latestEffectsProps?.activeImageEffects).toEqual({
         brightness: 40,
         contrast: 0,
@@ -149,7 +164,7 @@ describe("ImageUploader split effects regression", () => {
         upscale: false,
         restore: false,
       });
-      expect(latestToolsBarProps?.slots[1]?.previewEffects).toEqual({
+      expect(latestSlotSwitcherProps?.slots[1]?.previewEffects).toEqual({
         brightness: 40,
         contrast: 0,
         grayscale: 0,

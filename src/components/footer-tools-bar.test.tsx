@@ -2,7 +2,6 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { FooterToolsBar, type FooterToolsBarProps } from "./footer-tools-bar";
 import { t } from "@/locales/i18n";
-import type { SelectedImageItem } from "@/components/image-uploader/image-uploader";
 
 vi.mock("@/components/image-uploader/uploader-tools", () => ({
   UploaderTools: ({
@@ -24,24 +23,8 @@ vi.mock("@/components/image-uploader/uploader-tools", () => ({
   ),
 }));
 
-vi.mock("@/components/image-uploader/uploader-slot-switcher", () => ({
-  UploaderSlotSwitcher: ({
-    slots,
-    onSelectSlot,
-    hidden,
-  }: {
-    slots: Array<SelectedImageItem | null>;
-    onSelectSlot: (index: number) => void;
-    hidden?: boolean;
-  }) => (
-    <div data-testid="mock-slot-switcher" hidden={hidden}>
-      {slots.map((_, i) => (
-        <button key={i} onClick={() => onSelectSlot(i)}>
-          Slot {i}
-        </button>
-      ))}
-    </div>
-  ),
+vi.mock("@/components/image-uploader/size-selector", () => ({
+  SizeSelector: () => <div data-testid="mock-size-selector" />,
 }));
 
 vi.mock("@/components/icons/icon-shape.svg?react", () => ({
@@ -63,20 +46,7 @@ vi.mock("@/components/icons/icon-reset.svg?react", () => ({
   default: () => <svg data-testid="icon-reset" />,
 }));
 
-const createImageItem = (name: string): SelectedImageItem => ({
-  file: new File([name], `${name}.jpg`, { type: "image/jpeg" }),
-  previewUrl: `blob:${name}`,
-  metadata: null,
-  displayImageProportion: "horizontal",
-  autoSelectOptimalPending: false,
-  previewEffects: { brightness: 0, contrast: 0, grayscale: 0 },
-  previewTransform: { rotation: 0, flipHorizontal: false, flipVertical: false },
-});
-
 const createProps = (): FooterToolsBarProps => ({
-  slots: [createImageItem("slot1"), null, null],
-  activeSlotIndex: 0,
-  onSelectSlot: vi.fn(),
   onSplitImage: vi.fn(),
   canSplitImage: true,
   shouldConfirmSplit: false,
@@ -99,11 +69,11 @@ describe("FooterToolsBar", () => {
     vi.clearAllMocks();
   });
 
-  it("renders slot switcher and all 6 toolbar buttons", () => {
+  it("renders size selector and all 6 toolbar buttons", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} />);
 
-    expect(screen.getByTestId("mock-slot-switcher")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-size-selector")).toBeInTheDocument();
     expect(screen.getByTestId("mock-uploader-tools")).toBeInTheDocument();
 
     expect(
@@ -258,17 +228,6 @@ describe("FooterToolsBar", () => {
     expect(onToggleZoomPan).toHaveBeenCalled();
   });
 
-  it("calls onSelectSlot when slot switcher slot is clicked", () => {
-    const onSelectSlot = vi.fn();
-    const props = createProps();
-    render(<FooterToolsBar {...props} onSelectSlot={onSelectSlot} />);
-
-    const slotButton = screen.getByRole("button", { name: /Slot 1/i });
-    fireEvent.click(slotButton);
-
-    expect(onSelectSlot).toHaveBeenCalledWith(1);
-  });
-
   it("calls onSelectProportion when proportion is selected from tools", () => {
     const onSelectProportion = vi.fn();
     const props = createProps();
@@ -282,22 +241,6 @@ describe("FooterToolsBar", () => {
     fireEvent.click(proportionButton);
 
     expect(onSelectProportion).toHaveBeenCalledWith("horizontal");
-  });
-
-  it("hides slot switcher when isEditMode is true", () => {
-    const props = createProps();
-    render(<FooterToolsBar {...props} isEditMode={true} />);
-
-    const slotSwitcher = screen.getByTestId("mock-slot-switcher");
-    expect(slotSwitcher).toHaveAttribute("hidden");
-  });
-
-  it("hides slot switcher when isZoomPanMode is true", () => {
-    const props = createProps();
-    render(<FooterToolsBar {...props} isZoomPanMode={true} />);
-
-    const slotSwitcher = screen.getByTestId("mock-slot-switcher");
-    expect(slotSwitcher).toHaveAttribute("hidden");
   });
 
   it("shows split confirmation dialog when shouldConfirmSplit is true", () => {
