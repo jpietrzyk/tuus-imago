@@ -1,4 +1,4 @@
-import { ChevronUp, ShoppingBag } from "lucide-react";
+import { ChevronUp, ShoppingCart, ShoppingBag } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,14 +44,6 @@ export function CheckoutOrderDropup({
   onCheckout,
   checkoutDisabled,
 }: CheckoutOrderDropupProps) {
-  const checkedCount = rows.reduce((sum, row) => {
-    if (!checkedSlotKeys.has(row.slotKey)) {
-      return sum;
-    }
-
-    return sum + 1;
-  }, 0);
-
   const totalPrice = rows.reduce((sum, row) => {
     if (!checkedSlotKeys.has(row.slotKey)) {
       return sum;
@@ -62,33 +54,40 @@ export function CheckoutOrderDropup({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
+      <div
+        className="flex h-10 w-full overflow-hidden rounded-full bg-primary text-primary-foreground shadow-sm"
+        role="group"
+      >
+        <button
           type="button"
-          size="sm"
-          className="h-9 w-full lg:w-auto gap-1.5 rounded-full px-2 text-xs font-semibold tracking-[0.01em] shadow-sm sm:px-4 sm:text-sm"
+          className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-3 text-xs font-semibold tracking-[0.01em] transition-colors hover:bg-primary/80 disabled:pointer-events-none disabled:opacity-50 sm:px-4 sm:text-sm"
+          disabled={checkoutDisabled}
+          onClick={onCheckout}
           aria-label={
             rows.length > 0
               ? `${t("checkout.openCheckout")} · ${formatPrice(totalPrice)}`
               : t("checkout.openCheckout")
           }
         >
-          <ShoppingBag className="h-4 w-4" aria-hidden="true" />
-          <ChevronUp className="h-3.5 w-3.5 sm:hidden" aria-hidden="true" />
-          <span className="hidden items-center gap-2 sm:inline-flex">
-            {t("checkout.openCheckout")}
-            {rows.length > 0 ? (
-              <>
-                <span className="text-[10px] font-normal opacity-70">·</span>
-                <span className="text-xs font-semibold">{formatPrice(totalPrice)}</span>
-                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-foreground/20 px-1.5 text-[10px] font-bold leading-none">
-                  {checkedCount}
-                </span>
-              </>
-            ) : null}
-          </span>
-        </Button>
-      </DropdownMenuTrigger>
+          <ShoppingCart className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{t("checkout.openCheckout")}</span>
+          <span className="mx-0.5 inline-block h-4 w-px bg-primary-foreground/30" />
+          <span className="text-xs font-semibold">{formatPrice(totalPrice)}</span>
+        </button>
+
+        <span className="my-1.5 w-px bg-primary-foreground/30" />
+
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="flex cursor-pointer items-center justify-center px-2.5 transition-colors hover:bg-primary/80 sm:px-3"
+            aria-label={t("checkout.orderSelectionButton")}
+          >
+            <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        </DropdownMenuTrigger>
+      </div>
+
       <DropdownMenuContent
         align="center"
         side="top"

@@ -54,7 +54,7 @@ const defaultRows: FooterOrderRow[] = [
 ];
 
 describe("CheckoutOrderDropup", () => {
-  it("renders trigger button with label", () => {
+  it("renders main action button with label", () => {
     render(
       <CheckoutOrderDropup
         rows={[]}
@@ -68,6 +68,23 @@ describe("CheckoutOrderDropup", () => {
 
     expect(
       screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("renders popover trigger button", () => {
+    render(
+      <CheckoutOrderDropup
+        rows={[]}
+        checkedSlotKeys={new Set()}
+        onToggleSlot={vi.fn()}
+        onCheckout={vi.fn()}
+        checkoutDisabled={false}
+      />,
+      { wrapper },
+    );
+
+    expect(
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
     ).toBeInTheDocument();
   });
 
@@ -86,7 +103,7 @@ describe("CheckoutOrderDropup", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
     );
 
     expect(
@@ -109,7 +126,7 @@ describe("CheckoutOrderDropup", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
     );
 
     const checkboxes = screen.getAllByRole("checkbox", {
@@ -118,7 +135,7 @@ describe("CheckoutOrderDropup", () => {
     expect(checkboxes).toHaveLength(3);
   });
 
-  it("shows checked count in trigger", () => {
+  it("shows total price in trigger button", () => {
     render(
       <CheckoutOrderDropup
         rows={defaultRows}
@@ -130,10 +147,10 @@ describe("CheckoutOrderDropup", () => {
       { wrapper },
     );
 
-    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("PRICE:30")).toBeInTheDocument();
   });
 
-  it("computes price total from checked rows", async () => {
+  it("computes price total from checked rows in popover", async () => {
     const user = userEvent.setup();
 
     render(
@@ -147,10 +164,8 @@ describe("CheckoutOrderDropup", () => {
       { wrapper },
     );
 
-    expect(screen.getByText("PRICE:30")).toBeInTheDocument();
-
     await user.click(
-      screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
     );
 
     expect(screen.getAllByText("PRICE:30").length).toBeGreaterThanOrEqual(1);
@@ -172,7 +187,7 @@ describe("CheckoutOrderDropup", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
     );
 
     await user.click(
@@ -182,7 +197,7 @@ describe("CheckoutOrderDropup", () => {
     expect(onToggleSlot).toHaveBeenCalledWith("left");
   });
 
-  it("calls onCheckout when checkout button is clicked", async () => {
+  it("calls onCheckout when main action button is clicked", async () => {
     const user = userEvent.setup();
     const onCheckout = vi.fn();
 
@@ -201,6 +216,28 @@ describe("CheckoutOrderDropup", () => {
       screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
     );
 
+    expect(onCheckout).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onCheckout when checkout button in popover is clicked", async () => {
+    const user = userEvent.setup();
+    const onCheckout = vi.fn();
+
+    render(
+      <CheckoutOrderDropup
+        rows={defaultRows}
+        checkedSlotKeys={new Set(["left"])}
+        onToggleSlot={vi.fn()}
+        onCheckout={onCheckout}
+        checkoutDisabled={false}
+      />,
+      { wrapper },
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
+    );
+
     await user.click(
       screen.getByRole("button", {
         name: "checkout.proceedToCheckout",
@@ -210,7 +247,24 @@ describe("CheckoutOrderDropup", () => {
     expect(onCheckout).toHaveBeenCalledTimes(1);
   });
 
-  it("disables checkout button when checkoutDisabled is true", async () => {
+  it("disables main action button when checkoutDisabled is true", () => {
+    render(
+      <CheckoutOrderDropup
+        rows={defaultRows}
+        checkedSlotKeys={new Set(["left"])}
+        onToggleSlot={vi.fn()}
+        onCheckout={vi.fn()}
+        checkoutDisabled={true}
+      />,
+      { wrapper },
+    );
+
+    expect(
+      screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+    ).toBeDisabled();
+  });
+
+  it("disables checkout button in popover when checkoutDisabled is true", async () => {
     const user = userEvent.setup();
 
     render(
@@ -225,7 +279,7 @@ describe("CheckoutOrderDropup", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
     );
 
     expect(

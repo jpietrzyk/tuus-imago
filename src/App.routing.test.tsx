@@ -495,7 +495,7 @@ describe("App Component Routing", () => {
 
     await user.click(
       screen.getByRole("button", {
-        name: checkoutButtonLabel(),
+        name: tr("checkout.orderSelectionButton"),
       }),
     );
 
