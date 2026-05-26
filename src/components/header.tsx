@@ -13,7 +13,7 @@ import {
 import { t } from "@/locales/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { CurrentPromotionBanner } from "@/components/current-promotion-banner";
-import IconMenu from "@/components/icons/icon-menu.svg?react";
+import IconMenu from "@/assets/icons/menu.svg?react";
 import IconLogo from "@/components/icons/icon-logo.svg?react";
 
 interface HeaderProps {
