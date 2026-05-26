@@ -7,4 +7,11 @@ export const IMAGE_VALIDATION_RULES = {
   minDpi: 72,
 } as const;
 
-export type ImageValidationRules = typeof IMAGE_VALIDATION_RULES;
+export interface ImageValidationRules {
+  readonly acceptedMimeTypes: typeof IMAGE_VALIDATION_RULES.acceptedMimeTypes;
+  readonly maxFileSizeBytes: number;
+  readonly maxSelectedImages: number;
+  readonly minWidth: number;
+  readonly minHeight: number;
+  readonly minDpi: number;
+}

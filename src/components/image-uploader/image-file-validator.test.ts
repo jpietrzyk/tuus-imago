@@ -12,7 +12,7 @@ vi.mock("./jpeg-exif-reader", () => ({
 }));
 
 import { validateImageFile, extractPngDpi } from "./image-file-validator";
-import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
+import { IMAGE_VALIDATION_RULES, type ImageValidationRules } from "./image-validation-rules";
 
 const RULES = IMAGE_VALIDATION_RULES;
 
@@ -96,7 +96,7 @@ describe("validateImageFile", () => {
   });
 
   it("rejects JPEG with DPI below minimum", async () => {
-    const customRules = { ...RULES, minDpi: 150 };
+    const customRules: ImageValidationRules = { ...RULES, minDpi: 150 };
     mockReadJpegExifResolution.mockResolvedValue({
       xResolution: 72,
       yResolution: 72,
