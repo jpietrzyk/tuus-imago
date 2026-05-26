@@ -18,23 +18,28 @@ interface SizeSelectorProps {
 export function SizeSelector({ hidden = false }: SizeSelectorProps) {
   return (
     <div className="py-1" hidden={hidden}>
-      <div className="flex items-center justify-center gap-1.5">
-        {SIZE_OPTIONS.map(({ id, label }) => (
-          <Button
-            key={id}
-            type="button"
-            variant="secondary"
-            id={id}
-            className={SIZE_BUTTON_CLASS}
-          >
-            <span className="text-[9px] leading-none truncate w-full text-center">
-              {label}
-            </span>
-            <span className="text-[9px] leading-none truncate w-full text-center">
-              cm
-            </span>
-          </Button>
-        ))}
+      <div className="flex justify-center">
+        <div className="inline-flex flex-col gap-0.5">
+          <p className="text-xs text-muted-foreground">Wybierz rozmiar</p>
+          <div className="flex items-center justify-center gap-1.5">
+            {SIZE_OPTIONS.map(({ id, label }) => (
+              <Button
+                key={id}
+                type="button"
+                variant="secondary"
+                id={id}
+                className={SIZE_BUTTON_CLASS}
+              >
+                <span className="text-[9px] leading-none truncate w-full text-center">
+                  {label}
+                </span>
+                <span className="text-[9px] leading-none truncate w-full text-center">
+                  cm
+                </span>
+              </Button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
