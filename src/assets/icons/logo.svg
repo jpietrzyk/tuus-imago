@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="225.43687mm"
+   height="225.43715mm"
+   viewBox="0 0 225.43687 225.43715"
+   version="1.1"
+   id="svg4366"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs4360">
+    <rect
+       x="-269.78186"
+       y="-129.83954"
+       width="40.411152"
+       height="24.134438"
+       id="rect1183-8" />
+  </defs>
+  <metadata
+     id="metadata4363">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     transform="translate(-1990.9179,1913.0594)">
+    <g
+       id="g2351"
+       transform="matrix(2.2271062,0,0,2.2271062,1350.3688,-5442.0575)"
+       style="stroke-width:1.5875;stroke-miterlimit:4;stroke-dasharray:none">
+      <text
+         xml:space="preserve"
+         id="text1181-9"
+         style="font-size:4.23333px;line-height:1.25;font-family:bungee;-inkscape-font-specification:bungee;white-space:pre;shape-inside:url(#rect1183-8);stroke-width:0.311197;stroke-miterlimit:4;stroke-dasharray:none"
+         x="5.2771926"
+         y="0"
+         transform="matrix(5.1012775,0,0,5.1012775,1612.7335,2270.6846)"><tspan
+           x="-255.00965"
+           y="-125.98804"
+           id="tspan6"><tspan
+             style="font-family:'Bodoni MT';-inkscape-font-specification:'Bodoni MT';text-align:center;text-anchor:middle"
+             id="tspan5">TUUS
+</tspan></tspan><tspan
+           x="-256.7178"
+           y="-120.69638"
+           id="tspan8"><tspan
+             style="font-family:'Bodoni MT';-inkscape-font-specification:'Bodoni MT';text-align:center;text-anchor:middle"
+             id="tspan7">IMAGO</tspan></tspan></text>
+      <rect
+         style="opacity:0.993464;fill:none;stroke:#000100;stroke-width:1.5875;stroke-miterlimit:4;stroke-dasharray:none"
+         id="rect1195-4"
+         width="83.041565"
+         height="83.041565"
+         x="297.59897"
+         y="1595.2908" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:1.5875;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         d="m 369.55716,1585.516 18.33261,80.9928 -80.99282,18.3326 -18.33255,-80.9928 z"
+         id="path1217-5" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:1.5875;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:15.875;stroke-opacity:1"
+         d="m 369.55716,1585.516 18.33261,80.9928 -80.99282,18.3326 -18.33255,-80.9928 z"
+         id="path1217-1-1" />
+    </g>
+  </g>
+</svg>
