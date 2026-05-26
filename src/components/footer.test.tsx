@@ -71,7 +71,7 @@ describe("Footer Component", () => {
     ).toBeInTheDocument();
   });
 
-  it("should render order count badge showing checked count", () => {
+  it("should render total price in trigger button", () => {
     render(
       <MemoryRouter>
         <Footer
@@ -83,13 +83,6 @@ describe("Footer Component", () => {
               slotIndex: 0,
               proportion: "3:2",
               isUploaded: true,
-              unitPrice: CANVAS_PRINT_UNIT_PRICE,
-            },
-            {
-              slotKey: "right",
-              slotIndex: 2,
-              proportion: "2:3",
-              isUploaded: false,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
             },
           ]}
@@ -99,12 +92,15 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
-  it("should open dropup and show order rows when trigger is clicked", async () => {
+  it("should open dropup and show order rows when popover trigger is clicked", async () => {
     const user = userEvent.setup();
-    const onToggleOrderSlot = vi.fn();
 
     render(
       <MemoryRouter>
@@ -121,17 +117,17 @@ describe("Footer Component", () => {
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
-          onToggleOrderSlot={onToggleOrderSlot}
+          onToggleOrderSlot={vi.fn()}
         />
       </MemoryRouter>,
     );
 
     await user.click(
-      screen.getByRole("button", { name: checkoutButtonLabel() }),
+      screen.getByRole("button", { name: tr("checkout.orderSelectionButton") }),
     );
 
     expect(
-      screen.getByText(tr("checkout.orderSelectionTotal")),
+      screen.getByText(tr("checkout.orderSelectionTitle")),
     ).toBeInTheDocument();
     expect(
       screen.getAllByText(
@@ -165,7 +161,7 @@ describe("Footer Component", () => {
     );
 
     await user.click(
-      screen.getByRole("button", { name: checkoutButtonLabel() }),
+      screen.getByRole("button", { name: tr("checkout.orderSelectionButton") }),
     );
 
     await user.click(
@@ -179,7 +175,7 @@ describe("Footer Component", () => {
     expect(onToggleOrderSlot).toHaveBeenCalledWith("left");
   });
 
-  it("should call onCheckout when proceed button is clicked inside dropup", async () => {
+  it("should call onCheckout when main action button is clicked", async () => {
     const user = userEvent.setup();
     const onCheckout = vi.fn();
 
@@ -207,6 +203,37 @@ describe("Footer Component", () => {
       screen.getByRole("button", { name: checkoutButtonLabel() }),
     );
 
+    expect(onCheckout).toHaveBeenCalledTimes(1);
+  });
+
+  it("should call onCheckout when proceed button is clicked inside dropup", async () => {
+    const user = userEvent.setup();
+    const onCheckout = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <Footer
+          showCheckout
+          onCheckout={onCheckout}
+          orderRows={[
+            {
+              slotKey: "left",
+              slotIndex: 0,
+              proportion: "3:2",
+              isUploaded: true,
+              unitPrice: CANVAS_PRINT_UNIT_PRICE,
+            },
+          ]}
+          checkedOrderSlotKeys={new Set(["left"])}
+          onToggleOrderSlot={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: tr("checkout.orderSelectionButton") }),
+    );
+
     await user.click(
       screen.getByRole("button", { name: tr("checkout.proceedToCheckout") }),
     );
@@ -214,7 +241,7 @@ describe("Footer Component", () => {
     expect(onCheckout).toHaveBeenCalledTimes(1);
   });
 
-  it("should keep trigger enabled but disable proceed button when no slots are checked", async () => {
+  it("should disable main action button when checkoutDisabled and disable proceed in popover", async () => {
     const user = userEvent.setup();
 
     render(
@@ -238,12 +265,17 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    const trigger = screen.getByRole("button", {
+    const mainButton = screen.getByRole("button", {
       name: checkoutButtonLabel(),
     });
-    expect(trigger).not.toBeDisabled();
+    expect(mainButton).toBeDisabled();
 
-    await user.click(trigger);
+    const popoverTrigger = screen.getByRole("button", {
+      name: tr("checkout.orderSelectionButton"),
+    });
+    expect(popoverTrigger).not.toBeDisabled();
+
+    await user.click(popoverTrigger);
 
     const proceedButton = screen.getByRole("button", {
       name: tr("checkout.proceedToCheckout"),
