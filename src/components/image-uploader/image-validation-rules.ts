@@ -4,7 +4,7 @@ export const IMAGE_VALIDATION_RULES = {
   maxSelectedImages: 3,
   minWidth: 800,
   minHeight: 600,
-  minDpi: 150,
+  minDpi: 72,
 } as const;
 
 export type ImageValidationRules = typeof IMAGE_VALIDATION_RULES;
