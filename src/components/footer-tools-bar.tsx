@@ -47,8 +47,8 @@ export interface FooterToolsBarProps {
 }
 
 const TOOLBAR_BUTTON_CLASS =
-  "h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] rounded-2xl shadow-lg border-2 flex-col gap-0.5 p-1";
-const ICON_STYLE: React.CSSProperties = { width: "75%", height: "55%" };
+  "h-12 w-12 sm:h-[3.5rem] sm:w-[3.5rem] rounded-2xl shadow-lg border-2 flex-col gap-0.5 p-1";
+const ICON_STYLE: React.CSSProperties = { width: "65%", height: "45%" };
 
 export function FooterToolsBar({
   onSelectProportion,
