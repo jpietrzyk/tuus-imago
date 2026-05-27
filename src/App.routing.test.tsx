@@ -77,18 +77,11 @@ vi.mock("@/lib/supabase-client", () => ({
 }));
 
 const mockLoadImageDimensions = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ width: 1200, height: 800 }),
-);
-const mockReadJpegExifResolution = vi.hoisted(() =>
-  vi.fn().mockResolvedValue(null),
+  vi.fn().mockResolvedValue({ width: 3000, height: 2000 }),
 );
 
 vi.mock("@/components/image-uploader/load-image-dimensions", () => ({
   loadImageDimensions: mockLoadImageDimensions,
-}));
-
-vi.mock("@/components/image-uploader/jpeg-exif-reader", () => ({
-  readJpegExifResolution: mockReadJpegExifResolution,
 }));
 
 vi.mock("@/lib/cloudinary-upload", () => ({

@@ -14,18 +14,11 @@ vi.mock("./image-uploader/split-image-into-thirds", () => ({
 }));
 
 const mockLoadImageDimensions = vi.hoisted(() =>
-  vi.fn().mockResolvedValue({ width: 1200, height: 800 }),
-);
-const mockReadJpegExifResolution = vi.hoisted(() =>
-  vi.fn().mockResolvedValue(null),
+  vi.fn().mockResolvedValue({ width: 3000, height: 2000 }),
 );
 
 vi.mock("./image-uploader/load-image-dimensions", () => ({
   loadImageDimensions: mockLoadImageDimensions,
-}));
-
-vi.mock("./image-uploader/jpeg-exif-reader", () => ({
-  readJpegExifResolution: mockReadJpegExifResolution,
 }));
 
 let latestSlotSwitcherProps: {

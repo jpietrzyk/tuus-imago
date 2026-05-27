@@ -30,6 +30,16 @@ export type {
 } from "./image-proportion-calculator";
 
 export {
+  calculateDpiFromCrop,
+  calculateEffectiveDpi,
+  getDpiQuality,
+} from "./image-dpi-calculator";
+export type {
+  DpiCalculationResult,
+  DpiQuality,
+} from "./image-dpi-calculator";
+
+export {
   drawCroppedImageToCanvas,
   loadImageElement,
   resolveImageDimensions,

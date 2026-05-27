@@ -8,6 +8,9 @@ export interface ImageDebugData {
   displayProportion: string;
   suggestedProportion: string | null;
   coveragePercent: Partial<Record<"horizontal" | "vertical" | "rectangle", number>>;
+  effectiveDpi?: number | null;
+  dpiQuality?: string | null;
+  printSizeLabel?: string | null;
 }
 
 export interface ImageDebugPanelProps {
@@ -131,6 +134,17 @@ export function ImageDebugPanel({
             </span>
             {debugData.suggestedProportion ?? t("uploader.debugUnknown")}
           </p>
+          {typeof debugData.effectiveDpi === "number" && (
+            <p>
+              <span className="font-medium">
+                {debugData.printSizeLabel
+                  ? t("uploader.debugEffectiveDpiForSize", { size: debugData.printSizeLabel })
+                  : t("uploader.debugEffectiveDpi")}:{" "}
+              </span>
+              {debugData.effectiveDpi} DPI
+              {debugData.dpiQuality ? ` (${debugData.dpiQuality})` : ""}
+            </p>
+          )}
           {(["horizontal", "vertical", "rectangle"] as const).map((key) => {
             const labels: Record<string, string> = {
               horizontal: t("uploader.debugHorizontalCoverage"),
