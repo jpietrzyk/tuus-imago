@@ -50,6 +50,12 @@ import {
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
+import {
+  type PaintingSizeIndex,
+  type PaintingShape,
+  DEFAULT_PAINTING_SIZE_INDEX,
+  getPaintingSizeScale,
+} from "./painting-size";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
@@ -400,6 +406,8 @@ export const ImageUploader = forwardRef<
   const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
   const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">("settings");
   const [isZoomPanMode, setIsZoomPanMode] = useState(false);
+  const [selectedPaintingSize, setSelectedPaintingSize] =
+    useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1537,6 +1545,23 @@ export const ImageUploader = forwardRef<
     [updateActiveImage],
   );
 
+  const handleSelectPaintingSize = useCallback(
+    (index: PaintingSizeIndex) => {
+      setSelectedPaintingSize(index);
+    },
+    [],
+  );
+
+  const paintingSizeScale = useMemo(
+    () => getPaintingSizeScale(selectedPaintingSize),
+    [selectedPaintingSize],
+  );
+
+  const paintingShape = useMemo<PaintingShape>(
+    () => (displayImageProportion === "square" ? "square" : "rectangular"),
+    [displayImageProportion],
+  );
+
   const enterEffectsEditMode = useCallback(() => {
     setEffectsEditMode("settings");
     setIsEffectsEditMode(true);
@@ -1580,6 +1605,9 @@ export const ImageUploader = forwardRef<
       onEnterEditMode: enterEffectsEditMode,
       onReset: onReset ?? (() => {}),
       canReset: !!onReset && selectedImageCount > 0,
+      selectedPaintingSize,
+      onSelectPaintingSize: handleSelectPaintingSize,
+      paintingShape,
     };
   }, [
     selectedImageCount,
@@ -1595,6 +1623,9 @@ export const ImageUploader = forwardRef<
     enterAiEditMode,
     toggleZoomPan,
     onReset,
+    selectedPaintingSize,
+    handleSelectPaintingSize,
+    paintingShape,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);
@@ -1797,6 +1828,7 @@ export const ImageUploader = forwardRef<
               : undefined
           }
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
+          paintingSizeScale={paintingSizeScale}
         />
 
         <div className="px-4">

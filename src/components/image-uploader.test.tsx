@@ -44,6 +44,8 @@ function TestWrapper({
               isZoomPanMode: props.isZoomPanMode,
               selectedProportion: props.selectedProportion,
               shouldConfirmSplit: props.shouldConfirmSplit,
+              selectedPaintingSize: props.selectedPaintingSize,
+              paintingShape: props.paintingShape,
             }
           : null,
       );
