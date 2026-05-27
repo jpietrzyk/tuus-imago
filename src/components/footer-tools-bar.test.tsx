@@ -62,6 +62,8 @@ const createProps = (): FooterToolsBarProps => ({
   onEnterEditMode: vi.fn(),
   onReset: vi.fn(),
   canReset: true,
+  selectedPaintingSize: 60,
+  onSelectPaintingSize: vi.fn(),
 });
 
 describe("FooterToolsBar", () => {
