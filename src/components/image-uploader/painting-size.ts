@@ -4,7 +4,7 @@ export type PaintingShape = "square" | "rectangular";
 
 export const DEFAULT_PAINTING_SIZE_INDEX: PaintingSizeIndex = 2;
 
-interface PaintingSizeOption {
+export interface PaintingSizeOption {
   key: PaintingSizeIndex;
   label: string;
   widthCm: number;
