@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import {
-  PAINTING_SIZE_OPTIONS,
-  type PaintingSize,
+  getPaintingSizeOptions,
+  type PaintingShape,
+  type PaintingSizeIndex,
 } from "./painting-size";
 
 const SIZE_BUTTON_CLASS =
@@ -9,31 +10,35 @@ const SIZE_BUTTON_CLASS =
 
 interface SizeSelectorProps {
   hidden?: boolean;
-  selectedSize: PaintingSize;
-  onSelectSize: (size: PaintingSize) => void;
+  shape: PaintingShape;
+  selectedIndex: PaintingSizeIndex;
+  onSelectSize: (index: PaintingSizeIndex) => void;
 }
 
 export function SizeSelector({
   hidden = false,
-  selectedSize,
+  shape,
+  selectedIndex,
   onSelectSize,
 }: SizeSelectorProps) {
+  const options = getPaintingSizeOptions(shape);
+
   return (
     <div className="py-1" hidden={hidden}>
       <div className="flex justify-center">
         <div className="inline-flex flex-col gap-0.5">
           <p className="text-xs text-muted-foreground">Wybierz rozmiar</p>
           <div className="flex items-center justify-center gap-1.5">
-            {PAINTING_SIZE_OPTIONS.map(({ size, label }) => {
-              const isSelected = size === selectedSize;
+            {options.map(({ key, label }) => {
+              const isSelected = key === selectedIndex;
               return (
                 <Button
-                  key={size}
+                  key={key}
                   type="button"
                   variant={isSelected ? "default" : "secondary"}
-                  id={`size-btn-${size}`}
+                  id={`size-btn-${key}`}
                   className={SIZE_BUTTON_CLASS}
-                  onClick={() => onSelectSize(size)}
+                  onClick={() => onSelectSize(key)}
                   aria-pressed={isSelected}
                 >
                   <span className="text-[9px] leading-none truncate w-full text-center">

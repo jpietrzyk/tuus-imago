@@ -45,6 +45,7 @@ function TestWrapper({
               selectedProportion: props.selectedProportion,
               shouldConfirmSplit: props.shouldConfirmSplit,
               selectedPaintingSize: props.selectedPaintingSize,
+              paintingShape: props.paintingShape,
             }
           : null,
       );

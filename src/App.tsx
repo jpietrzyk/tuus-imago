@@ -241,6 +241,7 @@ function StorefrontApp() {
               shouldConfirmSplit: props.shouldConfirmSplit,
               showCoverageDetails: props.showCoverageDetails,
               selectedPaintingSize: props.selectedPaintingSize,
+              paintingShape: props.paintingShape,
             }
           : null,
       );

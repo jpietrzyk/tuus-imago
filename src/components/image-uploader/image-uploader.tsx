@@ -51,8 +51,9 @@ import {
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
 import {
-  type PaintingSize,
-  DEFAULT_PAINTING_SIZE,
+  type PaintingSizeIndex,
+  type PaintingShape,
+  DEFAULT_PAINTING_SIZE_INDEX,
   getPaintingSizeScale,
 } from "./painting-size";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
@@ -406,7 +407,7 @@ export const ImageUploader = forwardRef<
   const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">("settings");
   const [isZoomPanMode, setIsZoomPanMode] = useState(false);
   const [selectedPaintingSize, setSelectedPaintingSize] =
-    useState<PaintingSize>(DEFAULT_PAINTING_SIZE);
+    useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1545,8 +1546,8 @@ export const ImageUploader = forwardRef<
   );
 
   const handleSelectPaintingSize = useCallback(
-    (size: PaintingSize) => {
-      setSelectedPaintingSize(size);
+    (index: PaintingSizeIndex) => {
+      setSelectedPaintingSize(index);
     },
     [],
   );
@@ -1554,6 +1555,11 @@ export const ImageUploader = forwardRef<
   const paintingSizeScale = useMemo(
     () => getPaintingSizeScale(selectedPaintingSize),
     [selectedPaintingSize],
+  );
+
+  const paintingShape = useMemo<PaintingShape>(
+    () => (displayImageProportion === "square" ? "square" : "rectangular"),
+    [displayImageProportion],
   );
 
   const enterEffectsEditMode = useCallback(() => {
@@ -1601,6 +1607,7 @@ export const ImageUploader = forwardRef<
       canReset: !!onReset && selectedImageCount > 0,
       selectedPaintingSize,
       onSelectPaintingSize: handleSelectPaintingSize,
+      paintingShape,
     };
   }, [
     selectedImageCount,
@@ -1618,6 +1625,7 @@ export const ImageUploader = forwardRef<
     onReset,
     selectedPaintingSize,
     handleSelectPaintingSize,
+    paintingShape,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);

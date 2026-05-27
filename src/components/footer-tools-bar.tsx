@@ -14,7 +14,7 @@ import { t } from "@/locales/i18n";
 import { TriangleAlert } from "lucide-react";
 import { UploaderTools, type UploaderProportion } from "@/components/image-uploader/uploader-tools";
 import { SizeSelector } from "@/components/image-uploader/size-selector";
-import type { PaintingSize } from "@/components/image-uploader/painting-size";
+import type { PaintingShape, PaintingSizeIndex } from "@/components/image-uploader/painting-size";
 import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
 import IconFrame from "@/assets/icons/kadr_tool.svg?react";
 import IconAiEditor from "@/assets/icons/edytor_ai_tool.svg?react";
@@ -46,8 +46,9 @@ export interface FooterToolsBarProps {
   onReset: () => void;
   canReset: boolean;
 
-  selectedPaintingSize: PaintingSize;
-  onSelectPaintingSize: (size: PaintingSize) => void;
+  selectedPaintingSize: PaintingSizeIndex;
+  onSelectPaintingSize: (index: PaintingSizeIndex) => void;
+  paintingShape: PaintingShape;
 }
 
 const TOOLBAR_BUTTON_CLASS =
@@ -74,6 +75,7 @@ export function FooterToolsBar({
   canReset,
   selectedPaintingSize,
   onSelectPaintingSize,
+  paintingShape,
 }: FooterToolsBarProps) {
   const triptychButton = (
     <Button
@@ -105,7 +107,8 @@ export function FooterToolsBar({
   return (
     <div className="border-b border-gray-200">
       <SizeSelector
-        selectedSize={selectedPaintingSize}
+        shape={paintingShape}
+        selectedIndex={selectedPaintingSize}
         onSelectSize={onSelectPaintingSize}
       />
 
