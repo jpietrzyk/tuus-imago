@@ -234,7 +234,8 @@
     "settingsEffectsTitle": "Ustawienia",
     "removeSlotConfirmTitle": "Usunąć to zdjęcie?",
     "removeSlotConfirmDescription": "Tej operacji nie można cofnąć. Zdjęcie zostanie trwale usunięte ze slotu.",
-    "removeSlotConfirmAction": "Usuń"
+    "removeSlotConfirmAction": "Usuń",
+    "sizeUnavailable": "Zbyt niska rozdzielczość dla tego rozmiaru"
   },
   "checkout": {
     "title": "Zamówienie",
