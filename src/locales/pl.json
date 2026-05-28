@@ -207,6 +207,8 @@
     "debugVerticalCoverage": "Widoczny obszar pionowy",
     "debugRectangleCoverage": "Widoczny obszar prostokątny",
     "debugUnknown": "Nieznane",
+    "debugEffectiveDpi": "Efektywne DPI",
+    "debugEffectiveDpiForSize": "Efektywne DPI ({size})",
     "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia",
     "applyingEffect": "Stosowanie efektu...",
     "tabAdjust": "Korekty",

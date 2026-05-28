@@ -54,8 +54,10 @@ import {
   type PaintingSizeIndex,
   type PaintingShape,
   DEFAULT_PAINTING_SIZE_INDEX,
+  getPaintingSizeOptions,
   getPaintingSizeScale,
 } from "./painting-size";
+import { calculateEffectiveDpi } from "./image-dpi-calculator";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
@@ -1512,13 +1514,26 @@ export const ImageUploader = forwardRef<
       return null;
     }
 
+    const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
+    const sizeOptions = getPaintingSizeOptions(shape);
+    const currentSize = sizeOptions[selectedPaintingSize];
+    const dpiResult = calculateEffectiveDpi(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+      currentSize.widthCm,
+      currentSize.heightCm,
+    );
+
     return {
       metadata: selectedImageMetadata,
       displayProportion: displayImageProportion,
       suggestedProportion: bestDisplayImageProportion,
       coveragePercent: coveragePercent ?? {},
+      effectiveDpi: dpiResult.dpi,
+      dpiQuality: dpiResult.quality,
+      printSizeLabel: `${currentSize.widthCm}×${currentSize.heightCm} cm`,
     };
-  }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent]);
+  }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize]);
 
   const prevDebugDataRef = useRef<ImageDebugData | null>(null);
   useEffect(() => {

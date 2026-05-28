@@ -262,6 +262,8 @@
     "debugVerticalCoverage": "Vertical visible area",
     "debugRectangleCoverage": "Rectangle visible area",
     "debugUnknown": "Unknown",
+    "debugEffectiveDpi": "Effective DPI",
+    "debugEffectiveDpiForSize": "Effective DPI ({size})",
     "maxImagesError": "You can select up to 3 images",
     "applyingEffect": "Applying effect...",
     "tabAdjust": "Adjust",
