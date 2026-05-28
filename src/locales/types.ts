@@ -283,6 +283,7 @@ export interface Translations {
     removeSlotConfirmTitle: string;
     removeSlotConfirmDescription: string;
     removeSlotConfirmAction: string;
+    sizeUnavailable: string;
   };
   checkout: {
     title: string;

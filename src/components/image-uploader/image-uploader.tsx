@@ -57,7 +57,7 @@ import {
   getPaintingSizeOptions,
   getPaintingSizeScale,
 } from "./painting-size";
-import { calculateEffectiveDpi } from "./image-dpi-calculator";
+import { computeSizesDpiAvailability, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
@@ -1509,6 +1509,36 @@ export const ImageUploader = forwardRef<
     );
   }, [selectedImageMetadata]);
 
+  const paintingShape = useMemo<PaintingShape>(
+    () => (displayImageProportion === "square" ? "square" : "rectangular"),
+    [displayImageProportion],
+  );
+
+  const sizesDpiInfo = useMemo((): SizeDpiInfo[] | undefined => {
+    if (!selectedImageMetadata) {
+      return undefined;
+    }
+
+    return computeSizesDpiAvailability(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+      paintingShape,
+    );
+  }, [selectedImageMetadata, paintingShape]);
+
+  useEffect(() => {
+    if (!sizesDpiInfo) return;
+    const currentInfo = sizesDpiInfo.find((info) => info.sizeIndex === selectedPaintingSize);
+    if (currentInfo && !currentInfo.isAvailable) {
+      const largestAvailable = [...sizesDpiInfo]
+        .filter((info) => info.isAvailable)
+        .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];
+      if (largestAvailable) {
+        setSelectedPaintingSize(largestAvailable.sizeIndex);
+      }
+    }
+  }, [sizesDpiInfo, selectedPaintingSize]);
+
   const computedDebugData = useMemo((): ImageDebugData | null => {
     if (!selectedImageMetadata) {
       return null;
@@ -1517,23 +1547,22 @@ export const ImageUploader = forwardRef<
     const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
     const sizeOptions = getPaintingSizeOptions(shape);
     const currentSize = sizeOptions[selectedPaintingSize];
-    const dpiResult = calculateEffectiveDpi(
-      selectedImageMetadata.width,
-      selectedImageMetadata.height,
-      currentSize.widthCm,
-      currentSize.heightCm,
+    const currentSizeInfo = sizesDpiInfo?.find(
+      (i) => i.sizeIndex === selectedPaintingSize,
     );
+    const dpi = currentSizeInfo?.dpi ?? 0;
+    const dpiQuality = currentSizeInfo?.quality ?? "low";
 
     return {
       metadata: selectedImageMetadata,
       displayProportion: displayImageProportion,
       suggestedProportion: bestDisplayImageProportion,
       coveragePercent: coveragePercent ?? {},
-      effectiveDpi: dpiResult.dpi,
-      dpiQuality: dpiResult.quality,
+      effectiveDpi: dpi,
+      dpiQuality,
       printSizeLabel: `${currentSize.widthCm}×${currentSize.heightCm} cm`,
     };
-  }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize]);
+  }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize, sizesDpiInfo]);
 
   const prevDebugDataRef = useRef<ImageDebugData | null>(null);
   useEffect(() => {
@@ -1570,11 +1599,6 @@ export const ImageUploader = forwardRef<
   const paintingSizeScale = useMemo(
     () => getPaintingSizeScale(selectedPaintingSize),
     [selectedPaintingSize],
-  );
-
-  const paintingShape = useMemo<PaintingShape>(
-    () => (displayImageProportion === "square" ? "square" : "rectangular"),
-    [displayImageProportion],
   );
 
   const enterEffectsEditMode = useCallback(() => {
@@ -1623,6 +1647,7 @@ export const ImageUploader = forwardRef<
       selectedPaintingSize,
       onSelectPaintingSize: handleSelectPaintingSize,
       paintingShape,
+      sizesDpiInfo,
     };
   }, [
     selectedImageCount,
@@ -1641,6 +1666,7 @@ export const ImageUploader = forwardRef<
     selectedPaintingSize,
     handleSelectPaintingSize,
     paintingShape,
+    sizesDpiInfo,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);

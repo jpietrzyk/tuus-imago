@@ -242,6 +242,7 @@ function StorefrontApp() {
               showCoverageDetails: props.showCoverageDetails,
               selectedPaintingSize: props.selectedPaintingSize,
               paintingShape: props.paintingShape,
+              sizesDpiInfo: props.sizesDpiInfo,
             }
           : null,
       );

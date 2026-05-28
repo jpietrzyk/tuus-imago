@@ -15,6 +15,7 @@ import { TriangleAlert } from "lucide-react";
 import { UploaderTools, type UploaderProportion } from "@/components/image-uploader/uploader-tools";
 import { SizeSelector } from "@/components/image-uploader/size-selector";
 import type { PaintingShape, PaintingSizeIndex } from "@/components/image-uploader/painting-size";
+import type { SizeDpiInfo } from "@/components/image-uploader/size-dpi-availability";
 import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
 import IconFrame from "@/assets/icons/kadr_tool.svg?react";
 import IconAiEditor from "@/assets/icons/edytor_ai_tool.svg?react";
@@ -49,6 +50,7 @@ export interface FooterToolsBarProps {
   selectedPaintingSize: PaintingSizeIndex;
   onSelectPaintingSize: (index: PaintingSizeIndex) => void;
   paintingShape: PaintingShape;
+  sizesDpiInfo?: SizeDpiInfo[];
 }
 
 const TOOLBAR_BUTTON_CLASS =
@@ -76,6 +78,7 @@ export function FooterToolsBar({
   selectedPaintingSize,
   onSelectPaintingSize,
   paintingShape,
+  sizesDpiInfo,
 }: FooterToolsBarProps) {
   const triptychButton = (
     <Button
@@ -110,6 +113,7 @@ export function FooterToolsBar({
         shape={paintingShape}
         selectedIndex={selectedPaintingSize}
         onSelectSize={onSelectPaintingSize}
+        sizesDpiInfo={sizesDpiInfo}
       />
 
       <div className="py-1">
