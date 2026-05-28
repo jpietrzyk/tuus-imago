@@ -70,7 +70,7 @@ export function SizeSelector({
                   <span className="text-[9px] leading-none truncate w-full text-center">
                     cm
                   </span>
-                  {quality && isAvailable && (
+                  {quality && quality !== "low" && isAvailable && (
                     <span
                       className={`inline-block h-1.5 w-1.5 rounded-full ${QUALITY_DOT_COLORS[quality]}`}
                     />
