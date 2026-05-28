@@ -24,6 +24,10 @@ vi.mock("@/lib/cloudinary-upload", () => ({
   uploadImageToCloudinary: vi.fn(),
 }));
 
+vi.mock("./image-uploader/image-file-validator", () => ({
+  validateImageFile: vi.fn().mockResolvedValue([]),
+}));
+
 function TestWrapper({
   uploaderRef,
   ...uploaderProps
