@@ -55,7 +55,7 @@ export function CheckoutOrderDropup({
   return (
     <DropdownMenu>
       <div
-        className="flex h-10 w-full overflow-hidden rounded-full bg-primary text-primary-foreground shadow-sm"
+        className="flex h-10 w-full overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-sm"
         role="group"
       >
         <button
@@ -162,7 +162,7 @@ export function CheckoutOrderDropup({
 
             <Button
               size="sm"
-              className="h-8 w-full gap-2 rounded-full text-xs font-semibold"
+              className="h-8 w-full gap-2 rounded-lg text-xs font-semibold"
               disabled={checkoutDisabled}
               onClick={onCheckout}
             >

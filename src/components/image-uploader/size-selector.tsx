@@ -9,7 +9,7 @@ import type { SizeDpiInfo } from "./size-dpi-availability";
 import type { DpiQuality } from "./image-dpi-calculator";
 
 const SIZE_BUTTON_CLASS =
-  "h-8 sm:h-[2.25rem] w-[4.5rem] sm:w-[5rem] rounded-2xl shadow-lg border-2 flex-col gap-0 p-1";
+  "h-[2.4rem] sm:h-[2.7rem] flex-1 rounded shadow-lg border-2 flex-col gap-0 p-1";
 
 const QUALITY_DOT_COLORS: Record<Exclude<DpiQuality, "low">, string> = {
   excellent: "bg-green-500",
@@ -35,9 +35,9 @@ export function SizeSelector({
   const options = getPaintingSizeOptions(shape);
 
   return (
-    <div className="py-1" hidden={hidden}>
-      <div className="flex justify-center">
-        <div className="inline-flex flex-col gap-0.5">
+    <div className="py-1 flex justify-center" hidden={hidden}>
+      <div className="w-full lg:max-w-[28.875rem] bg-white rounded-lg p-1.5">
+        <div className="flex flex-col gap-0.5">
           <p className="text-xs text-muted-foreground">{t("uploader.selectSize")}</p>
           <div className="flex items-center justify-center gap-1.5">
             {options.map(({ key, label }) => {
