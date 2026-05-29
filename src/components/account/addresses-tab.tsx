@@ -112,7 +112,7 @@ export function AddressesTab() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-12" role="status">
         <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
       </div>
     );
@@ -293,6 +293,7 @@ export function AddressesTab() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label={t("account.editAddress")}
                     onClick={() => handleEdit(addr)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -300,6 +301,7 @@ export function AddressesTab() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label={t("account.deleteAddress")}
                     onClick={() => handleDelete(addr.id)}
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />

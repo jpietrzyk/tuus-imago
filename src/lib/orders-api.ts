@@ -1,5 +1,5 @@
 import { type UploadedSlotResult } from "@/components/image-uploader";
-import { supabase } from "@/lib/supabase-client";
+import { getAuthHeaders } from "@/lib/get-auth-headers";
 
 export interface CheckoutCustomerInput {
   name: string;
@@ -108,24 +108,6 @@ export interface CustomerAddress {
   is_default: boolean;
   created_at: string;
   updated_at: string;
-}
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession();
-  let token = data.session?.access_token;
-
-  if (!token) {
-    const { data: refreshData } = await supabase.auth.refreshSession();
-    token = refreshData.session?.access_token;
-  }
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-  return headers;
 }
 
 async function parseJsonResponse<T>(response: Response): Promise<T> {

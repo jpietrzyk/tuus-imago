@@ -32,7 +32,7 @@ describe("ContentPageShell Component", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Test Title",
     );
-    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(t("common.lastUpdated")))).toBeInTheDocument();
   });
 
   it("should render children when page is found", () => {

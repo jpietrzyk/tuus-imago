@@ -23,7 +23,8 @@
     "off": "Off",
     "contentNotFound": "Content not found",
     "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory.",
-    "footerContactLink": "Contact"
+    "footerContactLink": "Contact",
+    "lastUpdated": "Last updated:"
   },
   "auth": {
     "signIn": "Sign In",
@@ -78,7 +79,10 @@
     "noPayments": "No payment history yet.",
     "amount": "Amount",
     "provider": "Provider",
-    "status": "Status"
+    "status": "Status",
+    "backToOrders": "Back to orders",
+    "openInNewTab": "Open in new tab",
+    "deleteAddress": "Delete address"
   },
   "legalMenu": {
     "title": "Terms of Service",
@@ -290,7 +294,13 @@
     "removeSlotConfirmTitle": "Remove this image?",
     "removeSlotConfirmDescription": "This action cannot be undone. The image will be permanently removed from the slot.",
     "removeSlotConfirmAction": "Remove",
-    "sizeUnavailable": "Resolution too low for this size"
+    "sizeUnavailable": "Too low resolution for this size",
+    "triptychButton": "Triptych",
+    "shapeButtonLabel": "Shape",
+    "frameButtonLabel": "Frame",
+    "aiEditorButtonLabel": "AI Editor",
+    "settingsButtonLabel": "Settings",
+    "selectSize": "Select size"
   },
   "checkout": {
     "title": "Checkout",

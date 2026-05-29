@@ -194,11 +194,11 @@ describe("OrdersTab", () => {
     });
 
     expect(screen.getByText("TRACK-123")).toBeInTheDocument();
-    expect(screen.getByAltText("front")).toHaveAttribute(
+    expect(screen.getByAltText("front painting")).toHaveAttribute(
       "src",
       "thumb://48x48/https://cdn.example.com/img1.jpg",
     );
-    expect(screen.getByAltText("back")).toHaveAttribute(
+    expect(screen.getByAltText("back painting")).toHaveAttribute(
       "src",
       "thumb://48x48/https://cdn.example.com/img2.jpg",
     );

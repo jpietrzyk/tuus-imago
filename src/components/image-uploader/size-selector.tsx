@@ -38,7 +38,7 @@ export function SizeSelector({
     <div className="py-1" hidden={hidden}>
       <div className="flex justify-center">
         <div className="inline-flex flex-col gap-0.5">
-          <p className="text-xs text-muted-foreground">Wybierz rozmiar</p>
+          <p className="text-xs text-muted-foreground">{t("uploader.selectSize")}</p>
           <div className="flex items-center justify-center gap-1.5">
             {options.map(({ key, label }) => {
               const isSelected = key === selectedIndex;

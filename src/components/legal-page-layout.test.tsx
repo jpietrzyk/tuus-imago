@@ -29,7 +29,7 @@ describe("LegalPageLayout", () => {
 
   it("renders lastUpdated date", () => {
     render(<LegalPageLayout {...defaultProps} />)
-    expect(screen.getByText(/Ostatnia aktualizacja: 2026-01-01/)).toBeInTheDocument()
+    expect(screen.getByText(/common\.lastUpdated\s+2026-01-01/)).toBeInTheDocument()
   })
 
   it("renders back button that calls window.history.back()", async () => {

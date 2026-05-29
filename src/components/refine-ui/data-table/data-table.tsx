@@ -162,7 +162,19 @@ export function DataTable<TData extends BaseRecord>({
                     key={row.original?.id ?? row.id}
                     data-state={row.getIsSelected() && "selected"}
                     className={cn(onRowClick && "cursor-pointer")}
+                    role={onRowClick ? "button" : undefined}
+                    tabIndex={onRowClick ? 0 : undefined}
                     onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                    onKeyDown={
+                      onRowClick
+                        ? (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              onRowClick(row.original);
+                            }
+                          }
+                        : undefined
+                    }
                   >
                     {row.getVisibleCells().map((cell) => {
                       return (

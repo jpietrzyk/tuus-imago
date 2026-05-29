@@ -13,7 +13,7 @@ import {
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { useList } from "@refinedev/core";
-import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { adminFetch } from "@/admin/lib/admin-fetch";
 import { t } from "@/locales/i18n";
 
 type Partner = {
@@ -54,12 +54,9 @@ export function CouponCreatePage() {
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-
-      const response = await fetch("/.netlify/functions/admin-api", {
+      await adminFetch("/.netlify/functions/admin-api", {
         method: "POST",
-        headers,
-        body: JSON.stringify({
+        body: {
           resource: "coupons",
           data: {
             code: code.toUpperCase().trim(),
@@ -76,13 +73,8 @@ export function CouponCreatePage() {
             is_active: isActive,
             partner_id: partnerId === "__none__" ? null : partnerId,
           },
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const err = (await response.json()) as { error?: string };
-        throw new Error(err.error ?? "Create failed");
-      }
 
       navigate("/admin/coupons");
     } catch (err) {

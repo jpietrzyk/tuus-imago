@@ -59,7 +59,7 @@ export function OrdersTab() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-12" role="status">
         <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
       </div>
     );
@@ -86,6 +86,7 @@ export function OrdersTab() {
             <Button
               variant="ghost"
               size="sm"
+              aria-label={t("account.backToOrders")}
               onClick={() => {
                 setSelectedOrder(null);
                 navigate("/account/orders");
@@ -143,7 +144,7 @@ export function OrdersTab() {
                 >
                   <img
                     src={getCloudinaryThumbnailUrl(item.transformed_url, 48, 48)}
-                    alt={item.slot_key}
+                    alt={`${item.slot_key} painting`}
                     className="h-12 w-12 rounded object-cover border"
                   />
                   <span className="text-sm capitalize">{item.slot_key}</span>
@@ -151,6 +152,7 @@ export function OrdersTab() {
                     href={item.transformed_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={t("account.openInNewTab")}
                     className="ml-auto text-blue-600 hover:text-blue-800"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -193,10 +195,19 @@ export function OrdersTab() {
       {orders.map((order) => (
         <Card
           key={order.id}
+          role="button"
+          tabIndex={0}
           className="cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => {
             setSelectedOrder(order);
             navigate(`/account/orders/${order.id}`);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setSelectedOrder(order);
+              navigate(`/account/orders/${order.id}`);
+            }
           }}
         >
           <CardContent className="flex items-center gap-4 py-4">

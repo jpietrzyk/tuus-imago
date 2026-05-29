@@ -1,3 +1,4 @@
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useOne } from "@refinedev/core";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateTime } from "@/lib/format";
 import { t } from "@/locales/i18n";
 import { ArrowLeft, Megaphone, Pencil } from "lucide-react";
-import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { adminFetch } from "@/admin/lib/admin-fetch";
 import { useState } from "react";
 
 type Promotion = {
@@ -39,9 +40,7 @@ export function PromotionShowPage() {
 
   if (promotionQuery.isFetching) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
+      <LoadingSpinner fullPage />
     );
   }
 
@@ -68,20 +67,14 @@ export function PromotionShowPage() {
   const handleToggleActive = async () => {
     setToggling(true);
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/.netlify/functions/admin-api", {
+      await adminFetch("/.netlify/functions/admin-api", {
         method: "PATCH",
-        headers,
-        body: JSON.stringify({
+        body: {
           resource: "promotions",
           id: promotion.id,
           data: { is_active: !promotion.is_active },
-        }),
+        },
       });
-      if (!response.ok) {
-        const err = (await response.json()) as { error?: string };
-        throw new Error(err.error ?? "Update failed");
-      }
       promotionQuery.refetch();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Update failed");

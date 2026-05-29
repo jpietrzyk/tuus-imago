@@ -23,6 +23,7 @@ export interface Translations {
     contentNotFound: string;
     contentNotFoundHint: string;
     footerContactLink: string;
+    lastUpdated: string;
   };
   auth: {
     signIn: string;
@@ -78,6 +79,9 @@ export interface Translations {
     amount: string;
     provider: string;
     status: string;
+    backToOrders: string;
+    openInNewTab: string;
+    deleteAddress: string;
   };
   legalMenu: {
     title: string;
@@ -284,6 +288,12 @@ export interface Translations {
     removeSlotConfirmDescription: string;
     removeSlotConfirmAction: string;
     sizeUnavailable: string;
+    triptychButton: string;
+    shapeButtonLabel: string;
+    frameButtonLabel: string;
+    aiEditorButtonLabel: string;
+    settingsButtonLabel: string;
+    selectSize: string;
   };
   checkout: {
     title: string;
@@ -490,10 +500,12 @@ export interface Translations {
       dashboard: string;
       orders: string;
       coupons: string;
+      promotions: string;
       referralCodes: string;
       partners: string;
       customers: string;
       users: string;
+      admins: string;
       signOut: string;
       adminPanel: string;
     };

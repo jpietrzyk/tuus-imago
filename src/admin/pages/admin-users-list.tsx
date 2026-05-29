@@ -1,3 +1,4 @@
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCustom, useUpdate } from "@refinedev/core";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,7 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { t } from "@/locales/i18n";
-import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { adminFetch } from "@/admin/lib/admin-fetch";
 
 type UserRecord = {
   id: string;
@@ -147,23 +148,17 @@ export function AdminUsersPage({ isAdminFilter }: { isAdminFilter?: boolean }) {
     setEditError(null);
     setEditSuccess(false);
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/.netlify/functions/admin-api", {
+      await adminFetch("/.netlify/functions/admin-api", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
+        body: {
           resource: "profiles",
           id: editUser.id,
           data: {
             full_name: editName.trim() || null,
             phone: editPhone.trim() || null,
           },
-        }),
+        },
       });
-      if (!response.ok) {
-        const err = (await response.json()) as { error?: string };
-        throw new Error(err.error ?? "Update failed");
-      }
       editUser.full_name = editName.trim() || null;
       editUser.phone = editPhone.trim() || null;
       setEditSuccess(true);
@@ -176,9 +171,7 @@ export function AdminUsersPage({ isAdminFilter }: { isAdminFilter?: boolean }) {
 
   if (usersQuery.isFetching) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
+      <LoadingSpinner fullPage />
     );
   }
 
