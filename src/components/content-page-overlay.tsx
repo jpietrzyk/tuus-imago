@@ -13,7 +13,6 @@ interface ContentPageOverlayProps {
 }
 
 export function ContentPageOverlay({ page, onClose }: ContentPageOverlayProps) {
-  // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -29,6 +28,8 @@ export function ContentPageOverlay({ page, onClose }: ContentPageOverlayProps) {
     return (
       <div
         className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
@@ -62,6 +63,8 @@ export function ContentPageOverlay({ page, onClose }: ContentPageOverlayProps) {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-start justify-center overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -96,7 +99,7 @@ export function ContentPageOverlay({ page, onClose }: ContentPageOverlayProps) {
 
               <Separator className="my-8" />
               <div className="text-xs text-gray-500 text-center pt-2">
-                Ostatnia aktualizacja: {page.lastUpdated}
+                {t("common.lastUpdated")} {page.lastUpdated}
               </div>
             </CardContent>
           </Card>

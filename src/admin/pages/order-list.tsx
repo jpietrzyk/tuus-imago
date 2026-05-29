@@ -46,6 +46,7 @@ type OrderItemThumbnail = {
   slot_index: number;
 };
 
+import { adminFetch } from "@/admin/lib/admin-fetch";
 import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
 
 export function OrderListPage() {
@@ -333,23 +334,19 @@ export function OrderListPage() {
     if (selectedIds.size === 0) return;
     setBulkLoading(true);
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/.netlify/functions/admin-api", {
+      const result = await adminFetch<{
+        data?: { updated: number; failed: number };
+      }>("/.netlify/functions/admin-api", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({
+        body: {
           resource: "orders",
           meta: { bulkAction: "update_status" },
           data: {
             ids: [...selectedIds],
             status: bulkStatus,
           },
-        }),
+        },
       });
-      const result = (await response.json()) as {
-        data?: { updated: number; failed: number };
-      };
-      if (!response.ok) throw new Error("Bulk update failed");
       alert(
         `Updated ${result.data?.updated ?? 0} orders. Failed: ${result.data?.failed ?? 0}.`,
       );

@@ -1,3 +1,4 @@
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useOne, useUpdate, useList } from "@refinedev/core";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -149,9 +150,7 @@ export function CouponEditPage() {
 
   if (couponQuery.isFetching) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
+      <LoadingSpinner fullPage />
     );
   }
 

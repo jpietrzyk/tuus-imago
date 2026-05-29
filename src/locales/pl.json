@@ -23,7 +23,8 @@
     "off": "Wył.",
     "contentNotFound": "Nie znaleziono treści",
     "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/.",
-    "footerContactLink": "Kontakt"
+    "footerContactLink": "Kontakt",
+    "lastUpdated": "Ostatnia aktualizacja:"
   },
   "legalMenu": {
     "title": "Zasady korzystania z serwisu",
@@ -235,7 +236,13 @@
     "removeSlotConfirmTitle": "Usunąć to zdjęcie?",
     "removeSlotConfirmDescription": "Tej operacji nie można cofnąć. Zdjęcie zostanie trwale usunięte ze slotu.",
     "removeSlotConfirmAction": "Usuń",
-    "sizeUnavailable": "Zbyt niska rozdzielczość dla tego rozmiaru"
+    "sizeUnavailable": "Zbyt niska rozdzielczość dla tego rozmiaru",
+    "triptychButton": "Tryptyk",
+    "shapeButtonLabel": "Kształt",
+    "frameButtonLabel": "Kadr",
+    "aiEditorButtonLabel": "Edytor AI",
+    "settingsButtonLabel": "Ustawienia",
+    "selectSize": "Wybierz rozmiar"
   },
   "checkout": {
     "title": "Zamówienie",
@@ -392,7 +399,10 @@
     "noPayments": "Brak historii płatności.",
     "amount": "Kwota",
     "provider": "Dostawca",
-    "status": "Status"
+    "status": "Status",
+    "backToOrders": "Powrót do zamówień",
+    "openInNewTab": "Otwórz w nowej karcie",
+    "deleteAddress": "Usuń adres"
   },
   "complaint": {
     "title": "Formularz reklamacji",

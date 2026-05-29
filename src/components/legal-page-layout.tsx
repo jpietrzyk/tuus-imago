@@ -57,7 +57,7 @@ export function LegalPageLayout({
 
             <Separator className="my-8" />
             <div className="text-xs text-gray-500 text-center pt-2">
-              Ostatnia aktualizacja: {lastUpdated}
+              {t("common.lastUpdated")} {lastUpdated}
             </div>
           </CardContent>
         </Card>

@@ -90,7 +90,7 @@ export function FooterToolsBar({
       className={TOOLBAR_BUTTON_CLASS}
     >
       <IconTriptych style={ICON_STYLE} />
-      <span className="text-[9px] leading-none truncate w-full text-center">Tryptyk</span>
+      <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.triptychButton")}</span>
     </Button>
   );
 
@@ -103,7 +103,7 @@ export function FooterToolsBar({
       className={TOOLBAR_BUTTON_CLASS}
     >
       <IconReset style={ICON_STYLE} />
-      <span className="text-[9px] leading-none truncate w-full text-center">Reset</span>
+      <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.resetShort")}</span>
     </Button>
   );
 
@@ -132,7 +132,7 @@ export function FooterToolsBar({
                 className={TOOLBAR_BUTTON_CLASS}
               >
                 <IconShape style={ICON_STYLE} />
-                <span className="text-[9px] leading-none truncate w-full text-center">Kształt</span>
+                <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.shapeButtonLabel")}</span>
               </Button>
             }
           />
@@ -146,7 +146,7 @@ export function FooterToolsBar({
             className={TOOLBAR_BUTTON_CLASS}
           >
             <IconFrame style={ICON_STYLE} />
-            <span className="text-[9px] leading-none truncate w-full text-center">Kadr</span>
+            <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.frameButtonLabel")}</span>
           </Button>
 
           <Button
@@ -158,7 +158,7 @@ export function FooterToolsBar({
             className={TOOLBAR_BUTTON_CLASS}
           >
             <IconAiEditor style={ICON_STYLE} />
-            <span className="text-[9px] leading-none truncate w-full text-center">Edytor AI</span>
+            <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.aiEditorButtonLabel")}</span>
           </Button>
 
           <Button
@@ -170,7 +170,7 @@ export function FooterToolsBar({
             className={TOOLBAR_BUTTON_CLASS}
           >
             <IconSettings style={ICON_STYLE} />
-            <span className="text-[9px] leading-none truncate w-full text-center">Ustawienia</span>
+            <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.settingsButtonLabel")}</span>
           </Button>
 
           {shouldConfirmSplit ? (

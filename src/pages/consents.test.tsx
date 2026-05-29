@@ -54,7 +54,7 @@ describe("ConsentsPage Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Ostatnia aktualizacja:/)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(t("common.lastUpdated")))).toBeInTheDocument();
   });
 
   it("should render markdown content in prose container", () => {

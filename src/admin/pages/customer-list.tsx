@@ -1,3 +1,4 @@
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useCustom } from "@refinedev/core";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -130,9 +131,7 @@ export function CustomerListPage() {
       </div>
 
       {query.isFetching ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-        </div>
+        <LoadingSpinner fullPage />
       ) : (
         <Card>
           <CardContent className="p-0">

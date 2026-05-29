@@ -21,6 +21,14 @@ function mapOperator(operator: string): string {
 
 const API_URL = "/.netlify/functions/admin-api";
 
+async function handleResponseError(response: Response, fallbackMessage: string): Promise<never> {
+  const error = (await response.json()) as { error?: string };
+  throw {
+    message: error.error ?? fallbackMessage,
+    statusCode: response.status,
+  } satisfies HttpError;
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const adminDataProvider: DataProvider = {
   getList: async ({ resource, pagination, sorters, filters, meta }): Promise<any> => {
@@ -67,11 +75,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Failed to fetch list.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Failed to fetch list.");
     }
 
     const result = (await response.json()) as {
@@ -98,11 +102,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Failed to fetch record.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Failed to fetch record.");
     }
 
     const result = (await response.json()) as { data: BaseRecord };
@@ -127,11 +127,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Failed to fetch records.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Failed to fetch records.");
     }
 
     const result = (await response.json()) as { data: BaseRecord[] };
@@ -155,11 +151,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Failed to create record.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Failed to create record.");
     }
 
     const result = (await response.json()) as { data: BaseRecord };
@@ -184,11 +176,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Failed to update record.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Failed to update record.");
     }
 
     const result = (await response.json()) as { data: BaseRecord };
@@ -205,11 +193,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Failed to delete record.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Failed to delete record.");
     }
 
     const result = (await response.json()) as { data: BaseRecord };
@@ -241,11 +225,7 @@ export const adminDataProvider: DataProvider = {
     });
 
     if (!response.ok) {
-      const error = (await response.json()) as { error?: string };
-      throw {
-        message: error.error ?? "Request failed.",
-        statusCode: response.status,
-      } satisfies HttpError;
+      await handleResponseError(response, "Request failed.");
     }
 
     const result = await response.json();

@@ -36,7 +36,7 @@ export function PaymentsTab() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-12" role="status">
         <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
       </div>
     );

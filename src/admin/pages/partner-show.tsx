@@ -1,3 +1,4 @@
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useOne, useCustom, useCreate, useDelete } from "@refinedev/core";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +40,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { useState, useCallback } from "react";
-import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { adminFetch } from "@/admin/lib/admin-fetch";
 import { RefQrCodeDialog } from "@/admin/components/ref-qr-code-dialog";
 
 type Partner = {
@@ -176,11 +177,9 @@ export function PartnerShowPage() {
     setNewCouponSaving(true);
     setNewCouponError(null);
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch("/.netlify/functions/admin-api", {
+      await adminFetch("/.netlify/functions/admin-api", {
         method: "POST",
-        headers,
-        body: JSON.stringify({
+        body: {
           resource: "coupons",
           data: {
             code: newCouponCode.toUpperCase().trim(),
@@ -190,12 +189,8 @@ export function PartnerShowPage() {
             is_active: true,
             partner_id: id,
           },
-        }),
+        },
       });
-      if (!response.ok) {
-        const err = (await response.json()) as { error?: string };
-        throw new Error(err.error ?? "Create failed");
-      }
       setNewCouponCode("");
       setNewCouponDiscountValue("");
       setNewCouponDiscountType("percentage");
@@ -210,9 +205,7 @@ export function PartnerShowPage() {
 
   if (partnerQuery.isFetching) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
+      <LoadingSpinner fullPage />
     );
   }
 

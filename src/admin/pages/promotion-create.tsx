@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { getAuthHeaders } from "@/admin/lib/get-auth-headers";
+import { adminFetch } from "@/admin/lib/admin-fetch";
 import { t } from "@/locales/i18n";
 
 export function PromotionCreatePage() {
@@ -37,12 +37,9 @@ export function PromotionCreatePage() {
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-
-      const response = await fetch("/.netlify/functions/admin-api", {
+      await adminFetch("/.netlify/functions/admin-api", {
         method: "POST",
-        headers,
-        body: JSON.stringify({
+        body: {
           resource: "promotions",
           data: {
             name: name.trim(),
@@ -58,13 +55,8 @@ export function PromotionCreatePage() {
             valid_until: validUntil || null,
             is_active: false,
           },
-        }),
+        },
       });
-
-      if (!response.ok) {
-        const err = (await response.json()) as { error?: string };
-        throw new Error(err.error ?? "Create failed");
-      }
 
       navigate("/admin/promotions");
     } catch (err) {

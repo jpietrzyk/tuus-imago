@@ -22,11 +22,8 @@ export function getCurrentLanguage(): Language {
 }
 
 // Set the current language (for future use when implementing language switching)
-export function setLanguage(language: Language): void {
-  // For now, this is a placeholder
-  // In the future, this could be used with a state management system
-  // to implement language switching
-  console.log(`Language set to: ${language}`);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function setLanguage(_language: Language): void {
 }
 
 // Helper function to get a nested translation by path

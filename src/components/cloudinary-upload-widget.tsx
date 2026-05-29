@@ -156,21 +156,15 @@ export function CloudinaryUploadWidget({
       },
       (error: Error | null, result: UploadResult | null) => {
         setIsUploading(false);
-        console.log("Cloudinary widget callback:", { error, result });
 
         if (error) {
-          console.error("Upload error:", error);
           onUploadError?.(error.message || "Upload failed");
           return;
         }
 
         if (result?.event === "success") {
-          console.log("Upload successful, setting image:", result);
           setUploadedImage(result);
           setTransformations(DEFAULT_TRANSFORMATIONS);
-        } else if (result?.event === "close") {
-          console.log("Widget closed without upload");
-          // Widget closed without upload
         }
       },
     );

@@ -64,7 +64,7 @@ export function ProfileTab() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-12" role="status">
         <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
       </div>
     );
@@ -81,8 +81,8 @@ export function ProfileTab() {
       <CardContent>
         <form onSubmit={handleSave} className="space-y-4 max-w-md">
           <div className="space-y-2">
-            <Label>{t("auth.email")}</Label>
-            <Input value={user?.email ?? ""} disabled className="bg-gray-50" />
+            <Label htmlFor="profile-email">{t("auth.email")}</Label>
+            <Input id="profile-email" value={user?.email ?? ""} disabled className="bg-gray-50" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="profile-name">{t("auth.fullName")}</Label>

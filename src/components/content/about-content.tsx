@@ -1,5 +1,6 @@
 import { Heart, Users, Award, Target } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { t } from "@/locales/i18n";
 
 export function AboutContent() {
   return (
@@ -126,7 +127,7 @@ export function AboutContent() {
 
       {/* Last Updated */}
       <div className="text-xs text-muted-foreground text-center pt-2">
-        Last updated: February 2025
+        {t("common.lastUpdated")} February 2025
       </div>
     </>
   );
