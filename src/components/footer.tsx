@@ -33,9 +33,8 @@ export function Footer({
 
   return (
     <footer
-      className={`w-full border-t border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm ${
-        hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"
-      }`}
+      className={`w-full shadow-lg rounded-t-2xl ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
+      style={{ backgroundColor: "#F3EBE8" }}
     >
       {hasTools && <FooterToolsBar {...toolsBarProps} />}
       <div className={`w-full px-4 sm:px-6 lg:px-8 ${hasTools ? "h-(--app-shell-bar-height)" : "h-full"}`}>

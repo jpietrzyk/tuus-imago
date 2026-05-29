@@ -54,7 +54,7 @@ export interface FooterToolsBarProps {
 }
 
 const TOOLBAR_BUTTON_CLASS =
-  "h-12 w-12 sm:h-[3.5rem] sm:w-[3.5rem] rounded-2xl shadow-lg border-2 flex-col gap-0.5 p-1";
+  "h-12 w-12 sm:h-[3.5rem] sm:w-[3.5rem] rounded shadow-lg border-2 flex-col gap-0.5 p-1";
 const ICON_STYLE: React.CSSProperties = { width: "65%", height: "45%" };
 
 export function FooterToolsBar({
@@ -108,7 +108,7 @@ export function FooterToolsBar({
   );
 
   return (
-    <div className="border-b border-gray-200">
+    <div className="px-4 sm:px-6 lg:px-8">
       <SizeSelector
         shape={paintingShape}
         selectedIndex={selectedPaintingSize}
