@@ -37,7 +37,6 @@ import {
 import UploaderDropArea from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
-import { UploaderSlotSwitcher } from "./uploader-slot-switcher";
 import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
 import type { SlotSwitcherBarProps } from "./uploader-slot-switcher";
 import type { ImageDebugData } from "@/components/image-debug-panel";
