@@ -116,7 +116,7 @@ export function FooterToolsBar({
         sizesDpiInfo={sizesDpiInfo}
       />
 
-      <div className="py-1">
+      <div className="py-0.5">
         <div className="flex items-center justify-center gap-1.5">
           <UploaderTools
             onSelectProportion={onSelectProportion}

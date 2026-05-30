@@ -47,7 +47,7 @@ export function Footer({
         style={{ backgroundColor: "#F3EBE8" }}
       >
         {hasTools && <FooterToolsBar {...toolsBarProps} />}
-      <div className={`w-full px-4 sm:px-6 lg:px-8 ${hasTools ? "h-(--app-shell-bar-height)" : "h-full"}`}>
+      <div className={`w-full px-4 sm:px-6 lg:px-8 ${hasTools ? "py-1" : "h-full"}`}>
         <div className={`grid h-full items-center gap-3 sm:gap-4 ${hasTools ? "grid-cols-1 lg:grid-cols-[1fr_28.875rem_1fr]" : "grid-cols-[1fr_auto_1fr]"} max-lg:grid-cols-1`}>
           <div className="hidden lg:flex min-w-0 items-center gap-2 sm:gap-3">
             <button

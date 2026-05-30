@@ -1838,8 +1838,10 @@ export const ImageUploader = forwardRef<
         onChange={handleFileSelect}
         className="hidden"
       />
-      <CardContent className="relative flex-1 flex flex-col gap-3 sm:gap-8 overflow-hidden pb-2 lg:pb-1">
+      <CardContent className="relative flex-1 flex flex-col overflow-hidden pb-2 lg:pb-1">
         <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
+        <div className="flex-[0.15] md:hidden" />
+        <div className="flex flex-1 flex-col gap-3 sm:gap-8 min-h-0">
         <UploaderPreviewSlider
           activeImage={activeImage}
           activeImagePreviewUrl={
@@ -1926,6 +1928,7 @@ export const ImageUploader = forwardRef<
           externalEditMode={isEffectsEditMode}
           effectsMode={effectsEditMode}
         />
+        </div>
       </CardContent>
     </Card>
     </>
