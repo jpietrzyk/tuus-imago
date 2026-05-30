@@ -418,7 +418,7 @@ function StorefrontApp() {
         backgroundImage: `url(${bgImage})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: isDesktopSize ? "center" : "center top",
-        backgroundSize: isDesktopSize ? "cover" : "110% auto",
+        backgroundSize: isDesktopSize ? "cover" : "120% auto",
         backgroundAttachment: "fixed",
       }}
     >
