@@ -13,6 +13,7 @@ export { UploaderDropArea } from "./uploader-drop-area";
 export { UploaderActionButtons } from "./uploader-action-buttons";
 export { UploaderTools } from "./uploader-tools";
 export { default as UploaderSlotSwitcher } from "./uploader-slot-switcher";
+export type { SlotSwitcherBarProps } from "./uploader-slot-switcher";
 export { UploaderPreviewToolsPanel } from "./uploader-preview-tools-panel";
 export { default as SideSlotPreview } from "./side-slot-preview";
 export { default as UploaderPreviewSlider } from "./uploader-preview-slider";

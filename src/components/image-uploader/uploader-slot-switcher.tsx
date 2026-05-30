@@ -1,6 +1,13 @@
 import { t } from "@/locales/i18n";
 import type { SelectedImageItem } from "./image-uploader";
 
+export interface SlotSwitcherBarProps {
+  slots: Array<SelectedImageItem | null>;
+  activeSlotIndex: number | null;
+  onSelectSlot: (index: number) => void;
+  hidden: boolean;
+}
+
 interface UploaderSlotSwitcherProps {
   slots: Array<SelectedImageItem | null>;
   activeSlotIndex: number | null;
@@ -17,7 +24,7 @@ export function UploaderSlotSwitcher({
   return (
     <div
       hidden={hidden}
-      className="flex w-full items-center justify-between rounded-full border border-border/70 bg-muted/55 px-3 py-1.5 shadow-sm backdrop-blur-sm"
+      className="mx-auto flex w-1/2 items-center justify-between rounded-full border border-border/70 bg-muted/30 px-3 py-1.5 shadow-sm backdrop-blur-sm"
       role="group"
       aria-label={t("uploader.previewSlotNavigation")}
       data-testid="uploader-slot-dots"

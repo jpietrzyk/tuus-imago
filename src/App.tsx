@@ -6,6 +6,7 @@ import bgMobile from "./assets/bg_mobile.png";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
+import { type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 import { ImageDebugPanel, type ImageDebugData } from "@/components/image-debug-panel";
 import {
   LegalNavigationSheet,
@@ -251,6 +252,8 @@ function StorefrontApp() {
     },
     [],
   );
+  const [footerSlotSwitcherProps, setFooterSlotSwitcherProps] =
+    useState<SlotSwitcherBarProps | null>(null);
   const [imageDebugData, setImageDebugData] =
     useState<ImageDebugData | null>(null);
   const location = useLocation();
@@ -415,7 +418,7 @@ function StorefrontApp() {
         backgroundImage: `url(${bgImage})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: isDesktopSize ? "center" : "center top",
-        backgroundSize: "cover",
+        backgroundSize: isDesktopSize ? "cover" : "110% auto",
         backgroundAttachment: "fixed",
       }}
     >
@@ -436,6 +439,7 @@ function StorefrontApp() {
                 imageDebugDataEnabled={showUploaderDebugData}
                 initialRestoredSlots={uploadInitialSlots}
                 onToolsPanelPropsChange={stableSetFooterToolsBarProps}
+                onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
                 onDebugDataChange={setImageDebugData}
               />
             }
@@ -494,6 +498,7 @@ function StorefrontApp() {
         checkedOrderSlotKeys={checkedOrderSlotKeys}
         onToggleOrderSlot={toggleFooterOrderSlot}
         toolsBarProps={footerToolsBarProps}
+        slotSwitcherProps={footerSlotSwitcherProps}
       />
       <LegalNavigationSheet
         open={isLegalSheetOpen}
