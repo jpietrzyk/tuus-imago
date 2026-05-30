@@ -7,6 +7,7 @@ import {
   FooterToolsBar,
   type FooterToolsBarProps,
 } from "@/components/footer-tools-bar";
+import { UploaderSlotSwitcher, type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 
 interface FooterProps {
   onOpenContentPage?: (slug: string) => void;
@@ -17,6 +18,7 @@ interface FooterProps {
   checkedOrderSlotKeys?: Set<UploadSlotKey>;
   onToggleOrderSlot?: (slotKey: UploadSlotKey) => void;
   toolsBarProps?: FooterToolsBarProps | null;
+  slotSwitcherProps?: SlotSwitcherBarProps | null;
 }
 
 export function Footer({
@@ -28,15 +30,23 @@ export function Footer({
   checkedOrderSlotKeys = new Set<UploadSlotKey>(),
   onToggleOrderSlot,
   toolsBarProps,
+  slotSwitcherProps,
 }: FooterProps) {
   const hasTools = !!toolsBarProps;
+  const hasSlotSwitcher = !!slotSwitcherProps;
 
   return (
-    <footer
-      className={`w-full shadow-lg rounded-t-2xl ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
-      style={{ backgroundColor: "#F3EBE8" }}
-    >
-      {hasTools && <FooterToolsBar {...toolsBarProps} />}
+    <>
+      {hasSlotSwitcher && (
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <UploaderSlotSwitcher {...slotSwitcherProps} />
+        </div>
+      )}
+      <footer
+        className={`w-full shadow-lg rounded-t-2xl ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
+        style={{ backgroundColor: "#F3EBE8" }}
+      >
+        {hasTools && <FooterToolsBar {...toolsBarProps} />}
       <div className={`w-full px-4 sm:px-6 lg:px-8 ${hasTools ? "h-(--app-shell-bar-height)" : "h-full"}`}>
         <div className={`grid h-full items-center gap-3 sm:gap-4 ${hasTools ? "grid-cols-1 lg:grid-cols-[1fr_28.875rem_1fr]" : "grid-cols-[1fr_auto_1fr]"} max-lg:grid-cols-1`}>
           <div className="hidden lg:flex min-w-0 items-center gap-2 sm:gap-3">
@@ -66,6 +76,7 @@ export function Footer({
           </div>
         </div>
       </div>
-    </footer>
+      </footer>
+    </>
   );
 }

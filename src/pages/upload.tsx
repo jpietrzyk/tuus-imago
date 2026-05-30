@@ -7,6 +7,7 @@ import {
   type UploadedSlotResult,
 } from "@/components/image-uploader";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
+import { type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 import { type ImageDebugData } from "@/components/image-debug-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +42,7 @@ interface UploadPageProps {
   imageDebugDataEnabled?: boolean;
   initialRestoredSlots?: UploadedSlotResult[];
   onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
+  onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
 }
 
@@ -54,6 +56,7 @@ export function UploadPage({
   imageDebugDataEnabled = true,
   initialRestoredSlots = [],
   onToolsPanelPropsChange,
+  onSlotSwitcherPropsChange,
   onDebugDataChange,
 }: UploadPageProps = {}) {
   const restoredSlots = initialRestoredSlots;
@@ -721,6 +724,7 @@ export function UploadPage({
                     uploadingSlotIndex={uploadingSlotIndex}
                     className="mx-auto h-full w-full max-w-sm pt-4 pb-6 text-lg font-semibold"
                     onToolsPanelPropsChange={onToolsPanelPropsChange}
+                    onSlotSwitcherPropsChange={onSlotSwitcherPropsChange}
                     onDebugDataChange={onDebugDataChange}
                     onReset={hasUploaderSelection ? handleFooterReset : undefined}
                   />

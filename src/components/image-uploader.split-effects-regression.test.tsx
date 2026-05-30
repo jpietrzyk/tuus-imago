@@ -8,6 +8,7 @@ import {
   FooterToolsBar,
   type FooterToolsBarProps,
 } from "@/components/footer-tools-bar";
+import type { SlotSwitcherBarProps } from "./image-uploader/uploader-slot-switcher";
 
 vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
@@ -21,10 +22,7 @@ vi.mock("./image-uploader/load-image-dimensions", () => ({
   loadImageDimensions: mockLoadImageDimensions,
 }));
 
-let latestSlotSwitcherProps: {
-  slots: Array<SelectedImageItem | null>;
-  activeSlotIndex: number | null;
-} | null = null;
+let latestSlotSwitcherProps: SlotSwitcherBarProps | null = null;
 let latestEffectsProps: {
   activeImageEffects: SelectedImageItem["previewEffects"] | null;
   onUpdateEffect: (name: "brightness" | "contrast" | "grayscale", val: number) => void;
@@ -36,13 +34,7 @@ vi.mock("./image-uploader/uploader-preview-slider", () => ({
 }));
 
 vi.mock("./image-uploader/uploader-slot-switcher", () => ({
-  UploaderSlotSwitcher: (props: {
-    slots: Array<SelectedImageItem | null>;
-    activeSlotIndex: number | null;
-  }) => {
-    latestSlotSwitcherProps = props;
-    return <div data-testid="mock-slot-switcher" />;
-  },
+  SlotSwitcherBarProps: undefined,
 }));
 
 vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
@@ -85,11 +77,16 @@ vi.mock("@/components/footer-tools-bar", () => ({
 
 function TestWrapper() {
   const [toolsBarProps, setToolsBarProps] = useState<FooterToolsBarProps | null>(null);
+  const [, setSlotSwitcherProps] = useState<SlotSwitcherBarProps | null>(null);
 
   return (
     <>
       <ImageUploader
         onToolsPanelPropsChange={setToolsBarProps}
+        onSlotSwitcherPropsChange={(props) => {
+          latestSlotSwitcherProps = props;
+          setSlotSwitcherProps(props);
+        }}
       />
       {toolsBarProps && <FooterToolsBar {...toolsBarProps} />}
     </>

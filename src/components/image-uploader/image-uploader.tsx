@@ -39,6 +39,7 @@ import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
 import { UploaderSlotSwitcher } from "./uploader-slot-switcher";
 import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
+import type { SlotSwitcherBarProps } from "./uploader-slot-switcher";
 import type { ImageDebugData } from "@/components/image-debug-panel";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
 import { usePreviewSliderSlots } from "./use-preview-slider-slots";
@@ -116,6 +117,7 @@ interface ImageUploaderProps {
   externalResetTrigger?: number;
   showDebugData?: boolean;
   onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
+  onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
   onReset?: () => void;
 }
@@ -381,6 +383,7 @@ export const ImageUploader = forwardRef<
     showDebugData = true,
     initialSlots,
     onToolsPanelPropsChange,
+    onSlotSwitcherPropsChange,
     onDebugDataChange,
     onReset,
   }: ImageUploaderProps,
@@ -1677,6 +1680,21 @@ export const ImageUploader = forwardRef<
     onToolsPanelPropsChange(computedToolsBarProps);
   }, [computedToolsBarProps, onToolsPanelPropsChange]);
 
+  const computedSlotSwitcherProps = useMemo((): SlotSwitcherBarProps | null => {
+    if (selectedImageCount === 0) return null;
+    return {
+      slots: selectedImages,
+      activeSlotIndex: activeImageIndex,
+      onSelectSlot: handlePreviewSlotSelect,
+      hidden: isEffectsEditMode || isZoomPanMode,
+    };
+  }, [selectedImageCount, selectedImages, activeImageIndex, handlePreviewSlotSelect, isEffectsEditMode, isZoomPanMode]);
+
+  useEffect(() => {
+    if (!onSlotSwitcherPropsChange) return;
+    onSlotSwitcherPropsChange(computedSlotSwitcherProps);
+  }, [computedSlotSwitcherProps, onSlotSwitcherPropsChange]);
+
   const { leftSlotIndex, rightSlotIndex, leftSlotImage, rightSlotImage } =
     usePreviewSliderSlots({
       selectedImages,
@@ -1871,15 +1889,6 @@ export const ImageUploader = forwardRef<
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
           paintingSizeScale={paintingSizeScale}
         />
-
-        <div className="px-4">
-          <UploaderSlotSwitcher
-            slots={selectedImages}
-            activeSlotIndex={activeImageIndex}
-            onSelectSlot={handlePreviewSlotSelect}
-            hidden={isEffectsEditMode || isZoomPanMode}
-          />
-        </div>
 
         <UploaderPreviewToolsPanel
           onUpdateEffect={updateActiveImageEffect}
