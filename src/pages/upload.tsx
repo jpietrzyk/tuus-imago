@@ -713,6 +713,7 @@ export function UploadPage({
                         src={paintingSizeHelperUrl}
                         alt=""
                         className="h-full max-h-full w-auto max-w-full opacity-50"
+                        style={{ transform: "translate(-7%, -14%)" }}
                       />
                     </div>
                   )}
