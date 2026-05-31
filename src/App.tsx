@@ -258,13 +258,7 @@ function StorefrontApp() {
     useState<ImageDebugData | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const [uploadPageKey, setUploadPageKey] = useState(0);
-
-  useEffect(() => {
-    if (location.pathname === "/upload") {
-      setUploadPageKey((k) => k + 1);
-    }
-  }, [location.pathname, location.key]);
+  const uploadPageKey = location.pathname === "/upload" ? location.key : "off-upload";
 
   const uploadInitialSlots: UploadedSlotResult[] =
     (location.state as { restoredSlots?: UploadedSlotResult[] } | null)
@@ -341,19 +335,19 @@ function StorefrontApp() {
     [checkedOrderSlotKeys, footerOrderRows],
   );
 
-  useEffect(() => {
-    const activeSlotKeys = orderableSlots.map((slot) => slot.slotKey);
-
-    setOrderSlotSelection((previousSelection) => {
-      const nextSelection: Partial<Record<UploadSlotKey, boolean>> = {};
-
-      activeSlotKeys.forEach((slotKey) => {
-        nextSelection[slotKey] = previousSelection[slotKey] ?? true;
+  const handleOrderableSlotsChange = useCallback(
+    (slots: OrderableSlotSummary[]) => {
+      setOrderableSlots(slots);
+      setOrderSlotSelection((prev) => {
+        const next: Partial<Record<UploadSlotKey, boolean>> = {};
+        slots.forEach((slot) => {
+          next[slot.slotKey] = prev[slot.slotKey] ?? true;
+        });
+        return next;
       });
-
-      return nextSelection;
-    });
-  }, [orderableSlots]);
+    },
+    [],
+  );
 
   const toggleFooterOrderSlot = useCallback((slotKey: UploadSlotKey) => {
     setOrderSlotSelection((previousSelection) => {
@@ -406,7 +400,7 @@ function StorefrontApp() {
                 key={uploadPageKey}
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onSuccessfulSlotsChange={handleSuccessfulSlotsChange}
-                onOrderableSlotsChange={setOrderableSlots}
+                onOrderableSlotsChange={handleOrderableSlotsChange}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
                 showPaintingSizeHelper={showPaintingSizeHelper}
