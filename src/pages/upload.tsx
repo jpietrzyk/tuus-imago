@@ -40,6 +40,7 @@ interface UploadPageProps {
     action: (() => Promise<UploadedSlotResult[]>) | null,
   ) => void;
   imageDebugDataEnabled?: boolean;
+  showPaintingSizeHelper?: boolean;
   initialRestoredSlots?: UploadedSlotResult[];
   onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
   onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
@@ -54,6 +55,7 @@ export function UploadPage({
   onOrderableSlotsChange,
   onCheckoutWithUpload,
   imageDebugDataEnabled = true,
+  showPaintingSizeHelper = false,
   initialRestoredSlots = [],
   onToolsPanelPropsChange,
   onSlotSwitcherPropsChange,
@@ -726,6 +728,7 @@ export function UploadPage({
                     onToolsPanelPropsChange={onToolsPanelPropsChange}
                     onSlotSwitcherPropsChange={onSlotSwitcherPropsChange}
                     onDebugDataChange={onDebugDataChange}
+                    showPaintingSizeHelper={showPaintingSizeHelper}
                     onReset={hasUploaderSelection ? handleFooterReset : undefined}
                   />
                 </div>

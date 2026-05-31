@@ -119,6 +119,7 @@ interface ImageUploaderProps {
   onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
   onReset?: () => void;
+  showPaintingSizeHelper?: boolean;
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
@@ -385,6 +386,7 @@ export const ImageUploader = forwardRef<
     onSlotSwitcherPropsChange,
     onDebugDataChange,
     onReset,
+    showPaintingSizeHelper = false,
   }: ImageUploaderProps,
   ref,
 ) {
@@ -1889,6 +1891,7 @@ export const ImageUploader = forwardRef<
           }
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
           paintingSizeScale={paintingSizeScale}
+          showPaintingSizeHelper={showPaintingSizeHelper}
         />
 
         <UploaderPreviewToolsPanel

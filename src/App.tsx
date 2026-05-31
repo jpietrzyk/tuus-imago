@@ -379,43 +379,15 @@ function StorefrontApp() {
   }, []);
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
-  const [useTestBackground, setUseTestBackground] = useState(false);
+  const [showPaintingSizeHelper, setShowPaintingSizeHelper] = useState(false);
   const [showUploaderDebugData, setShowUploaderDebugData] = useState(false);
-  const [bgDebugUrl, setBgDebugUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    setBgDebugUrl(null);
-  }, [isDesktopSize]);
-
-  useEffect(() => {
-    if (!isDebug || !useTestBackground || bgDebugUrl) {
-      return;
-    }
-
-    let isCancelled = false;
-    const testModule = isDesktopSize
-      ? import("./assets/bg_desktop_test.png")
-      : import("./assets/bg_mobile_test.png");
-
-    void testModule.then((module) => {
-      if (!isCancelled) {
-        setBgDebugUrl(module.default);
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isDebug, useTestBackground, bgDebugUrl, isDesktopSize]);
-
-  const bgImage = useTestBackground && bgDebugUrl ? bgDebugUrl : isDesktopSize ? bgDesktop : bgMobile;
 
   return (
     <div
       className="h-screen overflow-hidden flex flex-col bg-background"
       style={{
         backgroundColor: "var(--background)",
-        backgroundImage: `url(${bgImage})`,
+        backgroundImage: `url(${isDesktopSize ? bgDesktop : bgMobile})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: isDesktopSize ? "center" : "center top",
         backgroundSize: isDesktopSize ? "cover" : "120% auto",
@@ -437,6 +409,7 @@ function StorefrontApp() {
                 onOrderableSlotsChange={setOrderableSlots}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
+                showPaintingSizeHelper={showPaintingSizeHelper}
                 initialRestoredSlots={uploadInitialSlots}
                 onToolsPanelPropsChange={stableSetFooterToolsBarProps}
                 onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
@@ -517,8 +490,8 @@ function StorefrontApp() {
           debugData={imageDebugData}
           showDebugData={showUploaderDebugData}
           onToggleDebugData={() => setShowUploaderDebugData((value) => !value)}
-          useTestBackground={useTestBackground}
-          onToggleTestBackground={() => setUseTestBackground((value) => !value)}
+          showPaintingSizeHelper={showPaintingSizeHelper}
+          onTogglePaintingSizeHelper={() => setShowPaintingSizeHelper((value) => !value)}
         />
       )}
     </div>

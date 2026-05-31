@@ -43,6 +43,7 @@ interface UploaderPreviewSliderProps {
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
   paintingSizeScale?: number;
+  showPaintingSizeHelper?: boolean;
 }
 
 export default function UploaderPreviewSlider({
@@ -77,6 +78,7 @@ export default function UploaderPreviewSlider({
   onSelectEmptySlot,
   onClearSlot,
   paintingSizeScale = 1,
+  showPaintingSizeHelper = false,
 }: UploaderPreviewSliderProps) {
   return (
     <div
@@ -122,6 +124,7 @@ export default function UploaderPreviewSlider({
         onMetadataResolved={onMetadataResolved}
         onSelectEmptySlot={onSelectEmptySlot}
         onClearSlot={onClearSlot}
+        showPaintingSizeHelper={showPaintingSizeHelper}
       />
 
       <SideSlotPreview

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import IconAdd from "@/components/icons/icon-add.svg?react";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
+import paintingSizeHelperUrl from "@/assets/painting-size-helper.svg";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion } from "./image-proportion-calculator";
@@ -40,6 +41,7 @@ interface PaintingPreviewSlotProps {
   }) => void;
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
+  showPaintingSizeHelper?: boolean;
 }
 
 export default function PaintingPreviewSlot({
@@ -65,6 +67,7 @@ export default function PaintingPreviewSlot({
   onMetadataResolved,
   onSelectEmptySlot,
   onClearSlot,
+  showPaintingSizeHelper = false,
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const effectivePreviewUrl = previewUrl ?? selectedImage?.previewUrl ?? null;
@@ -191,6 +194,15 @@ export default function PaintingPreviewSlot({
         onTouchStart={swipeDisabled ? undefined : onTouchStart}
         onTouchEnd={swipeDisabled ? undefined : onTouchEnd}
       >
+        {showPaintingSizeHelper && (
+          <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center md:hidden">
+            <img
+              src={paintingSizeHelperUrl}
+              alt=""
+              className="h-full max-h-full w-auto max-w-full opacity-50"
+            />
+          </div>
+        )}
         {selectedImage ? (
           <canvas
             ref={previewCanvasRef}
