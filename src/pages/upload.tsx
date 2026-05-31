@@ -16,6 +16,7 @@ import {
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
 import { CheckCircle2, AlertCircle, ExternalLink, Sliders } from "lucide-react";
+import paintingSizeHelperUrl from "@/assets/painting-size-helper.svg";
 import { t } from "@/locales/i18n";
 import {
   type ImageTransformations,
@@ -40,6 +41,7 @@ interface UploadPageProps {
     action: (() => Promise<UploadedSlotResult[]>) | null,
   ) => void;
   imageDebugDataEnabled?: boolean;
+  showPaintingSizeHelper?: boolean;
   initialRestoredSlots?: UploadedSlotResult[];
   onToolsPanelPropsChange?: (props: FooterToolsBarProps | null) => void;
   onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
@@ -54,6 +56,7 @@ export function UploadPage({
   onOrderableSlotsChange,
   onCheckoutWithUpload,
   imageDebugDataEnabled = true,
+  showPaintingSizeHelper = false,
   initialRestoredSlots = [],
   onToolsPanelPropsChange,
   onSlotSwitcherPropsChange,
@@ -704,6 +707,16 @@ export function UploadPage({
             {!uploadedImage && (
               <div className="relative flex h-full min-h-0 w-full flex-col items-center gap-4">
                 <div className="relative h-full min-h-0 w-full">
+                  {showPaintingSizeHelper && !uploadedImage && (
+                    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center md:hidden">
+                      <img
+                        src={paintingSizeHelperUrl}
+                        alt=""
+                        className="h-full max-h-full w-auto max-w-full opacity-50"
+                        style={{ transform: "translate(-7%, -14%)" }}
+                      />
+                    </div>
+                  )}
                   <ImageUploader
                     ref={uploaderRef}
                     onUploadSuccess={handleUploadSuccess}

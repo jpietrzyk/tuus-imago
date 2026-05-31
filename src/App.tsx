@@ -258,13 +258,7 @@ function StorefrontApp() {
     useState<ImageDebugData | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const [uploadPageKey, setUploadPageKey] = useState(0);
-
-  useEffect(() => {
-    if (location.pathname === "/upload") {
-      setUploadPageKey((k) => k + 1);
-    }
-  }, [location.pathname, location.key]);
+  const uploadPageKey = location.pathname === "/upload" ? location.key : "off-upload";
 
   const uploadInitialSlots: UploadedSlotResult[] =
     (location.state as { restoredSlots?: UploadedSlotResult[] } | null)
@@ -341,19 +335,19 @@ function StorefrontApp() {
     [checkedOrderSlotKeys, footerOrderRows],
   );
 
-  useEffect(() => {
-    const activeSlotKeys = orderableSlots.map((slot) => slot.slotKey);
-
-    setOrderSlotSelection((previousSelection) => {
-      const nextSelection: Partial<Record<UploadSlotKey, boolean>> = {};
-
-      activeSlotKeys.forEach((slotKey) => {
-        nextSelection[slotKey] = previousSelection[slotKey] ?? true;
+  const handleOrderableSlotsChange = useCallback(
+    (slots: OrderableSlotSummary[]) => {
+      setOrderableSlots(slots);
+      setOrderSlotSelection((prev) => {
+        const next: Partial<Record<UploadSlotKey, boolean>> = {};
+        slots.forEach((slot) => {
+          next[slot.slotKey] = prev[slot.slotKey] ?? true;
+        });
+        return next;
       });
-
-      return nextSelection;
-    });
-  }, [orderableSlots]);
+    },
+    [],
+  );
 
   const toggleFooterOrderSlot = useCallback((slotKey: UploadSlotKey) => {
     setOrderSlotSelection((previousSelection) => {
@@ -379,43 +373,15 @@ function StorefrontApp() {
   }, []);
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
-  const [useTestBackground, setUseTestBackground] = useState(false);
+  const [showPaintingSizeHelper, setShowPaintingSizeHelper] = useState(false);
   const [showUploaderDebugData, setShowUploaderDebugData] = useState(false);
-  const [bgDebugUrl, setBgDebugUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    setBgDebugUrl(null);
-  }, [isDesktopSize]);
-
-  useEffect(() => {
-    if (!isDebug || !useTestBackground || bgDebugUrl) {
-      return;
-    }
-
-    let isCancelled = false;
-    const testModule = isDesktopSize
-      ? import("./assets/bg_desktop_test.png")
-      : import("./assets/bg_mobile_test.png");
-
-    void testModule.then((module) => {
-      if (!isCancelled) {
-        setBgDebugUrl(module.default);
-      }
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isDebug, useTestBackground, bgDebugUrl, isDesktopSize]);
-
-  const bgImage = useTestBackground && bgDebugUrl ? bgDebugUrl : isDesktopSize ? bgDesktop : bgMobile;
 
   return (
     <div
       className="h-screen overflow-hidden flex flex-col bg-background"
       style={{
         backgroundColor: "var(--background)",
-        backgroundImage: `url(${bgImage})`,
+        backgroundImage: `url(${isDesktopSize ? bgDesktop : bgMobile})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: isDesktopSize ? "center" : "center top",
         backgroundSize: isDesktopSize ? "cover" : "120% auto",
@@ -434,9 +400,10 @@ function StorefrontApp() {
                 key={uploadPageKey}
                 onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
                 onSuccessfulSlotsChange={handleSuccessfulSlotsChange}
-                onOrderableSlotsChange={setOrderableSlots}
+                onOrderableSlotsChange={handleOrderableSlotsChange}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
+                showPaintingSizeHelper={showPaintingSizeHelper}
                 initialRestoredSlots={uploadInitialSlots}
                 onToolsPanelPropsChange={stableSetFooterToolsBarProps}
                 onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
@@ -517,8 +484,8 @@ function StorefrontApp() {
           debugData={imageDebugData}
           showDebugData={showUploaderDebugData}
           onToggleDebugData={() => setShowUploaderDebugData((value) => !value)}
-          useTestBackground={useTestBackground}
-          onToggleTestBackground={() => setUseTestBackground((value) => !value)}
+          showPaintingSizeHelper={showPaintingSizeHelper}
+          onTogglePaintingSizeHelper={() => setShowPaintingSizeHelper((value) => !value)}
         />
       )}
     </div>
