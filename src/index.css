@@ -144,23 +144,23 @@
 
 .painting-preview-slider {
   --painting-size-scale: 1;
-  max-height: clamp(15vh, calc(25vh * var(--painting-size-scale)), 65vh);
+  max-height: clamp(10vh, calc(25vh * var(--painting-size-scale)), 65vh);
 }
 
 @media (min-width: 768px) {
   .painting-preview-slider {
-    max-height: clamp(15vh, calc(42vh * var(--painting-size-scale)), 65vh);
+    max-height: clamp(10vh, calc(42vh * var(--painting-size-scale)), 65vh);
   }
 }
 
 @media (min-width: 1024px) {
   .painting-preview-slider {
-    max-height: clamp(15vh, calc(45vh * var(--painting-size-scale)), 65vh);
+    max-height: clamp(10vh, calc(45vh * var(--painting-size-scale)), 65vh);
   }
 }
 
 @media (min-width: 1280px) {
   .painting-preview-slider {
-    max-height: clamp(15vh, calc(50vh * var(--painting-size-scale)), 65vh);
+    max-height: clamp(10vh, calc(50vh * var(--painting-size-scale)), 65vh);
   }
 }
