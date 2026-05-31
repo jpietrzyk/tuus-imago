@@ -1,6 +1,5 @@
 import PaintingPreviewSlot from "./painting-preview-slot";
 import SideSlotPreview from "./side-slot-preview";
-import paintingSizeHelperUrl from "@/assets/painting-size-helper.svg";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -44,7 +43,6 @@ interface UploaderPreviewSliderProps {
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
   paintingSizeScale?: number;
-  showPaintingSizeHelper?: boolean;
 }
 
 export default function UploaderPreviewSlider({
@@ -79,23 +77,13 @@ export default function UploaderPreviewSlider({
   onSelectEmptySlot,
   onClearSlot,
   paintingSizeScale = 1,
-  showPaintingSizeHelper = false,
 }: UploaderPreviewSliderProps) {
   return (
     <div
-      className="painting-preview-slider relative flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 rounded-xl bg-transparent overflow-hidden"
+      className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 rounded-xl bg-transparent overflow-hidden"
       style={{ "--painting-size-scale": paintingSizeScale } as React.CSSProperties}
       data-testid="uploader-preview-slider"
     >
-      {showPaintingSizeHelper && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center md:hidden">
-          <img
-            src={paintingSizeHelperUrl}
-            alt=""
-            className="h-full max-h-full w-auto max-w-full opacity-50"
-          />
-        </div>
-      )}
       <SideSlotPreview
         position="left"
         slotIndex={leftSlotIndex}
