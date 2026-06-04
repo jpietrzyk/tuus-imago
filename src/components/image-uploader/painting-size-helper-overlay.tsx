@@ -5,6 +5,7 @@ import { getPaintingSizeScale, ALL_PAINTING_SIZE_INDICES } from "./painting-size
 interface PaintingSizeHelperOverlayProps {
   selectedSize: PaintingSizeIndex;
   paintingAspectRatio: number;
+  showBorders?: boolean;
   children: ReactNode;
 }
 
@@ -13,6 +14,7 @@ const MAX_SCALE = getPaintingSizeScale(3);
 export default function PaintingSizeHelperOverlay({
   selectedSize,
   paintingAspectRatio,
+  showBorders = false,
   children,
 }: PaintingSizeHelperOverlayProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -38,37 +40,42 @@ export default function PaintingSizeHelperOverlay({
   }, [paintingAspectRatio]);
 
   return (
-    <div ref={wrapperRef} className="relative flex h-full w-full items-center justify-center">
+    <div ref={wrapperRef} className="relative flex h-full w-full justify-center items-start">
       <div
         className="relative"
         style={{ width: fitSize.width, height: fitSize.height }}
       >
-        {ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
-          const scale = getPaintingSizeScale(sizeIdx);
-          const relativeScale = scale / MAX_SCALE;
-          const isSelected = sizeIdx === selectedSize;
+        {showBorders &&
+          ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
+            const scale = getPaintingSizeScale(sizeIdx);
+            const relativeScale = scale / MAX_SCALE;
+            const isSelected = sizeIdx === selectedSize;
 
-          return (
-            <div
-              key={sizeIdx}
-              className="absolute inset-0 m-auto"
-              style={{
-                width: `${relativeScale * 100}%`,
-                height: `${relativeScale * 100}%`,
-                border: isSelected
-                  ? "2px solid rgba(0, 0, 0, 0.5)"
-                  : "1.5px dashed rgba(0, 0, 0, 0.2)",
-              }}
-            />
-          );
-        })}
+            return (
+              <div
+                key={sizeIdx}
+                className="absolute inset-0 m-auto"
+                style={{
+                  width: `${relativeScale * 100}%`,
+                  height: `${relativeScale * 100}%`,
+                  border: isSelected
+                    ? "2px solid rgba(0, 0, 0, 0.5)"
+                    : "1.5px dashed rgba(0, 0, 0, 0.2)",
+                }}
+              />
+            );
+          })}
 
         <div
-          className="absolute inset-0 m-auto flex items-center justify-center"
-          style={{
-            width: `${(selectedScale / MAX_SCALE) * 100}%`,
-            height: `${(selectedScale / MAX_SCALE) * 100}%`,
-          }}
+          className={showBorders ? "absolute inset-0 m-auto flex items-center justify-center" : "relative flex h-full w-full items-center justify-center"}
+          style={
+            showBorders
+              ? {
+                  width: `${(selectedScale / MAX_SCALE) * 100}%`,
+                  height: `${(selectedScale / MAX_SCALE) * 100}%`,
+                }
+              : undefined
+          }
         >
           {children}
         </div>
