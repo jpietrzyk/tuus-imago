@@ -1,11 +1,15 @@
 import PaintingPreviewSlot from "./painting-preview-slot";
 import SideSlotPreview from "./side-slot-preview";
+import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import { getPaintingSizeScale, type PaintingSizeIndex } from "./painting-size";
 import type { CropAdjust } from "./use-crop-adjust";
+
+const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(3);
 
 interface UploaderPreviewSliderProps {
   activeImage: SelectedImageItem | null;
@@ -43,6 +47,9 @@ interface UploaderPreviewSliderProps {
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
   paintingSizeScale?: number;
+  showPaintingSizeHelper?: boolean;
+  selectedPaintingSize?: PaintingSizeIndex;
+  paintingAspectRatio?: number;
 }
 
 export default function UploaderPreviewSlider({
@@ -77,67 +84,89 @@ export default function UploaderPreviewSlider({
   onSelectEmptySlot,
   onClearSlot,
   paintingSizeScale = 1,
+  showPaintingSizeHelper = false,
+  selectedPaintingSize = 2,
+  paintingAspectRatio = 1.5,
 }: UploaderPreviewSliderProps) {
+  const effectiveScale = showPaintingSizeHelper
+    ? MAX_PAINTING_SIZE_SCALE
+    : paintingSizeScale;
+
+  const previewSlot = (
+    <PaintingPreviewSlot
+      selectedImage={activeImage}
+      previewUrl={activeImagePreviewUrl ?? activeImage?.previewUrl ?? null}
+      useCloudPreview={!!activeImage?.uploadedAsset}
+      activeSlotIndex={activeImageIndex}
+      selectedImageMetadata={selectedImageMetadata}
+      bestProportion={bestProportion}
+      userSelectedProportion={userSelectedProportion}
+      previewFrameAspectRatio={previewFrameAspectRatio}
+      isUploadOverlayVisible={isUploadOverlayVisible}
+      uploadProgress={uploadProgress}
+      uploadProgressLabel={uploadProgressLabel}
+      uploadingSlotIndex={uploadingSlotIndex}
+      isEffectUploading={isEffectUploading}
+      swipeDisabled={swipeDisabled}
+      isEditMode={isEditMode}
+      previewCropAdjust={previewCropAdjust}
+      onCropAdjustChange={onCropAdjustChange}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onMetadataResolved={onMetadataResolved}
+      onSelectEmptySlot={onSelectEmptySlot}
+      onClearSlot={onClearSlot}
+    />
+  );
+
   return (
     <div
-      className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 rounded-xl bg-transparent overflow-hidden"
-      style={{ "--painting-size-scale": paintingSizeScale } as React.CSSProperties}
+      className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center gap-3 md:gap-4 lg:gap-5 bg-transparent overflow-hidden"
+      style={{ "--painting-size-scale": effectiveScale } as React.CSSProperties}
       data-testid="uploader-preview-slider"
     >
-      <SideSlotPreview
-        position="left"
-        slotIndex={leftSlotIndex}
-        image={leftSlotImage}
-        previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
-        useCloudPreview={!!leftSlotImage?.uploadedAsset}
-        isNavigable={canMovePrevious}
-        isUploadOverlayVisible={isUploadOverlayVisible}
-        uploadProgress={uploadProgress}
-        uploadProgressLabel={uploadProgressLabel}
-        uploadingSlotIndex={uploadingSlotIndex}
-        disabled={isEditMode}
-        onSelectSlot={onSelectSlot}
-      />
+      {showPaintingSizeHelper ? (
+        <PaintingSizeHelperOverlay
+          selectedSize={selectedPaintingSize}
+          paintingAspectRatio={paintingAspectRatio}
+        >
+          {previewSlot}
+        </PaintingSizeHelperOverlay>
+      ) : (
+        <>
+          <SideSlotPreview
+            position="left"
+            slotIndex={leftSlotIndex}
+            image={leftSlotImage}
+            previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
+            useCloudPreview={!!leftSlotImage?.uploadedAsset}
+            isNavigable={canMovePrevious}
+            isUploadOverlayVisible={isUploadOverlayVisible}
+            uploadProgress={uploadProgress}
+            uploadProgressLabel={uploadProgressLabel}
+            uploadingSlotIndex={uploadingSlotIndex}
+            disabled={isEditMode}
+            onSelectSlot={onSelectSlot}
+          />
 
-      <PaintingPreviewSlot
-        selectedImage={activeImage}
-        previewUrl={activeImagePreviewUrl ?? activeImage?.previewUrl ?? null}
-        useCloudPreview={!!activeImage?.uploadedAsset}
-        activeSlotIndex={activeImageIndex}
-        selectedImageMetadata={selectedImageMetadata}
-        bestProportion={bestProportion}
-        userSelectedProportion={userSelectedProportion}
-        previewFrameAspectRatio={previewFrameAspectRatio}
-        isUploadOverlayVisible={isUploadOverlayVisible}
-        uploadProgress={uploadProgress}
-        uploadProgressLabel={uploadProgressLabel}
-        uploadingSlotIndex={uploadingSlotIndex}
-        isEffectUploading={isEffectUploading}
-        swipeDisabled={swipeDisabled}
-        isEditMode={isEditMode}
-        previewCropAdjust={previewCropAdjust}
-        onCropAdjustChange={onCropAdjustChange}
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
-        onMetadataResolved={onMetadataResolved}
-        onSelectEmptySlot={onSelectEmptySlot}
-        onClearSlot={onClearSlot}
-      />
+          {previewSlot}
 
-      <SideSlotPreview
-        position="right"
-        slotIndex={rightSlotIndex}
-        image={rightSlotImage}
-        previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
-        useCloudPreview={!!rightSlotImage?.uploadedAsset}
-        isNavigable={canMoveNext}
-        isUploadOverlayVisible={isUploadOverlayVisible}
-        uploadProgress={uploadProgress}
-        uploadProgressLabel={uploadProgressLabel}
-        uploadingSlotIndex={uploadingSlotIndex}
-        disabled={isEditMode}
-        onSelectSlot={onSelectSlot}
-      />
+          <SideSlotPreview
+            position="right"
+            slotIndex={rightSlotIndex}
+            image={rightSlotImage}
+            previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
+            useCloudPreview={!!rightSlotImage?.uploadedAsset}
+            isNavigable={canMoveNext}
+            isUploadOverlayVisible={isUploadOverlayVisible}
+            uploadProgress={uploadProgress}
+            uploadProgressLabel={uploadProgressLabel}
+            uploadingSlotIndex={uploadingSlotIndex}
+            disabled={isEditMode}
+            onSelectSlot={onSelectSlot}
+          />
+        </>
+      )}
     </div>
   );
 }

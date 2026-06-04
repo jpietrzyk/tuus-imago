@@ -119,6 +119,7 @@ interface ImageUploaderProps {
   onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
   onReset?: () => void;
+  showPaintingSizeHelper?: boolean;
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
@@ -385,6 +386,7 @@ export const ImageUploader = forwardRef<
     onSlotSwitcherPropsChange,
     onDebugDataChange,
     onReset,
+    showPaintingSizeHelper = false,
   }: ImageUploaderProps,
   ref,
 ) {
@@ -1603,6 +1605,12 @@ export const ImageUploader = forwardRef<
     [selectedPaintingSize],
   );
 
+  const paintingAspectRatio = useMemo(() => {
+    const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
+    const options = getPaintingSizeOptions(shape);
+    return options[0].widthCm / options[0].heightCm;
+  }, [displayImageProportion]);
+
   const enterEffectsEditMode = useCallback(() => {
     setEffectsEditMode("settings");
     setIsEffectsEditMode(true);
@@ -1889,6 +1897,9 @@ export const ImageUploader = forwardRef<
           }
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
           paintingSizeScale={paintingSizeScale}
+          showPaintingSizeHelper={showPaintingSizeHelper}
+          selectedPaintingSize={selectedPaintingSize}
+          paintingAspectRatio={paintingAspectRatio}
         />
 
         <UploaderPreviewToolsPanel

@@ -26,11 +26,13 @@ const RECTANGULAR_OPTIONS: PaintingSizeOption[] = [
 ];
 
 const SIZE_SCALE_MAP: Record<PaintingSizeIndex, number> = {
-  0: 0.5,
-  1: 0.83,
+  0: 0.667,
+  1: 0.833,
   2: 1.0,
-  3: 1.34,
+  3: 1.333,
 };
+
+export const ALL_PAINTING_SIZE_INDICES: PaintingSizeIndex[] = [0, 1, 2, 3];
 
 export function getPaintingSizeOptions(
   shape: PaintingShape,
