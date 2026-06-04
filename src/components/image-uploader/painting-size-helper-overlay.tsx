@@ -27,6 +27,7 @@ export default function PaintingSizeHelperOverlay({
 
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
       const fitWidth = Math.min(width, height * paintingAspectRatio);
       const fitHeight = fitWidth / paintingAspectRatio;
       setFitSize({ width: fitWidth, height: fitHeight });
@@ -40,10 +41,10 @@ export default function PaintingSizeHelperOverlay({
   }, [paintingAspectRatio]);
 
   return (
-    <div ref={wrapperRef} className="relative flex h-full w-full justify-center items-start">
+    <div ref={wrapperRef} className="relative flex h-full flex-1 justify-center items-start min-w-0">
       <div
         className="relative"
-        style={{ width: fitSize.width, height: fitSize.height }}
+        style={fitSize.width > 0 ? { width: fitSize.width, height: fitSize.height } : undefined}
       >
         {showBorders &&
           ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
