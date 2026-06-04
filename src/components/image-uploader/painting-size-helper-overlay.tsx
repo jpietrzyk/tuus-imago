@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useRef, useState, useEffect } from "react";
 import type { PaintingSizeIndex } from "./painting-size";
 import { getPaintingSizeScale, ALL_PAINTING_SIZE_INDICES } from "./painting-size";
 
@@ -15,13 +15,33 @@ export default function PaintingSizeHelperOverlay({
   paintingAspectRatio,
   children,
 }: PaintingSizeHelperOverlayProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [fitSize, setFitSize] = useState({ width: 0, height: 0 });
   const selectedScale = getPaintingSizeScale(selectedSize);
 
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      const fitWidth = Math.min(width, height * paintingAspectRatio);
+      const fitHeight = fitWidth / paintingAspectRatio;
+      setFitSize({ width: fitWidth, height: fitHeight });
+    };
+
+    update();
+
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [paintingAspectRatio]);
+
   return (
-    <div className="relative flex h-full w-full items-center justify-center">
+    <div ref={wrapperRef} className="relative flex h-full w-full items-center justify-center">
       <div
-        className="relative h-full max-h-full w-auto max-w-full"
-        style={{ aspectRatio: String(paintingAspectRatio) }}
+        className="relative"
+        style={{ width: fitSize.width, height: fitSize.height }}
       >
         {ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
           const scale = getPaintingSizeScale(sizeIdx);
