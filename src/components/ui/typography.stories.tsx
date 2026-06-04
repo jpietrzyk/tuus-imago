@@ -6,7 +6,7 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          "Typography uses Inter Variable font. The base text style is applied to `<body>` via Tailwind (`font-sans text-foreground bg-background`).",
+          "Typography uses Tw Cen MT (with Inter Variable fallback). The base text style is applied to `<body>` via Tailwind (`font-sans text-foreground bg-background`).",
       },
     },
   },
@@ -19,7 +19,7 @@ function FontFamily() {
   return (
     <div className="space-y-4 p-4">
       <h3 className="text-lg font-semibold border-b border-border pb-2">Font Family</h3>
-      <p className="font-mono text-sm text-muted-foreground">--font-sans: &quot;Inter Variable&quot;, sans-serif</p>
+      <p className="font-mono text-sm text-muted-foreground">--font-sans: &quot;Tw Cen MT&quot;, &quot;Inter Variable&quot;, sans-serif</p>
       <p className="text-base">
         The quick brown fox jumps over the lazy dog. 0123456789 !@#$%^&amp;*()
       </p>
