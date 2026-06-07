@@ -41,7 +41,6 @@ import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
 import type { SlotSwitcherBarProps } from "./uploader-slot-switcher";
 import type { ImageDebugData } from "@/components/image-debug-panel";
 import { useImageSliderNavigation } from "./use-image-slider-navigation";
-import { usePreviewSliderSlots } from "./use-preview-slider-slots";
 import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
@@ -55,7 +54,6 @@ import {
   type PaintingShape,
   DEFAULT_PAINTING_SIZE_INDEX,
   getPaintingSizeOptions,
-  getPaintingSizeScale,
 } from "./painting-size";
 import { computeSizesDpiAvailability, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
@@ -119,7 +117,6 @@ interface ImageUploaderProps {
   onSlotSwitcherPropsChange?: (props: SlotSwitcherBarProps | null) => void;
   onDebugDataChange?: (data: ImageDebugData | null) => void;
   onReset?: () => void;
-  showPaintingSizeHelper?: boolean;
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
@@ -386,7 +383,6 @@ export const ImageUploader = forwardRef<
     onSlotSwitcherPropsChange,
     onDebugDataChange,
     onReset,
-    showPaintingSizeHelper = false,
   }: ImageUploaderProps,
   ref,
 ) {
@@ -1448,8 +1444,6 @@ export const ImageUploader = forwardRef<
   const {
     previousFilledSlotIndex,
     nextFilledSlotIndex,
-    canMovePrevious,
-    canMoveNext,
   } = useImageSliderNavigation({
     selectedImages,
     activeImageIndex,
@@ -1600,11 +1594,6 @@ export const ImageUploader = forwardRef<
     [],
   );
 
-  const paintingSizeScale = useMemo(
-    () => getPaintingSizeScale(selectedPaintingSize),
-    [selectedPaintingSize],
-  );
-
   const paintingAspectRatio = useMemo(() => {
     const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
     const options = getPaintingSizeOptions(shape);
@@ -1701,12 +1690,6 @@ export const ImageUploader = forwardRef<
     if (!onSlotSwitcherPropsChange) return;
     onSlotSwitcherPropsChange(computedSlotSwitcherProps);
   }, [computedSlotSwitcherProps, onSlotSwitcherPropsChange]);
-
-  const { leftSlotIndex, rightSlotIndex, leftSlotImage, rightSlotImage } =
-    usePreviewSliderSlots({
-      selectedImages,
-      activeImageIndex,
-    });
 
   useEffect(() => {
     selectedImagesRef.current = selectedImages;
@@ -1868,25 +1851,10 @@ export const ImageUploader = forwardRef<
             typeof activeImageIndex === "number" &&
             busyBackgroundUploadSlots.has(activeImageIndex)
           }
-          canMovePrevious={canMovePrevious}
-          canMoveNext={canMoveNext}
-          leftSlotIndex={leftSlotIndex}
-          rightSlotIndex={rightSlotIndex}
-          leftSlotImage={leftSlotImage}
-          leftSlotPreviewUrl={
-            leftSlotImage ? getTransformedImagePreviewUrl(leftSlotImage) : null
-          }
-          rightSlotImage={rightSlotImage}
-          rightSlotPreviewUrl={
-            rightSlotImage
-              ? getTransformedImagePreviewUrl(rightSlotImage)
-              : null
-          }
           swipeDisabled={isEffectsEditMode || isZoomPanMode}
           isEditMode={isEffectsEditMode || isZoomPanMode}
           previewCropAdjust={activeImage?.previewCropAdjust}
           onCropAdjustChange={updateActiveImageCropAdjust}
-          onSelectSlot={handlePreviewSlotSelect}
           onTouchStart={handleSliderTouchStart}
           onTouchEnd={handleSliderTouchEnd}
           onMetadataResolved={handleMetadataResolved}
@@ -1896,8 +1864,6 @@ export const ImageUploader = forwardRef<
               : undefined
           }
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
-          paintingSizeScale={paintingSizeScale}
-          showPaintingSizeHelper={showPaintingSizeHelper}
           selectedPaintingSize={selectedPaintingSize}
           paintingAspectRatio={paintingAspectRatio}
         />

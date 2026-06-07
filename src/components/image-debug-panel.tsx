@@ -17,8 +17,6 @@ export interface ImageDebugPanelProps {
   debugData: ImageDebugData | null;
   showDebugData: boolean;
   onToggleDebugData: () => void;
-  showPaintingSizeHelper: boolean;
-  onTogglePaintingSizeHelper: () => void;
 }
 
 function DebugToggle({
@@ -61,8 +59,6 @@ export function ImageDebugPanel({
   debugData,
   showDebugData,
   onToggleDebugData,
-  showPaintingSizeHelper,
-  onTogglePaintingSizeHelper,
 }: ImageDebugPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -86,14 +82,6 @@ export function ImageDebugPanel({
 
       {!isCollapsed && (
         <div className="px-3 pb-2 flex flex-col gap-2">
-          <DebugToggle
-            label="SIZE:"
-            value={showPaintingSizeHelper}
-            onToggle={onTogglePaintingSizeHelper}
-            ariaLabel="Toggle painting size helper overlay"
-            activeText="show"
-            inactiveText="hide"
-          />
           <DebugToggle
             label="IMG:"
             value={showDebugData}
