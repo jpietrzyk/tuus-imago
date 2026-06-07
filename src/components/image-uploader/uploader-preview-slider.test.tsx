@@ -8,33 +8,6 @@ import type {
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import type { CropAdjust } from "./use-crop-adjust";
 
-vi.mock("./side-slot-preview", () => ({
-  default: ({
-    position,
-    onSelectSlot,
-    slotIndex,
-    disabled,
-  }: {
-    position: string;
-    onSelectSlot: (index: number) => void;
-    slotIndex: number | null;
-    disabled?: boolean;
-  }) => (
-    <button
-      type="button"
-      data-testid={`mock-side-${position}`}
-      data-disabled={disabled ? "true" : undefined}
-      onClick={() => {
-        if (typeof slotIndex === "number") {
-          onSelectSlot(slotIndex);
-        }
-      }}
-    >
-      {position}
-    </button>
-  ),
-}));
-
 vi.mock("./painting-preview-slot", () => ({
   default: ({
     swipeDisabled,
@@ -54,6 +27,12 @@ vi.mock("./painting-preview-slot", () => ({
       data-crop-adjust={previewCropAdjust ? JSON.stringify(previewCropAdjust) : undefined}
       data-has-crop-adjust-callback={onCropAdjustChange ? "true" : undefined}
     />
+  ),
+}));
+
+vi.mock("./painting-size-helper-overlay", () => ({
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-painting-size-overlay">{children}</div>
   ),
 }));
 
@@ -80,38 +59,20 @@ const createProps = () => ({
   bestProportion: "horizontal" as ImageDisplayProportion,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
   previewFrameAspectRatio: 16 / 9,
-  canMovePrevious: true,
-  canMoveNext: true,
-  leftSlotIndex: 0,
-  rightSlotIndex: 2,
-  leftSlotImage: createItem("left"),
-  rightSlotImage: createItem("right"),
-  onSelectSlot: vi.fn(),
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
   onMetadataResolved: vi.fn(),
 });
 
 describe("UploaderPreviewSlider", () => {
-  it("renders side previews and center painting slot", () => {
+  it("renders painting size overlay with painting slot", () => {
     const props = createProps();
 
     render(<UploaderPreviewSlider {...props} />);
 
     expect(screen.getByTestId("uploader-preview-slider")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-side-left")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-painting-size-overlay")).toBeInTheDocument();
     expect(screen.getByTestId("mock-painting-slot")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-side-right")).toBeInTheDocument();
-  });
-
-  it("forwards slot selection callbacks via side slots", () => {
-    const props = createProps();
-
-    render(<UploaderPreviewSlider {...props} />);
-
-    fireEvent.click(screen.getByTestId("mock-side-left"));
-
-    expect(props.onSelectSlot).toHaveBeenCalledWith(0);
   });
 
   it("passes swipeDisabled to painting preview slot", () => {
@@ -209,34 +170,6 @@ describe("UploaderPreviewSlider", () => {
 
     expect(screen.getByTestId("mock-painting-slot")).not.toHaveAttribute(
       "data-has-crop-adjust-callback",
-    );
-  });
-
-  it("passes disabled=true to side slots when isEditMode is true", () => {
-    const props = createProps();
-
-    render(<UploaderPreviewSlider {...props} isEditMode={true} />);
-
-    expect(screen.getByTestId("mock-side-left")).toHaveAttribute(
-      "data-disabled",
-      "true",
-    );
-    expect(screen.getByTestId("mock-side-right")).toHaveAttribute(
-      "data-disabled",
-      "true",
-    );
-  });
-
-  it("does not set disabled on side slots when isEditMode is false", () => {
-    const props = createProps();
-
-    render(<UploaderPreviewSlider {...props} isEditMode={false} />);
-
-    expect(screen.getByTestId("mock-side-left")).not.toHaveAttribute(
-      "data-disabled",
-    );
-    expect(screen.getByTestId("mock-side-right")).not.toHaveAttribute(
-      "data-disabled",
     );
   });
 });
