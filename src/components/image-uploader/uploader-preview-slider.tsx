@@ -6,10 +6,10 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
-import { getPaintingSizeScale, type PaintingSizeIndex } from "./painting-size";
+import { getPaintingSizeScale, ALL_PAINTING_SIZE_INDICES, type PaintingSizeIndex } from "./painting-size";
 import type { CropAdjust } from "./use-crop-adjust";
 
-const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(3);
+const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
 
 interface UploaderPreviewSliderProps {
   activeImage: SelectedImageItem | null;
