@@ -9,7 +9,7 @@ interface PaintingSizeHelperOverlayProps {
   children: ReactNode;
 }
 
-const MAX_SCALE = getPaintingSizeScale(3);
+const MAX_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
 
 export default function PaintingSizeHelperOverlay({
   selectedSize,

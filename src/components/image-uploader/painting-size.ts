@@ -1,4 +1,4 @@
-export type PaintingSizeIndex = 0 | 1 | 2 | 3;
+export type PaintingSizeIndex = 0 | 1 | 2 | 3 | 4;
 
 export type PaintingShape = "square" | "rectangular";
 
@@ -23,6 +23,7 @@ const RECTANGULAR_OPTIONS: PaintingSizeOption[] = [
   { key: 1, label: "75 x 50", widthCm: 75, heightCm: 50 },
   { key: 2, label: "90 x 60", widthCm: 90, heightCm: 60 },
   { key: 3, label: "120 x 80", widthCm: 120, heightCm: 80 },
+  { key: 4, label: "150 x 100", widthCm: 150, heightCm: 100 },
 ];
 
 const SIZE_SCALE_MAP: Record<PaintingSizeIndex, number> = {
@@ -30,9 +31,10 @@ const SIZE_SCALE_MAP: Record<PaintingSizeIndex, number> = {
   1: 0.833,
   2: 1.0,
   3: 1.333,
+  4: 1.667,
 };
 
-export const ALL_PAINTING_SIZE_INDICES: PaintingSizeIndex[] = [0, 1, 2, 3];
+export const ALL_PAINTING_SIZE_INDICES: PaintingSizeIndex[] = [0, 1, 2, 3, 4];
 
 export function getPaintingSizeOptions(
   shape: PaintingShape,
