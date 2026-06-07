@@ -373,7 +373,6 @@ function StorefrontApp() {
   }, []);
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
-  const [showPaintingSizeHelper, setShowPaintingSizeHelper] = useState(false);
   const [showUploaderDebugData, setShowUploaderDebugData] = useState(false);
 
   return (
@@ -403,7 +402,6 @@ function StorefrontApp() {
                 onOrderableSlotsChange={handleOrderableSlotsChange}
                 onCheckoutWithUpload={handleCheckoutWithUpload}
                 imageDebugDataEnabled={showUploaderDebugData}
-                showPaintingSizeHelper={showPaintingSizeHelper}
                 initialRestoredSlots={uploadInitialSlots}
                 onToolsPanelPropsChange={stableSetFooterToolsBarProps}
                 onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
@@ -484,8 +482,6 @@ function StorefrontApp() {
           debugData={imageDebugData}
           showDebugData={showUploaderDebugData}
           onToggleDebugData={() => setShowUploaderDebugData((value) => !value)}
-          showPaintingSizeHelper={showPaintingSizeHelper}
-          onTogglePaintingSizeHelper={() => setShowPaintingSizeHelper((value) => !value)}
         />
       )}
     </div>

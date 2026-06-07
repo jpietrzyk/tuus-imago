@@ -15,6 +15,10 @@ import {
   FooterToolsBar,
   type FooterToolsBarProps,
 } from "@/components/footer-tools-bar";
+import {
+  UploaderSlotSwitcher,
+  type SlotSwitcherBarProps,
+} from "./image-uploader/uploader-slot-switcher";
 
 vi.mock("./image-uploader/split-image-into-thirds", () => ({
   splitImageIntoVerticalThirdFiles: vi.fn(),
@@ -34,6 +38,7 @@ function TestWrapper({
 }: { uploaderRef?: React.RefObject<ImageUploaderHandle | null> } & Omit<React.ComponentProps<typeof ImageUploader>, "ref">) {
   const [toolsBarProps, setToolsBarProps] = useState<FooterToolsBarProps | null>(null);
   const toolsBarPropsJsonRef = useState(() => ({ current: "" }))[0];
+  const [slotSwitcherProps, setSlotSwitcherProps] = useState<SlotSwitcherBarProps | null>(null);
 
   const stableSetToolsBarProps = useCallback(
     (props: FooterToolsBarProps | null) => {
@@ -66,14 +71,25 @@ function TestWrapper({
         ref={uploaderRef}
         {...uploaderProps}
         onToolsPanelPropsChange={stableSetToolsBarProps}
+        onSlotSwitcherPropsChange={setSlotSwitcherProps}
       />
       {toolsBarProps && <FooterToolsBar {...toolsBarProps} />}
+      {slotSwitcherProps && !slotSwitcherProps.hidden && (
+        <UploaderSlotSwitcher {...slotSwitcherProps} />
+      )}
     </>
   );
 }
 
 let mockImageWidth = 1200;
 let mockImageHeight = 800;
+
+function slotDotHasImage(index: number): boolean {
+  const dot = screen.getByTestId(`uploader-slot-dot-${index}`);
+  const innerSpan = dot.querySelector("span");
+  if (!innerSpan) return false;
+  return !innerSpan.className.includes("border-dashed");
+}
 
 describe("ImageUploader", () => {
   beforeEach(() => {
@@ -145,12 +161,8 @@ describe("ImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-        ).toBeTruthy();
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       act(() => {
@@ -162,12 +174,8 @@ describe("ImageUploader", () => {
       }));
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-        ).toBeTruthy();
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
@@ -204,7 +212,7 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [firstFile] } });
       await screen.findByRole("img", { name: "Preview" });
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -217,9 +225,7 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       const splitButton = screen.getByRole("button", {
@@ -456,7 +462,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("shows side slider frames around preview after first image selection", async () => {
+  it("shows slot switcher dots and preview slider after first image selection", async () => {
     render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
@@ -472,21 +478,11 @@ describe("ImageUploader", () => {
       await screen.findByRole("img", { name: "Preview" });
 
       expect(screen.getByTestId("uploader-preview-slider")).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("uploader-preview-strip"),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.getByTestId("uploader-slider-side-left"),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId("uploader-slider-side-right"),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-      ).toBeNull();
-      expect(
-        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-      ).toBeNull();
+      expect(screen.getByTestId("uploader-slot-dots")).toBeInTheDocument();
+      expect(screen.getByTestId("uploader-slot-dot-0")).toBeInTheDocument();
+      expect(screen.getByTestId("uploader-slot-dot-2")).toBeInTheDocument();
+      expect(slotDotHasImage(0)).toBe(false);
+      expect(slotDotHasImage(2)).toBe(false);
     }
   });
 
@@ -514,7 +510,7 @@ describe("ImageUploader", () => {
       mockImageWidth = 900;
       mockImageHeight = 900;
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
       ) as HTMLInputElement | null;
@@ -534,14 +530,10 @@ describe("ImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
-      expect(
-        screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-      ).toBeNull();
+      expect(slotDotHasImage(0)).toBe(false);
     }
   });
 
@@ -569,7 +561,7 @@ describe("ImageUploader", () => {
       mockImageWidth = 1080;
       mockImageHeight = 1920;
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
       ) as HTMLInputElement | null;
@@ -582,21 +574,18 @@ describe("ImageUploader", () => {
         });
       }
 
-      const rightSideSlot = screen.getByTestId("uploader-slider-side-right");
       await waitFor(() => {
-        expect(rightSideSlot.querySelector("img")).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
-      expect(rightSideSlot.querySelector("img")).toHaveAttribute(
-        "src",
-        expect.any(String),
-      );
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
-      const rightFrame = rightSideSlot.querySelector(
-        '[data-testid="uploader-slider-side-right-preview-frame"]',
-      ) as HTMLElement | null;
-      expect(rightFrame).toBeTruthy();
-      expect(rightFrame).toHaveClass("aspect-[2/3]");
+      await waitFor(() => {
+        const previewCanvas = screen.getByTestId(
+          "selected-image-preview-canvas",
+        ) as HTMLCanvasElement;
+        expect(previewCanvas.width).toBeLessThan(previewCanvas.height);
+      });
     }
   });
 
@@ -624,7 +613,7 @@ describe("ImageUploader", () => {
       mockImageWidth = 900;
       mockImageHeight = 900;
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-left"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-0"));
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
       ) as HTMLInputElement | null;
@@ -644,14 +633,10 @@ describe("ImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(0)).toBe(true);
       });
 
-      expect(
-        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-      ).toBeNull();
+      expect(slotDotHasImage(2)).toBe(false);
     }
   });
 
@@ -681,7 +666,7 @@ describe("ImageUploader", () => {
       fireEvent.change(initialInput, { target: { files: [firstFile] } });
       await screen.findByRole("img", { name: "Preview" });
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -694,19 +679,13 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       await waitFor(() => {
-        const leftPreview = screen
-          .getByTestId("uploader-slider-side-left")
-          .querySelector("img");
-
-        expect(leftPreview).toHaveAttribute("src", "blob:first-preview");
+        expect(slotDotHasImage(1)).toBe(true);
       });
 
       expect(createObjectURLSpy).toHaveBeenCalledTimes(2);
@@ -714,7 +693,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("shows non-active selected preview at main size clipped by side slot", async () => {
+  it("persists per-slot proportion when switching between slots", async () => {
     render(<TestWrapper />);
 
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
@@ -739,7 +718,7 @@ describe("ImageUploader", () => {
       fireEvent.pointerDown(dropdownTrigger);
       fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -752,12 +731,10 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const secondImageDropdown = screen.getByTestId(
         "image-proportions-dropdown-trigger",
@@ -769,24 +746,6 @@ describe("ImageUploader", () => {
         expect(screen.getByTestId("selected-image-preview-frame")).toHaveStyle({
           aspectRatio: String(1),
         });
-      });
-
-      await waitFor(() => {
-        const leftFrame = screen.getByTestId(
-          "uploader-slider-side-left-preview-frame",
-        );
-        const leftSlot = screen.getByTestId("uploader-slider-side-left");
-
-        expect(leftFrame).toHaveStyle({ aspectRatio: String(2 / 3) });
-        expect(leftFrame).toHaveClass(
-          "h-full",
-          "w-full",
-          "min-w-0",
-          "max-w-full",
-          "aspect-[2/3]",
-        );
-
-        expect(leftSlot).toHaveClass("overflow-hidden");
       });
     }
   });
@@ -839,7 +798,7 @@ describe("ImageUploader", () => {
       mockImageWidth = 900;
       mockImageHeight = 900;
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -852,9 +811,7 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       const previewCanvas = screen.getByTestId(
@@ -874,9 +831,7 @@ describe("ImageUploader", () => {
       }));
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
@@ -884,7 +839,7 @@ describe("ImageUploader", () => {
         screen.getByTestId("selected-image-preview-placeholder"),
       ).toBeInTheDocument();
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       await waitFor(() => {
         const nextActiveCanvas = screen.getByTestId(
@@ -928,7 +883,7 @@ describe("ImageUploader", () => {
 
       mockImageWidth = 900;
       mockImageHeight = 900;
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       let editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -939,14 +894,12 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       mockImageWidth = 800;
       mockImageHeight = 1100;
-      fireEvent.click(screen.getByTestId("uploader-slider-side-left"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-0"));
 
       editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -957,12 +910,8 @@ describe("ImageUploader", () => {
       }
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-        ).toBeTruthy();
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       act(() => {
@@ -970,12 +919,8 @@ describe("ImageUploader", () => {
       });
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-        ).toBeTruthy();
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
       });
     }
   });
@@ -1010,7 +955,7 @@ describe("ImageUploader", () => {
 
       mockImageWidth = 900;
       mockImageHeight = 900;
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -1022,9 +967,13 @@ describe("ImageUploader", () => {
 
       // Wait for second image to register in right slot
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-1"));
+
+      await waitFor(() => {
+        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
       });
 
       const previewFrame = screen.getByTestId("selected-image-preview-frame");
@@ -1109,7 +1058,7 @@ describe("ImageUploader", () => {
       await screen.findByRole("img", { name: "Preview" });
 
       // Switch to right slot and upload second image
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -1121,11 +1070,7 @@ describe("ImageUploader", () => {
         fireEvent.change(editorInput, { target: { files: [file2] } });
 
         await waitFor(() => {
-          expect(
-            screen
-              .getByTestId("uploader-slider-side-right")
-              .querySelector("img"),
-          ).toBeTruthy();
+          expect(slotDotHasImage(2)).toBe(true);
         });
       }
 
@@ -1178,12 +1123,8 @@ describe("ImageUploader", () => {
 
       // After split, all three slots should be populated with new images
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-        ).toBeTruthy();
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
       });
     }
   });
@@ -1337,12 +1278,8 @@ describe("ImageUploader", () => {
     });
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("uploader-slider-side-left").querySelector("img"),
-      ).toBeTruthy();
-      expect(
-        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-      ).toBeTruthy();
+      expect(slotDotHasImage(0)).toBe(true);
+      expect(slotDotHasImage(2)).toBe(true);
     });
 
     await act(async () => {
@@ -1455,7 +1392,7 @@ describe("ImageUploader", () => {
     fireEvent.click(closeEffectsButton);
 
     // Add a second file to the right slot (no bg removal → no uploadedAsset)
-    fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+    fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
     const editorInput = document.querySelector(
       'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -1467,9 +1404,7 @@ describe("ImageUploader", () => {
     }
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-      ).toBeTruthy();
+      expect(slotDotHasImage(2)).toBe(true);
     });
 
     // Checkout: center slot should reuse cached asset (no upload); right slot is fresh (call 2)
@@ -1801,7 +1736,7 @@ describe("ImageUploader", () => {
         expect(screen.queryByText(tr("uploader.addMoreImagesTitle"))).not.toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByTestId("uploader-slider-side-right"));
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
 
       const editorInput = document.querySelector(
         'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
@@ -1812,9 +1747,7 @@ describe("ImageUploader", () => {
       fireEvent.change(editorInput, { target: { files: [secondFile] } });
 
       await waitFor(() => {
-        expect(
-          screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-        ).toBeTruthy();
+        expect(slotDotHasImage(2)).toBe(true);
       });
 
       await waitFor(() => {

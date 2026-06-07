@@ -481,9 +481,10 @@ describe("App Component Routing", () => {
     }
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("uploader-slider-side-right").querySelector("img"),
-      ).toBeTruthy();
+      const rightDot = screen.getByTestId("uploader-slot-dot-2");
+      const innerSpan = rightDot.querySelector("span");
+      expect(innerSpan).toBeTruthy();
+      expect(innerSpan!.className.includes("border-dashed")).toBe(false);
     });
 
     await user.click(

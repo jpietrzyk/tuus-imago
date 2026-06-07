@@ -1,5 +1,4 @@
 import PaintingPreviewSlot from "./painting-preview-slot";
-import SideSlotPreview from "./side-slot-preview";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
 import type {
   SelectedImageItem,
@@ -24,15 +23,6 @@ interface UploaderPreviewSliderProps {
   uploadProgressLabel?: string;
   uploadingSlotIndex?: number | null;
   isEffectUploading?: boolean;
-  canMovePrevious: boolean;
-  canMoveNext: boolean;
-  leftSlotIndex: number | null;
-  rightSlotIndex: number | null;
-  leftSlotImage: SelectedImageItem | null;
-  leftSlotPreviewUrl?: string | null;
-  rightSlotImage: SelectedImageItem | null;
-  rightSlotPreviewUrl?: string | null;
-  onSelectSlot: (index: number) => void;
   swipeDisabled?: boolean;
   isEditMode?: boolean;
   previewCropAdjust?: CropAdjust;
@@ -46,8 +36,6 @@ interface UploaderPreviewSliderProps {
   }) => void;
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
-  paintingSizeScale?: number;
-  showPaintingSizeHelper?: boolean;
   selectedPaintingSize?: PaintingSizeIndex;
   paintingAspectRatio?: number;
 }
@@ -65,15 +53,6 @@ export default function UploaderPreviewSlider({
   uploadProgressLabel,
   uploadingSlotIndex = null,
   isEffectUploading = false,
-  canMovePrevious,
-  canMoveNext,
-  leftSlotIndex,
-  rightSlotIndex,
-  leftSlotImage,
-  leftSlotPreviewUrl,
-  rightSlotImage,
-  rightSlotPreviewUrl,
-  onSelectSlot,
   swipeDisabled = false,
   isEditMode = false,
   previewCropAdjust,
@@ -83,15 +62,9 @@ export default function UploaderPreviewSlider({
   onMetadataResolved,
   onSelectEmptySlot,
   onClearSlot,
-  paintingSizeScale = 1,
-  showPaintingSizeHelper = false,
   selectedPaintingSize = 2,
   paintingAspectRatio = 1.5,
 }: UploaderPreviewSliderProps) {
-  const effectiveScale = showPaintingSizeHelper
-    ? MAX_PAINTING_SIZE_SCALE
-    : paintingSizeScale;
-
   const previewSlot = (
     <PaintingPreviewSlot
       selectedImage={activeImage}
@@ -122,52 +95,16 @@ export default function UploaderPreviewSlider({
   return (
     <div
       className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
-      style={{ "--painting-size-scale": effectiveScale } as React.CSSProperties}
+      style={{ "--painting-size-scale": MAX_PAINTING_SIZE_SCALE } as React.CSSProperties}
       data-testid="uploader-preview-slider"
     >
-      {showPaintingSizeHelper ? (
-        <PaintingSizeHelperOverlay
-          selectedSize={selectedPaintingSize}
-          paintingAspectRatio={paintingAspectRatio}
-          showBorders
-        >
-          {previewSlot}
-        </PaintingSizeHelperOverlay>
-      ) : (
-        <>
-          <SideSlotPreview
-            position="left"
-            slotIndex={leftSlotIndex}
-            image={leftSlotImage}
-            previewUrl={leftSlotPreviewUrl ?? leftSlotImage?.previewUrl ?? null}
-            useCloudPreview={!!leftSlotImage?.uploadedAsset}
-            isNavigable={canMovePrevious}
-            isUploadOverlayVisible={isUploadOverlayVisible}
-            uploadProgress={uploadProgress}
-            uploadProgressLabel={uploadProgressLabel}
-            uploadingSlotIndex={uploadingSlotIndex}
-            disabled={isEditMode}
-            onSelectSlot={onSelectSlot}
-          />
-
-          {previewSlot}
-
-          <SideSlotPreview
-            position="right"
-            slotIndex={rightSlotIndex}
-            image={rightSlotImage}
-            previewUrl={rightSlotPreviewUrl ?? rightSlotImage?.previewUrl ?? null}
-            useCloudPreview={!!rightSlotImage?.uploadedAsset}
-            isNavigable={canMoveNext}
-            isUploadOverlayVisible={isUploadOverlayVisible}
-            uploadProgress={uploadProgress}
-            uploadProgressLabel={uploadProgressLabel}
-            uploadingSlotIndex={uploadingSlotIndex}
-            disabled={isEditMode}
-            onSelectSlot={onSelectSlot}
-          />
-        </>
-      )}
+      <PaintingSizeHelperOverlay
+        selectedSize={selectedPaintingSize}
+        paintingAspectRatio={paintingAspectRatio}
+        showBorders
+      >
+        {previewSlot}
+      </PaintingSizeHelperOverlay>
     </div>
   );
 }
