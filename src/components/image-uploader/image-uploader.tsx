@@ -1544,7 +1544,7 @@ export const ImageUploader = forwardRef<
 
     const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
     const sizeOptions = getPaintingSizeOptions(shape);
-    const currentSize = sizeOptions[selectedPaintingSize];
+    const currentSize = sizeOptions.find((opt) => opt.key === selectedPaintingSize);
     const currentSizeInfo = sizesDpiInfo?.find(
       (i) => i.sizeIndex === selectedPaintingSize,
     );
@@ -1558,7 +1558,7 @@ export const ImageUploader = forwardRef<
       coveragePercent: coveragePercent ?? {},
       effectiveDpi: dpi,
       dpiQuality,
-      printSizeLabel: `${currentSize.widthCm}×${currentSize.heightCm} cm`,
+      printSizeLabel: currentSize ? `${currentSize.widthCm}×${currentSize.heightCm} cm` : "",
     };
   }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize, sizesDpiInfo]);
 
