@@ -21,11 +21,11 @@ const SQUARE_OPTIONS: PaintingSizeOption[] = [
 ];
 
 const RECTANGULAR_OPTIONS: PaintingSizeOption[] = [
-  { key: 0, label: "60 x 40", widthCm: 60, heightCm: 40 },
   { key: 1, label: "75 x 50", widthCm: 75, heightCm: 50 },
   { key: 2, label: "90 x 60", widthCm: 90, heightCm: 60 },
   { key: 3, label: "120 x 80", widthCm: 120, heightCm: 80 },
   { key: 4, label: "150 x 100", widthCm: 150, heightCm: 100 },
+  { key: 5, label: "180 x 120", widthCm: 180, heightCm: 120 },
 ];
 
 const SIZE_SCALE_MAP: Record<PaintingSizeIndex, number> = {

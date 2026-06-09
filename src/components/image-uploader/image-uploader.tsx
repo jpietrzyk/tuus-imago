@@ -1527,7 +1527,16 @@ export const ImageUploader = forwardRef<
   useEffect(() => {
     if (!sizesDpiInfo) return;
     const currentInfo = sizesDpiInfo.find((info) => info.sizeIndex === selectedPaintingSize);
-    if (currentInfo && !currentInfo.isAvailable) {
+    if (!currentInfo) {
+      const largestAvailable = [...sizesDpiInfo]
+        .filter((info) => info.isAvailable)
+        .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];
+      setSelectedPaintingSize(
+        largestAvailable ? largestAvailable.sizeIndex : DEFAULT_PAINTING_SIZE_INDEX,
+      );
+      return;
+    }
+    if (!currentInfo.isAvailable) {
       const largestAvailable = [...sizesDpiInfo]
         .filter((info) => info.isAvailable)
         .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];

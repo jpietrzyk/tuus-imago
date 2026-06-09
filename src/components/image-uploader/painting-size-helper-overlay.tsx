@@ -28,7 +28,8 @@ export default function PaintingSizeHelperOverlay({
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
       if (width === 0 || height === 0) return;
-      const fitWidth = Math.min(width, height * paintingAspectRatio);
+      const squareSide = Math.min(width, height);
+      const fitWidth = Math.min(squareSide, squareSide * paintingAspectRatio);
       const fitHeight = fitWidth / paintingAspectRatio;
       setFitSize({ width: fitWidth, height: fitHeight });
     };

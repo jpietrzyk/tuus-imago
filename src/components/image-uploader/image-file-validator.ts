@@ -6,7 +6,10 @@ import {
 import { type ImageValidationRules } from "./image-validation-rules";
 import { loadImageDimensions } from "./load-image-dimensions";
 
-const REFERENCE_PRINT_SIZE = getPaintingSizeOptions("rectangular")[DEFAULT_PAINTING_SIZE_INDEX];
+const REFERENCE_PRINT_SIZE =
+  getPaintingSizeOptions("rectangular").find(
+    (option) => option.key === DEFAULT_PAINTING_SIZE_INDEX,
+  ) ?? getPaintingSizeOptions("rectangular")[0];
 
 export interface ImageValidationViolation {
   rule: string;
