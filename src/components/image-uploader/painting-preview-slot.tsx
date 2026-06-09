@@ -3,7 +3,7 @@ import IconAdd from "@/components/icons/icon-add.svg?react";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
-import { type ImageDisplayProportion } from "./image-proportion-calculator";
+import { type ImageDisplayProportion, getFrameAspectRatioClassName } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
 import { useCanvasPanZoom } from "./use-canvas-pan-zoom";
@@ -73,11 +73,7 @@ export default function PaintingPreviewSlot({
     : (selectedImage?.previewEffects ?? null);
   const [isFocusPulseActive, setIsFocusPulseActive] = useState(false);
   const frameAspectRatioClassName =
-    userSelectedProportion === "vertical"
-      ? "aspect-[2/3]"
-      : userSelectedProportion === "horizontal"
-        ? "aspect-[16/9]"
-        : "aspect-square";
+    getFrameAspectRatioClassName(userSelectedProportion);
   const latestRenderConfigRef = usePreviewRenderConfig({
     selectedImageMetadata,
     bestProportion,

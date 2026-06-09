@@ -404,7 +404,7 @@ describe("ImageUploader", () => {
 
       await waitFor(() => {
         expect(previewCanvas.width).toBe(1200);
-        expect(previewCanvas.height).toBe(675);
+        expect(previewCanvas.height).toBe(800);
       });
 
       const dropdownTrigger = screen.getByTestId(
@@ -526,7 +526,7 @@ describe("ImageUploader", () => {
       ) as HTMLCanvasElement;
       await waitFor(() => {
         expect(previewCanvas.width).toBe(1200);
-        expect(previewCanvas.height).toBe(675);
+        expect(previewCanvas.height).toBe(800);
       });
 
       await waitFor(() => {
@@ -629,7 +629,7 @@ describe("ImageUploader", () => {
       ) as HTMLCanvasElement;
       await waitFor(() => {
         expect(previewCanvas.width).toBe(1200);
-        expect(previewCanvas.height).toBe(675);
+        expect(previewCanvas.height).toBe(800);
       });
 
       await waitFor(() => {
@@ -819,7 +819,7 @@ describe("ImageUploader", () => {
       ) as HTMLCanvasElement;
       await waitFor(() => {
         expect(previewCanvas.width).toBe(1200);
-        expect(previewCanvas.height).toBe(675);
+        expect(previewCanvas.height).toBe(800);
       });
 
       act(() => {
@@ -878,7 +878,7 @@ describe("ImageUploader", () => {
       ) as HTMLCanvasElement;
       await waitFor(() => {
         expect(previewCanvas.width).toBe(1200);
-        expect(previewCanvas.height).toBe(675);
+        expect(previewCanvas.height).toBe(800);
       });
 
       mockImageWidth = 900;
@@ -950,7 +950,7 @@ describe("ImageUploader", () => {
       ) as HTMLCanvasElement;
       await waitFor(() => {
         expect(previewCanvas.width).toBe(1200);
-        expect(previewCanvas.height).toBe(675);
+        expect(previewCanvas.height).toBe(800);
       });
 
       mockImageWidth = 900;

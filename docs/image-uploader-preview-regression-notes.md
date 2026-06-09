@@ -29,7 +29,7 @@ If either layer drifted:
 Main preview slot and side slots now enforce deterministic aspect classes:
 
 - vertical -> `aspect-[2/3]`
-- horizontal -> `aspect-[16/9]`
+- horizontal -> `aspect-[3/2]`
 - square/rectangle -> `aspect-square`
 
 This keeps frame geometry stable across breakpoints.
@@ -50,7 +50,7 @@ Result: even if the measured box is temporarily mismatched, image is not deforme
 
 - `src/components/image-uploader/painting-preview-slot.test.tsx`
   - Asserts vertical frame includes `aspect-[2/3]`.
-  - Asserts horizontal frame includes `aspect-[16/9]`.
+  - Asserts horizontal frame includes `aspect-[3/2]`.
   - Asserts square frame includes `aspect-square`.
 
 ### Canvas anti-stretch tests

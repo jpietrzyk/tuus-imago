@@ -58,7 +58,7 @@ const createProps = () => ({
   selectedImageMetadata: metadata,
   bestProportion: "horizontal" as ImageDisplayProportion,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
-  previewFrameAspectRatio: 16 / 9,
+  previewFrameAspectRatio: 3 / 2,
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
   onMetadataResolved: vi.fn(),

@@ -1594,12 +1594,10 @@ export const ImageUploader = forwardRef<
     [],
   );
 
-  const paintingAspectRatio = useMemo(() => {
-    const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
-    const options = getPaintingSizeOptions(shape);
-    const baseRatio = options[0].widthCm / options[0].heightCm;
-    return displayImageProportion === "vertical" ? 1 / baseRatio : baseRatio;
-  }, [displayImageProportion]);
+  const paintingAspectRatio = useMemo(
+    () => getTargetAspectRatio(displayImageProportion),
+    [displayImageProportion],
+  );
 
   const enterEffectsEditMode = useCallback(() => {
     setEffectsEditMode("settings");
