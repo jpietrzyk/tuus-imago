@@ -4,6 +4,7 @@ import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
 import {
   type ImageDisplayProportion,
+  getFrameAspectRatioClassName,
   getTargetAspectRatio,
 } from "./image-proportion-calculator";
 import { resolveSlotFramePreset } from "./slot-frame-presets";
@@ -45,11 +46,7 @@ export default function SideSlotPreview({
   const sideFrameAspectRatio = getTargetAspectRatio(sideProportion);
   const slotFramePreset = resolveSlotFramePreset(sideProportion);
   const slotAspectRatioClassName =
-    sideProportion === "vertical"
-      ? "aspect-[2/3]"
-      : sideProportion === "horizontal"
-        ? "aspect-[16/9]"
-        : "aspect-square";
+    getFrameAspectRatioClassName(sideProportion);
 
   // Build CSS filter for preview effects
   const getEffectFilter = () => {

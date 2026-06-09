@@ -32,7 +32,7 @@ const createProps = () => ({
   selectedImageMetadata: null as SelectedImageMetadata | null,
   bestProportion: null as ImageDisplayProportion | null,
   userSelectedProportion: "horizontal" as ImageDisplayProportion,
-  previewFrameAspectRatio: 16 / 9,
+  previewFrameAspectRatio: 3 / 2,
   onTouchStart: vi.fn(),
   onTouchEnd: vi.fn(),
   onMetadataResolved: vi.fn(),
@@ -261,7 +261,7 @@ describe("PaintingPreviewSlot", () => {
   it.each([
     {
       proportion: "horizontal" as ImageDisplayProportion,
-      aspectClass: "aspect-[16/9]",
+      aspectClass: "aspect-[3/2]",
     },
     {
       proportion: "square" as ImageDisplayProportion,

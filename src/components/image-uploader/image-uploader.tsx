@@ -1527,7 +1527,16 @@ export const ImageUploader = forwardRef<
   useEffect(() => {
     if (!sizesDpiInfo) return;
     const currentInfo = sizesDpiInfo.find((info) => info.sizeIndex === selectedPaintingSize);
-    if (currentInfo && !currentInfo.isAvailable) {
+    if (!currentInfo) {
+      const largestAvailable = [...sizesDpiInfo]
+        .filter((info) => info.isAvailable)
+        .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];
+      setSelectedPaintingSize(
+        largestAvailable ? largestAvailable.sizeIndex : DEFAULT_PAINTING_SIZE_INDEX,
+      );
+      return;
+    }
+    if (!currentInfo.isAvailable) {
       const largestAvailable = [...sizesDpiInfo]
         .filter((info) => info.isAvailable)
         .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];
@@ -1594,12 +1603,10 @@ export const ImageUploader = forwardRef<
     [],
   );
 
-  const paintingAspectRatio = useMemo(() => {
-    const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
-    const options = getPaintingSizeOptions(shape);
-    const baseRatio = options[0].widthCm / options[0].heightCm;
-    return displayImageProportion === "vertical" ? 1 / baseRatio : baseRatio;
-  }, [displayImageProportion]);
+  const paintingAspectRatio = useMemo(
+    () => getTargetAspectRatio(displayImageProportion),
+    [displayImageProportion],
+  );
 
   const enterEffectsEditMode = useCallback(() => {
     setEffectsEditMode("settings");

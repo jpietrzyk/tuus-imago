@@ -12,7 +12,7 @@ const meta: Meta<typeof FooterToolsBar> = {
     },
     selectedPaintingSize: {
       control: "select",
-      options: [0, 1, 2, 3, 4],
+      options: [0, 1, 2, 3, 4, 5],
     },
     paintingShape: {
       control: "select",
@@ -58,11 +58,11 @@ export const Default: Story = {}
 export const WithDpiAvailability: Story = {
   args: {
     sizesDpiInfo: [
-      { sizeIndex: 0, dpi: 320, quality: "excellent", isAvailable: true },
-      { sizeIndex: 1, dpi: 200, quality: "good", isAvailable: true },
-      { sizeIndex: 2, dpi: 100, quality: "acceptable", isAvailable: true },
-      { sizeIndex: 3, dpi: 55, quality: "low", isAvailable: false },
-      { sizeIndex: 4, dpi: 30, quality: "low", isAvailable: false },
+      { sizeIndex: 1, dpi: 320, quality: "excellent", isAvailable: true },
+      { sizeIndex: 2, dpi: 200, quality: "good", isAvailable: true },
+      { sizeIndex: 3, dpi: 100, quality: "acceptable", isAvailable: true },
+      { sizeIndex: 4, dpi: 55, quality: "low", isAvailable: false },
+      { sizeIndex: 5, dpi: 30, quality: "low", isAvailable: false },
     ] as SizeDpiInfo[],
   },
 }
@@ -70,11 +70,11 @@ export const WithDpiAvailability: Story = {
 export const AllSizesExcellent: Story = {
   args: {
     sizesDpiInfo: [
-      { sizeIndex: 0, dpi: 960, quality: "excellent", isAvailable: true },
-      { sizeIndex: 1, dpi: 640, quality: "excellent", isAvailable: true },
-      { sizeIndex: 2, dpi: 480, quality: "excellent", isAvailable: true },
-      { sizeIndex: 3, dpi: 360, quality: "excellent", isAvailable: true },
-      { sizeIndex: 4, dpi: 300, quality: "excellent", isAvailable: true },
+      { sizeIndex: 1, dpi: 960, quality: "excellent", isAvailable: true },
+      { sizeIndex: 2, dpi: 640, quality: "excellent", isAvailable: true },
+      { sizeIndex: 3, dpi: 480, quality: "excellent", isAvailable: true },
+      { sizeIndex: 4, dpi: 360, quality: "excellent", isAvailable: true },
+      { sizeIndex: 5, dpi: 300, quality: "excellent", isAvailable: true },
     ] as SizeDpiInfo[],
   },
 }

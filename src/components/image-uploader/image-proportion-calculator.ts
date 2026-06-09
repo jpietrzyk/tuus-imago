@@ -1,3 +1,5 @@
+import { getPaintingSizeOptions } from "./painting-size";
+
 export type ImageDisplayProportion =
   | "horizontal"
   | "vertical"
@@ -38,18 +40,37 @@ export const formatAspectRatio = (width: number, height: number): string => {
   return `${width / divisor}:${height / divisor}`;
 };
 
+const [rectangularBaseSize] = getPaintingSizeOptions("rectangular");
+const RECTANGULAR_ASPECT_RATIO =
+  rectangularBaseSize.widthCm / rectangularBaseSize.heightCm;
+
 export const getTargetAspectRatio = (
   proportion: ImageDisplayProportion,
 ): number => {
   switch (proportion) {
     case "vertical":
-      return 2 / 3;
+      return 1 / RECTANGULAR_ASPECT_RATIO;
     case "square":
     case "rectangle":
       return 1;
     case "horizontal":
     default:
-      return 16 / 9;
+      return RECTANGULAR_ASPECT_RATIO;
+  }
+};
+
+export const getFrameAspectRatioClassName = (
+  proportion: ImageDisplayProportion,
+): string => {
+  switch (proportion) {
+    case "vertical":
+      return "aspect-[2/3]";
+    case "horizontal":
+      return "aspect-[3/2]";
+    case "square":
+    case "rectangle":
+    default:
+      return "aspect-square";
   }
 };
 

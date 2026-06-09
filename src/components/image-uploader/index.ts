@@ -22,6 +22,7 @@ export {
   calculateAllProportions,
   calculateMaxCenteredCrop,
   formatAspectRatio,
+  getFrameAspectRatioClassName,
   getOptimalDisplayProportion,
   getTargetAspectRatio,
 } from "./image-proportion-calculator";
