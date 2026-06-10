@@ -20,14 +20,24 @@ function Slider({
   step = 1,
   disabled = false,
 }: SliderProps) {
+  // Track the last value reported via onChange to avoid state-update →
+  // effect → state-update double-render cycle.  The display uses
+  // `internalValue` for responsiveness; it is synced from the controlled
+  // `value` prop only when the prop diverges from what the user last
+  // dragged to.
   const [internalValue, setInternalValue] = React.useState(value);
+  const lastReportedRef = React.useRef(value);
 
-  React.useEffect(() => {
+  // Sync from controlled prop only when the external value differs from
+  // what we last reported — avoids the useEffect double-render.
+  if (value !== lastReportedRef.current) {
+    lastReportedRef.current = value;
     setInternalValue(value);
-  }, [value]);
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value);
+    lastReportedRef.current = newValue;
     setInternalValue(newValue);
     onChange?.(newValue);
   };

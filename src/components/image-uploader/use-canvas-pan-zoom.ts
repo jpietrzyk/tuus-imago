@@ -28,8 +28,27 @@ export function useCanvasPanZoom({
   const lastPinchDistRef = useRef<number | null>(null);
   const panAtDragStartRef = useRef({ panX, panY });
 
+  // Keep latest values in refs so event handlers never go stale
+  // without requiring effect re-registration.
+  const zoomRef = useRef(zoom);
+  const panXRef = useRef(panX);
+  const panYRef = useRef(panY);
+  const onZoomChangeRef = useRef(onZoomChange);
+  const onPanChangeRef = useRef(onPanChange);
+
+  zoomRef.current = zoom;
+  panXRef.current = panX;
+  panYRef.current = panY;
+  onZoomChangeRef.current = onZoomChange;
+  onPanChangeRef.current = onPanChange;
+
+  // Only update panAtDragStartRef when NOT actively dragging.
+  // During drag, this ref must stay fixed at the drag-start values
+  // so the position calculation (startPan + accumulatedDelta) stays correct.
   useEffect(() => {
-    panAtDragStartRef.current = { panX, panY };
+    if (!isDraggingRef.current) {
+      panAtDragStartRef.current = { panX, panY };
+    }
   }, [panX, panY]);
 
   const clampPan = useCallback(
@@ -45,6 +64,12 @@ export function useCanvasPanZoom({
     [],
   );
 
+  const clampPanRef = useRef(clampPan);
+  clampPanRef.current = clampPan;
+
+  // Main effect only depends on canvasRef and isEditMode.
+  // All dynamic values are read from refs inside handlers,
+  // so event listeners are NEVER torn down during drag.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !isEditMode) {
@@ -56,7 +81,7 @@ export function useCanvasPanZoom({
       e.preventDefault();
       isDraggingRef.current = true;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
-      panAtDragStartRef.current = { panX, panY };
+      panAtDragStartRef.current = { panX: panXRef.current, panY: panYRef.current };
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -74,8 +99,8 @@ export function useCanvasPanZoom({
       const newPanX = panAtDragStartRef.current.panX + panDeltaX;
       const newPanY = panAtDragStartRef.current.panY + panDeltaY;
 
-      const clamped = clampPan(newPanX, newPanY, zoom);
-      onPanChange(clamped.panX, clamped.panY);
+      const clamped = clampPanRef.current(newPanX, newPanY, zoomRef.current);
+      onPanChangeRef.current(clamped.panX, clamped.panY);
     };
 
     const handleMouseUp = () => {
@@ -85,12 +110,13 @@ export function useCanvasPanZoom({
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      const currentZoom = zoomRef.current;
       const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
-      if (newZoom !== zoom) {
-        onZoomChange(newZoom);
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
+      if (newZoom !== currentZoom) {
+        onZoomChangeRef.current(newZoom);
         if (newZoom <= 1) {
-          onPanChange(0, 0);
+          onPanChangeRef.current(0, 0);
         }
       }
     };
@@ -104,7 +130,7 @@ export function useCanvasPanZoom({
           x: e.touches[0].clientX,
           y: e.touches[0].clientY,
         };
-        panAtDragStartRef.current = { panX, panY };
+        panAtDragStartRef.current = { panX: panXRef.current, panY: panYRef.current };
       } else if (e.touches.length === 2) {
         isDraggingRef.current = false;
         lastPointerRef.current = null;
@@ -130,8 +156,8 @@ export function useCanvasPanZoom({
         const newPanX = panAtDragStartRef.current.panX + panDeltaX;
         const newPanY = panAtDragStartRef.current.panY + panDeltaY;
 
-        const clamped = clampPan(newPanX, newPanY, zoom);
-        onPanChange(clamped.panX, clamped.panY);
+        const clamped = clampPanRef.current(newPanX, newPanY, zoomRef.current);
+        onPanChangeRef.current(clamped.panX, clamped.panY);
       } else if (e.touches.length === 2 && lastPinchDistRef.current !== null) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -139,11 +165,12 @@ export function useCanvasPanZoom({
         const delta = (dist - lastPinchDistRef.current) * 0.01;
         lastPinchDistRef.current = dist;
 
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom + delta));
-        if (newZoom !== zoom) {
-          onZoomChange(newZoom);
+        const currentZoom = zoomRef.current;
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
+        if (newZoom !== currentZoom) {
+          onZoomChangeRef.current(newZoom);
           if (newZoom <= 1) {
-            onPanChange(0, 0);
+            onPanChangeRef.current(0, 0);
           }
         }
       }
@@ -161,7 +188,7 @@ export function useCanvasPanZoom({
           x: e.touches[0].clientX,
           y: e.touches[0].clientY,
         };
-        panAtDragStartRef.current = { panX, panY };
+        panAtDragStartRef.current = { panX: panXRef.current, panY: panYRef.current };
       }
     };
 
@@ -185,11 +212,5 @@ export function useCanvasPanZoom({
   }, [
     canvasRef,
     isEditMode,
-    zoom,
-    panX,
-    panY,
-    onZoomChange,
-    onPanChange,
-    clampPan,
   ]);
 }

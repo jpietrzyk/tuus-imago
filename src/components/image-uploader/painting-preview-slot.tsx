@@ -82,28 +82,40 @@ export default function PaintingPreviewSlot({
     previewCropAdjust,
   });
 
+  // Use refs for values read inside callbacks so the callbacks remain
+  // stable across re-renders.  This prevents useCanvasPanZoom from
+  // re-registering its event listeners on every crop adjust change.
+  const previewCropAdjustRef = useRef(previewCropAdjust);
+  previewCropAdjustRef.current = previewCropAdjust;
+  const onCropAdjustChangeRef = useRef(onCropAdjustChange);
+  onCropAdjustChangeRef.current = onCropAdjustChange;
+
   const handleZoomChange = useCallback(
     (newZoom: number) => {
-      if (!onCropAdjustChange) return;
-      onCropAdjustChange({
+      const adjust = previewCropAdjustRef.current;
+      const onChange = onCropAdjustChangeRef.current;
+      if (!onChange) return;
+      onChange({
         zoom: newZoom,
-        panX: previewCropAdjust?.panX ?? 0,
-        panY: previewCropAdjust?.panY ?? 0,
+        panX: adjust?.panX ?? 0,
+        panY: adjust?.panY ?? 0,
       });
     },
-    [onCropAdjustChange, previewCropAdjust],
+    [],
   );
 
   const handlePanChange = useCallback(
     (newPanX: number, newPanY: number) => {
-      if (!onCropAdjustChange) return;
-      onCropAdjustChange({
-        zoom: previewCropAdjust?.zoom ?? 1,
+      const adjust = previewCropAdjustRef.current;
+      const onChange = onCropAdjustChangeRef.current;
+      if (!onChange) return;
+      onChange({
+        zoom: adjust?.zoom ?? 1,
         panX: newPanX,
         panY: newPanY,
       });
     },
-    [onCropAdjustChange, previewCropAdjust],
+    [],
   );
 
   useCanvasPanZoom({
