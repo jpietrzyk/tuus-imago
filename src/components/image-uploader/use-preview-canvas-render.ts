@@ -26,6 +26,12 @@ interface UsePreviewCanvasRenderArgs {
     previewEffects: { brightness: number; contrast: number } | null;
     previewCropAdjust?: CropAdjust;
   }>;
+  /**
+   * External ref that will be populated with a function for immediate
+   * (non-React) canvas redraws.  Created by the parent so both this hook
+   * and useCanvasPanZoom can share it regardless of hook call order.
+   */
+  requestDrawRef: React.MutableRefObject<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>;
   onMetadataResolved: (args: {
     metadata: SelectedImageMetadata;
     nextDisplayImageProportion: ImageDisplayProportion;
@@ -44,6 +50,7 @@ export const usePreviewCanvasRender = ({
   previewCropAdjust,
   latestRenderConfigRef,
   onMetadataResolved,
+  requestDrawRef,
 }: UsePreviewCanvasRenderArgs) => {
   const imageCacheRef = useRef<{
     url: string;
@@ -55,7 +62,7 @@ export const usePreviewCanvasRender = ({
   // Stable ref to the current drawPreview function exposed by the main effect.
   // This allows the lightweight crop-redraw effect to trigger a redraw
   // without requiring the main effect to tear down and re-setup.
-  const drawPreviewRef = useRef<(() => void) | null>(null);
+  const drawPreviewRef = useRef<((cropAdjustOverride?: CropAdjust) => void) | null>(null);
 
   // Main effect: handles image loading, canvas setup, and resize handling.
   // Does NOT depend on previewCropAdjust — crop changes are handled by the
@@ -87,7 +94,7 @@ export const usePreviewCanvasRender = ({
       }
     };
 
-    const drawPreview = () => {
+    const drawPreview = (cropAdjustOverride?: CropAdjust) => {
       if (!isActive || !loadedImage || sourceWidth <= 0 || sourceHeight <= 0) {
         return;
       }
@@ -120,12 +127,16 @@ export const usePreviewCanvasRender = ({
         shouldAutoSelectOptimalProportion,
       });
 
-      const crop = previewCropAdjust
+      // Use the override when provided (e.g. during wheel zoom for immediate
+      // visual feedback), otherwise fall back to the React-committed value.
+      const cropAdjust = cropAdjustOverride ?? previewCropAdjust;
+
+      const crop = cropAdjust
         ? adjustCropForZoomPan(
             baseCrop,
-            previewCropAdjust.zoom,
-            previewCropAdjust.panX,
-            previewCropAdjust.panY,
+            cropAdjust.zoom,
+            cropAdjust.panX,
+            cropAdjust.panY,
           )
         : baseCrop;
 
@@ -146,6 +157,11 @@ export const usePreviewCanvasRender = ({
 
     // Expose drawPreview so the crop-redraw effect can call it.
     drawPreviewRef.current = drawPreview;
+
+    // Expose a stable requestDraw function for immediate (non-React) draws.
+    requestDrawRef.current = (cropAdjust: CropAdjust) => {
+      drawPreview(cropAdjust);
+    };
 
     const scheduleResizeDraw = () => {
       if (!isActive || !loadedImage) {
@@ -214,6 +230,7 @@ export const usePreviewCanvasRender = ({
     return () => {
       isActive = false;
       drawPreviewRef.current = null;
+      requestDrawRef.current = () => {};
 
       if (resizeFrameId !== null) {
         window.cancelAnimationFrame(resizeFrameId);

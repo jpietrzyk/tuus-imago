@@ -90,6 +90,11 @@ export default function PaintingPreviewSlot({
   const onCropAdjustChangeRef = useRef(onCropAdjustChange);
   onCropAdjustChangeRef.current = onCropAdjustChange;
 
+  // Shared ref for immediate canvas draws during zoom — created here so
+  // both usePreviewCanvasRender and useCanvasPanZoom can reference it
+  // regardless of hook call order.
+  const requestDrawRef = useRef<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>(() => {});
+
   const handleZoomChange = useCallback(
     (newZoom: number) => {
       const adjust = previewCropAdjustRef.current;
@@ -126,6 +131,7 @@ export default function PaintingPreviewSlot({
     panY: previewCropAdjust?.panY ?? 0,
     onZoomChange: handleZoomChange,
     onPanChange: handlePanChange,
+    requestDrawRef,
   });
 
   useEffect(() => {
@@ -184,6 +190,7 @@ export default function PaintingPreviewSlot({
     previewCropAdjust,
     latestRenderConfigRef,
     onMetadataResolved: handleMetadataResolved,
+    requestDrawRef,
   });
 
   return (

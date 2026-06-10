@@ -107,6 +107,16 @@ function createTouchEvent(
   });
 }
 
+function flushAnimationFrames() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        resolve();
+      });
+    });
+  });
+}
+
 describe("useCanvasPanZoom", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -134,7 +144,7 @@ describe("useCanvasPanZoom", () => {
     removeSpy.mockRestore();
   });
 
-  it("calls onZoomChange on mouse wheel scroll up", () => {
+  it("calls onZoomChange on mouse wheel scroll up", async () => {
     const onZoomChange = vi.fn();
     const Host = () => {
       const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -159,12 +169,14 @@ describe("useCanvasPanZoom", () => {
     act(() => {
       canvas.dispatchEvent(wheelEvent);
     });
+    // Zoom is RAF-throttled — flush pending frame
+    await act(() => flushAnimationFrames());
     expect(onZoomChange).toHaveBeenCalledWith(expect.any(Number));
     const newZoom = onZoomChange.mock.calls[0][0];
     expect(newZoom).toBeGreaterThan(1);
   });
 
-  it("calls onZoomChange on mouse wheel scroll down to decrease zoom", () => {
+  it("calls onZoomChange on mouse wheel scroll down to decrease zoom", async () => {
     const onZoomChange = vi.fn();
     const Host = () => {
       const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -189,6 +201,7 @@ describe("useCanvasPanZoom", () => {
     act(() => {
       canvas.dispatchEvent(wheelEvent);
     });
+    await act(() => flushAnimationFrames());
     expect(onZoomChange).toHaveBeenCalledWith(expect.any(Number));
     const newZoom = onZoomChange.mock.calls[0][0];
     expect(newZoom).toBeLessThan(2);
@@ -301,7 +314,7 @@ describe("useCanvasPanZoom", () => {
     expect(onPanChange).toHaveBeenCalled();
   });
 
-  it("calls onZoomChange on pinch gesture", () => {
+  it("calls onZoomChange on pinch gesture", async () => {
     const onZoomChange = vi.fn();
     const Host = () => {
       const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -329,13 +342,14 @@ describe("useCanvasPanZoom", () => {
         createTouchEvent("touchmove", [createTouch(80, 150), createTouch1(320, 150)]),
       );
     });
+    await act(() => flushAnimationFrames());
 
     expect(onZoomChange).toHaveBeenCalled();
     const newZoom = onZoomChange.mock.calls[0][0];
     expect(newZoom).toBeGreaterThan(1);
   });
 
-  it("resets pan when zoom returns to 1 via wheel", () => {
+  it("resets pan when zoom returns to 1 via wheel", async () => {
     const onPanChange = vi.fn();
     const Host = () => {
       const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -356,6 +370,7 @@ describe("useCanvasPanZoom", () => {
     act(() => {
       canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
     });
+    await act(() => flushAnimationFrames());
 
     expect(onPanChange).toHaveBeenCalledWith(0, 0);
   });

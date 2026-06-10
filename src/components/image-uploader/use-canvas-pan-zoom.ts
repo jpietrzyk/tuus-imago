@@ -12,6 +12,8 @@ interface UseCanvasPanZoomParams {
   panY: number;
   onZoomChange: (zoom: number) => void;
   onPanChange: (panX: number, panY: number) => void;
+  /** Ref to a function that triggers an immediate canvas redraw with the given crop adjust. */
+  requestDrawRef?: React.MutableRefObject<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>;
 }
 
 export function useCanvasPanZoom({
@@ -22,6 +24,7 @@ export function useCanvasPanZoom({
   panY,
   onZoomChange,
   onPanChange,
+  requestDrawRef,
 }: UseCanvasPanZoomParams) {
   const isDraggingRef = useRef(false);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
@@ -69,12 +72,38 @@ export function useCanvasPanZoom({
 
   // Main effect only depends on canvasRef and isEditMode.
   // All dynamic values are read from refs inside handlers,
-  // so event listeners are NEVER torn down during drag.
+  // so event listeners are NEVER torn down during drag/zoom.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !isEditMode) {
       return;
     }
+
+    // --- Zoom RAF throttle ---
+    // Accumulate zoom changes between frames. Only commit to React state
+    // once per animation frame. This prevents the full React render cascade
+    // from running on every single wheel tick.
+    let zoomRafId: number | null = null;
+    let pendingZoomCommit: number | null = null;
+
+    const commitZoom = () => {
+      zoomRafId = null;
+      if (pendingZoomCommit !== null) {
+        const zoomToCommit = pendingZoomCommit;
+        pendingZoomCommit = null;
+        onZoomChangeRef.current(zoomToCommit);
+        if (zoomToCommit <= 1) {
+          onPanChangeRef.current(0, 0);
+        }
+      }
+    };
+
+    const scheduleZoomCommit = (newZoom: number) => {
+      pendingZoomCommit = newZoom;
+      if (zoomRafId === null) {
+        zoomRafId = window.requestAnimationFrame(commitZoom);
+      }
+    };
 
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
@@ -114,10 +143,18 @@ export function useCanvasPanZoom({
       const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
       const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
       if (newZoom !== currentZoom) {
-        onZoomChangeRef.current(newZoom);
-        if (newZoom <= 1) {
-          onPanChangeRef.current(0, 0);
+        // Optimistically update the ref so consecutive wheel events in the
+        // same frame accumulate correctly instead of reading a stale value.
+        zoomRef.current = newZoom;
+
+        // Draw the canvas immediately for zero-latency visual feedback.
+        // This bypasses React's render cycle entirely.
+        if (requestDrawRef) {
+          requestDrawRef.current({ zoom: newZoom, panX: panXRef.current, panY: panYRef.current });
         }
+
+        // Throttle React state commit to once per animation frame.
+        scheduleZoomCommit(newZoom);
       }
     };
 
@@ -168,10 +205,13 @@ export function useCanvasPanZoom({
         const currentZoom = zoomRef.current;
         const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
         if (newZoom !== currentZoom) {
-          onZoomChangeRef.current(newZoom);
-          if (newZoom <= 1) {
-            onPanChangeRef.current(0, 0);
+          zoomRef.current = newZoom;
+
+          if (requestDrawRef) {
+            requestDrawRef.current({ zoom: newZoom, panX: panXRef.current, panY: panYRef.current });
           }
+
+          scheduleZoomCommit(newZoom);
         }
       }
     };
@@ -201,6 +241,15 @@ export function useCanvasPanZoom({
     canvas.addEventListener("touchend", handleTouchEnd, { passive: false });
 
     return () => {
+      // Cancel any pending zoom commit
+      if (zoomRafId !== null) {
+        window.cancelAnimationFrame(zoomRafId);
+        // Flush the last pending zoom so it's not lost
+        if (pendingZoomCommit !== null) {
+          onZoomChangeRef.current(pendingZoomCommit);
+        }
+      }
+
       canvas.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
@@ -212,5 +261,6 @@ export function useCanvasPanZoom({
   }, [
     canvasRef,
     isEditMode,
+    requestDrawRef,
   ]);
 }
