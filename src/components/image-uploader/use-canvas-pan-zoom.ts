@@ -39,21 +39,6 @@ export function useCanvasPanZoom({
   const onZoomChangeRef = useRef(onZoomChange);
   const onPanChangeRef = useRef(onPanChange);
 
-  zoomRef.current = zoom;
-  panXRef.current = panX;
-  panYRef.current = panY;
-  onZoomChangeRef.current = onZoomChange;
-  onPanChangeRef.current = onPanChange;
-
-  // Only update panAtDragStartRef when NOT actively dragging.
-  // During drag, this ref must stay fixed at the drag-start values
-  // so the position calculation (startPan + accumulatedDelta) stays correct.
-  useEffect(() => {
-    if (!isDraggingRef.current) {
-      panAtDragStartRef.current = { panX, panY };
-    }
-  }, [panX, panY]);
-
   const clampPan = useCallback(
     (newPanX: number, newPanY: number, currentZoom: number): { panX: number; panY: number } => {
       if (currentZoom <= 1) {
@@ -68,7 +53,26 @@ export function useCanvasPanZoom({
   );
 
   const clampPanRef = useRef(clampPan);
-  clampPanRef.current = clampPan;
+
+  // Sync props → refs inside useEffect to satisfy react-hooks/refs rule.
+  // These run after every render, keeping refs current for event handlers.
+  useEffect(() => {
+    zoomRef.current = zoom;
+    panXRef.current = panX;
+    panYRef.current = panY;
+    onZoomChangeRef.current = onZoomChange;
+    onPanChangeRef.current = onPanChange;
+    clampPanRef.current = clampPan;
+  });
+
+  // Only update panAtDragStartRef when NOT actively dragging.
+  // During drag, this ref must stay fixed at the drag-start values
+  // so the position calculation (startPan + accumulatedDelta) stays correct.
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      panAtDragStartRef.current = { panX, panY };
+    }
+  }, [panX, panY]);
 
   // Main effect only depends on canvasRef and isEditMode.
   // All dynamic values are read from refs inside handlers,

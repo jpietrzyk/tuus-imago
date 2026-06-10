@@ -250,6 +250,7 @@ export const usePreviewCanvasRender = ({
     userSelectedProportion,
     selectedImageMetadata,
     previewEffects,
+    requestDrawRef,
   ]);
 
   // Lightweight effect: redraws the canvas when previewCropAdjust changes.

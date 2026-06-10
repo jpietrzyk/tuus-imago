@@ -86,9 +86,12 @@ export default function PaintingPreviewSlot({
   // stable across re-renders.  This prevents useCanvasPanZoom from
   // re-registering its event listeners on every crop adjust change.
   const previewCropAdjustRef = useRef(previewCropAdjust);
-  previewCropAdjustRef.current = previewCropAdjust;
   const onCropAdjustChangeRef = useRef(onCropAdjustChange);
-  onCropAdjustChangeRef.current = onCropAdjustChange;
+
+  useEffect(() => {
+    previewCropAdjustRef.current = previewCropAdjust;
+    onCropAdjustChangeRef.current = onCropAdjustChange;
+  });
 
   // Shared ref for immediate canvas draws during zoom — created here so
   // both usePreviewCanvasRender and useCanvasPanZoom can reference it
