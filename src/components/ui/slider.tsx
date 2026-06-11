@@ -20,14 +20,25 @@ function Slider({
   step = 1,
   disabled = false,
 }: SliderProps) {
+  // Track the last value reported via onChange so we can skip the
+  // useEffect sync when the external value matches what the user
+  // last dragged to.  This reduces re-renders from 2 per change to 1.
   const [internalValue, setInternalValue] = React.useState(value);
+  const lastReportedRef = React.useRef(value);
 
   React.useEffect(() => {
-    setInternalValue(value);
+    // Only sync from external value when it differs from what the
+    // user last interacted with — avoids the double-render from a
+    // naive useEffect([value]) that fires even after user-driven changes.
+    if (value !== lastReportedRef.current) {
+      lastReportedRef.current = value;
+      setInternalValue(value);
+    }
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value);
+    lastReportedRef.current = newValue;
     setInternalValue(newValue);
     onChange?.(newValue);
   };

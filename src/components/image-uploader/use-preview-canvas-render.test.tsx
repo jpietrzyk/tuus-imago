@@ -42,6 +42,7 @@ function Harness({
   previewCropAdjust,
 }: HarnessProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const requestDrawRef = useRef<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>(() => {});
   const latestRenderConfigRef = useRef<{
     selectedImageMetadata: SelectedImageMetadata | null;
     bestProportion: ImageDisplayProportion | null;
@@ -82,6 +83,7 @@ function Harness({
     onMetadataResolved,
     previewEffects: previewEffects ?? null,
     previewCropAdjust,
+    requestDrawRef,
   });
 
   return <canvas ref={canvasRef} data-testid="canvas" />;
@@ -380,6 +382,7 @@ describe("usePreviewCanvasRender", () => {
       const [storedMetadata, setStoredMetadata] =
         useState<SelectedImageMetadata | null>(null);
       const canvasRef = useRef<HTMLCanvasElement>(null);
+      const requestDrawRef = useRef<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>(() => {});
       const latestRenderConfigRef = useRef({
         selectedImageMetadata: storedMetadata,
         bestProportion: null as ImageDisplayProportion | null,
@@ -416,6 +419,7 @@ describe("usePreviewCanvasRender", () => {
         latestRenderConfigRef,
         onMetadataResolved: handleMetadataResolved,
         previewEffects: null,
+        requestDrawRef,
       });
 
       return <canvas ref={canvasRef} data-testid="canvas" />;

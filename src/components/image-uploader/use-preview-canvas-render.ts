@@ -26,6 +26,12 @@ interface UsePreviewCanvasRenderArgs {
     previewEffects: { brightness: number; contrast: number } | null;
     previewCropAdjust?: CropAdjust;
   }>;
+  /**
+   * External ref that will be populated with a function for immediate
+   * (non-React) canvas redraws.  Created by the parent so both this hook
+   * and useCanvasPanZoom can share it regardless of hook call order.
+   */
+  requestDrawRef: React.MutableRefObject<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>;
   onMetadataResolved: (args: {
     metadata: SelectedImageMetadata;
     nextDisplayImageProportion: ImageDisplayProportion;
@@ -44,6 +50,7 @@ export const usePreviewCanvasRender = ({
   previewCropAdjust,
   latestRenderConfigRef,
   onMetadataResolved,
+  requestDrawRef,
 }: UsePreviewCanvasRenderArgs) => {
   const imageCacheRef = useRef<{
     url: string;
@@ -52,10 +59,19 @@ export const usePreviewCanvasRender = ({
     sourceHeight: number;
   } | null>(null);
 
+  // Stable ref to the current drawPreview function exposed by the main effect.
+  // This allows the lightweight crop-redraw effect to trigger a redraw
+  // without requiring the main effect to tear down and re-setup.
+  const drawPreviewRef = useRef<((cropAdjustOverride?: CropAdjust) => void) | null>(null);
+
+  // Main effect: handles image loading, canvas setup, and resize handling.
+  // Does NOT depend on previewCropAdjust — crop changes are handled by the
+  // lightweight redraw effect below, avoiding expensive teardown on every pan.
   useEffect(() => {
     const canvas = canvasRef.current;
 
     if (!previewUrl || !canvas) {
+      drawPreviewRef.current = null;
       return;
     }
 
@@ -65,7 +81,20 @@ export const usePreviewCanvasRender = ({
     let sourceWidth = 0;
     let sourceHeight = 0;
 
-    const drawPreview = () => {
+    // Cached canvas display dimensions — updated only on resize events to
+    // avoid getBoundingClientRect() forced reflows during zoom/pan.
+    let cachedDisplayWidth = 0;
+    let cachedDisplayHeight = 0;
+
+    const updateCachedDimensions = () => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width >= 32 && rect.height >= 32) {
+        cachedDisplayWidth = Math.max(1, Math.round(rect.width));
+        cachedDisplayHeight = Math.max(1, Math.round(rect.height));
+      }
+    };
+
+    const drawPreview = (cropAdjustOverride?: CropAdjust) => {
       if (!isActive || !loadedImage || sourceWidth <= 0 || sourceHeight <= 0) {
         return;
       }
@@ -98,27 +127,50 @@ export const usePreviewCanvasRender = ({
         shouldAutoSelectOptimalProportion,
       });
 
-      const crop = previewCropAdjust
+      // Use the override when provided (e.g. during wheel zoom for immediate
+      // visual feedback), otherwise fall back to the React-committed value.
+      const cropAdjust = cropAdjustOverride ?? previewCropAdjust;
+
+      const crop = cropAdjust
         ? adjustCropForZoomPan(
             baseCrop,
-            previewCropAdjust.zoom,
-            previewCropAdjust.panX,
-            previewCropAdjust.panY,
+            cropAdjust.zoom,
+            cropAdjust.panX,
+            cropAdjust.panY,
           )
         : baseCrop;
+
+      // Use cached dimensions during zoom/pan to avoid forced reflow.
+      // Only fall back to getBoundingClientRect if we have no cache yet.
+      const cachedDims = cachedDisplayWidth > 0 && cachedDisplayHeight > 0
+        ? { w: cachedDisplayWidth, h: cachedDisplayHeight }
+        : null;
 
       drawCroppedImageToCanvas({
         canvas,
         image: loadedImage,
         crop,
         effects: previewEffects,
+        cachedDimensions: cachedDims,
       });
+    };
+
+    // Expose drawPreview so the crop-redraw effect can call it.
+    drawPreviewRef.current = drawPreview;
+
+    // Expose a stable requestDraw function for immediate (non-React) draws.
+    requestDrawRef.current = (cropAdjust: CropAdjust) => {
+      drawPreview(cropAdjust);
     };
 
     const scheduleResizeDraw = () => {
       if (!isActive || !loadedImage) {
         return;
       }
+
+      // Update cached dimensions on resize so the next draw uses
+      // accurate values without triggering a forced reflow.
+      updateCachedDimensions();
 
       if (resizeFrameId !== null) {
         window.cancelAnimationFrame(resizeFrameId);
@@ -177,6 +229,8 @@ export const usePreviewCanvasRender = ({
 
     return () => {
       isActive = false;
+      drawPreviewRef.current = null;
+      requestDrawRef.current = () => {};
 
       if (resizeFrameId !== null) {
         window.cancelAnimationFrame(resizeFrameId);
@@ -196,6 +250,39 @@ export const usePreviewCanvasRender = ({
     userSelectedProportion,
     selectedImageMetadata,
     previewEffects,
-    previewCropAdjust,
+    requestDrawRef,
   ]);
+
+  // Lightweight effect: redraws the canvas when previewCropAdjust changes.
+  // Uses requestAnimationFrame to batch rapid updates during drag.
+  // This avoids the expensive teardown of the main effect.
+  // Skips the initial mount — the main effect already handles the first draw.
+  const prevCropAdjustRef = useRef(previewCropAdjust);
+  const cropAdjustFirstMountRef = useRef(true);
+
+  useEffect(() => {
+    if (cropAdjustFirstMountRef.current) {
+      cropAdjustFirstMountRef.current = false;
+      prevCropAdjustRef.current = previewCropAdjust;
+      return;
+    }
+
+    // Skip if value hasn't actually changed (object identity check)
+    if (prevCropAdjustRef.current === previewCropAdjust) {
+      return;
+    }
+    prevCropAdjustRef.current = previewCropAdjust;
+
+    if (!drawPreviewRef.current) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      drawPreviewRef.current?.();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [previewCropAdjust]);
 };

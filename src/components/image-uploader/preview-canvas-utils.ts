@@ -32,31 +32,54 @@ export const drawCroppedImageToCanvas = ({
   image,
   crop,
   effects,
+  cachedDimensions,
 }: {
   canvas: HTMLCanvasElement;
   image: HTMLImageElement;
   crop: CropCalculationResult;
   effects?: { brightness: number; contrast: number } | null;
+  /**
+   * Optional cached display dimensions { w, h } to avoid calling
+   * getBoundingClientRect() on every draw.  When provided, the canvas
+   * buffer is only resized when these dimensions differ from the current
+   * buffer size.
+   */
+  cachedDimensions?: { w: number; h: number } | null;
 }): boolean => {
   const context = canvas.getContext("2d");
   if (!context) {
     return false;
   }
 
-  const rect = canvas.getBoundingClientRect();
   const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
-  // Ignore transient tiny measurements that can happen during initial layout/animation.
-  // In those cases, use crop output size for the internal canvas buffer.
-  const hasMeasuredCanvasSize = rect.width >= 32 && rect.height >= 32;
-  const displayWidth = hasMeasuredCanvasSize
-    ? Math.max(1, Math.round(rect.width))
-    : crop.outputWidth;
-  const displayHeight = hasMeasuredCanvasSize
-    ? Math.max(1, Math.round(rect.height))
-    : crop.outputHeight;
 
-  canvas.width = Math.round(displayWidth * dpr);
-  canvas.height = Math.round(displayHeight * dpr);
+  let displayWidth: number;
+  let displayHeight: number;
+
+  if (cachedDimensions) {
+    displayWidth = cachedDimensions.w;
+    displayHeight = cachedDimensions.h;
+  } else {
+    const rect = canvas.getBoundingClientRect();
+    const hasMeasuredCanvasSize = rect.width >= 32 && rect.height >= 32;
+    displayWidth = hasMeasuredCanvasSize
+      ? Math.max(1, Math.round(rect.width))
+      : crop.outputWidth;
+    displayHeight = hasMeasuredCanvasSize
+      ? Math.max(1, Math.round(rect.height))
+      : crop.outputHeight;
+  }
+
+  const bufferWidth = Math.round(displayWidth * dpr);
+  const bufferHeight = Math.round(displayHeight * dpr);
+
+  // Only resize the canvas buffer when dimensions actually changed.
+  // Setting canvas.width/height clears the buffer and resets context
+  // state, which is expensive and causes flicker during zoom/pan.
+  if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+    canvas.width = bufferWidth;
+    canvas.height = bufferHeight;
+  }
 
   if (
     typeof HTMLImageElement !== "undefined" &&
