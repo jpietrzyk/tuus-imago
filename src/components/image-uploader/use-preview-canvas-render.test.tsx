@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import * as previewCanvasUtils from "./preview-canvas-utils";
 import * as previewRenderPlan from "./preview-render-plan";
+import type { PreviewTransform } from "./preview-canvas-utils";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import type { SelectedImageMetadata } from "./image-uploader";
 import type { CropAdjust } from "./use-crop-adjust";
@@ -29,6 +30,7 @@ interface HarnessProps {
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   previewEffects: { brightness: number; contrast: number } | null;
+  previewTransform?: PreviewTransform | null;
   previewCropAdjust?: CropAdjust;
 }
 
@@ -39,6 +41,7 @@ function Harness({
   bestProportion,
   userSelectedProportion,
   previewEffects,
+  previewTransform = null,
   previewCropAdjust,
 }: HarnessProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -48,12 +51,14 @@ function Harness({
     bestProportion: ImageDisplayProportion | null;
     userSelectedProportion: ImageDisplayProportion;
     previewEffects: { brightness: number; contrast: number } | null;
+    previewTransform: PreviewTransform | null;
     previewCropAdjust?: CropAdjust;
   }>({
     selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
     previewEffects: previewEffects ?? null,
+    previewTransform,
     previewCropAdjust,
   });
 
@@ -63,6 +68,7 @@ function Harness({
       bestProportion,
       userSelectedProportion,
       previewEffects: previewEffects ?? null,
+      previewTransform,
       previewCropAdjust,
     };
   }, [
@@ -70,6 +76,7 @@ function Harness({
     selectedImageMetadata,
     userSelectedProportion,
     previewEffects,
+    previewTransform,
     previewCropAdjust,
   ]);
 
@@ -82,6 +89,7 @@ function Harness({
     latestRenderConfigRef,
     onMetadataResolved,
     previewEffects: previewEffects ?? null,
+    previewTransform,
     previewCropAdjust,
     requestDrawRef,
   });
@@ -388,6 +396,7 @@ describe("usePreviewCanvasRender", () => {
         bestProportion: null as ImageDisplayProportion | null,
         userSelectedProportion: "horizontal" as ImageDisplayProportion,
         previewEffects: null as { brightness: number; contrast: number } | null,
+        previewTransform: null as PreviewTransform | null,
       });
 
       useEffect(() => {
@@ -396,6 +405,7 @@ describe("usePreviewCanvasRender", () => {
           bestProportion: null,
           userSelectedProportion: "horizontal",
           previewEffects: null,
+          previewTransform: null,
         };
       }, [storedMetadata]);
 
@@ -419,6 +429,7 @@ describe("usePreviewCanvasRender", () => {
         latestRenderConfigRef,
         onMetadataResolved: handleMetadataResolved,
         previewEffects: null,
+        previewTransform: null,
         requestDrawRef,
       });
 
@@ -774,6 +785,154 @@ describe("usePreviewCanvasRender", () => {
     ).toHaveBeenLastCalledWith(
       expect.objectContaining({
         effects: { brightness: 50, contrast: 20 },
+      }),
+    );
+  });
+
+  it("passes previewTransform to drawCroppedImageToCanvas", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
+      metadata: { width: 1200, height: 800, aspectRatio: "3:2" },
+      nextDisplayImageProportion: "horizontal",
+      shouldAutoSelectOptimalProportion: false,
+      crop: {
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 1200,
+        cropHeight: 675,
+        outputWidth: 1200,
+        outputHeight: 675,
+        sourceArea: 960000,
+        cropArea: 810000,
+        coverageRatio: 0.84375,
+        coveragePercent: 84.38,
+        widthScale: 1,
+        heightScale: 0.84375,
+      },
+    });
+
+    render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={null}
+        bestProportion="horizontal"
+        userSelectedProportion="horizontal"
+        previewEffects={null}
+        previewTransform={{
+          rotation: 180,
+          flipHorizontal: false,
+          flipVertical: false,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalled();
+    });
+
+    expect(
+      vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas),
+    ).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        transform: {
+          rotation: 180,
+          flipHorizontal: false,
+          flipVertical: false,
+        },
+      }),
+    );
+  });
+
+  it("rerenders when previewTransform changes", async () => {
+    const onMetadataResolved = vi.fn();
+    const image = document.createElement("img");
+
+    vi.mocked(previewCanvasUtils.loadImageElement).mockResolvedValue(image);
+    vi.mocked(previewCanvasUtils.resolveImageDimensions).mockReturnValue({
+      sourceWidth: 1200,
+      sourceHeight: 800,
+    });
+    vi.mocked(previewRenderPlan.buildPreviewRenderPlan).mockReturnValue({
+      metadata: { width: 1200, height: 800, aspectRatio: "3:2" },
+      nextDisplayImageProportion: "horizontal",
+      shouldAutoSelectOptimalProportion: false,
+      crop: {
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 1200,
+        cropHeight: 675,
+        outputWidth: 1200,
+        outputHeight: 675,
+        sourceArea: 960000,
+        cropArea: 810000,
+        coverageRatio: 0.84375,
+        coveragePercent: 84.38,
+        widthScale: 1,
+        heightScale: 0.84375,
+      },
+    });
+
+    const { rerender } = render(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={null}
+        bestProportion="horizontal"
+        userSelectedProportion="horizontal"
+        previewEffects={null}
+        previewTransform={{
+          rotation: 90,
+          flipHorizontal: false,
+          flipVertical: false,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        1,
+      );
+    });
+
+    rerender(
+      <Harness
+        previewUrl="blob:preview"
+        onMetadataResolved={onMetadataResolved}
+        selectedImageMetadata={null}
+        bestProportion="horizontal"
+        userSelectedProportion="horizontal"
+        previewEffects={null}
+        previewTransform={{
+          rotation: 180,
+          flipHorizontal: true,
+          flipVertical: false,
+        }}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
+        2,
+      );
+    });
+
+    expect(
+      vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas),
+    ).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        transform: {
+          rotation: 180,
+          flipHorizontal: true,
+          flipVertical: false,
+        },
       }),
     );
   });

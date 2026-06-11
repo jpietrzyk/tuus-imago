@@ -71,6 +71,11 @@ export default function PaintingPreviewSlot({
   const effectivePreviewEffects = useCloudPreview
     ? null
     : (selectedImage?.previewEffects ?? null);
+  // The cloud preview URL already encodes rotation/flip, so the client-side
+  // canvas transform is only applied for local (pre-upload) previews.
+  const effectivePreviewTransform = useCloudPreview
+    ? null
+    : (selectedImage?.previewTransform ?? null);
   const [isFocusPulseActive, setIsFocusPulseActive] = useState(false);
   const frameAspectRatioClassName =
     getFrameAspectRatioClassName(userSelectedProportion);
@@ -79,6 +84,7 @@ export default function PaintingPreviewSlot({
     bestProportion,
     userSelectedProportion,
     previewEffects: effectivePreviewEffects,
+    previewTransform: effectivePreviewTransform,
     previewCropAdjust,
   });
 
@@ -190,6 +196,7 @@ export default function PaintingPreviewSlot({
     bestProportion,
     userSelectedProportion,
     previewEffects: effectivePreviewEffects,
+    previewTransform: effectivePreviewTransform,
     previewCropAdjust,
     latestRenderConfigRef,
     onMetadataResolved: handleMetadataResolved,
