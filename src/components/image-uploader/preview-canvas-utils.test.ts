@@ -36,18 +36,16 @@ describe("preview-canvas-utils", () => {
 
   it("loads image element from preview URL", async () => {
     const mockImage = class {
-      onload: ((ev: Event) => void) | null = null;
-      onerror: ((ev: Event) => void) | null = null;
       naturalWidth = 320;
       naturalHeight = 240;
       width = 320;
       height = 240;
 
-      set src(_value: string) {
-        queueMicrotask(() => {
-          this.onload?.(new Event("load"));
-        });
+      decode() {
+        return Promise.resolve();
       }
+
+      set src(_value: string) {}
     };
 
     vi.stubGlobal("Image", mockImage);

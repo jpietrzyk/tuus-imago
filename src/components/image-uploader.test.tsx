@@ -29,7 +29,10 @@ vi.mock("@/lib/cloudinary-upload", () => ({
 }));
 
 vi.mock("./image-uploader/image-file-validator", () => ({
-  validateImageFile: vi.fn().mockResolvedValue([]),
+  validateImageFile: vi.fn().mockResolvedValue({
+    violations: [],
+    dimensions: null,
+  }),
 }));
 
 function TestWrapper({
@@ -105,6 +108,10 @@ describe("ImageUploader", () => {
         naturalHeight = mockImageHeight;
         width = mockImageWidth;
         height = mockImageHeight;
+
+        decode() {
+          return Promise.resolve();
+        }
 
         set src(_value: string) {
           queueMicrotask(() => {

@@ -8,13 +8,17 @@ interface ImageDimensions {
 export const loadImageElement = (
   previewUrl: string,
 ): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Failed to load image preview"));
-    image.src = previewUrl;
-  });
+  const image = new Image();
+  image.src = previewUrl;
+  // decode() resolves once the image is fully decoded, allowing the browser
+  // to perform the decode off the main thread so the subsequent drawImage()
+  // call does not block the UI (important for large images).
+  return image.decode().then(
+    () => image,
+    () => {
+      throw new Error("Failed to load image preview");
+    },
+  );
 };
 
 export const resolveImageDimensions = (image: HTMLImageElement): ImageDimensions => {

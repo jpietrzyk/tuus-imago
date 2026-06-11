@@ -503,7 +503,7 @@ export const ImageUploader = forwardRef<
   );
 
   const addOrReplaceSelection = useCallback(
-    (file: File, preferredIndex?: number) => {
+    (file: File, preferredIndex?: number, dimensions?: { width: number; height: number }) => {
       const currentImages = selectedImagesRef.current;
       const hasExistingSelection = currentImages.some(Boolean);
       const clickedEmptySlot =
@@ -519,7 +519,19 @@ export const ImageUploader = forwardRef<
         return;
       }
 
-      const nextImage = buildSelectedImageItem(file, true);
+      // When dimensions are already known (e.g. from validation), compute the
+      // optimal proportion up front and skip the separate async image decode
+      // that resolveOptimalProportionForFile would otherwise trigger.
+      const precomputedProportion = dimensions
+        ? getOptimalDisplayProportion(dimensions.width, dimensions.height)
+        : null;
+
+      const nextImage = precomputedProportion
+        ? {
+            ...buildSelectedImageItem(file, false),
+            displayImageProportion: precomputedProportion,
+          }
+        : buildSelectedImageItem(file, true);
 
       setSelectedImages((prevImages) => {
         const nextImages = [...prevImages];
@@ -540,6 +552,10 @@ export const ImageUploader = forwardRef<
 
         return insertionIndex;
       });
+
+      if (precomputedProportion) {
+        return;
+      }
 
       resolveOptimalProportionForFile(nextImage.previewUrl).then((optimalProportion) => {
         setSelectedImages((prevImages) => {
@@ -567,7 +583,10 @@ export const ImageUploader = forwardRef<
 
   const validateAndStoreFile = useCallback(
     async (file: File, preferredIndex?: number) => {
-      const violations = await validateImageFile(file, IMAGE_VALIDATION_RULES);
+      const { violations, dimensions } = await validateImageFile(
+        file,
+        IMAGE_VALIDATION_RULES,
+      );
 
       if (violations.length > 0) {
         onUploadError?.(t(violations[0].messageKey, violations[0].params));
@@ -582,7 +601,7 @@ export const ImageUploader = forwardRef<
         return;
       }
 
-      addOrReplaceSelection(file, preferredIndex);
+      addOrReplaceSelection(file, preferredIndex, dimensions ?? undefined);
     },
     [addOrReplaceSelection, onUploadError, selectedImageCount],
   );

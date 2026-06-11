@@ -20,7 +20,10 @@ export interface ImageValidationViolation {
 export async function validateImageFile(
   file: File,
   rules: ImageValidationRules,
-): Promise<ImageValidationViolation[]> {
+): Promise<{
+  violations: ImageValidationViolation[];
+  dimensions: { width: number; height: number } | null;
+}> {
   const violations: ImageValidationViolation[] = [];
 
   if (!rules.acceptedMimeTypes.includes(file.type as typeof rules.acceptedMimeTypes[number])) {
@@ -29,7 +32,7 @@ export async function validateImageFile(
       messageKey: "upload.validation.invalidType",
       params: {},
     });
-    return violations;
+    return { violations, dimensions: null };
   }
 
   if (file.size > rules.maxFileSizeBytes) {
@@ -38,7 +41,7 @@ export async function validateImageFile(
       messageKey: "upload.validation.maxFileSize",
       params: { maxSizeMB: rules.maxFileSizeBytes / (1024 * 1024) },
     });
-    return violations;
+    return { violations, dimensions: null };
   }
 
   let dimensions: { width: number; height: number };
@@ -50,7 +53,7 @@ export async function validateImageFile(
       messageKey: "upload.validation.invalidImage",
       params: {},
     });
-    return violations;
+    return { violations, dimensions: null };
   }
 
   if (dimensions.width < rules.minWidth) {
@@ -70,7 +73,7 @@ export async function validateImageFile(
   }
 
   if (violations.length > 0) {
-    return violations;
+    return { violations, dimensions };
   }
 
   const { dpi } = calculateEffectiveDpi(
@@ -88,5 +91,5 @@ export async function validateImageFile(
     });
   }
 
-  return violations;
+  return { violations, dimensions };
 }

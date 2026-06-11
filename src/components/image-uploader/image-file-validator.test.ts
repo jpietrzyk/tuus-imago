@@ -22,7 +22,7 @@ describe("validateImageFile", () => {
 
   it("rejects invalid MIME type", async () => {
     const file = new File(["x"], "test.gif", { type: "image/gif" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("invalidType");
@@ -37,7 +37,7 @@ describe("validateImageFile", () => {
       { type: "image/jpeg" },
     );
 
-    const violations = await validateImageFile(file, smallRules);
+    const { violations } = await validateImageFile(file, smallRules);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("maxFileSize");
@@ -51,7 +51,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "narrow.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations.length).toBeGreaterThanOrEqual(1);
     const widthViolation = violations.find((v) => v.rule === "minWidth");
@@ -67,7 +67,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "short.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations.length).toBeGreaterThanOrEqual(1);
     const heightViolation = violations.find((v) => v.rule === "minHeight");
@@ -83,7 +83,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "valid.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(0);
   });
@@ -96,7 +96,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "lowdpi.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, customRules);
+    const { violations } = await validateImageFile(file, customRules);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("minDpi");
@@ -112,7 +112,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "exactdpi.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(0);
   });
@@ -124,7 +124,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "test.webp", { type: "image/webp" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(0);
   });
@@ -133,7 +133,7 @@ describe("validateImageFile", () => {
     mockLoadImageDimensions.mockRejectedValue(new Error("Failed to load image"));
 
     const file = new File(["x"], "broken.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("invalidImage");
@@ -143,7 +143,7 @@ describe("validateImageFile", () => {
     const file = new File(["x"], "data.gif", {
       type: "image/gif",
     });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("invalidType");
@@ -157,7 +157,7 @@ describe("validateImageFile", () => {
       "big.jpg",
       { type: "image/jpeg" },
     );
-    const violations = await validateImageFile(file, smallRules);
+    const { violations } = await validateImageFile(file, smallRules);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("maxFileSize");
@@ -171,7 +171,7 @@ describe("validateImageFile", () => {
     });
 
     const file = new File(["x"], "small.jpg", { type: "image/jpeg" });
-    const violations = await validateImageFile(file, RULES);
+    const { violations } = await validateImageFile(file, RULES);
 
     const hasMinWidth = violations.some((v) => v.rule === "minWidth");
     expect(hasMinWidth).toBe(true);
