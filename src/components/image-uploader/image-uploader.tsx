@@ -957,7 +957,7 @@ export const ImageUploader = forwardRef<
             flipHorizontal: false,
             flipVertical: false,
           }),
-          rotation: degrees,
+          rotation: ((degrees % 360) + 360) % 360,
         },
       }));
     },

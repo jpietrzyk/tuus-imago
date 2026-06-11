@@ -300,4 +300,217 @@ describe("preview-canvas-utils", () => {
       500,
     );
   });
+
+  describe("transform (rotation / flip)", () => {
+    const createTransformContext = () => ({
+      filter: "none",
+      clearRect: vi.fn(),
+      save: vi.fn(),
+      restore: vi.fn(),
+      translate: vi.fn(),
+      rotate: vi.fn(),
+      scale: vi.fn(),
+      drawImage: vi.fn(),
+    });
+
+    const mountCanvas = (
+      context: ReturnType<typeof createTransformContext>,
+      width = 600,
+      height = 400,
+    ) => {
+      const canvas = document.createElement("canvas");
+      vi.spyOn(canvas, "getContext").mockReturnValue(
+        context as unknown as CanvasRenderingContext2D,
+      );
+      vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+        width,
+        height,
+        x: 0,
+        y: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        toJSON: () => ({}),
+      });
+      return canvas;
+    };
+
+    it("applies horizontal flip via context transforms", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop(); // aspect 100/80 = 1.25
+
+      const drawn = drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 0, flipHorizontal: true, flipVertical: false },
+      });
+
+      expect(drawn).toBe(true);
+      // 600x400 canvas, aspect 1.5 > crop aspect 1.25 → drawWidth = 400*1.25 = 500
+      expect(context.translate).toHaveBeenCalledWith(300, 200);
+      expect(context.scale).toHaveBeenCalledWith(-1, 1);
+      expect(context.save).toHaveBeenCalledTimes(1);
+      expect(context.restore).toHaveBeenCalledTimes(1);
+      expect(context.drawImage).toHaveBeenCalledWith(
+        image,
+        crop.cropX,
+        crop.cropY,
+        crop.cropWidth,
+        crop.cropHeight,
+        -250,
+        -200,
+        500,
+        400,
+      );
+    });
+
+    it("applies vertical flip via context transforms", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 0, flipHorizontal: false, flipVertical: true },
+      });
+
+      expect(context.scale).toHaveBeenCalledWith(1, -1);
+    });
+
+    it("rotates 180 degrees", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 180, flipHorizontal: false, flipVertical: false },
+      });
+
+      expect(context.rotate).toHaveBeenCalledWith(Math.PI);
+      expect(context.drawImage).toHaveBeenCalledWith(
+        image,
+        crop.cropX,
+        crop.cropY,
+        crop.cropWidth,
+        crop.cropHeight,
+        -250,
+        -200,
+        500,
+        400,
+      );
+    });
+
+    it("rotates 90 degrees with swapped destination box", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop(); // aspect 1.25 → displayed aspect 0.8 after 90°
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 90, flipHorizontal: false, flipVertical: false },
+      });
+
+      expect(context.rotate).toHaveBeenCalledWith(Math.PI / 2);
+      // drawWidth = 400 * 0.8 = 320; rect dims swapped → 400 x 320
+      expect(context.drawImage).toHaveBeenCalledWith(
+        image,
+        crop.cropX,
+        crop.cropY,
+        crop.cropWidth,
+        crop.cropHeight,
+        -200,
+        -160,
+        400,
+        320,
+      );
+    });
+
+    it("rotates 270 degrees with swapped destination box", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 270, flipHorizontal: false, flipVertical: false },
+      });
+
+      expect(context.rotate).toHaveBeenCalledWith((270 * Math.PI) / 180);
+      expect(context.drawImage).toHaveBeenCalledWith(
+        image,
+        crop.cropX,
+        crop.cropY,
+        crop.cropWidth,
+        crop.cropHeight,
+        -200,
+        -160,
+        400,
+        320,
+      );
+    });
+
+    it("normalizes rotation values beyond a full turn", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 450, flipHorizontal: false, flipVertical: false },
+      });
+
+      // 450° → 90°
+      expect(context.rotate).toHaveBeenCalledWith(Math.PI / 2);
+    });
+
+    it("treats a 360° rotation with no flips as identity (untransformed path)", () => {
+      const context = createTransformContext();
+      const canvas = mountCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        transform: { rotation: 360, flipHorizontal: false, flipVertical: false },
+      });
+
+      expect(context.save).not.toHaveBeenCalled();
+      expect(context.translate).not.toHaveBeenCalled();
+      expect(context.rotate).not.toHaveBeenCalled();
+      // Identity path centers the draw at positive offsets.
+      expect(context.drawImage).toHaveBeenCalledWith(
+        image,
+        crop.cropX,
+        crop.cropY,
+        crop.cropWidth,
+        crop.cropHeight,
+        50,
+        0,
+        500,
+        400,
+      );
+    });
+  });
 });

@@ -27,17 +27,31 @@ export const resolveImageDimensions = (image: HTMLImageElement): ImageDimensions
   };
 };
 
+export interface PreviewTransform {
+  rotation: number;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+}
+
 export const drawCroppedImageToCanvas = ({
   canvas,
   image,
   crop,
   effects,
+  transform,
   cachedDimensions,
 }: {
   canvas: HTMLCanvasElement;
   image: HTMLImageElement;
   crop: CropCalculationResult;
   effects?: { brightness: number; contrast: number } | null;
+  /**
+   * Optional geometric transform (rotation in degrees and/or flips).
+   * Rotation is normalized to the [0, 360) range; only 90/180/270 produce
+   * a visible rotation.  When omitted or identity, the original draw path
+   * (no translate/rotate/scale) is used unchanged.
+   */
+  transform?: PreviewTransform | null;
   /**
    * Optional cached display dimensions { w, h } to avoid calling
    * getBoundingClientRect() on every draw.  When provided, the canvas
@@ -90,26 +104,37 @@ export const drawCroppedImageToCanvas = ({
 
   const dstW = canvas.width;
   const dstH = canvas.height;
+
+  // Normalize rotation and detect whether a transform is actually applied.
+  const normalizedRotation =
+    transform != null ? ((transform.rotation % 360) + 360) % 360 : 0;
+  const hasFlip =
+    !!transform && (transform.flipHorizontal || transform.flipVertical);
+  const isIdentityTransform = normalizedRotation === 0 && !hasFlip;
+  // A 90°/270° rotation swaps the displayed content's width and height.
+  const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
+
   const cropAspectRatio = crop.outputWidth / crop.outputHeight;
+  // Aspect ratio of the content as it appears on screen after rotation.
+  const displayedAspectRatio = isQuarterTurn
+    ? 1 / cropAspectRatio
+    : cropAspectRatio;
   const canvasAspectRatio = dstW / dstH;
 
   let drawWidth = dstW;
   let drawHeight = dstH;
 
-  // Preserve crop proportions inside the measured canvas box to avoid
+  // Preserve content proportions inside the measured canvas box to avoid
   // stretching when layout briefly reports a mismatched aspect ratio.
-  if (canvasAspectRatio > cropAspectRatio) {
-    drawWidth = Math.round(dstH * cropAspectRatio);
-  } else if (canvasAspectRatio < cropAspectRatio) {
-    drawHeight = Math.round(dstW / cropAspectRatio);
+  if (canvasAspectRatio > displayedAspectRatio) {
+    drawWidth = Math.round(dstH * displayedAspectRatio);
+  } else if (canvasAspectRatio < displayedAspectRatio) {
+    drawHeight = Math.round(dstW / displayedAspectRatio);
   }
-
-  const drawX = Math.floor((dstW - drawWidth) / 2);
-  const drawY = Math.floor((dstH - drawHeight) / 2);
 
   // Reset filter to a known state before each draw so stale effects from a
   // previous render don't persist (e.g. after "Reset Effects" is pressed).
-  context.filter = "none";
+  let filter = "none";
 
   // Apply preview effects via canvas filter if present
   if (effects && (effects.brightness !== 0 || effects.contrast !== 0)) {
@@ -121,21 +146,61 @@ export const drawCroppedImageToCanvas = ({
     const clampedBrightness = Math.max(0, Math.min(2, brightnessFactor));
     const clampedContrast = Math.max(0, Math.min(2, contrastFactor));
 
-    context.filter = `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
+    filter = `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
   }
 
   context.clearRect(0, 0, dstW, dstH);
+
+  if (isIdentityTransform) {
+    const drawX = Math.floor((dstW - drawWidth) / 2);
+    const drawY = Math.floor((dstH - drawHeight) / 2);
+    context.filter = filter;
+    context.drawImage(
+      image,
+      crop.cropX,
+      crop.cropY,
+      crop.cropWidth,
+      crop.cropHeight,
+      drawX,
+      drawY,
+      drawWidth,
+      drawHeight,
+    );
+    return true;
+  }
+
+  // Transform path: rotate/flip around the canvas center.
+  // Order matches the Cloudinary transform (rotate, then hflip, then vflip)
+  // so the live preview matches the uploaded/previewed image.
+  context.save();
+  context.translate(dstW / 2, dstH / 2);
+  context.rotate((normalizedRotation * Math.PI) / 180);
+  if (transform?.flipHorizontal) {
+    context.scale(-1, 1);
+  }
+  if (transform?.flipVertical) {
+    context.scale(1, -1);
+  }
+  context.filter = filter;
+
+  // For a 90°/270° rotation the drawn rectangle's axes are swapped, so a
+  // box of (drawHeight × drawWidth) in the rotated frame covers the full
+  // (drawWidth × drawHeight) area on screen after rotation.
+  const rectW = isQuarterTurn ? drawHeight : drawWidth;
+  const rectH = isQuarterTurn ? drawWidth : drawHeight;
+
   context.drawImage(
     image,
     crop.cropX,
     crop.cropY,
     crop.cropWidth,
     crop.cropHeight,
-    drawX,
-    drawY,
-    drawWidth,
-    drawHeight,
+    -rectW / 2,
+    -rectH / 2,
+    rectW,
+    rectH,
   );
+  context.restore();
 
   return true;
 };

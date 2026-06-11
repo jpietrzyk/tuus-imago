@@ -3,12 +3,33 @@ import {
   drawCroppedImageToCanvas,
   loadImageElement,
   resolveImageDimensions,
+  type PreviewTransform,
 } from "./preview-canvas-utils";
 import { buildPreviewRenderPlan } from "./preview-render-plan";
 import { adjustCropForZoomPan } from "./use-crop-adjust";
-import type { ImageDisplayProportion } from "./image-proportion-calculator";
+import {
+  calculateMaxCenteredCrop,
+  type ImageDisplayProportion,
+} from "./image-proportion-calculator";
 import type { SelectedImageMetadata } from "./image-uploader";
 import type { CropAdjust } from "./use-crop-adjust";
+
+/**
+ * For 90°/270° rotations the image's orientation swaps, so the crop that
+ * fills the frame after rotation must be selected against the inverse frame
+ * aspect.  Horizontal ↔ vertical swap; square/rectangle stay the same.
+ */
+const invertDisplayProportion = (
+  proportion: ImageDisplayProportion,
+): ImageDisplayProportion => {
+  if (proportion === "horizontal") {
+    return "vertical";
+  }
+  if (proportion === "vertical") {
+    return "horizontal";
+  }
+  return proportion;
+};
 
 interface UsePreviewCanvasRenderArgs {
   previewUrl: string | null;
@@ -18,12 +39,14 @@ interface UsePreviewCanvasRenderArgs {
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
   previewEffects: { brightness: number; contrast: number } | null;
+  previewTransform: PreviewTransform | null;
   previewCropAdjust?: CropAdjust;
   latestRenderConfigRef: React.MutableRefObject<{
     selectedImageMetadata: SelectedImageMetadata | null;
     bestProportion: ImageDisplayProportion | null;
     userSelectedProportion: ImageDisplayProportion;
     previewEffects: { brightness: number; contrast: number } | null;
+    previewTransform: PreviewTransform | null;
     previewCropAdjust?: CropAdjust;
   }>;
   /**
@@ -47,6 +70,7 @@ export const usePreviewCanvasRender = ({
   bestProportion,
   userSelectedProportion,
   previewEffects,
+  previewTransform,
   previewCropAdjust,
   latestRenderConfigRef,
   onMetadataResolved,
@@ -104,12 +128,13 @@ export const usePreviewCanvasRender = ({
         bestProportion,
         userSelectedProportion,
         previewEffects,
+        previewTransform,
         previewCropAdjust,
       } = latestRenderConfigRef.current;
 
       const {
         metadata,
-        crop: baseCrop,
+        crop: planCrop,
         nextDisplayImageProportion,
         shouldAutoSelectOptimalProportion,
       } = buildPreviewRenderPlan({
@@ -126,6 +151,25 @@ export const usePreviewCanvasRender = ({
         nextDisplayImageProportion,
         shouldAutoSelectOptimalProportion,
       });
+
+      // For 90°/270° rotations the image orientation swaps, so the crop that
+      // fills the frame after rotation must be selected against the inverse
+      // frame aspect (horizontal ↔ vertical).  Metadata and the proportion
+      // decision stay on the original dimensions so the user's chosen frame
+      // proportion is not yanked around by rotating.
+      const normalizedRotation =
+        previewTransform != null
+          ? ((previewTransform.rotation % 360) + 360) % 360
+          : 0;
+      const isQuarterTurn =
+        normalizedRotation === 90 || normalizedRotation === 270;
+      const baseCrop = isQuarterTurn
+        ? calculateMaxCenteredCrop({
+            sourceWidth,
+            sourceHeight,
+            proportion: invertDisplayProportion(nextDisplayImageProportion),
+          })
+        : planCrop;
 
       // Use the override when provided (e.g. during wheel zoom for immediate
       // visual feedback), otherwise fall back to the React-committed value.
@@ -151,6 +195,7 @@ export const usePreviewCanvasRender = ({
         image: loadedImage,
         crop,
         effects: previewEffects,
+        transform: previewTransform,
         cachedDimensions: cachedDims,
       });
     };
@@ -250,6 +295,7 @@ export const usePreviewCanvasRender = ({
     userSelectedProportion,
     selectedImageMetadata,
     previewEffects,
+    previewTransform,
     requestDrawRef,
   ]);
 
