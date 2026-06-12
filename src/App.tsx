@@ -1,8 +1,8 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useState, useCallback, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
-import bgDesktop from "./assets/bg_desktop.png";
-import bgMobile from "./assets/bg_mobile.png";
+import bgDesktop from "./assets/bg_desktop.webp";
+import bgMobile from "./assets/bg_mobile.webp";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
@@ -384,7 +384,6 @@ function StorefrontApp() {
         backgroundRepeat: "no-repeat",
         backgroundPosition: isDesktopSize ? "center" : "center top",
         backgroundSize: isDesktopSize ? "cover" : "120% auto",
-        backgroundAttachment: "fixed",
       }}
     >
       <Header onOpenLegalMenu={openLegalSheet} promotionSlogan={activePromotion?.slogan} />

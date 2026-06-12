@@ -153,6 +153,7 @@ describe("StorefrontApp background image", () => {
     expect(bgStyle).toContain("bg_mobile");
     expect(bgStyle).not.toContain("bg_desktop");
     expect(wrapper.style.backgroundSize).toBe("120%");
+    expect(wrapper.style.backgroundAttachment).toBe("");
   });
 
   it("uses desktop background when viewport is 768px or above", () => {
@@ -175,6 +176,7 @@ describe("StorefrontApp background image", () => {
     expect(bgStyle).toContain("bg_desktop");
     expect(bgStyle).not.toContain("bg_mobile");
     expect(wrapper.style.backgroundSize).toBe("cover");
+    expect(wrapper.style.backgroundAttachment).toBe("");
   });
 
   it("removes matchMedia listener on unmount", () => {
