@@ -9,15 +9,6 @@ import {
 } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -410,7 +401,6 @@ export const ImageUploader = forwardRef<
   const [isZoomPanMode, setIsZoomPanMode] = useState(false);
   const [selectedPaintingSize, setSelectedPaintingSize] =
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
-  const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -1027,17 +1017,6 @@ export const ImageUploader = forwardRef<
     [updateActiveImage],
   );
 
-  const checkShowAddMoreDialog = useCallback(
-    (currentFilledCount: number) => {
-      if (currentFilledCount > 0 && currentFilledCount < MAX_SELECTED_IMAGES) {
-        requestAnimationFrame(() => {
-          setShowAddMoreDialog(true);
-        });
-      }
-    },
-    [],
-  );
-
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
@@ -1048,10 +1027,6 @@ export const ImageUploader = forwardRef<
       if (files && files.length > 0) {
         if (files.length === 1) {
           void validateAndStoreFile(files[0], preferredIndex);
-          const nextCount = selectedImageCount < IMAGE_VALIDATION_RULES.maxSelectedImages
-            ? selectedImageCount + 1
-            : selectedImageCount;
-          checkShowAddMoreDialog(nextCount);
         } else {
           const validFiles: File[] = [];
           for (const file of Array.from(files)) {
@@ -1075,15 +1050,12 @@ export const ImageUploader = forwardRef<
               ...buildSelectedImageItem(file, true),
             };
           }
-
-          const finalCount = currentImages.filter(Boolean).length;
-          checkShowAddMoreDialog(Math.min(finalCount, IMAGE_VALIDATION_RULES.maxSelectedImages));
         }
       }
 
       e.currentTarget.value = "";
     },
-    [validateAndStoreFile, selectedImageCount, checkShowAddMoreDialog, addOrReplaceSelection, buildSelectedImageItem],
+    [validateAndStoreFile, selectedImageCount, addOrReplaceSelection, buildSelectedImageItem],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -1122,27 +1094,10 @@ export const ImageUploader = forwardRef<
             ...buildSelectedImageItem(file, true),
           };
         }
-
-        const finalCount = currentImages.filter(Boolean).length;
-        checkShowAddMoreDialog(Math.min(finalCount, IMAGE_VALIDATION_RULES.maxSelectedImages));
       }
     },
-    [selectedImageCount, checkShowAddMoreDialog, addOrReplaceSelection, buildSelectedImageItem],
+    [selectedImageCount, addOrReplaceSelection, buildSelectedImageItem],
   );
-
-  const handleAddMoreImages = useCallback(() => {
-    setShowAddMoreDialog(false);
-    const currentImages = selectedImagesRef.current;
-    const nextEmptySlotIndex = currentImages.findIndex((image) => image === null);
-    if (nextEmptySlotIndex >= 0) {
-      pendingSelectionSlotRef.current = nextEmptySlotIndex;
-    }
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleDeclineAddMore = useCallback(() => {
-    setShowAddMoreDialog(false);
-  }, []);
 
   const handlePreviewSlotSelect = useCallback(
     (index: number) => {
@@ -1256,7 +1211,6 @@ export const ImageUploader = forwardRef<
   }, []);
 
   const handleCancel = useCallback(() => {
-    setShowAddMoreDialog(false);
     setShowRemoveSlotDialog(false);
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
@@ -1773,27 +1727,6 @@ export const ImageUploader = forwardRef<
     lastExternalResetTriggerRef.current = externalResetTrigger;
   }, [externalResetTrigger, handleCancel]);
 
-  const addMoreDialog = (
-    <Dialog open={showAddMoreDialog} onOpenChange={(open) => { if (!open) handleDeclineAddMore(); }} modal={false}>
-      <DialogContent showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle>{t("uploader.addMoreImagesTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("uploader.addMoreImagesDescription", { count: String(selectedImageCount) })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={handleDeclineAddMore}>
-            {t("uploader.addMoreImagesNo")}
-          </Button>
-          <Button onClick={handleAddMoreImages}>
-            {t("uploader.addMoreImagesYes")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-
   const removeSlotDialog = (
     <AlertDialog open={showRemoveSlotDialog} onOpenChange={(open) => { if (!open) handleCancelRemoveSlot(); }}>
       <AlertDialogContent size="sm">
@@ -1819,7 +1752,6 @@ export const ImageUploader = forwardRef<
   if (selectedImageCount === 0) {
     return (
       <>
-        {addMoreDialog}
         <UploaderDropArea
         showIcons={showIcons}
         className={className}
@@ -1837,7 +1769,6 @@ export const ImageUploader = forwardRef<
 
   return (
     <>
-      {addMoreDialog}
       {removeSlotDialog}
       <Card className="mx-auto flex h-full w-full max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
       <input
