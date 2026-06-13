@@ -172,7 +172,7 @@ export default function UploaderPreviewSlider({
   if (showDesktopTriptych) {
     return (
       <div
-        className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center gap-2 lg:gap-4 bg-transparent overflow-hidden"
+        className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center gap-0.5 lg:gap-1 bg-transparent overflow-hidden"
         style={{ "--painting-size-scale": MAX_PAINTING_SIZE_SCALE } as React.CSSProperties}
         data-testid="uploader-preview-slider"
         data-triptych-layout="desktop"
