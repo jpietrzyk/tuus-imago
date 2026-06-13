@@ -172,4 +172,86 @@ describe("UploaderPreviewSlider", () => {
       "data-has-crop-adjust-callback",
     );
   });
+
+  it("renders single-slot layout when not in desktop triptych mode", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} isDesktopTriptych={false} />);
+
+    expect(screen.getByTestId("uploader-preview-slider")).not.toHaveAttribute(
+      "data-triptych-layout",
+    );
+  });
+
+  it("renders all three slots side-by-side in desktop triptych mode", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    const slider = screen.getByTestId("uploader-preview-slider");
+    expect(slider).toHaveAttribute("data-triptych-layout", "desktop");
+    expect(screen.getByTestId("mock-painting-slot")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("triptych-side-panel-0"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("triptych-side-panel-2"),
+    ).toBeInTheDocument();
+  });
+
+  it("places the active slot at its positional column", () => {
+    const props = { ...createProps(), activeImageIndex: 0 };
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    expect(screen.getByTestId("mock-painting-slot")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("triptych-side-panel-1"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("triptych-side-panel-2"),
+    ).toBeInTheDocument();
+  });
+
+  it("ignores desktop triptych when slots are not provided", () => {
+    const props = createProps();
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        onSelectSlot={vi.fn()}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    expect(screen.getByTestId("uploader-preview-slider")).not.toHaveAttribute(
+      "data-triptych-layout",
+    );
+  });
 });

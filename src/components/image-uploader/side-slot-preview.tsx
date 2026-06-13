@@ -2,6 +2,7 @@ import { useState } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import type { SelectedImageItem } from "./image-uploader";
+import { buildPreviewEffectFilter } from "./preview-effect-filter";
 import {
   type ImageDisplayProportion,
   getFrameAspectRatioClassName,
@@ -47,28 +48,6 @@ export default function SideSlotPreview({
   const slotFramePreset = resolveSlotFramePreset(sideProportion);
   const slotAspectRatioClassName =
     getFrameAspectRatioClassName(sideProportion);
-
-  // Build CSS filter for preview effects
-  const getEffectFilter = () => {
-    if (!image || !image.previewEffects || useCloudPreview) {
-      return undefined;
-    }
-
-    const { brightness, contrast } = image.previewEffects;
-
-    if (brightness === 0 && contrast === 0) {
-      return undefined;
-    }
-
-    const brightnessFactor = 1 + brightness / 100;
-    const contrastFactor = 1 + contrast / 100;
-
-    // Clamp values to reasonable ranges
-    const clampedBrightness = Math.max(0, Math.min(2, brightnessFactor));
-    const clampedContrast = Math.max(0, Math.min(2, contrastFactor));
-
-    return `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
-  };
 
   // Track the last cloud URL that has been loaded by the <img>.
   // Updated via onLoad/onError callbacks.
@@ -150,7 +129,7 @@ export default function SideSlotPreview({
               }
               className="h-full w-full object-cover object-center"
               style={{
-                filter: getEffectFilter(),
+                filter: buildPreviewEffectFilter(image, useCloudPreview),
               }}
               draggable={false}
               onLoad={() => setConfirmedCloudUrl(previewUrl ?? null)}
