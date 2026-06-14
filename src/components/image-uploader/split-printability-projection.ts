@@ -48,3 +48,21 @@ export function projectTriptychPrintability(
     noSizePrintable,
   };
 }
+
+export function resolveTriptychTargetSizeIndex(
+  sourceSizeIndex: PaintingSizeIndex,
+  projection: SplitPrintabilityProjection,
+): PaintingSizeIndex {
+  const available = projection.projectedSizesDpiInfo.filter(
+    (info) => info.isAvailable,
+  );
+  if (available.length === 0) {
+    return sourceSizeIndex;
+  }
+  const largestAvailableIndex = available.reduce(
+    (max, info) => (info.sizeIndex > max ? info.sizeIndex : max),
+    available[0].sizeIndex,
+  );
+  const target = Math.min(sourceSizeIndex, largestAvailableIndex);
+  return target as PaintingSizeIndex;
+}

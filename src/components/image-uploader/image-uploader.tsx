@@ -48,7 +48,10 @@ import {
 } from "./painting-size";
 import { computeSizesDpiAvailability, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
-import { projectTriptychPrintability } from "./split-printability-projection";
+import {
+  projectTriptychPrintability,
+  resolveTriptychTargetSizeIndex,
+} from "./split-printability-projection";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -1264,6 +1267,19 @@ export const ImageUploader = forwardRef<
       return;
     }
 
+    let targetSize = selectedPaintingSize;
+    if (selectedImageMetadata) {
+      const projection = projectTriptychPrintability(
+        selectedImageMetadata.width,
+        selectedImageMetadata.height,
+        selectedPaintingSize,
+      );
+      targetSize = resolveTriptychTargetSizeIndex(
+        selectedPaintingSize,
+        projection,
+      );
+    }
+
     try {
       const splitFiles = await splitImageIntoVerticalThirdFiles({
         previewUrl: activeImage.previewUrl,
@@ -1287,6 +1303,7 @@ export const ImageUploader = forwardRef<
       setActiveImageIndex(CENTER_SLOT_INDEX);
       activeImageIndexRef.current = CENTER_SLOT_INDEX;
       onImageMetadataChange?.(null);
+      setSelectedPaintingSize(targetSize);
       setIsTriptychSplit(true);
     } catch {
       onUploadError?.(t("upload.error"));
@@ -1297,6 +1314,8 @@ export const ImageUploader = forwardRef<
     onImageMetadataChange,
     onUploadError,
     revokePreviewUrls,
+    selectedImageMetadata,
+    selectedPaintingSize,
   ]);
 
   const uploadFilledSlots =

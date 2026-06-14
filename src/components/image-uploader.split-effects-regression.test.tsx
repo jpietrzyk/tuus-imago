@@ -70,6 +70,9 @@ vi.mock("@/components/footer-tools-bar", () => ({
         >
           split
         </button>
+        <span data-testid="selected-painting-size">
+          {props.selectedPaintingSize}
+        </span>
       </div>
     );
   },
@@ -160,6 +163,54 @@ describe("ImageUploader split effects regression", () => {
         upscale: false,
         restore: false,
       });
+    });
+  });
+
+  it("caps the post-split size at the source size instead of upgrading to the largest printable size", async () => {
+    // High-resolution source: even one-third panels remain printable at every
+    // rectangular size, but the chosen (source) size must be preserved.
+    mockLoadImageDimensions.mockResolvedValue({ width: 16000, height: 10000 });
+
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
+      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
+      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+    if (!input) return;
+
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    // Source defaults to size index 2 (90x60).
+    expect(screen.getByTestId("selected-painting-size").textContent).toBe("2");
+
+    fireEvent.click(screen.getByTestId("split-active-image"));
+
+    await waitFor(() => {
+      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
+        previewUrl: expect.stringContaining("blob:"),
+        sourceFile,
+      });
+    });
+
+    // After split the size stays at 2 (source height preserved), never upgraded
+    // to the largest printable size even though larger sizes remain printable.
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-painting-size").textContent).toBe("2");
     });
   });
 });
