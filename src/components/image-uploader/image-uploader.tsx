@@ -50,6 +50,7 @@ import { computeSizesDpiAvailability, type SizeDpiInfo } from "./size-dpi-availa
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 export interface ImageTransformations {
   rotation: number;
@@ -399,6 +400,7 @@ export const ImageUploader = forwardRef<
   const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
   const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">("settings");
   const [isZoomPanMode, setIsZoomPanMode] = useState(false);
+  const [isTriptychSplit, setIsTriptychSplit] = useState(false);
   const [selectedPaintingSize, setSelectedPaintingSize] =
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
@@ -426,6 +428,13 @@ export const ImageUploader = forwardRef<
 
   const selectedImageCount = selectedImages.filter(Boolean).length;
   const shouldShowUploaderDebugData = SHOW_UPLOADER_DEBUG && showDebugData;
+
+  const isLgScreen = useMediaQuery("(min-width: 1024px)");
+  const isDesktopTriptych =
+    isLgScreen &&
+    isTriptychSplit &&
+    selectedImages.length === MAX_SELECTED_IMAGES &&
+    selectedImages.every(Boolean);
 
   const activeImage =
     typeof activeImageIndex === "number"
@@ -534,6 +543,8 @@ export const ImageUploader = forwardRef<
 
         return nextImages;
       });
+
+      setIsTriptychSplit(false);
 
       setActiveImageIndex((currentActiveIndex) => {
         if (hasExistingSelection && clickedEmptySlot) {
@@ -1135,6 +1146,7 @@ export const ImageUploader = forwardRef<
       }
 
       nextImages[index] = null;
+      setIsTriptychSplit(false);
 
       const filledIndexes = nextImages.reduce<number[]>(
         (acc, image, imageIndex) => {
@@ -1221,6 +1233,7 @@ export const ImageUploader = forwardRef<
     });
     setActiveImageIndex(null);
     updateSelectedImageMetadata(null);
+    setIsTriptychSplit(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -1257,6 +1270,7 @@ export const ImageUploader = forwardRef<
       setActiveImageIndex(CENTER_SLOT_INDEX);
       activeImageIndexRef.current = CENTER_SLOT_INDEX;
       onImageMetadataChange?.(null);
+      setIsTriptychSplit(true);
     } catch {
       onUploadError?.(t("upload.error"));
     }
@@ -1663,9 +1677,9 @@ export const ImageUploader = forwardRef<
       slots: selectedImages,
       activeSlotIndex: activeImageIndex,
       onSelectSlot: handlePreviewSlotSelect,
-      hidden: isEffectsEditMode || isZoomPanMode,
+      hidden: isEffectsEditMode || isZoomPanMode || isDesktopTriptych,
     };
-  }, [selectedImageCount, selectedImages, activeImageIndex, handlePreviewSlotSelect, isEffectsEditMode, isZoomPanMode]);
+  }, [selectedImageCount, selectedImages, activeImageIndex, handlePreviewSlotSelect, isEffectsEditMode, isZoomPanMode, isDesktopTriptych]);
 
   useEffect(() => {
     if (!onSlotSwitcherPropsChange) return;
@@ -1824,6 +1838,10 @@ export const ImageUploader = forwardRef<
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
           selectedPaintingSize={selectedPaintingSize}
           paintingAspectRatio={paintingAspectRatio}
+          slots={selectedImages}
+          onSelectSlot={handlePreviewSlotSelect}
+          getSlotPreviewUrl={getTransformedImagePreviewUrl}
+          isDesktopTriptych={isDesktopTriptych}
         />
 
         <UploaderPreviewToolsPanel
