@@ -127,6 +127,8 @@ describe("ImageUploader", () => {
   });
 
   it("splits active image into three slots after confirmation", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
     const sourceFile = new File(["source"], "source.jpg", {
       type: "image/jpeg",
     });
@@ -193,6 +195,8 @@ describe("ImageUploader", () => {
   });
 
   it("asks for confirmation before splitting when other slots are already used", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
     const secondFile = new File(["second"], "second.jpg", {
       type: "image/jpeg",
@@ -259,6 +263,120 @@ describe("ImageUploader", () => {
         expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
           previewUrl: expect.stringContaining("blob:"),
           sourceFile: firstFile,
+        });
+      });
+    }
+  });
+
+  it("disables triptych split when no print size would be available after split", async () => {
+    mockImageWidth = 1200;
+    mockImageHeight = 800;
+
+    const onImageMetadataChange = vi.fn();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+
+    render(<TestWrapper onImageMetadataChange={onImageMetadataChange} />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      await waitFor(() => {
+        expect(onImageMetadataChange).toHaveBeenCalledWith(
+          expect.objectContaining({ width: 1200, height: 800 }),
+        );
+      });
+
+      await waitFor(() => {
+        const button = screen.getByRole("button", {
+          name: tr("uploader.splitSelectedImage"),
+        });
+        expect(button).toBeDisabled();
+      });
+      expect(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSelectedImage"),
+        }),
+      ).toHaveAttribute("title", tr("uploader.triptychUnavailableNoSize"));
+    }
+  });
+
+  it("asks for printability confirmation before splitting a small single image", async () => {
+    mockImageWidth = 7000;
+    mockImageHeight = 1800;
+
+    const onImageMetadataChange = vi.fn();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
+      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
+      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+
+    render(<TestWrapper onImageMetadataChange={onImageMetadataChange} />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      await waitFor(() => {
+        expect(onImageMetadataChange).toHaveBeenCalledWith(
+          expect.objectContaining({ width: 7000, height: 1800 }),
+        );
+      });
+
+      // Wait for the metadata-driven DPI availability to propagate to the size
+      // buttons (same render that flips the split confirmation state).
+      await waitFor(() => {
+        expect(document.getElementById("size-btn-5")).toHaveAttribute(
+          "title",
+          tr("uploader.sizeUnavailable"),
+        );
+      });
+
+      const splitButton = screen.getByRole("button", {
+        name: tr("uploader.splitSelectedImage"),
+      });
+      fireEvent.click(splitButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText(tr("uploader.splitPrintabilityConfirmDescription")),
+        ).toBeInTheDocument();
+      });
+
+      expect(splitImageIntoVerticalThirdFiles).not.toHaveBeenCalled();
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSlotsConfirmAction"),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
+          previewUrl: expect.stringContaining("blob:"),
+          sourceFile,
         });
       });
     }
@@ -1089,6 +1207,8 @@ describe("ImageUploader", () => {
   });
 
   it("splits image and keeps split previews visible", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
     const sourceFile = new File(["source"], "source.jpg", {
       type: "image/jpeg",
     });
@@ -1160,6 +1280,8 @@ describe("ImageUploader", () => {
   });
 
   it("forces fresh uploads after split by invalidating previous uploaded cache", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
     const sourceFile = new File(["source"], "source.jpg", {
       type: "image/jpeg",
       lastModified: 101,

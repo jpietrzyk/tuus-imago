@@ -48,6 +48,7 @@ import {
 } from "./painting-size";
 import { computeSizesDpiAvailability, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
+import { projectTriptychPrintability } from "./split-printability-projection";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
 import { useMediaQuery } from "@/lib/use-media-query";
@@ -117,6 +118,22 @@ const SHOW_UPLOADER_DEBUG = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
 
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
   Array.from({ length: MAX_SELECTED_IMAGES }, () => null);
+
+const resolveSplitConfirmVariant = (
+  hasOverwriteReason: boolean,
+  willSelectedSizeBeBlocked: boolean,
+): FooterToolsBarProps["splitConfirmVariant"] => {
+  if (hasOverwriteReason && willSelectedSizeBeBlocked) {
+    return "both";
+  }
+  if (willSelectedSizeBeBlocked) {
+    return "printability";
+  }
+  if (hasOverwriteReason) {
+    return "overwrite";
+  }
+  return "none";
+};
 
 export interface SelectedImageItem {
   file: File;
@@ -1511,6 +1528,18 @@ export const ImageUploader = forwardRef<
     );
   }, [selectedImageMetadata, paintingShape]);
 
+  const splitPrintability = useMemo(() => {
+    if (!selectedImageMetadata) {
+      return null;
+    }
+
+    return projectTriptychPrintability(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+      selectedPaintingSize,
+    );
+  }, [selectedImageMetadata, selectedPaintingSize]);
+
   useEffect(() => {
     if (!sizesDpiInfo) return;
     const currentInfo = sizesDpiInfo.find((info) => info.sizeIndex === selectedPaintingSize);
@@ -1619,8 +1648,18 @@ export const ImageUploader = forwardRef<
 
     return {
       onSplitImage: () => void handleSplitActiveImage(),
-      canSplitImage: !!activeImage,
-      shouldConfirmSplit: selectedImageCount > 1,
+      canSplitImage:
+        !!activeImage && !(splitPrintability?.noSizePrintable ?? false),
+      shouldConfirmSplit:
+        selectedImageCount > 1 ||
+        (splitPrintability?.willSelectedSizeBeBlocked ?? false),
+      splitConfirmVariant: resolveSplitConfirmVariant(
+        selectedImageCount > 1,
+        splitPrintability?.willSelectedSizeBeBlocked ?? false,
+      ),
+      triptychDisabledReason: splitPrintability?.noSizePrintable
+        ? "noPrintableSize"
+        : undefined,
       onSelectProportion: handleSelectProportion,
       coveragePercent,
       selectedProportion:
@@ -1661,6 +1700,7 @@ export const ImageUploader = forwardRef<
     handleSelectPaintingSize,
     paintingShape,
     sizesDpiInfo,
+    splitPrintability,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);

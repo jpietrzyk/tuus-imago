@@ -43,6 +43,8 @@ export interface FooterToolsBarProps {
   onSplitImage: () => void;
   canSplitImage: boolean;
   shouldConfirmSplit: boolean;
+  splitConfirmVariant: "overwrite" | "printability" | "both" | "none";
+  triptychDisabledReason?: "noPrintableSize";
 
   onReset: () => void;
   canReset: boolean;
@@ -56,6 +58,21 @@ export interface FooterToolsBarProps {
 const TOOLBAR_BUTTON_CLASS =
   "h-12 w-12 sm:h-[3.5rem] sm:w-[3.5rem] rounded shadow-lg border-2 flex-col gap-0.5 p-1";
 const ICON_STYLE: React.CSSProperties = { width: "65%", height: "45%" };
+
+type SplitConfirmVariant = FooterToolsBarProps["splitConfirmVariant"];
+
+const resolveSplitConfirmDescription = (variant: SplitConfirmVariant): string => {
+  switch (variant) {
+    case "printability":
+      return t("uploader.splitPrintabilityConfirmDescription");
+    case "both":
+      return t("uploader.splitBothConfirmDescription");
+    case "overwrite":
+    case "none":
+    default:
+      return t("uploader.splitSlotsConfirmDescription");
+  }
+};
 
 export function FooterToolsBar({
   onSelectProportion,
@@ -73,6 +90,8 @@ export function FooterToolsBar({
   onSplitImage,
   canSplitImage,
   shouldConfirmSplit,
+  splitConfirmVariant,
+  triptychDisabledReason,
   onReset,
   canReset,
   selectedPaintingSize,
@@ -87,6 +106,11 @@ export function FooterToolsBar({
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
+      title={
+        !canSplitImage && triptychDisabledReason === "noPrintableSize"
+          ? t("uploader.triptychUnavailableNoSize")
+          : undefined
+      }
       className={TOOLBAR_BUTTON_CLASS}
     >
       <IconTriptych style={ICON_STYLE} />
@@ -188,7 +212,7 @@ export function FooterToolsBar({
                       {t("uploader.splitSlotsConfirmTitle")}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      {t("uploader.splitSlotsConfirmDescription")}
+                      {resolveSplitConfirmDescription(splitConfirmVariant)}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

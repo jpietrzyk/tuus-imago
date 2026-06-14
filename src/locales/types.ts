@@ -250,6 +250,9 @@ export interface Translations {
     splitSelectedImage: string;
     splitSlotsConfirmTitle: string;
     splitSlotsConfirmDescription: string;
+    splitPrintabilityConfirmDescription: string;
+    splitBothConfirmDescription: string;
+    triptychUnavailableNoSize: string;
     splitSlotsConfirmAction: string;
     resetSlotsConfirmTitle: string;
     resetSlotsConfirmDescription: string;
