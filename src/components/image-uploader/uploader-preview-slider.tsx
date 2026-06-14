@@ -169,16 +169,30 @@ export default function UploaderPreviewSlider({
     slots.length > 0 &&
     typeof onSelectSlot === "function";
 
+  // The triptych packs one size-step tighter than the maximum: the panel box
+  // references the second-largest size so neighboring panels touch at that
+  // border instead of the outermost one.
+  const triptychReferenceScale = getPaintingSizeScale(
+    ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 3],
+  );
+  const selectedScaleRelative =
+    getPaintingSizeScale(selectedPaintingSize) / triptychReferenceScale;
+
   if (showDesktopTriptych) {
     return (
       <div
-        className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center gap-0.5 lg:gap-1 bg-transparent overflow-hidden"
+        className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
         style={{ "--painting-size-scale": MAX_PAINTING_SIZE_SCALE } as React.CSSProperties}
         data-testid="uploader-preview-slider"
         data-triptych-layout="desktop"
       >
         {slots!.map((slot, index) => {
           const isActive = index === activeImageIndex;
+          const panelAspectRatio = isActive
+            ? previewFrameAspectRatio
+            : slot
+              ? getTargetAspectRatio(slot.displayImageProportion)
+              : paintingAspectRatio;
           const content = isActive ? (
             previewSlot
           ) : slot ? (
@@ -189,9 +203,7 @@ export default function UploaderPreviewSlider({
                 getSlotPreviewUrl ? getSlotPreviewUrl(slot) : null
               }
               useCloudPreview={!!slot.uploadedAsset}
-              previewFrameAspectRatio={getTargetAspectRatio(
-                slot.displayImageProportion,
-              )}
+              previewFrameAspectRatio={panelAspectRatio}
               onSelectSlot={onSelectSlot!}
             />
           ) : null;
@@ -199,15 +211,37 @@ export default function UploaderPreviewSlider({
           return (
             <div
               key={index}
-              className="flex h-full min-w-0 flex-1 items-center justify-center"
+              className="relative h-full shrink-0 overflow-hidden"
+              style={{ aspectRatio: String(panelAspectRatio) }}
             >
-              <PaintingSizeHelperOverlay
-                selectedSize={selectedPaintingSize}
-                paintingAspectRatio={paintingAspectRatio}
-                showBorders
+              {ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
+                const scale = getPaintingSizeScale(sizeIdx);
+                const relativeScale = scale / triptychReferenceScale;
+                const isSelected = sizeIdx === selectedPaintingSize;
+
+                return (
+                  <div
+                    key={sizeIdx}
+                    className="pointer-events-none absolute inset-0 m-auto"
+                    style={{
+                      width: `${relativeScale * 100}%`,
+                      height: `${relativeScale * 100}%`,
+                      border: isSelected
+                        ? "2px solid rgba(0, 0, 0, 0.5)"
+                        : "1.5px dashed rgba(0, 0, 0, 0.2)",
+                    }}
+                  />
+                );
+              })}
+              <div
+                className="absolute inset-0 m-auto flex items-center justify-center"
+                style={{
+                  width: `${selectedScaleRelative * 100}%`,
+                  height: `${selectedScaleRelative * 100}%`,
+                }}
               >
                 {content}
-              </PaintingSizeHelperOverlay>
+              </div>
             </div>
           );
         })}
