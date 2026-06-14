@@ -254,4 +254,55 @@ describe("UploaderPreviewSlider", () => {
       "data-triptych-layout",
     );
   });
+
+  it("scales panel content to 100% at the largest size so panels touch", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+        selectedPaintingSize={5}
+      />,
+    );
+
+    const contents = screen.getAllByTestId("triptych-panel-content");
+    for (const content of contents) {
+      expect(content).toHaveStyle({ width: "100%", height: "100%" });
+    }
+  });
+
+  it("scales panel content below 100% for smaller sizes (no overflow)", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+        selectedPaintingSize={2}
+      />,
+    );
+
+    // Index 2 scale (1.0) relative to the largest (2.0) = 50%.
+    const contents = screen.getAllByTestId("triptych-panel-content");
+    for (const content of contents) {
+      expect(content).toHaveStyle({ width: "50%", height: "50%" });
+    }
+  });
 });

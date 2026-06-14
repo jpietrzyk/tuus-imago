@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
@@ -14,6 +14,7 @@ import { getPaintingSizeScale, ALL_PAINTING_SIZE_INDICES, type PaintingSizeIndex
 import type { CropAdjust } from "./use-crop-adjust";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
+const TRIPTYCH_PANEL_COUNT = 3;
 
 interface TriptychSidePanelProps {
   slotIndex: number;
@@ -169,18 +170,49 @@ export default function UploaderPreviewSlider({
     slots.length > 0 &&
     typeof onSelectSlot === "function";
 
-  // The triptych packs one size-step tighter than the maximum: the panel box
-  // references the second-largest size so neighboring panels touch at that
-  // border instead of the outermost one.
-  const triptychReferenceScale = getPaintingSizeScale(
-    ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 3],
-  );
+  // All triptych panels share the same portrait aspect ratio (each slot is a
+  // vertical third of a horizontal source).
+  const triptychAspect = previewFrameAspectRatio;
+  const triptychContainerRef = useRef<HTMLDivElement>(null);
+  const [triptychFit, setTriptychFit] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    if (!showDesktopTriptych) return;
+    const el = triptychContainerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+      // The reference box represents the LARGEST painting size. Three such
+      // portrait panels side-by-side must fit the container in both dimensions;
+      // at the largest size the panels touch each other exactly.
+      const referenceHeight = Math.min(
+        height,
+        width / (TRIPTYCH_PANEL_COUNT * triptychAspect),
+      );
+      setTriptychFit({
+        width: referenceHeight * triptychAspect,
+        height: referenceHeight,
+      });
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [showDesktopTriptych, triptychAspect]);
+
+  // Every size is expressed relative to the largest size so the selected panel
+  // never overflows its reference box (≤ 100%); the largest size fills it.
   const selectedScaleRelative =
-    getPaintingSizeScale(selectedPaintingSize) / triptychReferenceScale;
+    getPaintingSizeScale(selectedPaintingSize) / MAX_PAINTING_SIZE_SCALE;
 
   if (showDesktopTriptych) {
+    const hasFit = triptychFit.width > 0 && triptychFit.height > 0;
     return (
       <div
+        ref={triptychContainerRef}
         className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
         style={{ "--painting-size-scale": MAX_PAINTING_SIZE_SCALE } as React.CSSProperties}
         data-testid="uploader-preview-slider"
@@ -211,12 +243,16 @@ export default function UploaderPreviewSlider({
           return (
             <div
               key={index}
-              className="relative h-full shrink-0 overflow-hidden"
-              style={{ aspectRatio: String(panelAspectRatio) }}
+              className="relative h-full shrink-0"
+              style={
+                hasFit
+                  ? { width: triptychFit.width, height: triptychFit.height }
+                  : { aspectRatio: String(panelAspectRatio) }
+              }
             >
               {ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
                 const scale = getPaintingSizeScale(sizeIdx);
-                const relativeScale = scale / triptychReferenceScale;
+                const relativeScale = scale / MAX_PAINTING_SIZE_SCALE;
                 const isSelected = sizeIdx === selectedPaintingSize;
 
                 return (
@@ -235,6 +271,7 @@ export default function UploaderPreviewSlider({
               })}
               <div
                 className="absolute inset-0 m-auto flex items-center justify-center"
+                data-testid="triptych-panel-content"
                 style={{
                   width: `${selectedScaleRelative * 100}%`,
                   height: `${selectedScaleRelative * 100}%`,

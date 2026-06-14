@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   projectTriptychPrintability,
+  resolveTriptychTargetSizeIndex,
   TRIPTYCH_PROJECTED_SHAPE,
 } from "./split-printability-projection";
 
@@ -37,5 +38,35 @@ describe("projectTriptychPrintability", () => {
 
   it("uses rectangular as the default projected shape", () => {
     expect(TRIPTYCH_PROJECTED_SHAPE).toBe("rectangular");
+  });
+});
+
+describe("resolveTriptychTargetSizeIndex", () => {
+  it("keeps the source size when it is still printable after split", () => {
+    // 15000x10000: center panel 5000x10000, source index 2 (90x60) printable
+    const projection = projectTriptychPrintability(15000, 10000, 2);
+    expect(resolveTriptychTargetSizeIndex(2, projection)).toBe(2);
+  });
+
+  it("steps down to the largest printable size when the source is too large", () => {
+    // 7500x5000: center panel 2500x5000, index 2 (90x60) blocked, index 1 printable
+    const projection = projectTriptychPrintability(7500, 5000, 4);
+    expect(resolveTriptychTargetSizeIndex(4, projection)).toBeLessThan(4);
+    const result = resolveTriptychTargetSizeIndex(4, projection);
+    expect(projection.projectedSizesDpiInfo.find((i) => i.sizeIndex === result)?.isAvailable).toBe(true);
+  });
+
+  it("never upgrades beyond the source size even when larger sizes are printable", () => {
+    // Very high resolution: every rectangular size printable (largestAvailable = 5), but source is 2
+    const projection = projectTriptychPrintability(16000, 10000, 2);
+    const allAvailable = projection.projectedSizesDpiInfo.every((i) => i.isAvailable);
+    expect(allAvailable).toBe(true);
+    expect(resolveTriptychTargetSizeIndex(2, projection)).toBe(2);
+  });
+
+  it("returns the source index unchanged when no size is printable", () => {
+    const projection = projectTriptychPrintability(4500, 3000, 2);
+    expect(projection.noSizePrintable).toBe(true);
+    expect(resolveTriptychTargetSizeIndex(2, projection)).toBe(2);
   });
 });
