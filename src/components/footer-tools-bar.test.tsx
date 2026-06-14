@@ -50,6 +50,7 @@ const createProps = (): FooterToolsBarProps => ({
   onSplitImage: vi.fn(),
   canSplitImage: true,
   shouldConfirmSplit: false,
+  splitConfirmVariant: "none",
   onSelectProportion: vi.fn(),
   selectedProportion: "horizontal",
   isZoomPanMode: false,
@@ -248,7 +249,13 @@ describe("FooterToolsBar", () => {
 
   it("shows split confirmation dialog when shouldConfirmSplit is true", () => {
     const props = createProps();
-    render(<FooterToolsBar {...props} shouldConfirmSplit={true} />);
+    render(
+      <FooterToolsBar
+        {...props}
+        shouldConfirmSplit={true}
+        splitConfirmVariant="overwrite"
+      />,
+    );
 
     const splitButton = screen.getByRole("button", {
       name: t("uploader.splitSelectedImage"),
@@ -258,6 +265,64 @@ describe("FooterToolsBar", () => {
     expect(
       screen.getByText(t("uploader.splitSlotsConfirmTitle")),
     ).toBeInTheDocument();
+  });
+
+  it("shows printability description for printability variant", () => {
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        shouldConfirmSplit={true}
+        splitConfirmVariant="printability"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: t("uploader.splitSelectedImage") }),
+    );
+
+    expect(
+      screen.getByText(t("uploader.splitPrintabilityConfirmDescription")),
+    ).toBeInTheDocument();
+  });
+
+  it("shows combined description for both variant", () => {
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        shouldConfirmSplit={true}
+        splitConfirmVariant="both"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: t("uploader.splitSelectedImage") }),
+    );
+
+    expect(
+      screen.getByText(t("uploader.splitBothConfirmDescription")),
+    ).toBeInTheDocument();
+  });
+
+  it("shows unavailable tooltip when split disabled due to no printable size", () => {
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        canSplitImage={false}
+        triptychDisabledReason="noPrintableSize"
+      />,
+    );
+
+    const splitButton = screen.getByRole("button", {
+      name: t("uploader.splitSelectedImage"),
+    });
+    expect(splitButton).toBeDisabled();
+    expect(splitButton).toHaveAttribute(
+      "title",
+      t("uploader.triptychUnavailableNoSize"),
+    );
   });
 
   it("disables kadr button when canToggleZoomPan is false", () => {
