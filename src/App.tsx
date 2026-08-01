@@ -296,8 +296,8 @@ function StorefrontApp() {
     [],
   );
 
-  const showFooterCheckout =
-    location.pathname === "/upload" && isFooterCheckoutAvailable;
+  const isUploadRoute = location.pathname === "/upload";
+  const showFooterCheckout = isUploadRoute && isFooterCheckoutAvailable;
 
   const footerOrderRows = useMemo(
     () =>
@@ -382,8 +382,8 @@ function StorefrontApp() {
         backgroundColor: "var(--background)",
         backgroundImage: `url(${isDesktopSize ? bgDesktop : bgMobile})`,
         backgroundRepeat: "no-repeat",
-        backgroundPosition: isDesktopSize ? "center" : "center top",
-        backgroundSize: isDesktopSize ? "cover" : "120% auto",
+        backgroundPosition: "center",
+        backgroundSize: "cover",
       }}
     >
       <Header onOpenLegalMenu={openLegalSheet} promotionSlogan={activePromotion?.slogan} />
@@ -461,8 +461,8 @@ function StorefrontApp() {
         orderRows={footerOrderRows}
         checkedOrderSlotKeys={checkedOrderSlotKeys}
         onToggleOrderSlot={toggleFooterOrderSlot}
-        toolsBarProps={footerToolsBarProps}
-        slotSwitcherProps={footerSlotSwitcherProps}
+        toolsBarProps={isUploadRoute ? footerToolsBarProps : null}
+        slotSwitcherProps={isUploadRoute ? footerSlotSwitcherProps : null}
       />
       <LegalNavigationSheet
         open={isLegalSheetOpen}

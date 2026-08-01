@@ -513,6 +513,52 @@ describe("App Component Routing", () => {
     expect(screen.queryByText(tr("upload.slotRight"))).not.toBeInTheDocument();
   });
 
+  it("should not render the upload slot switcher on /checkout after navigating from /upload", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MemoryRouter initialEntries={["/upload"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).not.toBeNull();
+
+    fireEvent.change(input!, {
+      target: {
+        files: [new File(["center"], "center.jpg", { type: "image/jpeg" })],
+      },
+    });
+
+    await screen.findByRole("img", { name: "Preview" });
+
+    // The footer slot switcher is active while an image is loaded on /upload
+    await waitFor(() => {
+      expect(screen.getByTestId("uploader-slot-dots")).toBeInTheDocument();
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: tr("checkout.orderSelectionButton"),
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: tr("checkout.proceedToCheckout"),
+      }),
+    );
+
+    await screen.findByRole("heading", { name: tr("checkout.title") });
+
+    // The upload-specific slot switcher must not persist onto /checkout
+    expect(screen.queryByTestId("uploader-slot-dots")).not.toBeInTheDocument();
+  });
+
   it("should render back navigation button on about page", () => {
     render(
       <MemoryRouter initialEntries={["/about"]}>
