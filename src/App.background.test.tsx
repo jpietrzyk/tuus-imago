@@ -152,7 +152,7 @@ describe("StorefrontApp background image", () => {
     const bgStyle = wrapper.style.backgroundImage;
     expect(bgStyle).toContain("bg_mobile");
     expect(bgStyle).not.toContain("bg_desktop");
-    expect(wrapper.style.backgroundSize).toBe("120%");
+    expect(wrapper.style.backgroundSize).toBe("cover");
     expect(wrapper.style.backgroundAttachment).toBe("");
   });
 
