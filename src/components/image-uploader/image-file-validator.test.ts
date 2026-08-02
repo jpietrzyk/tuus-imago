@@ -1,19 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockLoadImageDimensions = vi.hoisted(() => vi.fn());
+const dpiRulesState = vi.hoisted(() => ({ minDpi: 72 }));
 
 vi.mock("./load-image-dimensions", () => ({
   loadImageDimensions: mockLoadImageDimensions,
 }));
 
+vi.mock("./image-dpi-rules", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./image-dpi-rules")>();
+  return {
+    ...actual,
+    get IMAGE_DPI_RULES() {
+      return {
+        ...actual.IMAGE_DPI_RULES,
+        minDpi: dpiRulesState.minDpi,
+      };
+    },
+  };
+});
+
 import { validateImageFile } from "./image-file-validator";
-import { IMAGE_VALIDATION_RULES, type ImageValidationRules } from "./image-validation-rules";
+import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 
 const RULES = IMAGE_VALIDATION_RULES;
 
 describe("validateImageFile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    dpiRulesState.minDpi = 72;
     mockLoadImageDimensions.mockResolvedValue({
       width: RULES.minWidth,
       height: RULES.minHeight,
@@ -89,14 +104,14 @@ describe("validateImageFile", () => {
   });
 
   it("rejects image with DPI below minimum for reference print size (90x60 cm)", async () => {
-    const customRules: ImageValidationRules = { ...RULES, minDpi: 150 };
+    dpiRulesState.minDpi = 150;
     mockLoadImageDimensions.mockResolvedValue({
       width: 3000,
       height: 2000,
     });
 
     const file = new File(["x"], "lowdpi.jpg", { type: "image/jpeg" });
-    const { violations } = await validateImageFile(file, customRules);
+    const { violations } = await validateImageFile(file, RULES);
 
     expect(violations).toHaveLength(1);
     expect(violations[0].rule).toBe("minDpi");

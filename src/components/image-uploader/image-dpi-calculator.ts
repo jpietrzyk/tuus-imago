@@ -1,3 +1,4 @@
+import { IMAGE_DPI_RULES } from "./image-dpi-rules";
 import type { CropCalculationResult } from "./image-proportion-calculator";
 import type { PaintingSizeOption } from "./painting-size";
 
@@ -43,8 +44,9 @@ export function calculateDpiFromCrop(
 }
 
 export function getDpiQuality(dpi: number): DpiQuality {
-  if (dpi >= 300) return "excellent";
-  if (dpi >= 150) return "good";
-  if (dpi >= 72) return "acceptable";
+  const { excellent, good, acceptable } = IMAGE_DPI_RULES.qualityThresholds;
+  if (dpi >= excellent) return "excellent";
+  if (dpi >= good) return "good";
+  if (dpi >= acceptable) return "acceptable";
   return "low";
 }
