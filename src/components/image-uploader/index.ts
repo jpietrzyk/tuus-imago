@@ -41,6 +41,9 @@ export type {
   DpiQuality,
 } from "./image-dpi-calculator";
 
+export { IMAGE_DPI_RULES } from "./image-dpi-rules";
+export type { ImageDpiRules } from "./image-dpi-rules";
+
 export {
   drawCroppedImageToCanvas,
   loadImageElement,

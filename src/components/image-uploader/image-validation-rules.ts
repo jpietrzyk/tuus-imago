@@ -4,7 +4,6 @@ export const IMAGE_VALIDATION_RULES = {
   maxSelectedImages: 3,
   minWidth: 2552,
   minHeight: 1701,
-  minDpi: 72,
 } as const;
 
 export interface ImageValidationRules {
@@ -13,5 +12,4 @@ export interface ImageValidationRules {
   readonly maxSelectedImages: number;
   readonly minWidth: number;
   readonly minHeight: number;
-  readonly minDpi: number;
 }

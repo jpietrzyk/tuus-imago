@@ -1,4 +1,5 @@
 import { calculateEffectiveDpi } from "./image-dpi-calculator";
+import { IMAGE_DPI_RULES } from "./image-dpi-rules";
 import {
   DEFAULT_PAINTING_SIZE_INDEX,
   getPaintingSizeOptions,
@@ -83,11 +84,11 @@ export async function validateImageFile(
     REFERENCE_PRINT_SIZE.heightCm,
   );
 
-  if (dpi < rules.minDpi) {
+  if (dpi < IMAGE_DPI_RULES.minDpi) {
     violations.push({
       rule: "minDpi",
       messageKey: "upload.validation.minDpi",
-      params: { minDpi: rules.minDpi, actualDpi: dpi },
+      params: { minDpi: IMAGE_DPI_RULES.minDpi, actualDpi: dpi },
     });
   }
 
