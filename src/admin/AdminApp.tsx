@@ -61,6 +61,11 @@ export function AdminApp({ children }: { children: ReactNode }) {
           show: "/admin/admins/:id",
           meta: { label: "Admins" },
         },
+        {
+          name: "app_settings",
+          list: "/admin/settings",
+          meta: { label: "Settings" },
+        },
       ]}
       options={{
         syncWithLocation: true,

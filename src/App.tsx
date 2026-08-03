@@ -72,6 +72,8 @@ import { ProtectedRoute } from "@/components/protected-route";
 import { setReferralCookie } from "@/lib/referral-cookie";
 import { useReferralTracking } from "@/lib/use-referral-tracking";
 import { getActivePromotion, type ActivePromotionResponse } from "@/lib/orders-api";
+import { getDpiSettings } from "@/lib/orders-api";
+import { applyDpiRulesOverride } from "@/components/image-uploader/image-dpi-rules";
 import { Authenticated } from "@refinedev/core";
 import { AdminApp } from "./admin/AdminApp";
 import { AdminLayout } from "./admin/layout";
@@ -99,6 +101,7 @@ const PromotionListPage = lazy(() => import("./admin/pages/promotion-list").then
 const PromotionCreatePage = lazy(() => import("./admin/pages/promotion-create").then((m) => ({ default: m.PromotionCreatePage })));
 const PromotionShowPage = lazy(() => import("./admin/pages/promotion-show").then((m) => ({ default: m.PromotionShowPage })));
 const PromotionEditPage = lazy(() => import("./admin/pages/promotion-edit").then((m) => ({ default: m.PromotionEditPage })));
+const SettingsPage = lazy(() => import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })));
 
 function AdminPageLoader() {
   return (
@@ -147,6 +150,7 @@ export function App() {
             <Route path="promotions/new" element={<Suspense fallback={<AdminPageLoader />}><PromotionCreatePage /></Suspense>} />
             <Route path="promotions/:id" element={<Suspense fallback={<AdminPageLoader />}><PromotionShowPage /></Suspense>} />
             <Route path="promotions/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PromotionEditPage /></Suspense>} />
+            <Route path="settings" element={<Suspense fallback={<AdminPageLoader />}><SettingsPage /></Suspense>} />
           </Route>
         </Routes>
       </AdminApp>
@@ -172,6 +176,35 @@ function StorefrontApp() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
+  const applyDpiSettings = useCallback(() => {
+    getDpiSettings()
+      .then((settings) => {
+        applyDpiRulesOverride({
+          minDpi: settings.dpiGuardEnabled ? settings.dpiThreshold : 0,
+          qualityThresholds: {
+            excellent: settings.dpiThresholdExcellent,
+            good: settings.dpiThresholdGood,
+            acceptable: settings.dpiThresholdAcceptable,
+          },
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    applyDpiSettings();
+  }, [applyDpiSettings]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        applyDpiSettings();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [applyDpiSettings]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

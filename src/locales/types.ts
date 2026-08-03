@@ -507,6 +507,7 @@ export interface Translations {
       admins: string;
       signOut: string;
       adminPanel: string;
+      settings: string;
     };
     statuses: {
       order: {
@@ -725,6 +726,19 @@ export interface Translations {
       userCancel: string;
       userConfirmRevokeAdmin: string;
       userConfirmGrantAdmin: string;
+      settingsTitle: string;
+      dpiGuard: string;
+      dpiGuardHint: string;
+      dpiThreshold: string;
+      dpiThresholdHint: string;
+      settingsSaved: string;
+      invalidValue: string;
+      dpiQualityMarkers: string;
+      dpiQualityMarkersHint: string;
+      dpiThreshold_excellent: string;
+      dpiThreshold_good: string;
+      dpiThreshold_acceptable: string;
+      dpiThresholdOrderError: string;
     };
   };
 }

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { t } from "@/locales/i18n";
+import { useFormState } from "@/admin/hooks/use-form-state";
 
 type Promotion = {
   id: string;
@@ -32,21 +33,6 @@ type Promotion = {
   created_at: string;
   updated_at: string;
 };
-
-function useFormState() {
-  const [dirty, setDirty] = useState<Record<string, string>>({});
-
-  const get = (field: string, fallback: string): string => {
-    if (field in dirty) return dirty[field];
-    return fallback;
-  };
-
-  const set = (field: string, value: string) => {
-    setDirty((prev) => ({ ...prev, [field]: value }));
-  };
-
-  return { get, set };
-}
 
 export function PromotionEditPage() {
   const { id } = useParams<{ id: string }>();
