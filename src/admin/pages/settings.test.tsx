@@ -107,6 +107,20 @@ describe("SettingsPage", () => {
     expect(screen.getByLabelText("Akceptowalna (szary)")).toHaveValue(72);
   });
 
+  it("shows a load-error state when settings cannot be fetched", () => {
+    mockUseList.mockReturnValue({
+      result: undefined,
+      query: { isFetching: false, isError: true, refetch: mockRefetch },
+    });
+    renderSettings();
+
+    expect(
+      screen.getByText("Nie udało się wczytać ustawień.", { exact: false }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Ponów")).toBeInTheDocument();
+    expect(screen.queryByText("Zapisz zmiany")).not.toBeInTheDocument();
+  });
+
   it("saves guard, threshold and quality markers on submit", async () => {
     setupMocks();
     mockMutateAsync.mockResolvedValue({ data: {} });

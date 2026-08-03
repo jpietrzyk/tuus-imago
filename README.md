@@ -161,7 +161,10 @@ Three sequential jobs on every push:
 2. **lint** — `pnpm lint`
 3. **migrate** (main branch only, when `supabase/migrations/**` changed) — `pnpm db:migrate:deploy`
 
-Required GitHub repository secrets: `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`.
+Required GitHub configuration:
+- `SUPABASE_ACCESS_TOKEN` — **secret** (personal access token, `sbp_…`)
+- `SUPABASE_DB_PASSWORD` — **secret** (Postgres database password)
+- `SUPABASE_PROJECT_REF` — **repository variable** (non-sensitive project ID); a secret of the same name is also accepted as a fallback.
 
 ## Infrastructure
 

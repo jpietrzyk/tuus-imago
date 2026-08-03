@@ -732,6 +732,8 @@ export interface Translations {
       dpiThreshold: string;
       dpiThresholdHint: string;
       settingsSaved: string;
+      settingsLoadError: string;
+      retry: string;
       invalidValue: string;
       dpiQualityMarkers: string;
       dpiQualityMarkersHint: string;
