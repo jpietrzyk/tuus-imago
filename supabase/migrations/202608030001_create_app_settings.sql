@@ -25,8 +25,11 @@ create trigger app_settings_updated_at_trigger
 
 -- Canonical DPI defaults. Keep in sync with:
 --   netlify/functions/app-settings.ts (DEFAULTS)
---   src/components/image-uploader/image-dpi-rules.ts (DEFAULT_DPI_THRESHOLD)
+--   src/components/image-uploader/image-dpi-rules.ts (DEFAULT_DPI_THRESHOLD, DEFAULT_QUALITY_THRESHOLDS)
 insert into public.app_settings (key, value, data_type, description) values
   ('dpi_guard', 'true', 'boolean', 'Master switch for DPI enforcement on upload'),
-  ('dpi_threshold', '72', 'integer', 'Minimum DPI required when DPI guard is on')
+  ('dpi_threshold', '72', 'integer', 'Minimum DPI required when DPI guard is on'),
+  ('dpi_threshold_excellent', '300', 'integer', 'DPI at/above which a print size is marked excellent (green)'),
+  ('dpi_threshold_good', '150', 'integer', 'DPI at/above which a print size is marked good (yellow)'),
+  ('dpi_threshold_acceptable', '72', 'integer', 'DPI at/above which a print size is marked acceptable (gray)')
 on conflict (key) do nothing;

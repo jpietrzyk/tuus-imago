@@ -136,6 +136,9 @@ export async function getActivePromotion(): Promise<ActivePromotionResponse> {
 export interface DpiSettingsResponse {
   dpiGuardEnabled: boolean;
   dpiThreshold: number;
+  dpiThresholdExcellent: number;
+  dpiThresholdGood: number;
+  dpiThresholdAcceptable: number;
 }
 
 export async function getDpiSettings(): Promise<DpiSettingsResponse> {

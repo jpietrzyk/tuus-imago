@@ -775,7 +775,14 @@
       "dpiGuardHint": "Gdy wyłączone, obrazy o niskiej rozdzielczości nie są blokowane, a wszystkie rozmiary wydruku są dostępne.",
       "dpiThreshold": "Próg DPI",
       "dpiThresholdHint": "Minimalne DPI wymuszane, gdy strażnik jest włączony.",
-      "settingsSaved": "Ustawienia zapisane."
+      "settingsSaved": "Ustawienia zapisane.",
+      "invalidValue": "nieprawidłowa wartość",
+      "dpiQualityMarkers": "Wskaźniki jakości",
+      "dpiQualityMarkersHint": "Wartości DPI, przy których rozmiary wydruku pokazują zielony, żółty i szary wskaźnik. Muszą być uporządkowane: Doskonała > Dobra > Akceptowalna.",
+      "dpiThreshold_excellent": "Doskonała (zielony)",
+      "dpiThreshold_good": "Dobra (żółty)",
+      "dpiThreshold_acceptable": "Akceptowalna (szary)",
+      "dpiThresholdOrderError": "Progi jakości muszą być uporządkowane: Doskonała > Dobra > Akceptowalna."
     }
   }
 }

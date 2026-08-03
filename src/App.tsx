@@ -182,6 +182,11 @@ function StorefrontApp() {
       .then((settings) => {
         applyDpiRulesOverride({
           minDpi: settings.dpiGuardEnabled ? settings.dpiThreshold : 0,
+          qualityThresholds: {
+            excellent: settings.dpiThresholdExcellent,
+            good: settings.dpiThresholdGood,
+            acceptable: settings.dpiThresholdAcceptable,
+          },
         });
       })
       .catch(() => {});

@@ -732,6 +732,13 @@ export interface Translations {
       dpiThreshold: string;
       dpiThresholdHint: string;
       settingsSaved: string;
+      invalidValue: string;
+      dpiQualityMarkers: string;
+      dpiQualityMarkersHint: string;
+      dpiThreshold_excellent: string;
+      dpiThreshold_good: string;
+      dpiThreshold_acceptable: string;
+      dpiThresholdOrderError: string;
     };
   };
 }

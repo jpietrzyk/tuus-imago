@@ -8,7 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { t } from "@/locales/i18n";
 import { useFormState } from "@/admin/hooks/use-form-state";
-import { DEFAULT_DPI_THRESHOLD } from "@/components/image-uploader/image-dpi-rules";
+import {
+  DEFAULT_DPI_THRESHOLD,
+  DEFAULT_QUALITY_THRESHOLDS,
+  type QualityThresholds,
+} from "@/components/image-uploader/image-dpi-rules";
 
 type AppSettingRow = {
   id: string;
@@ -17,6 +21,20 @@ type AppSettingRow = {
   data_type: "boolean" | "integer" | "number" | "string";
   description: string | null;
 };
+
+type QualityKey = keyof QualityThresholds;
+
+const QUALITY_DOT_COLORS: Record<QualityKey, string> = {
+  excellent: "bg-green-500",
+  good: "bg-yellow-500",
+  acceptable: "bg-gray-400",
+};
+
+const QUALITY_FIELDS: { key: QualityKey; settingKey: string; inputId: string }[] = [
+  { key: "excellent", settingKey: "dpi_threshold_excellent", inputId: "dpiThresholdExcellent" },
+  { key: "good", settingKey: "dpi_threshold_good", inputId: "dpiThresholdGood" },
+  { key: "acceptable", settingKey: "dpi_threshold_acceptable", inputId: "dpiThresholdAcceptable" },
+];
 
 export function SettingsPage() {
   const { result, query } = useList<AppSettingRow>({
@@ -27,8 +45,9 @@ export function SettingsPage() {
   const { mutateAsync: updateSetting } = useUpdate();
 
   const rows = result?.data ?? [];
-  const guardRow = rows.find((r) => r.key === "dpi_guard");
-  const thresholdRow = rows.find((r) => r.key === "dpi_threshold");
+  const rowByKey = (key: string) => rows.find((r) => r.key === key);
+  const guardRow = rowByKey("dpi_guard");
+  const thresholdRow = rowByKey("dpi_threshold");
 
   const form = useFormState();
   const [saving, setSaving] = useState(false);
@@ -45,6 +64,15 @@ export function SettingsPage() {
     thresholdRow ? thresholdRow.value : String(DEFAULT_DPI_THRESHOLD),
   );
 
+  const qualityValue = (qKey: QualityKey): string =>
+    form.get(
+      `q_${qKey}`,
+      (() => {
+        const row = rowByKey(`dpi_threshold_${qKey}`);
+        return row ? row.value : String(DEFAULT_QUALITY_THRESHOLDS[qKey]);
+      })(),
+    );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -52,8 +80,29 @@ export function SettingsPage() {
     setSuccess(false);
 
     const parsedThreshold = parseInt(threshold, 10);
+    const parsedQuality: Record<QualityKey, number> = {
+      excellent: parseInt(qualityValue("excellent"), 10),
+      good: parseInt(qualityValue("good"), 10),
+      acceptable: parseInt(qualityValue("acceptable"), 10),
+    };
+
     if (!Number.isFinite(parsedThreshold)) {
-      setError(t("admin.labels.dpiThreshold") + ": invalid value");
+      setError(`${t("admin.labels.dpiThreshold")}: ${t("admin.labels.invalidValue")}`);
+      setSaving(false);
+      return;
+    }
+    for (const qKey of ["excellent", "good", "acceptable"] as const) {
+      if (!Number.isFinite(parsedQuality[qKey]) || parsedQuality[qKey] < 1) {
+        setError(`${t(`admin.labels.dpiThreshold_${qKey}`)}: ${t("admin.labels.invalidValue")}`);
+        setSaving(false);
+        return;
+      }
+    }
+    if (
+      parsedQuality.excellent <= parsedQuality.good ||
+      parsedQuality.good <= parsedQuality.acceptable
+    ) {
+      setError(t("admin.labels.dpiThresholdOrderError"));
       setSaving(false);
       return;
     }
@@ -76,6 +125,18 @@ export function SettingsPage() {
           values: { value: String(parsedThreshold) },
         }),
       );
+    }
+    for (const field of QUALITY_FIELDS) {
+      const row = rowByKey(field.settingKey);
+      if (row) {
+        updates.push(
+          updateSetting({
+            resource: "app_settings",
+            id: row.id,
+            values: { value: String(parsedQuality[field.key]) },
+          }),
+        );
+      }
     }
 
     const results = await Promise.allSettled(updates);
@@ -148,6 +209,38 @@ export function SettingsPage() {
                 disabled={!guardEnabled}
                 required
               />
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <div className="space-y-1">
+                <Label>{t("admin.labels.dpiQualityMarkers")}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.labels.dpiQualityMarkersHint")}
+                </p>
+              </div>
+              {QUALITY_FIELDS.map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <Label
+                    htmlFor={field.inputId}
+                    className="flex items-center gap-2"
+                  >
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${QUALITY_DOT_COLORS[field.key]}`}
+                    />
+                    {t(`admin.labels.dpiThreshold_${field.key}`)}
+                  </Label>
+                  <Input
+                    id={field.inputId}
+                    type="number"
+                    step="1"
+                    min="1"
+                    max="600"
+                    value={qualityValue(field.key)}
+                    onChange={(e) => form.set(`q_${field.key}`, e.target.value)}
+                    required
+                  />
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-3 pt-2">

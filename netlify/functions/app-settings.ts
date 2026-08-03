@@ -2,13 +2,22 @@ import { createServiceClient } from "./_shared/supabase-auth";
 
 // Canonical defaults for the DPI settings. Keep in sync with:
 //  - supabase/migrations/202608030001_create_app_settings.sql (seed values)
-//  - src/components/image-uploader/image-dpi-rules.ts (DEFAULT_DPI_THRESHOLD)
+//  - src/components/image-uploader/image-dpi-rules.ts (DEFAULT_DPI_THRESHOLD, DEFAULT_QUALITY_THRESHOLDS)
 const DEFAULTS = {
   dpiGuardEnabled: true,
   dpiThreshold: 72,
+  dpiThresholdExcellent: 300,
+  dpiThresholdGood: 150,
+  dpiThresholdAcceptable: 72,
 };
 
-const SETTING_KEYS = ["dpi_guard", "dpi_threshold"] as const;
+const SETTING_KEYS = [
+  "dpi_guard",
+  "dpi_threshold",
+  "dpi_threshold_excellent",
+  "dpi_threshold_good",
+  "dpi_threshold_acceptable",
+] as const;
 
 type AppSettingRow = {
   key: string;
@@ -25,6 +34,17 @@ function ok(body: unknown, cacheSeconds = 60) {
       "Cache-Control": `public, max-age=${cacheSeconds}`,
     },
   };
+}
+
+function readInteger(
+  byKey: Map<string, AppSettingRow>,
+  key: string,
+  fallback: number,
+): number {
+  const row = byKey.get(key);
+  if (!row || row.data_type !== "integer") return fallback;
+  const parsed = parseInt(row.value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 export const handler = async (event: { httpMethod?: string }) => {
@@ -58,20 +78,28 @@ export const handler = async (event: { httpMethod?: string }) => {
   );
 
   const guardRow = byKey.get("dpi_guard");
-  const thresholdRow = byKey.get("dpi_threshold");
-
   const dpiGuardEnabled =
     guardRow && guardRow.data_type === "boolean"
       ? guardRow.value === "true"
       : DEFAULTS.dpiGuardEnabled;
 
-  const thresholdParsed =
-    thresholdRow && thresholdRow.data_type === "integer"
-      ? parseInt(thresholdRow.value, 10)
-      : NaN;
-  const dpiThreshold = Number.isFinite(thresholdParsed)
-    ? thresholdParsed
-    : DEFAULTS.dpiThreshold;
-
-  return ok({ dpiGuardEnabled, dpiThreshold });
+  return ok({
+    dpiGuardEnabled,
+    dpiThreshold: readInteger(byKey, "dpi_threshold", DEFAULTS.dpiThreshold),
+    dpiThresholdExcellent: readInteger(
+      byKey,
+      "dpi_threshold_excellent",
+      DEFAULTS.dpiThresholdExcellent,
+    ),
+    dpiThresholdGood: readInteger(
+      byKey,
+      "dpi_threshold_good",
+      DEFAULTS.dpiThresholdGood,
+    ),
+    dpiThresholdAcceptable: readInteger(
+      byKey,
+      "dpi_threshold_acceptable",
+      DEFAULTS.dpiThresholdAcceptable,
+    ),
+  });
 };

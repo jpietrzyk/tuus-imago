@@ -775,7 +775,14 @@
       "dpiGuardHint": "When off, low-resolution images are not blocked and all print sizes are selectable.",
       "dpiThreshold": "DPI Threshold",
       "dpiThresholdHint": "Minimum DPI enforced when the guard is on.",
-      "settingsSaved": "Settings saved."
+      "settingsSaved": "Settings saved.",
+      "invalidValue": "invalid value",
+      "dpiQualityMarkers": "Quality Markers",
+      "dpiQualityMarkersHint": "DPI values at which print sizes show the green, yellow, and gray markers. Must be ordered: Excellent > Good > Acceptable.",
+      "dpiThreshold_excellent": "Excellent (green)",
+      "dpiThreshold_good": "Good (yellow)",
+      "dpiThreshold_acceptable": "Acceptable (gray)",
+      "dpiThresholdOrderError": "Quality thresholds must be ordered: Excellent > Good > Acceptable."
     }
   }
 }
