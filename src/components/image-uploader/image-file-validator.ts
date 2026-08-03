@@ -57,39 +57,41 @@ export async function validateImageFile(
     return { violations, dimensions: null };
   }
 
-  if (dimensions.width < rules.minWidth) {
-    violations.push({
-      rule: "minWidth",
-      messageKey: "upload.validation.minWidth",
-      params: { minWidth: rules.minWidth, actualWidth: dimensions.width },
-    });
-  }
+  if (IMAGE_DPI_RULES.guardEnabled) {
+    if (dimensions.width < rules.minWidth) {
+      violations.push({
+        rule: "minWidth",
+        messageKey: "upload.validation.minWidth",
+        params: { minWidth: rules.minWidth, actualWidth: dimensions.width },
+      });
+    }
 
-  if (dimensions.height < rules.minHeight) {
-    violations.push({
-      rule: "minHeight",
-      messageKey: "upload.validation.minHeight",
-      params: { minHeight: rules.minHeight, actualHeight: dimensions.height },
-    });
-  }
+    if (dimensions.height < rules.minHeight) {
+      violations.push({
+        rule: "minHeight",
+        messageKey: "upload.validation.minHeight",
+        params: { minHeight: rules.minHeight, actualHeight: dimensions.height },
+      });
+    }
 
-  if (violations.length > 0) {
-    return { violations, dimensions };
-  }
+    if (violations.length > 0) {
+      return { violations, dimensions };
+    }
 
-  const { dpi } = calculateEffectiveDpi(
-    dimensions.width,
-    dimensions.height,
-    REFERENCE_PRINT_SIZE.widthCm,
-    REFERENCE_PRINT_SIZE.heightCm,
-  );
+    const { dpi } = calculateEffectiveDpi(
+      dimensions.width,
+      dimensions.height,
+      REFERENCE_PRINT_SIZE.widthCm,
+      REFERENCE_PRINT_SIZE.heightCm,
+    );
 
-  if (dpi < IMAGE_DPI_RULES.minDpi) {
-    violations.push({
-      rule: "minDpi",
-      messageKey: "upload.validation.minDpi",
-      params: { minDpi: IMAGE_DPI_RULES.minDpi, actualDpi: dpi },
-    });
+    if (dpi < IMAGE_DPI_RULES.minDpi) {
+      violations.push({
+        rule: "minDpi",
+        messageKey: "upload.validation.minDpi",
+        params: { minDpi: IMAGE_DPI_RULES.minDpi, actualDpi: dpi },
+      });
+    }
   }
 
   return { violations, dimensions };

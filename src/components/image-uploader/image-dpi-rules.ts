@@ -1,4 +1,5 @@
 const DEFAULT_MIN_DPI = 72;
+const DEFAULT_GUARD_ENABLED = true;
 
 export const DEFAULT_DPI_THRESHOLD = DEFAULT_MIN_DPI;
 
@@ -15,14 +16,19 @@ export type QualityThresholds = {
 };
 
 export const IMAGE_DPI_RULES: ImageDpiRules = {
+  guardEnabled: DEFAULT_GUARD_ENABLED,
   minDpi: DEFAULT_MIN_DPI,
   qualityThresholds: { ...DEFAULT_QUALITY_THRESHOLDS },
 };
 
 export function applyDpiRulesOverride(override: {
+  guardEnabled?: boolean;
   minDpi?: number;
   qualityThresholds?: QualityThresholds;
 }): void {
+  if (override.guardEnabled !== undefined) {
+    IMAGE_DPI_RULES.guardEnabled = override.guardEnabled;
+  }
   if (override.minDpi !== undefined) {
     IMAGE_DPI_RULES.minDpi = override.minDpi;
   }
@@ -36,6 +42,7 @@ export function applyDpiRulesOverride(override: {
 }
 
 export function resetDpiRules(): void {
+  IMAGE_DPI_RULES.guardEnabled = DEFAULT_GUARD_ENABLED;
   IMAGE_DPI_RULES.minDpi = DEFAULT_MIN_DPI;
   IMAGE_DPI_RULES.qualityThresholds.excellent =
     DEFAULT_QUALITY_THRESHOLDS.excellent;
@@ -45,6 +52,7 @@ export function resetDpiRules(): void {
 }
 
 export interface ImageDpiRules {
+  guardEnabled: boolean;
   minDpi: number;
   qualityThresholds: QualityThresholds;
 }

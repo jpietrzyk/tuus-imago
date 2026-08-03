@@ -181,7 +181,8 @@ function StorefrontApp() {
     getDpiSettings()
       .then((settings) => {
         applyDpiRulesOverride({
-          minDpi: settings.dpiGuardEnabled ? settings.dpiThreshold : 0,
+          guardEnabled: settings.dpiGuardEnabled,
+          minDpi: settings.dpiThreshold,
           qualityThresholds: {
             excellent: settings.dpiThresholdExcellent,
             good: settings.dpiThresholdGood,

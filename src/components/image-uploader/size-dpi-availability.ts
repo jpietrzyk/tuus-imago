@@ -30,7 +30,9 @@ export function computeSizesDpiAvailability(
       sizeIndex: option.key,
       dpi: result.dpi,
       quality: result.quality,
-      isAvailable: result.dpi >= IMAGE_DPI_RULES.minDpi,
+      isAvailable: IMAGE_DPI_RULES.guardEnabled
+        ? result.dpi >= IMAGE_DPI_RULES.minDpi
+        : true,
     };
   });
 }

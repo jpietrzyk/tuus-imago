@@ -14,6 +14,21 @@ describe("image-dpi-rules runtime override", () => {
     expect(IMAGE_DPI_RULES.minDpi).toBe(72);
   });
 
+  it("has the guard enabled by default", () => {
+    expect(IMAGE_DPI_RULES.guardEnabled).toBe(true);
+  });
+
+  it("can disable the guard via override", () => {
+    applyDpiRulesOverride({ guardEnabled: false });
+    expect(IMAGE_DPI_RULES.guardEnabled).toBe(false);
+  });
+
+  it("restores the guard after reset", () => {
+    applyDpiRulesOverride({ guardEnabled: false });
+    resetDpiRules();
+    expect(IMAGE_DPI_RULES.guardEnabled).toBe(true);
+  });
+
   it("mutates minDpi in place so existing importers observe the new value", () => {
     applyDpiRulesOverride({ minDpi: 150 });
     expect(IMAGE_DPI_RULES.minDpi).toBe(150);

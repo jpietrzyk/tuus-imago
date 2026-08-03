@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockLoadImageDimensions = vi.hoisted(() => vi.fn());
-const dpiRulesState = vi.hoisted(() => ({ minDpi: 72 }));
+const dpiRulesState = vi.hoisted(() => ({ minDpi: 72, guardEnabled: true }));
 
 vi.mock("./load-image-dimensions", () => ({
   loadImageDimensions: mockLoadImageDimensions,
@@ -15,6 +15,7 @@ vi.mock("./image-dpi-rules", async (importOriginal) => {
       return {
         ...actual.IMAGE_DPI_RULES,
         minDpi: dpiRulesState.minDpi,
+        guardEnabled: dpiRulesState.guardEnabled,
       };
     },
   };
@@ -29,6 +30,7 @@ describe("validateImageFile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dpiRulesState.minDpi = 72;
+    dpiRulesState.guardEnabled = true;
     mockLoadImageDimensions.mockResolvedValue({
       width: RULES.minWidth,
       height: RULES.minHeight,
@@ -192,5 +194,18 @@ describe("validateImageFile", () => {
     expect(hasMinWidth).toBe(true);
     const hasMinDpi = violations.some((v) => v.rule === "minDpi");
     expect(hasMinDpi).toBe(false);
+  });
+
+  it("accepts images below minimum dimensions when the DPI guard is off", async () => {
+    dpiRulesState.guardEnabled = false;
+    mockLoadImageDimensions.mockResolvedValue({
+      width: 1080,
+      height: 1080,
+    });
+
+    const file = new File(["x"], "small.jpg", { type: "image/jpeg" });
+    const { violations } = await validateImageFile(file, RULES);
+
+    expect(violations).toHaveLength(0);
   });
 });
