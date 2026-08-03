@@ -46,7 +46,7 @@ jobs:
       contents: read
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || secrets.SUPABASE_PROJECT_REF }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
     steps:
       - name: Checkout
@@ -68,6 +68,17 @@ jobs:
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify Supabase configuration
+        if: steps.detect_migrations.outputs.has_changes == 'true'
+        run: |
+          echo "SUPABASE_PROJECT_REF: ${{ env.SUPABASE_PROJECT_REF != '' && 'set' || 'NOT SET' }}"
+          echo "SUPABASE_ACCESS_TOKEN: ${{ env.SUPABASE_ACCESS_TOKEN != '' && 'set' || 'NOT SET' }}"
+          echo "SUPABASE_DB_PASSWORD: ${{ env.SUPABASE_DB_PASSWORD != '' && 'set' || 'NOT SET' }}"
+          if [[ -z "${SUPABASE_PROJECT_REF:-}" ]]; then
+            echo "::error::SUPABASE_PROJECT_REF is not set. Add it as a repository variable (Settings → Secrets and variables → Actions → Variables) or secret."
+            exit 1
           fi
 
       - name: Install pnpm

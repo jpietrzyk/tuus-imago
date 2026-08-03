@@ -159,6 +159,24 @@ export function SettingsPage() {
     return <LoadingSpinner fullPage />;
   }
 
+  if (query.isError) {
+    return (
+      <div className="space-y-6 max-w-xl">
+        <h1 className="text-2xl font-bold">{t("admin.labels.settingsTitle")}</h1>
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+            <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+              {t("admin.labels.settingsLoadError")}
+            </div>
+            <Button variant="outline" onClick={() => query.refetch()}>
+              {t("admin.labels.retry")}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-xl">
       <h1 className="text-2xl font-bold">{t("admin.labels.settingsTitle")}</h1>

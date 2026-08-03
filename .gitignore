@@ -29,3 +29,7 @@ dist-ssr
 q
 # Storybook build output
 storybook-static
+
+# Supabase CLI local artifacts
+supabase/.temp
+supabase/.branches
