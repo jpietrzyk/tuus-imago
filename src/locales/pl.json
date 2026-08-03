@@ -776,6 +776,8 @@
       "dpiThreshold": "Próg DPI",
       "dpiThresholdHint": "Minimalne DPI wymuszane, gdy strażnik jest włączony.",
       "settingsSaved": "Ustawienia zapisane.",
+      "settingsLoadError": "Nie udało się wczytać ustawień. Jeśli baza danych była niedawno aktualizowana, tabela ustawień może nie być jeszcze zastosowana. Spróbuj ponownie za chwilę.",
+      "retry": "Ponów",
       "invalidValue": "nieprawidłowa wartość",
       "dpiQualityMarkers": "Wskaźniki jakości",
       "dpiQualityMarkersHint": "Wartości DPI, przy których rozmiary wydruku pokazują zielony, żółty i szary wskaźnik. Muszą być uporządkowane: Doskonała > Dobra > Akceptowalna.",

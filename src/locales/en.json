@@ -776,6 +776,8 @@
       "dpiThreshold": "DPI Threshold",
       "dpiThresholdHint": "Minimum DPI enforced when the guard is on.",
       "settingsSaved": "Settings saved.",
+      "settingsLoadError": "Could not load settings. If the database was recently updated, the settings table may not be applied yet. Try again in a moment.",
+      "retry": "Retry",
       "invalidValue": "invalid value",
       "dpiQualityMarkers": "Quality Markers",
       "dpiQualityMarkersHint": "DPI values at which print sizes show the green, yellow, and gray markers. Must be ordered: Excellent > Good > Acceptable.",
