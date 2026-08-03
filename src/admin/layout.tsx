@@ -12,6 +12,7 @@ import {
   LogOut,
   X,
   Megaphone,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -69,6 +70,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.admins"),
     icon: <Shield className="h-5 w-5" />,
     path: "/admin/admins",
+  },
+  {
+    label: t("admin.navigation.settings"),
+    icon: <Settings className="h-5 w-5" />,
+    path: "/admin/settings",
   },
 ];
 

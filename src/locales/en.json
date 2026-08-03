@@ -521,7 +521,8 @@
       "users": "Users",
       "admins": "Admins",
       "signOut": "Sign out",
-      "adminPanel": "Admin Panel"
+      "adminPanel": "Admin Panel",
+      "settings": "Settings"
     },
     "statuses": {
       "order": {
@@ -768,7 +769,13 @@
       "promotionActive": "Active",
       "promotionInactive": "Inactive",
       "promotionConditions": "Conditions",
-      "promotionSearchName": "Search name..."
+      "promotionSearchName": "Search name...",
+      "settingsTitle": "Settings",
+      "dpiGuard": "DPI Guard",
+      "dpiGuardHint": "When off, low-resolution images are not blocked and all print sizes are selectable.",
+      "dpiThreshold": "DPI Threshold",
+      "dpiThresholdHint": "Minimum DPI enforced when the guard is on.",
+      "settingsSaved": "Settings saved."
     }
   }
 }

@@ -133,6 +133,16 @@ export async function getActivePromotion(): Promise<ActivePromotionResponse> {
   return parseJsonResponse<ActivePromotionResponse>(response);
 }
 
+export interface DpiSettingsResponse {
+  dpiGuardEnabled: boolean;
+  dpiThreshold: number;
+}
+
+export async function getDpiSettings(): Promise<DpiSettingsResponse> {
+  const response = await fetch("/.netlify/functions/app-settings");
+  return parseJsonResponse<DpiSettingsResponse>(response);
+}
+
 export async function createOrder(
   payload: CreateOrderRequest,
   signal?: AbortSignal,
