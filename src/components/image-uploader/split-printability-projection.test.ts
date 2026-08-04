@@ -30,9 +30,9 @@ describe("projectTriptychPrintability", () => {
   });
 
   it("treats a square-only selected index as blocked for the rectangular projection", () => {
-    const result = projectTriptychPrintability(15000, 15000, 0);
+    const result = projectTriptychPrintability(15000, 15000, 5);
 
-    expect(result.projectedSizesDpiInfo.find((i) => i.sizeIndex === 0)).toBeUndefined();
+    expect(result.projectedSizesDpiInfo.find((i) => i.sizeIndex === 5)).toBeUndefined();
     expect(result.willSelectedSizeBeBlocked).toBe(true);
   });
 
@@ -57,7 +57,7 @@ describe("resolveTriptychTargetSizeIndex", () => {
   });
 
   it("never upgrades beyond the source size even when larger sizes are printable", () => {
-    // Very high resolution: every rectangular size printable (largestAvailable = 5), but source is 2
+    // Very high resolution: every rectangular size printable (largestAvailable = 4), but source is 2
     const projection = projectTriptychPrintability(16000, 10000, 2);
     const allAvailable = projection.projectedSizesDpiInfo.every((i) => i.isAvailable);
     expect(allAvailable).toBe(true);
