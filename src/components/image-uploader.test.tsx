@@ -348,7 +348,7 @@ describe("ImageUploader", () => {
       // Wait for the metadata-driven DPI availability to propagate to the size
       // buttons (same render that flips the split confirmation state).
       await waitFor(() => {
-        expect(document.getElementById("size-btn-5")).toHaveAttribute(
+        expect(document.getElementById("size-btn-4")).toHaveAttribute(
           "title",
           tr("uploader.sizeUnavailable"),
         );
