@@ -1,16 +1,28 @@
-import { calculateEffectiveDpi } from "./image-dpi-calculator";
+import { calculateOrientationMatchedDpi } from "./image-dpi-calculator";
 import { IMAGE_DPI_RULES } from "./image-dpi-rules";
 import {
   DEFAULT_PAINTING_SIZE_INDEX,
   getPaintingSizeOptions,
+  type PaintingShape,
+  type PaintingSizeOption,
 } from "./painting-size";
+import { getOptimalDisplayProportion } from "./image-proportion-calculator";
 import { type ImageValidationRules } from "./image-validation-rules";
 import { loadImageDimensions } from "./load-image-dimensions";
 
-const REFERENCE_PRINT_SIZE =
-  getPaintingSizeOptions("rectangular").find(
-    (option) => option.key === DEFAULT_PAINTING_SIZE_INDEX,
-  ) ?? getPaintingSizeOptions("rectangular")[0];
+function resolveReferencePrintSize(
+  width: number,
+  height: number,
+): PaintingSizeOption {
+  const optimalProportion = getOptimalDisplayProportion(width, height);
+  const shape: PaintingShape =
+    optimalProportion === "square" ? "square" : "rectangular";
+  const options = getPaintingSizeOptions(shape);
+  return (
+    options.find((option) => option.key === DEFAULT_PAINTING_SIZE_INDEX) ??
+    options[0]
+  );
+}
 
 export interface ImageValidationViolation {
   rule: string;
@@ -58,31 +70,15 @@ export async function validateImageFile(
   }
 
   if (IMAGE_DPI_RULES.guardEnabled) {
-    if (dimensions.width < rules.minWidth) {
-      violations.push({
-        rule: "minWidth",
-        messageKey: "upload.validation.minWidth",
-        params: { minWidth: rules.minWidth, actualWidth: dimensions.width },
-      });
-    }
-
-    if (dimensions.height < rules.minHeight) {
-      violations.push({
-        rule: "minHeight",
-        messageKey: "upload.validation.minHeight",
-        params: { minHeight: rules.minHeight, actualHeight: dimensions.height },
-      });
-    }
-
-    if (violations.length > 0) {
-      return { violations, dimensions };
-    }
-
-    const { dpi } = calculateEffectiveDpi(
+    const referencePrintSize = resolveReferencePrintSize(
       dimensions.width,
       dimensions.height,
-      REFERENCE_PRINT_SIZE.widthCm,
-      REFERENCE_PRINT_SIZE.heightCm,
+    );
+    const { dpi } = calculateOrientationMatchedDpi(
+      dimensions.width,
+      dimensions.height,
+      referencePrintSize.widthCm,
+      referencePrintSize.heightCm,
     );
 
     if (dpi < IMAGE_DPI_RULES.minDpi) {

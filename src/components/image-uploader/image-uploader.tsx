@@ -88,6 +88,7 @@ interface ImageUploaderProps {
     transformations: ImageTransformations,
   ) => void;
   onUploadError?: (error: string) => void;
+  onUploadAttemptStart?: () => void;
   onImageMetadataChange?: (metadata: SelectedImageMetadata | null) => void;
   onSelectionStateChange?: (hasSelection: boolean) => void;
   onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
@@ -378,6 +379,7 @@ export const ImageUploader = forwardRef<
 >(function ImageUploader(
   {
     onUploadError,
+    onUploadAttemptStart,
     onImageMetadataChange,
     onSelectionStateChange,
     onOrderableSlotsChange,
@@ -1056,6 +1058,7 @@ export const ImageUploader = forwardRef<
       pendingSelectionSlotRef.current = null;
 
       if (files && files.length > 0) {
+        onUploadAttemptStart?.();
         if (files.length === 1) {
           void validateAndStoreFile(files[0], preferredIndex);
         } else {
@@ -1086,7 +1089,7 @@ export const ImageUploader = forwardRef<
 
       e.currentTarget.value = "";
     },
-    [validateAndStoreFile, selectedImageCount, addOrReplaceSelection, buildSelectedImageItem],
+    [validateAndStoreFile, selectedImageCount, addOrReplaceSelection, buildSelectedImageItem, onUploadAttemptStart],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -1103,6 +1106,7 @@ export const ImageUploader = forwardRef<
 
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
+        onUploadAttemptStart?.();
         const validFiles: File[] = [];
         for (const file of Array.from(files)) {
           if (IMAGE_VALIDATION_RULES.acceptedMimeTypes.includes(
@@ -1127,7 +1131,7 @@ export const ImageUploader = forwardRef<
         }
       }
     },
-    [selectedImageCount, addOrReplaceSelection, buildSelectedImageItem],
+    [selectedImageCount, addOrReplaceSelection, buildSelectedImageItem, onUploadAttemptStart],
   );
 
   const handlePreviewSlotSelect = useCallback(

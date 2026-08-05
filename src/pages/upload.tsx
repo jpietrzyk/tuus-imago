@@ -215,9 +215,11 @@ export function UploadPage({
     setUploadedImage(null);
     setHasUploaderSelection(false);
     setIsSuccess(false);
-    // Auto-hide error message after 5 seconds
-    setTimeout(() => setUploadError(null), 5000);
   };
+
+  const handleUploadAttemptStart = useCallback(() => {
+    setUploadError(null);
+  }, []);
 
   const manualCustomCoordinates =
     uploadedImage &&
@@ -708,6 +710,7 @@ export function UploadPage({
                     ref={uploaderRef}
                     onUploadSuccess={handleUploadSuccess}
                     onUploadError={handleUploadError}
+                    onUploadAttemptStart={handleUploadAttemptStart}
                     onSelectionStateChange={setHasUploaderSelection}
                     onOrderableSlotsChange={onOrderableSlotsChange}
                     onUploadProgress={handleUploadProgress}

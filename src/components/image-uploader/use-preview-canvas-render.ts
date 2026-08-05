@@ -34,7 +34,6 @@ const invertDisplayProportion = (
 interface UsePreviewCanvasRenderArgs {
   previewUrl: string | null;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  selectedImageMetadata: SelectedImageMetadata | null;
   allowAutoSelectOptimalProportion?: boolean;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
@@ -65,7 +64,6 @@ interface UsePreviewCanvasRenderArgs {
 export const usePreviewCanvasRender = ({
   previewUrl,
   canvasRef,
-  selectedImageMetadata,
   allowAutoSelectOptimalProportion = true,
   bestProportion,
   userSelectedProportion,
@@ -293,7 +291,6 @@ export const usePreviewCanvasRender = ({
     previewUrl,
     allowAutoSelectOptimalProportion,
     userSelectedProportion,
-    selectedImageMetadata,
     previewEffects,
     previewTransform,
     requestDrawRef,

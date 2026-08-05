@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateEffectiveDpi,
   calculateDpiFromCrop,
+  calculateOrientationMatchedDpi,
   getDpiQuality,
 } from "./image-dpi-calculator";
 import type { CropCalculationResult } from "./image-proportion-calculator";
@@ -46,6 +47,29 @@ describe("calculateEffectiveDpi", () => {
     const result = calculateEffectiveDpi(2400, 2400, 60, 60);
     expect(result.dpi).toBe(101);
     expect(result.quality).toBe("acceptable");
+  });
+});
+
+describe("calculateOrientationMatchedDpi", () => {
+  it("keeps landscape image against landscape print unchanged", () => {
+    const result = calculateOrientationMatchedDpi(3000, 2000, 90, 60);
+    expect(result.dpi).toBe(84);
+  });
+
+  it("rotates a landscape print for a portrait image", () => {
+    const result = calculateOrientationMatchedDpi(2000, 3000, 90, 60);
+    expect(result.dpi).toBe(84);
+  });
+
+  it("gives the same DPI for a portrait image and its landscape equivalent", () => {
+    const portrait = calculateOrientationMatchedDpi(2000, 3000, 90, 60);
+    const landscape = calculateOrientationMatchedDpi(3000, 2000, 90, 60);
+    expect(portrait.dpi).toBe(landscape.dpi);
+  });
+
+  it("leaves square image and square print unchanged", () => {
+    const result = calculateOrientationMatchedDpi(2000, 2000, 60, 60);
+    expect(result.dpi).toBe(84);
   });
 });
 

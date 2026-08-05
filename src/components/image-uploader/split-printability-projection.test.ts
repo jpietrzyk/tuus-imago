@@ -11,12 +11,20 @@ describe("projectTriptychPrintability", () => {
 
     expect(result.projectedSizesDpiInfo).toHaveLength(5);
     expect(result.noSizePrintable).toBe(false);
-    // 90x60 (index 2) falls below minDpi with a 2500px-wide center panel
+    // 90x60 (index 2) stays printable: a 2500px-wide portrait center panel
+    // maps to the rotated 60x90 reference.
+    expect(result.willSelectedSizeBeBlocked).toBe(false);
+  });
+
+  it("blocks the selected size when the center panel is too narrow but smaller sizes still print", () => {
+    const result = projectTriptychPrintability(4500, 3000, 2);
+
+    expect(result.noSizePrintable).toBe(false);
     expect(result.willSelectedSizeBeBlocked).toBe(true);
   });
 
   it("flags no printable size when the source is too small after split", () => {
-    const result = projectTriptychPrintability(4500, 3000, 2);
+    const result = projectTriptychPrintability(3000, 1500, 2);
 
     expect(result.noSizePrintable).toBe(true);
     expect(result.willSelectedSizeBeBlocked).toBe(true);
@@ -49,7 +57,7 @@ describe("resolveTriptychTargetSizeIndex", () => {
   });
 
   it("steps down to the largest printable size when the source is too large", () => {
-    // 7500x5000: center panel 2500x5000, index 2 (90x60) blocked, index 1 printable
+    // 7500x5000: center panel 2500x5000, index 4 (150x100) blocked, index 3 printable
     const projection = projectTriptychPrintability(7500, 5000, 4);
     expect(resolveTriptychTargetSizeIndex(4, projection)).toBeLessThan(4);
     const result = resolveTriptychTargetSizeIndex(4, projection);
@@ -65,7 +73,7 @@ describe("resolveTriptychTargetSizeIndex", () => {
   });
 
   it("returns the source index unchanged when no size is printable", () => {
-    const projection = projectTriptychPrintability(4500, 3000, 2);
+    const projection = projectTriptychPrintability(3000, 1500, 2);
     expect(projection.noSizePrintable).toBe(true);
     expect(resolveTriptychTargetSizeIndex(2, projection)).toBe(2);
   });
