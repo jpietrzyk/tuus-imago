@@ -47,46 +47,60 @@ if (typeof Element !== "undefined") {
   }
 }
 
-// Simple polyfill for HTMLCanvasElement in jsdom to suppress warnings
-if (typeof window.HTMLCanvasElement !== "function") {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).HTMLCanvasElement = class HTMLCanvasElement {
-    width: number = 300;
-    height: number = 150;
+// jsdom returns null from HTMLCanvasElement.prototype.getContext() (and logs a
+// "Not implemented" warning) unless the optional native `canvas` package is
+// installed. Return a stub 2D context so preview rendering can still size the
+// canvas buffer in tests — only dimensions are asserted, never pixels. Tests
+// that need specific context behaviour mock getContext themselves
+// (see preview-canvas-utils.test.ts).
+const createCanvasRenderingContext2DStub = (): CanvasRenderingContext2D => {
+  const noop = () => {};
+  return {
+    canvas: null,
+    fillStyle: "",
+    strokeStyle: "",
+    lineWidth: 1,
+    filter: "none",
+    globalAlpha: 1,
+    globalCompositeOperation: "source-over",
+    imageSmoothingEnabled: true,
+    arc: noop,
+    beginPath: noop,
+    clearRect: noop,
+    clip: noop,
+    closePath: noop,
+    createImageData: () => ({ data: new Uint8ClampedArray(0) }),
+    drawImage: noop,
+    fill: noop,
+    fillRect: noop,
+    fillText: noop,
+    getImageData: () => ({ data: new Uint8ClampedArray(0) }),
+    lineTo: noop,
+    measureText: () => ({ width: 0 }),
+    moveTo: noop,
+    putImageData: noop,
+    rect: noop,
+    restore: noop,
+    rotate: noop,
+    save: noop,
+    scale: noop,
+    setTransform: noop,
+    stroke: noop,
+    strokeRect: noop,
+    strokeText: noop,
+    transform: noop,
+    translate: noop,
+  } as unknown as CanvasRenderingContext2D;
+};
 
-    getContext() {
-      // Return a minimal mock context
-      return {
-        fillRect: () => {},
-        clearRect: () => {},
-        getImageData: () => ({ data: new Uint8ClampedArray(0) }),
-        putImageData: () => {},
-        createImageData: () => ({ data: new Uint8ClampedArray(0) }),
-        setTransform: () => {},
-        drawImage: () => {},
-        save: () => {},
-        fillText: () => {},
-        restore: () => {},
-        beginPath: () => {},
-        moveTo: () => {},
-        lineTo: () => {},
-        closePath: () => {},
-        stroke: () => {},
-        translate: () => {},
-        scale: () => {},
-        rotate: () => {},
-        arc: () => {},
-        fill: () => {},
-        measureText: () => ({ width: 0 }),
-        transform: () => {},
-        rect: () => {},
-        clip: () => {},
-      };
-    }
-
-    toDataURL() {
-      return "";
-    }
+if (typeof window.HTMLCanvasElement === "function") {
+  const canvasPrototype = HTMLCanvasElement.prototype as {
+    getContext: (...args: unknown[]) => RenderingContext | null;
+  };
+  const nativeGetContext = canvasPrototype.getContext;
+  canvasPrototype.getContext = function (this: HTMLCanvasElement, ...args: unknown[]) {
+    const native = nativeGetContext.apply(this, args as [string]) ?? null;
+    return native ?? createCanvasRenderingContext2DStub();
   };
 }
 
