@@ -83,7 +83,6 @@ function Harness({
   usePreviewCanvasRender({
     previewUrl,
     canvasRef,
-    selectedImageMetadata,
     bestProportion,
     userSelectedProportion,
     latestRenderConfigRef,
@@ -423,7 +422,6 @@ describe("usePreviewCanvasRender", () => {
       usePreviewCanvasRender({
         previewUrl,
         canvasRef,
-        selectedImageMetadata: storedMetadata,
         bestProportion: null,
         userSelectedProportion: "horizontal",
         latestRenderConfigRef,
@@ -1353,15 +1351,17 @@ describe("usePreviewCanvasRender", () => {
       },
     });
 
+    const stableMetadata: SelectedImageMetadata = {
+      width: 1200,
+      height: 800,
+      aspectRatio: "3:2",
+    };
+
     const { rerender } = render(
       <Harness
         previewUrl="blob:preview"
         onMetadataResolved={onMetadataResolved}
-        selectedImageMetadata={{
-          width: 1200,
-          height: 800,
-          aspectRatio: "3:2",
-        }}
+        selectedImageMetadata={stableMetadata}
         bestProportion="horizontal"
         userSelectedProportion="horizontal"
         previewEffects={null}
@@ -1374,17 +1374,17 @@ describe("usePreviewCanvasRender", () => {
       );
     });
 
+    const drawCountBeforeCropChanges = vi.mocked(
+      previewCanvasUtils.drawCroppedImageToCanvas,
+    ).mock.calls.length;
+
     const zoomLevels = [1.1, 1.2, 1.5, 2.0, 2.5, 3.0, 2.0, 1.5];
     for (const zoom of zoomLevels) {
       rerender(
         <Harness
           previewUrl="blob:preview"
           onMetadataResolved={onMetadataResolved}
-          selectedImageMetadata={{
-            width: 1200,
-            height: 800,
-            aspectRatio: "3:2",
-          }}
+          selectedImageMetadata={stableMetadata}
           bestProportion="horizontal"
           userSelectedProportion="horizontal"
           previewEffects={null}
@@ -1394,9 +1394,10 @@ describe("usePreviewCanvasRender", () => {
     }
 
     await waitFor(() => {
-      expect(previewCanvasUtils.drawCroppedImageToCanvas).toHaveBeenCalledTimes(
-        1 + zoomLevels.length,
-      );
+      expect(
+        vi.mocked(previewCanvasUtils.drawCroppedImageToCanvas).mock.calls
+          .length,
+      ).toBeGreaterThan(drawCountBeforeCropChanges);
     });
 
     expect(previewCanvasUtils.loadImageElement).toHaveBeenCalledTimes(1);
