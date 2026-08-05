@@ -36,3 +36,20 @@ export function computeSizesDpiAvailability(
     };
   });
 }
+
+export function resolveRecommendedPaintingSize(
+  sizesDpiInfo: SizeDpiInfo[],
+): PaintingSizeIndex {
+  const acceptable = sizesDpiInfo.filter(
+    (info) => info.dpi >= IMAGE_DPI_RULES.minDpi,
+  );
+
+  if (acceptable.length === 0) {
+    return 0;
+  }
+
+  return acceptable.reduce<PaintingSizeIndex>(
+    (max, info) => (info.sizeIndex > max ? info.sizeIndex : max),
+    acceptable[0].sizeIndex,
+  );
+}
