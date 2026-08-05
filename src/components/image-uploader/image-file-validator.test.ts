@@ -32,8 +32,8 @@ describe("validateImageFile", () => {
     dpiRulesState.minDpi = 72;
     dpiRulesState.guardEnabled = true;
     mockLoadImageDimensions.mockResolvedValue({
-      width: RULES.minWidth,
-      height: RULES.minHeight,
+      width: 3000,
+      height: 2000,
     });
   });
 
@@ -61,36 +61,49 @@ describe("validateImageFile", () => {
     expect(violations[0].messageKey).toBe("upload.validation.maxFileSize");
   });
 
-  it("rejects image below minimum width", async () => {
+  it("rejects a square image below the square reference print resolution", async () => {
     mockLoadImageDimensions.mockResolvedValue({
-      width: RULES.minWidth - 1,
-      height: RULES.minHeight,
+      width: 1000,
+      height: 1000,
     });
 
-    const file = new File(["x"], "narrow.jpg", { type: "image/jpeg" });
+    const file = new File(["x"], "small.jpg", { type: "image/jpeg" });
     const { violations } = await validateImageFile(file, RULES);
 
-    expect(violations.length).toBeGreaterThanOrEqual(1);
-    const widthViolation = violations.find((v) => v.rule === "minWidth");
-    expect(widthViolation).toBeDefined();
-    expect(widthViolation!.params.minWidth).toBe(RULES.minWidth);
-    expect(widthViolation!.params.actualWidth).toBe(RULES.minWidth - 1);
+    expect(violations).toHaveLength(1);
+    expect(violations[0].rule).toBe("minDpi");
+    expect(violations[0].messageKey).toBe("upload.validation.minDpi");
+    expect(violations[0].params.minDpi).toBe(72);
+    expect(violations[0].params.actualDpi).toBe(42);
   });
 
-  it("rejects image below minimum height", async () => {
+  it("accepts a portrait image that meets the DPI in its optimal orientation", async () => {
     mockLoadImageDimensions.mockResolvedValue({
-      width: RULES.minWidth,
-      height: RULES.minHeight - 1,
+      width: 2000,
+      height: 3000,
     });
 
-    const file = new File(["x"], "short.jpg", { type: "image/jpeg" });
+    const file = new File(["x"], "vertical.jpg", { type: "image/jpeg" });
     const { violations } = await validateImageFile(file, RULES);
 
-    expect(violations.length).toBeGreaterThanOrEqual(1);
-    const heightViolation = violations.find((v) => v.rule === "minHeight");
-    expect(heightViolation).toBeDefined();
-    expect(heightViolation!.params.minHeight).toBe(RULES.minHeight);
-    expect(heightViolation!.params.actualHeight).toBe(RULES.minHeight - 1);
+    expect(violations).toHaveLength(0);
+  });
+
+  it("reports DPI for a portrait image below the resolution requirement", async () => {
+    mockLoadImageDimensions.mockResolvedValue({
+      width: 1500,
+      height: 2250,
+    });
+
+    const file = new File(["x"], "vertical-low.jpg", { type: "image/jpeg" });
+    const { violations } = await validateImageFile(file, RULES);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0].rule).toBe("minDpi");
+    expect(violations[0].messageKey).toBe("upload.validation.minDpi");
+    expect(violations[0].params.actualDpi).toBe(63);
+    expect(violations[0].params.minDpi).toBe(72);
+    expect(violations.some((v) => v.rule === "minWidth")).toBe(false);
   });
 
   it("returns no violations for an image with sufficient resolution for default print size", async () => {
@@ -181,19 +194,17 @@ describe("validateImageFile", () => {
     expect(mockLoadImageDimensions).not.toHaveBeenCalled();
   });
 
-  it("does not check DPI when dimension violations exist", async () => {
+  it("checks DPI for any image when the guard is enabled", async () => {
     mockLoadImageDimensions.mockResolvedValue({
-      width: RULES.minWidth - 1,
-      height: RULES.minHeight,
+      width: 1000,
+      height: 1000,
     });
 
     const file = new File(["x"], "small.jpg", { type: "image/jpeg" });
     const { violations } = await validateImageFile(file, RULES);
 
-    const hasMinWidth = violations.some((v) => v.rule === "minWidth");
-    expect(hasMinWidth).toBe(true);
     const hasMinDpi = violations.some((v) => v.rule === "minDpi");
-    expect(hasMinDpi).toBe(false);
+    expect(hasMinDpi).toBe(true);
   });
 
   it("accepts images below minimum dimensions when the DPI guard is off", async () => {

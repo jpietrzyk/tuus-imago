@@ -1,5 +1,5 @@
 import type { DpiQuality } from "./image-dpi-calculator";
-import { calculateEffectiveDpi } from "./image-dpi-calculator";
+import { calculateOrientationMatchedDpi } from "./image-dpi-calculator";
 import { IMAGE_DPI_RULES } from "./image-dpi-rules";
 import type { PaintingShape, PaintingSizeIndex } from "./painting-size";
 import { getPaintingSizeOptions } from "./painting-size";
@@ -19,7 +19,7 @@ export function computeSizesDpiAvailability(
   const options = getPaintingSizeOptions(shape);
 
   return options.map((option) => {
-    const result = calculateEffectiveDpi(
+    const result = calculateOrientationMatchedDpi(
       imageWidth,
       imageHeight,
       option.widthCm,

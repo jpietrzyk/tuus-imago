@@ -189,8 +189,6 @@ export interface Translations {
     usedCloudinaryTools: string;
     noCloudinaryTools: string;
     validation: {
-      minWidth: string;
-      minHeight: string;
       minDpi: string;
       maxFileSize: string;
       invalidType: string;

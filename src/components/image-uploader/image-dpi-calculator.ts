@@ -31,6 +31,24 @@ export function calculateEffectiveDpi(
   };
 }
 
+export function calculateOrientationMatchedDpi(
+  pixelWidth: number,
+  pixelHeight: number,
+  printWidthCm: number,
+  printHeightCm: number,
+): DpiCalculationResult {
+  const imageIsPortrait = pixelHeight > pixelWidth;
+  const printIsPortrait = printHeightCm > printWidthCm;
+  const shouldSwap = imageIsPortrait !== printIsPortrait;
+
+  return calculateEffectiveDpi(
+    pixelWidth,
+    pixelHeight,
+    shouldSwap ? printHeightCm : printWidthCm,
+    shouldSwap ? printWidthCm : printHeightCm,
+  );
+}
+
 export function calculateDpiFromCrop(
   crop: CropCalculationResult,
   printSize: PaintingSizeOption,

@@ -136,9 +136,7 @@
     "usedCloudinaryTools": "Użyte narzędzia AI",
     "noCloudinaryTools": "Nie wybrano narzędzi AI",
     "validation": {
-      "minWidth": "Obraz musi mieć co najmniej {minWidth}px szerokości (aktualnie: {actualWidth}px)",
-      "minHeight": "Obraz musi mieć co najmniej {minHeight}px wysokości (aktualnie: {actualHeight}px)",
-      "minDpi": "Rozdzielczość obrazu musi wynosić co najmniej {minDpi} DPI (aktualnie: {actualDpi} DPI)",
+      "minDpi": "Rozdzielczość obrazu musi wynosić co najmniej {minDpi} DPI do druku (aktualnie: {actualDpi} DPI)",
       "maxFileSize": "Rozmiar pliku przekracza limit {maxSizeMB} MB",
       "invalidType": "Nieobsługiwany format pliku. Użyj JPG, PNG lub WebP",
       "invalidImage": "Nie udało się wczytać obrazu. Plik może być uszkodzony."
