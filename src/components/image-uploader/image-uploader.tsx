@@ -46,7 +46,7 @@ import {
   DEFAULT_PAINTING_SIZE_INDEX,
   getPaintingSizeOptions,
 } from "./painting-size";
-import { computeSizesDpiAvailability, type SizeDpiInfo } from "./size-dpi-availability";
+import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
 import {
   projectTriptychPrintability,
@@ -425,6 +425,7 @@ export const ImageUploader = forwardRef<
   const [isTriptychSplit, setIsTriptychSplit] = useState(false);
   const [selectedPaintingSize, setSelectedPaintingSize] =
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
+  const userSelectedPaintingSizeRef = useRef(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -1258,6 +1259,7 @@ export const ImageUploader = forwardRef<
     setActiveImageIndex(null);
     updateSelectedImageMetadata(null);
     setIsTriptychSplit(false);
+    userSelectedPaintingSizeRef.current = false;
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -1307,6 +1309,7 @@ export const ImageUploader = forwardRef<
       setActiveImageIndex(CENTER_SLOT_INDEX);
       activeImageIndexRef.current = CENTER_SLOT_INDEX;
       onImageMetadataChange?.(null);
+      userSelectedPaintingSizeRef.current = true;
       setSelectedPaintingSize(targetSize);
       setIsTriptychSplit(true);
     } catch {
@@ -1565,14 +1568,17 @@ export const ImageUploader = forwardRef<
 
   useEffect(() => {
     if (!sizesDpiInfo) return;
-    const currentInfo = sizesDpiInfo.find((info) => info.sizeIndex === selectedPaintingSize);
+
+    if (!userSelectedPaintingSizeRef.current) {
+      setSelectedPaintingSize(resolveRecommendedPaintingSize(sizesDpiInfo));
+      return;
+    }
+
+    const currentInfo = sizesDpiInfo.find(
+      (info) => info.sizeIndex === selectedPaintingSize,
+    );
     if (!currentInfo) {
-      const largestAvailable = [...sizesDpiInfo]
-        .filter((info) => info.isAvailable)
-        .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];
-      setSelectedPaintingSize(
-        largestAvailable ? largestAvailable.sizeIndex : DEFAULT_PAINTING_SIZE_INDEX,
-      );
+      setSelectedPaintingSize(resolveRecommendedPaintingSize(sizesDpiInfo));
       return;
     }
     if (!currentInfo.isAvailable) {
@@ -1637,6 +1643,7 @@ export const ImageUploader = forwardRef<
 
   const handleSelectPaintingSize = useCallback(
     (index: PaintingSizeIndex) => {
+      userSelectedPaintingSizeRef.current = true;
       setSelectedPaintingSize(index);
     },
     [],
