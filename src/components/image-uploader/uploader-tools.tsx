@@ -54,7 +54,6 @@ export function UploaderTools({
   showCoverageDetails = false,
   triggerButton,
 }: UploaderToolsProps) {
-  const selectedCoverage = coveragePercent?.[selectedProportion];
   const SelectedIcon = PROPORTION_ICONS[selectedProportion];
 
   const defaultTrigger = (
@@ -99,16 +98,6 @@ export function UploaderTools({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {showCoverageDetails &&
-        typeof selectedCoverage === "number" &&
-        !Number.isNaN(selectedCoverage) && (
-          <div
-            className="text-xs text-muted-foreground"
-            data-testid="selected-coverage-hint"
-          >
-            Showing {selectedCoverage.toFixed(2)}% of original area
-          </div>
-        )}
     </div>
   );
 }

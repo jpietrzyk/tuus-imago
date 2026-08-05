@@ -30,27 +30,4 @@ describe("UploaderTools", () => {
       "Vertical",
     );
   });
-
-  it("shows coverage hint when showCoverageDetails and valid coverage", () => {
-    render(
-      <UploaderTools
-        {...defaultProps}
-        showCoverageDetails
-        coveragePercent={{ horizontal: 75.123 }}
-      />,
-    );
-    expect(screen.getByTestId("selected-coverage-hint")).toBeInTheDocument();
-    expect(screen.getByText(/75\.12%/)).toBeInTheDocument();
-  });
-
-  it("hides coverage hint when showCoverageDetails=false", () => {
-    render(
-      <UploaderTools
-        {...defaultProps}
-        showCoverageDetails={false}
-        coveragePercent={{ horizontal: 75.123 }}
-      />,
-    );
-    expect(screen.queryByTestId("selected-coverage-hint")).not.toBeInTheDocument();
-  });
 });
