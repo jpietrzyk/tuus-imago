@@ -1,10 +1,15 @@
 import { type ReactNode, useRef, useState, useEffect } from "react";
-import type { PaintingSizeIndex } from "./painting-size";
-import { getPaintingSizeScale, ALL_PAINTING_SIZE_INDICES } from "./painting-size";
+import type { PaintingShape, PaintingSizeIndex } from "./painting-size";
+import {
+  getPaintingSizeScale,
+  getPaintingSizeIndices,
+  ALL_PAINTING_SIZE_INDICES,
+} from "./painting-size";
 
 interface PaintingSizeHelperOverlayProps {
   selectedSize: PaintingSizeIndex;
   paintingAspectRatio: number;
+  shape?: PaintingShape;
   showBorders?: boolean;
   children: ReactNode;
 }
@@ -14,6 +19,7 @@ const MAX_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SI
 export default function PaintingSizeHelperOverlay({
   selectedSize,
   paintingAspectRatio,
+  shape = "square",
   showBorders = false,
   children,
 }: PaintingSizeHelperOverlayProps) {
@@ -48,7 +54,7 @@ export default function PaintingSizeHelperOverlay({
         style={fitSize.width > 0 ? { width: fitSize.width, height: fitSize.height } : undefined}
       >
         {showBorders &&
-          ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
+          getPaintingSizeIndices(shape).map((sizeIdx) => {
             const scale = getPaintingSizeScale(sizeIdx);
             const relativeScale = scale / MAX_SCALE;
             const isSelected = sizeIdx === selectedSize;

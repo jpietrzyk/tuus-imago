@@ -49,6 +49,10 @@ export function getPaintingSizeOptions(
   return shape === "square" ? SQUARE_OPTIONS : RECTANGULAR_OPTIONS;
 }
 
+export function getPaintingSizeIndices(shape: PaintingShape): PaintingSizeIndex[] {
+  return getPaintingSizeOptions(shape).map((option) => option.key);
+}
+
 export function getPaintingOrientation(
   proportion: FrameProportion,
 ): PaintingOrientation {
