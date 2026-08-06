@@ -39,10 +39,38 @@ const SIZE_SCALE_MAP: Record<PaintingSizeIndex, number> = {
 
 export const ALL_PAINTING_SIZE_INDICES: PaintingSizeIndex[] = [0, 1, 2, 3, 4, 5];
 
+export type PaintingOrientation = "portrait" | "landscape";
+
+export type FrameProportion = "horizontal" | "vertical" | "rectangle" | "square";
+
 export function getPaintingSizeOptions(
   shape: PaintingShape,
 ): PaintingSizeOption[] {
   return shape === "square" ? SQUARE_OPTIONS : RECTANGULAR_OPTIONS;
+}
+
+export function getPaintingOrientation(
+  proportion: FrameProportion,
+): PaintingOrientation {
+  return proportion === "vertical" ? "portrait" : "landscape";
+}
+
+export function getOrientedPaintingDimensions(
+  option: PaintingSizeOption,
+  orientation: PaintingOrientation,
+): { widthCm: number; heightCm: number } {
+  const swap = orientation === "portrait" && option.widthCm !== option.heightCm;
+  return swap
+    ? { widthCm: option.heightCm, heightCm: option.widthCm }
+    : { widthCm: option.widthCm, heightCm: option.heightCm };
+}
+
+export function formatPaintingSizeLabel(
+  option: PaintingSizeOption,
+  orientation: PaintingOrientation,
+): string {
+  const { widthCm, heightCm } = getOrientedPaintingDimensions(option, orientation);
+  return `${widthCm} x ${heightCm}`;
 }
 
 export function getPaintingSizeScale(index: PaintingSizeIndex): number {

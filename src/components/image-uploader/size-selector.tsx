@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
 import {
+  formatPaintingSizeLabel,
   getPaintingSizeOptions,
+  type PaintingOrientation,
   type PaintingShape,
   type PaintingSizeIndex,
 } from "./painting-size";
@@ -20,6 +22,7 @@ const QUALITY_DOT_COLORS: Record<Exclude<DpiQuality, "low">, string> = {
 interface SizeSelectorProps {
   hidden?: boolean;
   shape: PaintingShape;
+  orientation?: PaintingOrientation;
   selectedIndex: PaintingSizeIndex;
   onSelectSize: (index: PaintingSizeIndex) => void;
   sizesDpiInfo?: SizeDpiInfo[];
@@ -28,6 +31,7 @@ interface SizeSelectorProps {
 export function SizeSelector({
   hidden = false,
   shape,
+  orientation = "landscape",
   selectedIndex,
   onSelectSize,
   sizesDpiInfo,
@@ -40,7 +44,8 @@ export function SizeSelector({
         <div className="flex flex-col gap-0.5">
           <p className="text-xs text-muted-foreground">{t("uploader.selectSize")}</p>
           <div className="flex items-center justify-center gap-1.5">
-            {options.map(({ key, label }) => {
+            {options.map((option) => {
+              const { key } = option;
               const isSelected = key === selectedIndex;
               const dpiInfo = sizesDpiInfo?.find(
                 (info) => info.sizeIndex === key,
@@ -65,7 +70,7 @@ export function SizeSelector({
                   <span
                     className={`text-[9px] leading-none truncate w-full text-center ${!isAvailable ? "line-through" : ""}`}
                   >
-                    {label}
+                    {formatPaintingSizeLabel(option, orientation)}
                   </span>
                   <span className="text-[9px] leading-none truncate w-full text-center">
                     cm

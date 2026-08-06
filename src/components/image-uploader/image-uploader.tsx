@@ -44,6 +44,8 @@ import {
   type PaintingSizeIndex,
   type PaintingShape,
   DEFAULT_PAINTING_SIZE_INDEX,
+  getOrientedPaintingDimensions,
+  getPaintingOrientation,
   getPaintingSizeOptions,
 } from "./painting-size";
 import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
@@ -1604,6 +1606,12 @@ export const ImageUploader = forwardRef<
     );
     const dpi = currentSizeInfo?.dpi ?? 0;
     const dpiQuality = currentSizeInfo?.quality ?? "low";
+    const printDims = currentSize
+      ? getOrientedPaintingDimensions(
+          currentSize,
+          getPaintingOrientation(displayImageProportion),
+        )
+      : null;
 
     return {
       metadata: selectedImageMetadata,
@@ -1612,7 +1620,7 @@ export const ImageUploader = forwardRef<
       coveragePercent: coveragePercent ?? {},
       effectiveDpi: dpi,
       dpiQuality,
-      printSizeLabel: currentSize ? `${currentSize.widthCm}×${currentSize.heightCm} cm` : "",
+      printSizeLabel: printDims ? `${printDims.widthCm}×${printDims.heightCm} cm` : "",
     };
   }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize, sizesDpiInfo]);
 

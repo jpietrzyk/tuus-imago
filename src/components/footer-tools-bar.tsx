@@ -15,6 +15,7 @@ import { TriangleAlert } from "lucide-react";
 import { UploaderTools, type UploaderProportion } from "@/components/image-uploader/uploader-tools";
 import { SizeSelector } from "@/components/image-uploader/size-selector";
 import type { PaintingShape, PaintingSizeIndex } from "@/components/image-uploader/painting-size";
+import { getPaintingOrientation } from "@/components/image-uploader/painting-size";
 import type { SizeDpiInfo } from "@/components/image-uploader/size-dpi-availability";
 import IconShape from "@/assets/icons/ksztalt_tool.svg?react";
 import IconFrame from "@/assets/icons/kadr_tool.svg?react";
@@ -135,6 +136,7 @@ export function FooterToolsBar({
     <div className="px-4 sm:px-6 lg:px-8">
       <SizeSelector
         shape={paintingShape}
+        orientation={getPaintingOrientation(selectedProportion)}
         selectedIndex={selectedPaintingSize}
         onSelectSize={onSelectPaintingSize}
         sizesDpiInfo={sizesDpiInfo}
