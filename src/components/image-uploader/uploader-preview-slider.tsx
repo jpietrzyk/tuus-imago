@@ -10,7 +10,7 @@ import type {
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import { getTargetAspectRatio } from "./image-proportion-calculator";
-import { getPaintingSizeScale, ALL_PAINTING_SIZE_INDICES, type PaintingSizeIndex } from "./painting-size";
+import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
 import type { CropAdjust } from "./use-crop-adjust";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
@@ -102,6 +102,7 @@ interface UploaderPreviewSliderProps {
   onClearSlot?: () => void;
   selectedPaintingSize?: PaintingSizeIndex;
   paintingAspectRatio?: number;
+  paintingShape?: PaintingShape;
   slots?: Array<SelectedImageItem | null>;
   onSelectSlot?: (index: number) => void;
   getSlotPreviewUrl?: (image: SelectedImageItem) => string;
@@ -132,6 +133,7 @@ export default function UploaderPreviewSlider({
   onClearSlot,
   selectedPaintingSize = 2,
   paintingAspectRatio = 1.5,
+  paintingShape = "square",
   slots,
   onSelectSlot,
   getSlotPreviewUrl,
@@ -250,7 +252,7 @@ export default function UploaderPreviewSlider({
                   : { aspectRatio: String(panelAspectRatio) }
               }
             >
-              {ALL_PAINTING_SIZE_INDICES.map((sizeIdx) => {
+              {getPaintingSizeIndices(paintingShape).map((sizeIdx) => {
                 const scale = getPaintingSizeScale(sizeIdx);
                 const relativeScale = scale / MAX_PAINTING_SIZE_SCALE;
                 const isSelected = sizeIdx === selectedPaintingSize;
@@ -295,6 +297,7 @@ export default function UploaderPreviewSlider({
       <PaintingSizeHelperOverlay
         selectedSize={selectedPaintingSize}
         paintingAspectRatio={paintingAspectRatio}
+        shape={paintingShape}
         showBorders
       >
         {previewSlot}

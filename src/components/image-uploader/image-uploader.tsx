@@ -1916,6 +1916,7 @@ export const ImageUploader = forwardRef<
           onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
           selectedPaintingSize={selectedPaintingSize}
           paintingAspectRatio={paintingAspectRatio}
+          paintingShape={paintingShape}
           slots={selectedImages}
           onSelectSlot={handlePreviewSlotSelect}
           getSlotPreviewUrl={getTransformedImagePreviewUrl}
