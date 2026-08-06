@@ -207,7 +207,7 @@
     "debugSuggestedFrame": "Sugerowana ramka podglądu",
     "debugHorizontalCoverage": "Widoczny obszar poziomy",
     "debugVerticalCoverage": "Widoczny obszar pionowy",
-    "debugRectangleCoverage": "Widoczny obszar prostokątny",
+    "debugRectangleCoverage": "Widoczny obszar kwadratowy",
     "debugUnknown": "Nieznane",
     "debugEffectiveDpi": "Efektywne DPI",
     "debugEffectiveDpiForSize": "Efektywne DPI ({size})",

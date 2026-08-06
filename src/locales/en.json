@@ -265,7 +265,7 @@
     "debugSuggestedFrame": "Suggested preview frame",
     "debugHorizontalCoverage": "Horizontal visible area",
     "debugVerticalCoverage": "Vertical visible area",
-    "debugRectangleCoverage": "Rectangle visible area",
+    "debugRectangleCoverage": "Square visible area",
     "debugUnknown": "Unknown",
     "debugEffectiveDpi": "Effective DPI",
     "debugEffectiveDpiForSize": "Effective DPI ({size})",
