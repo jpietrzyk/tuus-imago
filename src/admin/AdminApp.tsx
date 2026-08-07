@@ -1,4 +1,5 @@
 import { Refine } from "@refinedev/core";
+import routerProvider from "@refinedev/react-router";
 import { adminDataProvider } from "./data-provider";
 import { adminAuthProvider } from "./auth-provider";
 import type { ReactNode } from "react";
@@ -6,6 +7,7 @@ import type { ReactNode } from "react";
 export function AdminApp({ children }: { children: ReactNode }) {
   return (
     <Refine
+      routerProvider={routerProvider}
       dataProvider={adminDataProvider}
       authProvider={adminAuthProvider}
       resources={[
