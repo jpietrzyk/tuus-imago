@@ -12,8 +12,7 @@ Canvas photo printing e-commerce application. Customers upload photos, preview c
 | Images | Cloudinary (signed upload via Netlify Functions) |
 | Payments | Przelewy24 (sandbox/production) |
 | CRM | HubSpot (non-blocking contact sync) |
-| CMS | Decap CMS (legal pages at `/admin/`) |
-| Admin | Refine framework with TanStack Table |
+| Admin | Refine + TanStack Table (`/admin`, gated by Supabase admin auth) |
 | Testing | Vitest 4, Testing Library, jsdom |
 | Linting | ESLint 9 (flat config), typescript-eslint |
 | i18n | English + Polish |
@@ -128,7 +127,7 @@ src/
   admin/              # Admin app wrapper, auth/data providers, layout
 netlify/functions/    # Serverless functions (orders, payments, uploads, CRM)
 supabase/migrations/  # Database migration files
-content/legal/        # Markdown content for legal pages (managed via CMS)
+content/legal/        # Markdown content for legal pages (edited in-repo)
 scripts/              # Dev scripts (Supabase migration helper)
 docs/                 # Development notes
 ```
@@ -196,9 +195,9 @@ Required GitHub configuration:
 - Non-blocking — sync failure does not prevent checkout or payment
 - Requires custom contact properties in HubSpot (see `.env.example` comments)
 
-## Legal Pages & CMS
+## Legal Pages
 
-Legal pages are Markdown files in `content/legal/`, managed via **Decap CMS** at `/admin/`.
+Legal pages are Markdown files in `content/legal/`, loaded directly by `src/lib/content-loader.ts` (frontmatter + body). They are edited in the repository — there is no separate CMS UI.
 
 - **Slugs are derived from filenames** (e.g., `terms.md` → `/terms`). Renaming a file requires updating all references.
 - **Menu ordering** is controlled by the `menuOrder` frontmatter field within each menu section (`legal`, `payments`, `company`).
