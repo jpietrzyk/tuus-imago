@@ -305,4 +305,103 @@ describe("UploaderPreviewSlider", () => {
       expect(content).toHaveStyle({ width: "50%", height: "50%" });
     }
   });
+
+  it("mirrors the slot zoom/pan onto the side panel image transform", () => {
+    const props = createProps();
+    const left = createItem("left");
+    left.previewCropAdjust = { zoom: 2, panX: 0.5, panY: 0 };
+    const slots: Array<SelectedImageItem | null> = [
+      left,
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    const sideImg = screen
+      .getByTestId("triptych-side-panel-0")
+      .querySelector("img");
+
+    expect(sideImg).not.toBeNull();
+    expect(sideImg?.getAttribute("style") ?? "").toMatch(/scale\(2\)/);
+  });
+
+  it("mirrors the slot rotation onto the side panel image transform", () => {
+    const props = createProps();
+    const left = createItem("left");
+    left.previewTransform = {
+      rotation: 90,
+      flipHorizontal: false,
+      flipVertical: false,
+    };
+    const slots: Array<SelectedImageItem | null> = [
+      left,
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    const sideImg = screen
+      .getByTestId("triptych-side-panel-0")
+      .querySelector("img");
+
+    expect(sideImg?.getAttribute("style") ?? "").toMatch(/rotate\(90deg\)/);
+  });
+
+  it("marks side panels with the linked state", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    const { rerender } = render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+        isTriptychLinked={true}
+      />,
+    );
+
+    expect(screen.getByTestId("triptych-side-panel-0")).toHaveAttribute(
+      "data-triptych-linked",
+      "true",
+    );
+
+    rerender(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+        isTriptychLinked={false}
+      />,
+    );
+
+    expect(screen.getByTestId("triptych-side-panel-0")).not.toHaveAttribute(
+      "data-triptych-linked",
+    );
+  });
 });

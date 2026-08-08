@@ -386,4 +386,64 @@ describe("FooterToolsBar", () => {
 
     expect(onReset).toHaveBeenCalled();
   });
+
+  it("does not render triptych link toggle when canToggleTriptychLink is false", () => {
+    const props = createProps();
+    render(<FooterToolsBar {...props} />);
+
+    expect(screen.queryByTestId("triptych-link-toggle")).toBeNull();
+  });
+
+  it("renders triptych link toggle when canToggleTriptychLink is true", () => {
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        canToggleTriptychLink={true}
+        isTriptychLinked={true}
+      />,
+    );
+
+    const linkToggle = screen.getByTestId("triptych-link-toggle");
+    expect(linkToggle).toBeInTheDocument();
+    expect(linkToggle).toHaveAttribute("data-linked", "true");
+    expect(linkToggle).toHaveAttribute(
+      "aria-label",
+      t("uploader.triptychLinkedTooltip"),
+    );
+  });
+
+  it("reflects unlinked state on the triptych link toggle", () => {
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        canToggleTriptychLink={true}
+        isTriptychLinked={false}
+      />,
+    );
+
+    const linkToggle = screen.getByTestId("triptych-link-toggle");
+    expect(linkToggle).toHaveAttribute("data-linked", "false");
+    expect(linkToggle).toHaveAttribute(
+      "aria-label",
+      t("uploader.triptychUnlinkedTooltip"),
+    );
+  });
+
+  it("calls onToggleTriptychLink when the link toggle is clicked", () => {
+    const onToggleTriptychLink = vi.fn();
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        canToggleTriptychLink={true}
+        onToggleTriptychLink={onToggleTriptychLink}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("triptych-link-toggle"));
+
+    expect(onToggleTriptychLink).toHaveBeenCalledOnce();
+  });
 });

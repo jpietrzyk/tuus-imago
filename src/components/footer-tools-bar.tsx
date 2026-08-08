@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { t } from "@/locales/i18n";
-import { TriangleAlert } from "lucide-react";
+import { TriangleAlert, Link2, Unlink2 } from "lucide-react";
 import { UploaderTools, type UploaderProportion } from "@/components/image-uploader/uploader-tools";
 import { SizeSelector } from "@/components/image-uploader/size-selector";
 import type { PaintingShape, PaintingSizeIndex } from "@/components/image-uploader/painting-size";
@@ -46,6 +46,10 @@ export interface FooterToolsBarProps {
   shouldConfirmSplit: boolean;
   splitConfirmVariant: "overwrite" | "printability" | "both" | "none";
   triptychDisabledReason?: "noPrintableSize";
+
+  isTriptychLinked?: boolean;
+  canToggleTriptychLink?: boolean;
+  onToggleTriptychLink?: () => void;
 
   onReset: () => void;
   canReset: boolean;
@@ -93,6 +97,9 @@ export function FooterToolsBar({
   shouldConfirmSplit,
   splitConfirmVariant,
   triptychDisabledReason,
+  isTriptychLinked = true,
+  canToggleTriptychLink = false,
+  onToggleTriptychLink,
   onReset,
   canReset,
   selectedPaintingSize,
@@ -118,6 +125,36 @@ export function FooterToolsBar({
       <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.triptychButton")}</span>
     </Button>
   );
+
+  const triptychLinkButton = canToggleTriptychLink ? (
+    <Button
+      type="button"
+      variant={isTriptychLinked ? "default" : "secondary"}
+      onClick={onToggleTriptychLink}
+      aria-label={
+        isTriptychLinked
+          ? t("uploader.triptychLinkedTooltip")
+          : t("uploader.triptychUnlinkedTooltip")
+      }
+      title={
+        isTriptychLinked
+          ? t("uploader.triptychLinkedTooltip")
+          : t("uploader.triptychUnlinkedTooltip")
+      }
+      data-testid="triptych-link-toggle"
+      data-linked={isTriptychLinked ? "true" : "false"}
+      className={TOOLBAR_BUTTON_CLASS}
+    >
+      {isTriptychLinked ? (
+        <Link2 style={ICON_STYLE} />
+      ) : (
+        <Unlink2 style={ICON_STYLE} />
+      )}
+      <span className="text-[9px] leading-none truncate w-full text-center">
+        {t("uploader.triptychLinkButton")}
+      </span>
+    </Button>
+  ) : null;
 
   const resetButton = (
     <Button
@@ -234,6 +271,8 @@ export function FooterToolsBar({
             ) : (
               triptychButton
             )}
+
+          {triptychLinkButton}
 
           <AlertDialog>
             <AlertDialogTrigger asChild>{resetButton}</AlertDialogTrigger>

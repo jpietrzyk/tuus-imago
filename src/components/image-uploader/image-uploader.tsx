@@ -425,6 +425,9 @@ export const ImageUploader = forwardRef<
   const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">("settings");
   const [isZoomPanMode, setIsZoomPanMode] = useState(false);
   const [isTriptychSplit, setIsTriptychSplit] = useState(false);
+  const [isTriptychLinked, setIsTriptychLinked] = useState(true);
+  const isTriptychSplitRef = useRef(false);
+  const isTriptychLinkedRef = useRef(true);
   const [selectedPaintingSize, setSelectedPaintingSize] =
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const userSelectedPaintingSizeRef = useRef(false);
@@ -468,6 +471,14 @@ export const ImageUploader = forwardRef<
   const selectedImageMetadata = activeImage?.metadata ?? null;
   const displayImageProportion =
     activeImage?.displayImageProportion ?? "horizontal";
+
+  useEffect(() => {
+    isTriptychSplitRef.current = isTriptychSplit;
+  }, [isTriptychSplit]);
+
+  useEffect(() => {
+    isTriptychLinkedRef.current = isTriptychLinked;
+  }, [isTriptychLinked]);
 
   const revokePreviewUrls = useCallback(
     (images: Array<SelectedImageItem | null>) => {
@@ -570,6 +581,7 @@ export const ImageUploader = forwardRef<
       });
 
       setIsTriptychSplit(false);
+      setIsTriptychLinked(true);
 
       setActiveImageIndex((currentActiveIndex) => {
         if (hasExistingSelection && clickedEmptySlot) {
@@ -659,6 +671,209 @@ export const ImageUploader = forwardRef<
     [activeImageIndex],
   );
 
+  // --- Triptych binding helpers ---
+  // When the triptych is linked, editable state (effects/transform/crop) is
+  // propagated to every filled slot. When unlinked (or not a triptych), only
+  // the active slot is touched. Indices are resolved from refs so the writer
+  // callbacks stay stable across renders.
+  const resolveBoundSlotIndices = useCallback((): number[] => {
+    const activeIdx = activeImageIndexRef.current;
+    if (typeof activeIdx !== "number") {
+      return [];
+    }
+
+    if (!isTriptychSplitRef.current || !isTriptychLinkedRef.current) {
+      return [activeIdx];
+    }
+
+    return selectedImagesRef.current
+      .map((image, idx) => (image ? idx : -1))
+      .filter((idx) => idx >= 0);
+  }, []);
+
+  // Sibling (non-active) updates are coalesced onto a single animation frame
+  // so continuous gestures (pan/zoom drag, effect-slider drag) don't re-render
+  // all three slots on every input tick. The active slot is always updated
+  // synchronously for immediate feedback, matching the canvas's RAF throttle.
+  const pendingSiblingMutationRef = useRef<{
+    effects?: { value: SelectedImageItem["previewEffects"] };
+    transform?: { value: SelectedImageItem["previewTransform"] };
+    crop?: {
+      value: { zoom: number; panX: number; panY: number } | undefined;
+    };
+  }>({});
+  const siblingFlushRafRef = useRef<number | null>(null);
+
+  const updateActiveSlot = useCallback(
+    (mutate: (image: SelectedImageItem) => SelectedImageItem) => {
+      const activeIdx = activeImageIndexRef.current;
+      if (typeof activeIdx !== "number") {
+        return;
+      }
+      setSelectedImages((prevImages) =>
+        prevImages.map((image, idx) =>
+          image && idx === activeIdx ? mutate(image) : image,
+        ),
+      );
+    },
+    [],
+  );
+
+  const flushSiblingMutations = useCallback(() => {
+    siblingFlushRafRef.current = null;
+    const pending = pendingSiblingMutationRef.current;
+    pendingSiblingMutationRef.current = {};
+    if (!pending.effects && !pending.transform && !pending.crop) {
+      return;
+    }
+
+    const activeIdx = activeImageIndexRef.current;
+    const siblingIndices = resolveBoundSlotIndices().filter(
+      (idx) => idx !== activeIdx,
+    );
+    if (siblingIndices.length === 0) {
+      return;
+    }
+
+    setSelectedImages((prevImages) =>
+      prevImages.map((image, idx) => {
+        if (!image || !siblingIndices.includes(idx)) {
+          return image;
+        }
+
+        let next = image;
+        if (pending.effects) {
+          next = { ...next, previewEffects: { ...pending.effects.value } };
+        }
+        if (pending.transform) {
+          next = {
+            ...next,
+            previewTransform: pending.transform.value
+              ? { ...pending.transform.value }
+              : undefined,
+          };
+        }
+        if (pending.crop) {
+          next = {
+            ...next,
+            previewCropAdjust: pending.crop.value
+              ? { ...pending.crop.value }
+              : undefined,
+          };
+        }
+        return next;
+      }),
+    );
+  }, [resolveBoundSlotIndices]);
+
+  const scheduleSiblingFlush = useCallback(() => {
+    const activeIdx = activeImageIndexRef.current;
+    const hasSiblings = resolveBoundSlotIndices().some(
+      (idx) => idx !== activeIdx,
+    );
+    if (!hasSiblings) {
+      return;
+    }
+
+    if (siblingFlushRafRef.current === null) {
+      siblingFlushRafRef.current =
+        window.requestAnimationFrame(flushSiblingMutations);
+    }
+  }, [flushSiblingMutations, resolveBoundSlotIndices]);
+
+  const applyEffectsToGroup = useCallback(
+    (effects: SelectedImageItem["previewEffects"]) => {
+      if (resolveBoundSlotIndices().length === 0) {
+        return;
+      }
+      updateActiveSlot((image) => ({
+        ...image,
+        previewEffects: { ...effects },
+      }));
+      pendingSiblingMutationRef.current.effects = { value: effects };
+      scheduleSiblingFlush();
+    },
+    [resolveBoundSlotIndices, scheduleSiblingFlush, updateActiveSlot],
+  );
+
+  const applyTransformToGroup = useCallback(
+    (transform: SelectedImageItem["previewTransform"]) => {
+      if (resolveBoundSlotIndices().length === 0) {
+        return;
+      }
+      updateActiveSlot((image) => ({
+        ...image,
+        previewTransform: transform ? { ...transform } : undefined,
+      }));
+      pendingSiblingMutationRef.current.transform = { value: transform };
+      scheduleSiblingFlush();
+    },
+    [resolveBoundSlotIndices, scheduleSiblingFlush, updateActiveSlot],
+  );
+
+  const applyCropAdjustToGroup = useCallback(
+    (adjust: { zoom: number; panX: number; panY: number } | undefined) => {
+      if (resolveBoundSlotIndices().length === 0) {
+        return;
+      }
+      updateActiveSlot((image) => ({
+        ...image,
+        previewCropAdjust: adjust ? { ...adjust } : undefined,
+      }));
+      pendingSiblingMutationRef.current.crop = { value: adjust };
+      scheduleSiblingFlush();
+    },
+    [resolveBoundSlotIndices, scheduleSiblingFlush, updateActiveSlot],
+  );
+
+  const syncGroupFromActive = useCallback(() => {
+    const activeIdx = activeImageIndexRef.current;
+    const source = typeof activeIdx === "number"
+      ? selectedImagesRef.current[activeIdx]
+      : null;
+    if (!source) {
+      return;
+    }
+
+    setSelectedImages((prevImages) =>
+      prevImages.map((image, idx) => {
+        if (!image || idx === activeIdx) {
+          return image;
+        }
+
+        return {
+          ...image,
+          previewEffects: { ...source.previewEffects },
+          previewTransform: source.previewTransform
+            ? { ...source.previewTransform }
+            : image.previewTransform,
+          previewCropAdjust: source.previewCropAdjust
+            ? { ...source.previewCropAdjust }
+            : image.previewCropAdjust,
+        };
+      }),
+    );
+  }, []);
+
+  const toggleTriptychLink = useCallback(() => {
+    const next = !isTriptychLinkedRef.current;
+    setIsTriptychLinked(next);
+    // Re-linking converges the siblings to the active image's current state.
+    if (next) {
+      syncGroupFromActive();
+    }
+  }, [syncGroupFromActive]);
+
+  // Cancel any pending sibling flush when the uploader unmounts.
+  useEffect(() => {
+    return () => {
+      if (siblingFlushRafRef.current !== null) {
+        window.cancelAnimationFrame(siblingFlushRafRef.current);
+        siblingFlushRafRef.current = null;
+      }
+    };
+  }, []);
+
   useEffect(() => {
     setShowIcons(defaultShowIcons);
   }, [defaultShowIcons]);
@@ -717,15 +932,16 @@ export const ImageUploader = forwardRef<
 
   const updateActiveImageEffect = useCallback(
     (effectName: "brightness" | "contrast" | "grayscale", value: number) => {
-      updateActiveImage((image) => ({
-        ...image,
-        previewEffects: {
-          ...image.previewEffects,
-          [effectName]: value,
-        },
-      }));
+      if (!activeImage) {
+        return;
+      }
+
+      applyEffectsToGroup({
+        ...activeImage.previewEffects,
+        [effectName]: value,
+      });
     },
-    [updateActiveImage],
+    [activeImage, applyEffectsToGroup],
   );
 
   const setSlotRemoveBackground = useCallback(
@@ -827,25 +1043,26 @@ export const ImageUploader = forwardRef<
 
   const toggleActiveImageRemoveBackground = useCallback(
     (enabled: boolean) => {
-      const slotIndex = activeImageIndexRef.current;
-      if (typeof slotIndex !== "number") {
-        return;
-      }
+      const indices = resolveBoundSlotIndices();
 
-      setSlotRemoveBackground(slotIndex, enabled);
+      indices.forEach((slotIndex) =>
+        setSlotRemoveBackground(slotIndex, enabled),
+      );
 
       if (!enabled) {
         return;
       }
 
-      void uploadSlotIfNeeded(slotIndex).catch((error) => {
-        setSlotRemoveBackground(slotIndex, false);
-        onUploadError?.(
-          error instanceof Error ? error.message : t("upload.uploadFailed"),
-        );
+      indices.forEach((slotIndex) => {
+        void uploadSlotIfNeeded(slotIndex).catch((error) => {
+          setSlotRemoveBackground(slotIndex, false);
+          onUploadError?.(
+            error instanceof Error ? error.message : t("upload.uploadFailed"),
+          );
+        });
       });
     },
-    [onUploadError, setSlotRemoveBackground, uploadSlotIfNeeded],
+    [onUploadError, resolveBoundSlotIndices, setSlotRemoveBackground, uploadSlotIfNeeded],
   );
 
   const setSlotEnhance = useCallback((slotIndex: number, enabled: boolean) => {
@@ -875,25 +1092,24 @@ export const ImageUploader = forwardRef<
 
   const toggleActiveImageEnhance = useCallback(
     (enabled: boolean) => {
-      const slotIndex = activeImageIndexRef.current;
-      if (typeof slotIndex !== "number") {
-        return;
-      }
+      const indices = resolveBoundSlotIndices();
 
-      setSlotEnhance(slotIndex, enabled);
+      indices.forEach((slotIndex) => setSlotEnhance(slotIndex, enabled));
 
       if (!enabled) {
         return;
       }
 
-      void uploadSlotIfNeeded(slotIndex).catch((error) => {
-        setSlotEnhance(slotIndex, false);
-        onUploadError?.(
-          error instanceof Error ? error.message : t("upload.uploadFailed"),
-        );
+      indices.forEach((slotIndex) => {
+        void uploadSlotIfNeeded(slotIndex).catch((error) => {
+          setSlotEnhance(slotIndex, false);
+          onUploadError?.(
+            error instanceof Error ? error.message : t("upload.uploadFailed"),
+          );
+        });
       });
     },
-    [onUploadError, setSlotEnhance, uploadSlotIfNeeded],
+    [onUploadError, resolveBoundSlotIndices, setSlotEnhance, uploadSlotIfNeeded],
   );
 
   const setSlotUpscale = useCallback((slotIndex: number, enabled: boolean) => {
@@ -923,25 +1139,24 @@ export const ImageUploader = forwardRef<
 
   const toggleActiveImageUpscale = useCallback(
     (enabled: boolean) => {
-      const slotIndex = activeImageIndexRef.current;
-      if (typeof slotIndex !== "number") {
-        return;
-      }
+      const indices = resolveBoundSlotIndices();
 
-      setSlotUpscale(slotIndex, enabled);
+      indices.forEach((slotIndex) => setSlotUpscale(slotIndex, enabled));
 
       if (!enabled) {
         return;
       }
 
-      void uploadSlotIfNeeded(slotIndex).catch((error) => {
-        setSlotUpscale(slotIndex, false);
-        onUploadError?.(
-          error instanceof Error ? error.message : t("upload.uploadFailed"),
-        );
+      indices.forEach((slotIndex) => {
+        void uploadSlotIfNeeded(slotIndex).catch((error) => {
+          setSlotUpscale(slotIndex, false);
+          onUploadError?.(
+            error instanceof Error ? error.message : t("upload.uploadFailed"),
+          );
+        });
       });
     },
-    [onUploadError, setSlotUpscale, uploadSlotIfNeeded],
+    [onUploadError, resolveBoundSlotIndices, setSlotUpscale, uploadSlotIfNeeded],
   );
 
   const setSlotRestore = useCallback((slotIndex: number, enabled: boolean) => {
@@ -971,86 +1186,73 @@ export const ImageUploader = forwardRef<
 
   const toggleActiveImageRestore = useCallback(
     (enabled: boolean) => {
-      const slotIndex = activeImageIndexRef.current;
-      if (typeof slotIndex !== "number") {
-        return;
-      }
+      const indices = resolveBoundSlotIndices();
 
-      setSlotRestore(slotIndex, enabled);
+      indices.forEach((slotIndex) => setSlotRestore(slotIndex, enabled));
 
       if (!enabled) {
         return;
       }
 
-      void uploadSlotIfNeeded(slotIndex).catch((error) => {
-        setSlotRestore(slotIndex, false);
-        onUploadError?.(
-          error instanceof Error ? error.message : t("upload.uploadFailed"),
-        );
+      indices.forEach((slotIndex) => {
+        void uploadSlotIfNeeded(slotIndex).catch((error) => {
+          setSlotRestore(slotIndex, false);
+          onUploadError?.(
+            error instanceof Error ? error.message : t("upload.uploadFailed"),
+          );
+        });
       });
     },
-    [onUploadError, setSlotRestore, uploadSlotIfNeeded],
+    [onUploadError, resolveBoundSlotIndices, setSlotRestore, uploadSlotIfNeeded],
   );
 
   const updateActiveImageRotation = useCallback(
     (degrees: number) => {
-      updateActiveImage((image) => ({
-        ...image,
-        previewTransform: {
-          ...(image.previewTransform ?? {
-            rotation: 0,
-            flipHorizontal: false,
-            flipVertical: false,
-          }),
-          rotation: ((degrees % 360) + 360) % 360,
-        },
-      }));
+      const base = activeImage?.previewTransform ?? {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+      };
+
+      applyTransformToGroup({
+        ...base,
+        rotation: ((degrees % 360) + 360) % 360,
+      });
     },
-    [updateActiveImage],
+    [activeImage, applyTransformToGroup],
   );
 
   const toggleActiveImageFlipHorizontal = useCallback(
     (enabled: boolean) => {
-      updateActiveImage((image) => ({
-        ...image,
-        previewTransform: {
-          ...(image.previewTransform ?? {
-            rotation: 0,
-            flipHorizontal: false,
-            flipVertical: false,
-          }),
-          flipHorizontal: enabled,
-        },
-      }));
+      const base = activeImage?.previewTransform ?? {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+      };
+
+      applyTransformToGroup({ ...base, flipHorizontal: enabled });
     },
-    [updateActiveImage],
+    [activeImage, applyTransformToGroup],
   );
 
   const toggleActiveImageFlipVertical = useCallback(
     (enabled: boolean) => {
-      updateActiveImage((image) => ({
-        ...image,
-        previewTransform: {
-          ...(image.previewTransform ?? {
-            rotation: 0,
-            flipHorizontal: false,
-            flipVertical: false,
-          }),
-          flipVertical: enabled,
-        },
-      }));
+      const base = activeImage?.previewTransform ?? {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+      };
+
+      applyTransformToGroup({ ...base, flipVertical: enabled });
     },
-    [updateActiveImage],
+    [activeImage, applyTransformToGroup],
   );
 
   const updateActiveImageCropAdjust = useCallback(
     (adjust: { zoom: number; panX: number; panY: number } | undefined) => {
-      updateActiveImage((image) => ({
-        ...image,
-        previewCropAdjust: adjust,
-      }));
+      applyCropAdjustToGroup(adjust);
     },
-    [updateActiveImage],
+    [applyCropAdjustToGroup],
   );
 
   const handleFileSelect = useCallback(
@@ -1174,6 +1376,7 @@ export const ImageUploader = forwardRef<
 
       nextImages[index] = null;
       setIsTriptychSplit(false);
+      setIsTriptychLinked(true);
 
       const filledIndexes = nextImages.reduce<number[]>(
         (acc, image, imageIndex) => {
@@ -1292,6 +1495,10 @@ export const ImageUploader = forwardRef<
       const splitFiles = await splitImageIntoVerticalThirdFiles({
         previewUrl: activeImage.previewUrl,
         sourceFile: activeImage.file,
+        metadata: activeImage.metadata,
+        proportion: activeImage.displayImageProportion,
+        previewTransform: activeImage.previewTransform,
+        previewCropAdjust: activeImage.previewCropAdjust,
       });
 
       setSelectedImages((prevImages) => {
@@ -1305,6 +1512,9 @@ export const ImageUploader = forwardRef<
           previewEffects: {
             ...activeImage.previewEffects,
           },
+          // The pre-split crop/transform is now baked into the slices, so the
+          // parts start without any local crop adjust.
+          previewCropAdjust: undefined,
         }));
       });
 
@@ -1314,6 +1524,7 @@ export const ImageUploader = forwardRef<
       userSelectedPaintingSizeRef.current = true;
       setSelectedPaintingSize(targetSize);
       setIsTriptychSplit(true);
+      setIsTriptychLinked(true);
     } catch {
       onUploadError?.(t("upload.error"));
     }
@@ -1698,6 +1909,12 @@ export const ImageUploader = forwardRef<
       triptychDisabledReason: splitPrintability?.noSizePrintable
         ? "noPrintableSize"
         : undefined,
+      isTriptychLinked,
+      canToggleTriptychLink:
+        isTriptychSplit &&
+        selectedImages.length === MAX_SELECTED_IMAGES &&
+        selectedImages.every(Boolean),
+      onToggleTriptychLink: toggleTriptychLink,
       onSelectProportion: handleSelectProportion,
       coveragePercent,
       selectedProportion:
@@ -1739,6 +1956,10 @@ export const ImageUploader = forwardRef<
     paintingShape,
     sizesDpiInfo,
     splitPrintability,
+    isTriptychSplit,
+    isTriptychLinked,
+    toggleTriptychLink,
+    selectedImages,
   ]);
 
   const prevToolsBarPropsRef = useRef<FooterToolsBarProps | null>(null);
@@ -1921,6 +2142,7 @@ export const ImageUploader = forwardRef<
           onSelectSlot={handlePreviewSlotSelect}
           getSlotPreviewUrl={getTransformedImagePreviewUrl}
           isDesktopTriptych={isDesktopTriptych}
+          isTriptychLinked={isTriptychLinked}
         />
 
         <UploaderPreviewToolsPanel

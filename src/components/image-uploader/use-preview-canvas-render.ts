@@ -9,27 +9,11 @@ import { buildPreviewRenderPlan } from "./preview-render-plan";
 import { adjustCropForZoomPan } from "./use-crop-adjust";
 import {
   calculateMaxCenteredCrop,
+  invertDisplayProportion,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
 import type { SelectedImageMetadata } from "./image-uploader";
 import type { CropAdjust } from "./use-crop-adjust";
-
-/**
- * For 90°/270° rotations the image's orientation swaps, so the crop that
- * fills the frame after rotation must be selected against the inverse frame
- * aspect.  Horizontal ↔ vertical swap; square/rectangle stay the same.
- */
-const invertDisplayProportion = (
-  proportion: ImageDisplayProportion,
-): ImageDisplayProportion => {
-  if (proportion === "horizontal") {
-    return "vertical";
-  }
-  if (proportion === "vertical") {
-    return "horizontal";
-  }
-  return proportion;
-};
 
 interface UsePreviewCanvasRenderArgs {
   previewUrl: string | null;

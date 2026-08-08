@@ -37,6 +37,25 @@ export interface PreviewTransform {
   flipVertical: boolean;
 }
 
+/** Normalize a rotation value to the [0, 360) range. */
+export const normalizeRotation = (rotation: number | undefined): number =>
+  (((rotation ?? 0) % 360) + 360) % 360;
+
+/** True when a transform has no visible rotation or flip. */
+export const isIdentityPreviewTransform = (
+  transform?: PreviewTransform | null,
+): boolean => {
+  if (!transform) {
+    return true;
+  }
+
+  return (
+    normalizeRotation(transform.rotation) === 0 &&
+    !transform.flipHorizontal &&
+    !transform.flipVertical
+  );
+};
+
 export const drawCroppedImageToCanvas = ({
   canvas,
   image,
@@ -111,7 +130,7 @@ export const drawCroppedImageToCanvas = ({
 
   // Normalize rotation and detect whether a transform is actually applied.
   const normalizedRotation =
-    transform != null ? ((transform.rotation % 360) + 360) % 360 : 0;
+    transform != null ? normalizeRotation(transform.rotation) : 0;
   const hasFlip =
     !!transform && (transform.flipHorizontal || transform.flipVertical);
   const isIdentityTransform = normalizedRotation === 0 && !hasFlip;

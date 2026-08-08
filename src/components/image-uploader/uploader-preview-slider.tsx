@@ -23,7 +23,52 @@ interface TriptychSidePanelProps {
   useCloudPreview: boolean;
   previewFrameAspectRatio: number;
   onSelectSlot: (index: number) => void;
+  isLinked: boolean;
 }
+
+/**
+ * Build the CSS `transform` mirroring a slot's zoom/pan crop and rotation/flip.
+ * Cloud previews already encode these server-side, so the mirror is only
+ * applied to local (pre-upload) previews. The side panel reflects the slot's
+ * own state; when the triptych is linked, that state is kept identical to the
+ * active slot, so all panels move together live.
+ */
+const buildSidePanelTransform = (
+  image: SelectedImageItem,
+  useCloudPreview: boolean,
+): string | undefined => {
+  if (useCloudPreview) {
+    return undefined;
+  }
+
+  const parts: string[] = [];
+  const transform = image.previewTransform;
+
+  if (transform) {
+    const rotation = transform.rotation;
+    if (rotation) {
+      parts.push(`rotate(${rotation}deg)`);
+    }
+    if (transform.flipHorizontal || transform.flipVertical) {
+      parts.push(
+        `scale(${transform.flipHorizontal ? -1 : 1}, ${transform.flipVertical ? -1 : 1})`,
+      );
+    }
+  }
+
+  const cropAdjust = image.previewCropAdjust;
+  const zoom = cropAdjust?.zoom ?? 1;
+  if (zoom > 1) {
+    // Translate as a fraction of the element size so panning scales with zoom.
+    const panRange = (zoom - 1) / zoom;
+    const tx = -panRange * 50 * (cropAdjust?.panX ?? 0);
+    const ty = -panRange * 50 * (cropAdjust?.panY ?? 0);
+    parts.push(`scale(${zoom})`);
+    parts.push(`translate(${tx}%, ${ty}%)`);
+  }
+
+  return parts.length > 0 ? parts.join(" ") : undefined;
+};
 
 function TriptychSidePanel({
   slotIndex,
@@ -32,6 +77,7 @@ function TriptychSidePanel({
   useCloudPreview,
   previewFrameAspectRatio,
   onSelectSlot,
+  isLinked,
 }: TriptychSidePanelProps) {
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
@@ -42,6 +88,11 @@ function TriptychSidePanel({
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
 
+  const previewStyle: React.CSSProperties = {
+    filter: buildPreviewEffectFilter(image, useCloudPreview),
+    transform: buildSidePanelTransform(image, useCloudPreview),
+  };
+
   return (
     <button
       type="button"
@@ -49,6 +100,7 @@ function TriptychSidePanel({
       data-testid={`triptych-side-panel-${slotIndex}`}
       aria-label={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
       className="group/side-panel relative flex h-full max-h-full shrink-0 items-center justify-center"
+      data-triptych-linked={isLinked ? "true" : undefined}
     >
       <div
         className="relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none opacity-95 hover:opacity-100"
@@ -57,8 +109,8 @@ function TriptychSidePanel({
         <img
           src={effectivePreviewUrl}
           alt={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
-          className="h-full w-full object-cover object-center"
-          style={{ filter: buildPreviewEffectFilter(image, useCloudPreview) }}
+          className="h-full w-full object-cover object-center transition-transform duration-100 ease-out motion-reduce:transition-none"
+          style={previewStyle}
           draggable={false}
           onLoad={() => setConfirmedCloudUrl(effectivePreviewUrl)}
           onError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
@@ -107,6 +159,7 @@ interface UploaderPreviewSliderProps {
   onSelectSlot?: (index: number) => void;
   getSlotPreviewUrl?: (image: SelectedImageItem) => string;
   isDesktopTriptych?: boolean;
+  isTriptychLinked?: boolean;
 }
 
 export default function UploaderPreviewSlider({
@@ -138,6 +191,7 @@ export default function UploaderPreviewSlider({
   onSelectSlot,
   getSlotPreviewUrl,
   isDesktopTriptych = false,
+  isTriptychLinked = true,
 }: UploaderPreviewSliderProps) {
   const previewSlot = (
     <PaintingPreviewSlot
@@ -239,6 +293,7 @@ export default function UploaderPreviewSlider({
               useCloudPreview={!!slot.uploadedAsset}
               previewFrameAspectRatio={panelAspectRatio}
               onSelectSlot={onSelectSlot!}
+              isLinked={isTriptychLinked}
             />
           ) : null;
 

@@ -74,6 +74,23 @@ export const getFrameAspectRatioClassName = (
   }
 };
 
+/**
+ * Swap horizontal/vertical proportions. Used when a 90°/270° rotation flips the
+ * on-screen axes: the crop that fills the frame after rotation must be selected
+ * against the inverse frame aspect. square/rectangle are unchanged.
+ */
+export const invertDisplayProportion = (
+  proportion: ImageDisplayProportion,
+): ImageDisplayProportion => {
+  if (proportion === "horizontal") {
+    return "vertical";
+  }
+  if (proportion === "vertical") {
+    return "horizontal";
+  }
+  return proportion;
+};
+
 export const calculateMaxCenteredCrop = ({
   sourceWidth,
   sourceHeight,

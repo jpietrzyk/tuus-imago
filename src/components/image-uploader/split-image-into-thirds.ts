@@ -1,6 +1,142 @@
-import { loadImageElement, resolveImageDimensions } from "./preview-canvas-utils";
+import {
+  loadImageElement,
+  resolveImageDimensions,
+  isIdentityPreviewTransform,
+  normalizeRotation,
+  type PreviewTransform,
+} from "./preview-canvas-utils";
+import {
+  calculateMaxCenteredCrop,
+  invertDisplayProportion,
+  type CropCalculationResult,
+  type ImageDisplayProportion,
+} from "./image-proportion-calculator";
+import { adjustCropForZoomPan } from "./use-crop-adjust";
 
 const PART_COUNT = 3;
+
+interface ComposeSourceParams {
+  image: CanvasImageSource;
+  metadata: { width: number; height: number };
+  proportion: ImageDisplayProportion;
+  previewTransform?: PreviewTransform | null;
+  previewCropAdjust?: { zoom: number; panX: number; panY: number } | null;
+}
+
+interface ComposedDrawable {
+  drawable: CanvasImageSource;
+  width: number;
+  height: number;
+}
+
+/**
+ * Render the source image with its rotation/flip and zoom/pan crop applied,
+ * producing a single composed canvas that represents exactly what the user
+ * saw in the preview before splitting. The triptych slices are then cut from
+ * this composed canvas so every part keeps the pre-split effect.
+ */
+const resolveComposedCrop = ({
+  metadata,
+  proportion,
+  previewTransform,
+  previewCropAdjust,
+}: Omit<ComposeSourceParams, "image">): {
+  crop: CropCalculationResult;
+  normalizedRotation: number;
+  isQuarterTurn: boolean;
+} => {
+  const sourceWidth = metadata.width;
+  const sourceHeight = metadata.height;
+
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    throw new Error("Cannot compose image with invalid dimensions");
+  }
+
+  const normalizedRotation = normalizeRotation(previewTransform?.rotation);
+  const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
+
+  // For 90°/270° rotations the on-screen axes swap, so the crop must be
+  // selected against the inverse frame aspect — mirroring the live preview
+  // (use-preview-canvas-render.ts) so the baked region matches what the user
+  // saw.
+  const baseCrop = calculateMaxCenteredCrop({
+    sourceWidth,
+    sourceHeight,
+    proportion: isQuarterTurn ? invertDisplayProportion(proportion) : proportion,
+  });
+
+  const crop =
+    previewCropAdjust && previewCropAdjust.zoom > 1
+      ? adjustCropForZoomPan(
+          baseCrop,
+          previewCropAdjust.zoom,
+          previewCropAdjust.panX,
+          previewCropAdjust.panY,
+        )
+      : baseCrop;
+
+  return { crop, normalizedRotation, isQuarterTurn };
+};
+
+/**
+ * Render the source image with its rotation/flip and zoom/pan crop applied,
+ * producing a single composed canvas that represents exactly what the user
+ * saw in the preview before splitting. Used when a rotation or flip is present
+ * (the no-transform/no-flip path slices the source directly to avoid this
+ * full-resolution intermediate buffer).
+ */
+const composeSourceDrawable = (params: ComposeSourceParams): ComposedDrawable => {
+  const { image, previewTransform } = params;
+  const { crop: adjustedCrop, normalizedRotation, isQuarterTurn } =
+    resolveComposedCrop(params);
+
+  const cropWidth = Math.max(1, Math.round(adjustedCrop.cropWidth));
+  const cropHeight = Math.max(1, Math.round(adjustedCrop.cropHeight));
+
+  // A 90°/270° rotation swaps the on-screen axes, so the buffer must mirror
+  // that swap to keep the drawn content upright and un-stretched.
+  const canvasWidth = isQuarterTurn ? cropHeight : cropWidth;
+  const canvasHeight = isQuarterTurn ? cropWidth : cropHeight;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Unable to prepare image composition canvas context");
+  }
+
+  // Order matches the live canvas preview and Cloudinary transform:
+  // rotate, then hflip, then vflip.
+  context.save();
+  context.translate(canvasWidth / 2, canvasHeight / 2);
+  context.rotate((normalizedRotation * Math.PI) / 180);
+  if (previewTransform?.flipHorizontal) {
+    context.scale(-1, 1);
+  }
+  if (previewTransform?.flipVertical) {
+    context.scale(1, -1);
+  }
+
+  const rectWidth = isQuarterTurn ? cropHeight : cropWidth;
+  const rectHeight = isQuarterTurn ? cropWidth : cropHeight;
+
+  context.drawImage(
+    image,
+    adjustedCrop.cropX,
+    adjustedCrop.cropY,
+    adjustedCrop.cropWidth,
+    adjustedCrop.cropHeight,
+    -rectWidth / 2,
+    -rectHeight / 2,
+    rectWidth,
+    rectHeight,
+  );
+  context.restore();
+
+  return { drawable: canvas, width: canvasWidth, height: canvasHeight };
+};
 
 const resolveOutputMimeType = (sourceMimeType: string): string => {
   if (
@@ -83,12 +219,12 @@ const canvasToBlob = async (
 };
 
 const drawSliceToCanvas = ({
-  image,
+  drawable,
   sliceStartX,
   sliceWidth,
   sourceHeight,
 }: {
-  image: HTMLImageElement;
+  drawable: CanvasImageSource;
   sliceStartX: number;
   sliceWidth: number;
   sourceHeight: number;
@@ -103,7 +239,7 @@ const drawSliceToCanvas = ({
   }
 
   context.drawImage(
-    image,
+    drawable,
     sliceStartX,
     0,
     sliceWidth,
@@ -117,36 +253,36 @@ const drawSliceToCanvas = ({
   return canvas;
 };
 
-export const splitImageIntoVerticalThirdFiles = async ({
-  previewUrl,
-  sourceFile,
+const sliceDrawableIntoFiles = async ({
+  drawable,
+  drawableWidth,
+  drawableHeight,
+  baseFilename,
+  outputMimeType,
+  outputExtension,
 }: {
-  previewUrl: string;
-  sourceFile: File;
+  drawable: CanvasImageSource;
+  drawableWidth: number;
+  drawableHeight: number;
+  baseFilename: string;
+  outputMimeType: string;
+  outputExtension: string;
 }): Promise<[File, File, File]> => {
-  const image = await loadImageElement(previewUrl);
-  const { sourceWidth, sourceHeight } = resolveImageDimensions(image);
-
-  if (sourceWidth <= 0 || sourceHeight <= 0) {
-    throw new Error("Cannot split image with invalid dimensions");
-  }
-
-  const outputMimeType = resolveOutputMimeType(sourceFile.type);
-  const outputExtension = inferExtension(outputMimeType);
-  const baseFilename = stripExtension(sourceFile.name);
-  const singleSliceWidth = Math.floor(sourceWidth / PART_COUNT);
+  const singleSliceWidth = Math.floor(drawableWidth / PART_COUNT);
 
   const splitFiles = await Promise.all(
     Array.from({ length: PART_COUNT }, async (_, index) => {
       const sliceStartX = singleSliceWidth * index;
       const sliceWidth =
-        index === PART_COUNT - 1 ? sourceWidth - sliceStartX : singleSliceWidth;
+        index === PART_COUNT - 1
+          ? drawableWidth - sliceStartX
+          : singleSliceWidth;
 
       const canvas = drawSliceToCanvas({
-        image,
+        drawable,
         sliceStartX,
         sliceWidth,
-        sourceHeight,
+        sourceHeight: drawableHeight,
       });
 
       const blob = await canvasToBlob(canvas, outputMimeType);
@@ -163,4 +299,163 @@ export const splitImageIntoVerticalThirdFiles = async ({
   );
 
   return splitFiles as [File, File, File];
+};
+
+/**
+ * Draw a single vertical third directly from the source image's crop region,
+ * avoiding a full-resolution intermediate compose canvas. Only valid for the
+ * no-rotation / no-flip path (the slice geometry matches the compose-then-slice
+ * result because each third is an unmirrored vertical strip of the crop).
+ */
+const drawDirectCropSliceToCanvas = ({
+  image,
+  crop,
+  index,
+}: {
+  image: CanvasImageSource;
+  crop: CropCalculationResult;
+  index: number;
+}): HTMLCanvasElement => {
+  const composedWidth = Math.max(1, Math.round(crop.cropWidth));
+  const composedHeight = Math.max(1, Math.round(crop.cropHeight));
+  const singleSliceWidth = Math.floor(composedWidth / PART_COUNT);
+  const sliceStartX = singleSliceWidth * index;
+  const sliceWidth =
+    index === PART_COUNT - 1 ? composedWidth - sliceStartX : singleSliceWidth;
+
+  // Map the slice columns back to source-crop space proportionally.
+  const sourceSliceX =
+    crop.cropX + (sliceStartX / composedWidth) * crop.cropWidth;
+  const sourceSliceWidth = (sliceWidth / composedWidth) * crop.cropWidth;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = sliceWidth;
+  canvas.height = composedHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Unable to prepare image split canvas context");
+  }
+
+  context.drawImage(
+    image,
+    sourceSliceX,
+    crop.cropY,
+    sourceSliceWidth,
+    crop.cropHeight,
+    0,
+    0,
+    sliceWidth,
+    composedHeight,
+  );
+
+  return canvas;
+};
+
+export interface SplitImageOptions {
+  previewUrl: string;
+  sourceFile: File;
+  /** Source metadata; required to apply pre-split crop/transform baking. */
+  metadata?: { width: number; height: number } | null;
+  /** Display proportion used to compute the pre-split crop. */
+  proportion?: ImageDisplayProportion | null;
+  /** Rotation/flip applied to the single image before splitting. */
+  previewTransform?: PreviewTransform | null;
+  /** Zoom/pan crop applied to the single image before splitting. */
+  previewCropAdjust?: { zoom: number; panX: number; panY: number } | null;
+}
+
+export const splitImageIntoVerticalThirdFiles = async ({
+  previewUrl,
+  sourceFile,
+  metadata,
+  proportion,
+  previewTransform,
+  previewCropAdjust,
+}: SplitImageOptions): Promise<[File, File, File]> => {
+  const image = await loadImageElement(previewUrl);
+  const { sourceWidth, sourceHeight } = resolveImageDimensions(image);
+
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    throw new Error("Cannot split image with invalid dimensions");
+  }
+
+  const outputMimeType = resolveOutputMimeType(sourceFile.type);
+  const outputExtension = inferExtension(outputMimeType);
+  const baseFilename = stripExtension(sourceFile.name);
+
+  const hasTransformOrCrop =
+    !!metadata &&
+    !!proportion &&
+    (!isIdentityPreviewTransform(previewTransform) ||
+      !!(previewCropAdjust && previewCropAdjust.zoom > 1));
+
+  // Fast path: only zoom/pan crop (no rotation, no flip). Slice each third
+  // directly from the source crop region, avoiding a full-resolution
+  // intermediate compose canvas. Rotation/flip still go through the compose
+  // path below.
+  const hasFlip =
+    !!previewTransform &&
+    (previewTransform.flipHorizontal || previewTransform.flipVertical);
+  const canSliceCropDirectly =
+    hasTransformOrCrop &&
+    !!metadata &&
+    !!proportion &&
+    !hasFlip &&
+    normalizeRotation(previewTransform?.rotation) === 0;
+
+  if (canSliceCropDirectly && metadata && proportion) {
+    const { crop } = resolveComposedCrop({
+      metadata,
+      proportion,
+      previewTransform,
+      previewCropAdjust,
+    });
+
+    const splitFiles = await Promise.all(
+      Array.from({ length: PART_COUNT }, async (_, index) => {
+        const canvas = drawDirectCropSliceToCanvas({ image, crop, index });
+        const blob = await canvasToBlob(canvas, outputMimeType);
+        return new File(
+          [blob],
+          `${baseFilename}-part-${index + 1}.${outputExtension}`,
+          {
+            type: outputMimeType,
+            lastModified: Date.now(),
+          },
+        );
+      }),
+    );
+
+    return splitFiles as [File, File, File];
+  }
+
+  if (hasTransformOrCrop && metadata && proportion) {
+    const composed = composeSourceDrawable({
+      image,
+      metadata,
+      proportion,
+      previewTransform,
+      previewCropAdjust,
+    });
+
+    return sliceDrawableIntoFiles({
+      drawable: composed.drawable,
+      drawableWidth: composed.width,
+      drawableHeight: composed.height,
+      baseFilename,
+      outputMimeType,
+      outputExtension,
+    });
+  }
+
+  // No transform/crop: slice the raw image unchanged.
+  return sliceDrawableIntoFiles({
+    drawable: image,
+    drawableWidth: sourceWidth,
+    drawableHeight: sourceHeight,
+    baseFilename,
+    outputMimeType,
+    outputExtension,
+  });
 };

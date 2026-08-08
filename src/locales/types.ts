@@ -286,6 +286,9 @@ export interface Translations {
     removeSlotConfirmAction: string;
     sizeUnavailable: string;
     triptychButton: string;
+    triptychLinkButton: string;
+    triptychLinkedTooltip: string;
+    triptychUnlinkedTooltip: string;
     shapeButtonLabel: string;
     frameButtonLabel: string;
     aiEditorButtonLabel: string;
