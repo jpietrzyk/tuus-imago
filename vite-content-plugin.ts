@@ -35,9 +35,11 @@ export function tuusContentPlugin(mode: string): Plugin {
   async function fetchContent(isBuild: boolean): Promise<ContentPageRow[]> {
     if (cached) return cached;
 
-    const env = loadEnv(mode, process.cwd(), "");
-    const supabaseUrl = env.SUPABASE_URL;
-    const serviceKey = env.SUPABASE_SECRET_KEY;
+    // Netlify/CI inject build env into process.env directly (no .env file);
+    // loadEnv is only the fallback for local dev (reads the .env file).
+    const fileEnv = loadEnv(mode, process.cwd(), "");
+    const supabaseUrl = process.env.SUPABASE_URL ?? fileEnv.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SECRET_KEY ?? fileEnv.SUPABASE_SECRET_KEY;
 
     if (!supabaseUrl || !serviceKey) {
       const msg =
