@@ -35,15 +35,19 @@ export function tuusContentPlugin(mode: string): Plugin {
   async function fetchContent(isBuild: boolean): Promise<ContentPageRow[]> {
     if (cached) return cached;
 
-    // Netlify/CI inject build env into process.env directly (no .env file);
-    // loadEnv is only the fallback for local dev (reads the .env file).
+    // Use the publishable (anon) key + the VITE_-prefixed URL: these are present in
+    // every deploy context (incl. CI and deploy previews), whereas SUPABASE_SECRET_KEY
+    // is often scoped to the production context only. content_pages has a public-read
+    // RLS policy for published rows, so the anon key is sufficient to bake exactly the
+    // content the storefront should show.
     const fileEnv = loadEnv(mode, process.cwd(), "");
-    const supabaseUrl = process.env.SUPABASE_URL ?? fileEnv.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SECRET_KEY ?? fileEnv.SUPABASE_SECRET_KEY;
+    const supabaseUrl = process.env.VITE_SUPABASE_URL ?? fileEnv.VITE_SUPABASE_URL;
+    const apiKey =
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? fileEnv.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-    if (!supabaseUrl || !serviceKey) {
+    if (!supabaseUrl || !apiKey) {
       const msg =
-        "[tuus-content] Missing SUPABASE_URL or SUPABASE_SECRET_KEY for build-time content fetch.";
+        "[tuus-content] Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY for build-time content fetch.";
       if (isBuild) {
         throw new Error(msg);
       }
@@ -60,8 +64,8 @@ export function tuusContentPlugin(mode: string): Plugin {
     try {
       const response = await fetch(url, {
         headers: {
-          apikey: serviceKey,
-          Authorization: `Bearer ${serviceKey}`,
+          apikey: apiKey,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
