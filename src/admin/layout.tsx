@@ -13,6 +13,7 @@ import {
   X,
   Megaphone,
   Settings,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.settings"),
     icon: <Settings className="h-5 w-5" />,
     path: "/admin/settings",
+  },
+  {
+    label: t("admin.navigation.contentPages"),
+    icon: <FileText className="h-5 w-5" />,
+    path: "/admin/content",
   },
 ];
 

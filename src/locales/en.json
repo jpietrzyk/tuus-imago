@@ -22,7 +22,7 @@
     "on": "On",
     "off": "Off",
     "contentNotFound": "Content not found",
-    "contentNotFoundHint": "Could not load this page's content. Check that the markdown file exists in the content/legal/ directory.",
+    "contentNotFoundHint": "This page's content could not be loaded. It may be unpublished or missing in the content settings.",
     "footerContactLink": "Contact",
     "lastUpdated": "Last updated:"
   },
@@ -523,7 +523,8 @@
       "admins": "Admins",
       "signOut": "Sign out",
       "adminPanel": "Admin Panel",
-      "settings": "Settings"
+      "settings": "Settings",
+      "contentPages": "Content"
     },
     "statuses": {
       "order": {
@@ -785,7 +786,31 @@
       "dpiThreshold_excellent": "Excellent (green)",
       "dpiThreshold_good": "Good (yellow)",
       "dpiThreshold_acceptable": "Acceptable (gray)",
-      "dpiThresholdOrderError": "Quality thresholds must be ordered: Excellent > Good > Acceptable."
+      "dpiThresholdOrderError": "Quality thresholds must be ordered: Excellent > Good > Acceptable.",
+      "contentTitle": "Content pages",
+      "editContent": "Edit content",
+      "contentNotFound": "Content page not found.",
+      "contentSlug": "Slug",
+      "contentSlugHint": "Route identifier (read-only).",
+      "contentBody": "Body (Markdown)",
+      "contentMenuSection": "Menu section",
+      "contentMenuOrder": "Menu order",
+      "contentLastUpdated": "Last updated",
+      "contentLang": "Language",
+      "contentPublished": "Published",
+      "contentPublishedHint": "Unpublished pages are hidden from the storefront.",
+      "contentSectionLegal": "Legal",
+      "contentSectionPayments": "Payments",
+      "contentSectionCompany": "Company",
+      "triggerRebuild": "Trigger rebuild",
+      "rebuilding": "Triggering…",
+      "rebuildPromptTitle": "Trigger a site rebuild?",
+      "rebuildPromptBody": "Content changes only go live after a rebuild. Trigger one now?",
+      "rebuildNow": "Rebuild now",
+      "notNow": "Not now",
+      "rebuildTriggered": "Rebuild triggered. It may take a few minutes to go live.",
+      "rebuildFailed": "Failed to trigger rebuild.",
+      "rebuildNotConfigured": "Build trigger is not configured."
     }
   }
 }

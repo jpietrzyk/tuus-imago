@@ -68,6 +68,12 @@ export function AdminApp({ children }: { children: ReactNode }) {
           list: "/admin/settings",
           meta: { label: "Settings" },
         },
+        {
+          name: "content_pages",
+          list: "/admin/content",
+          edit: "/admin/content/:id/edit",
+          meta: { label: "Content" },
+        },
       ]}
       options={{
         syncWithLocation: true,

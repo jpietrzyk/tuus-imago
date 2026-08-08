@@ -1,0 +1,35 @@
+[
+  {
+    "slug": "about",
+    "title": "O nas",
+    "subtitle": "Dowiedz się więcej",
+    "icon": "Building2",
+    "menu_section": "company",
+    "menu_order": 1,
+    "last_updated": "2025-02-01",
+    "body": "## Nasza misja\n\nBody about.",
+    "lang": "pl"
+  },
+  {
+    "slug": "terms",
+    "title": "Warunki korzystania",
+    "subtitle": "Warunki użytkowania",
+    "icon": "FileText",
+    "menu_section": "legal",
+    "menu_order": 2,
+    "last_updated": "2025-03-01",
+    "body": "## Warunki\n\nBody terms.",
+    "lang": "pl"
+  },
+  {
+    "slug": "payments",
+    "title": "Płatności",
+    "subtitle": "Metody płatności",
+    "icon": "BadgeDollarSign",
+    "menu_section": "payments",
+    "menu_order": 1,
+    "last_updated": "2025-03-01",
+    "body": "## Płatności\n\nBody payments.",
+    "lang": "pl"
+  }
+]

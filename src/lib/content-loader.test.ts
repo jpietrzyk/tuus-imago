@@ -1,24 +1,36 @@
 import { describe, expect, it } from "vitest";
 
-import { createLegalPageData } from "./content-loader";
+import {
+  getAllPages,
+  getPageBySlug,
+  getPagesBySection,
+} from "./content-loader";
 
-describe("createLegalPageData", () => {
-  it("derives slug from the file path instead of frontmatter", () => {
-    const page = createLegalPageData(
-      "/content/legal/terms.md",
-      `---
-title: "Warunki korzystania"
-subtitle: "Warunki użytkowania naszych usług"
-slug: "broken-route"
-icon: "FileText"
-menuSection: "legal"
-menuOrder: 2
-lastUpdated: "2025-03-01"
----
+describe("content-loader", () => {
+  it("exposes pages sorted by menu order", () => {
+    const pages = getAllPages();
+    expect(pages.length).toBeGreaterThan(0);
+    for (let i = 1; i < pages.length; i++) {
+      expect(pages[i].menuOrder).toBeGreaterThanOrEqual(pages[i - 1].menuOrder);
+    }
+  });
 
-Body`,
-    );
+  it("finds a page by slug", () => {
+    const page = getPageBySlug("about");
+    expect(page?.title).toBe("O nas");
+    expect(page?.menuSection).toBe("company");
+  });
 
-    expect(page.slug).toBe("terms");
+  it("returns undefined for unknown slug", () => {
+    expect(getPageBySlug("does-not-exist")).toBeUndefined();
+  });
+
+  it("filters pages by section", () => {
+    const legal = getPagesBySection("legal");
+    expect(legal.every((p) => p.menuSection === "legal")).toBe(true);
+    expect(legal.some((p) => p.slug === "terms")).toBe(true);
+
+    const payments = getPagesBySection("payments");
+    expect(payments.some((p) => p.slug === "payments")).toBe(true);
   });
 });
