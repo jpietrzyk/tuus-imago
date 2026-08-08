@@ -52,8 +52,10 @@ function TestWrapper({
               canUpdateEffects: props.canUpdateEffects,
               canUpdateAiEffects: props.canUpdateAiEffects,
               canToggleZoomPan: props.canToggleZoomPan,
+              canToggleTriptychLink: props.canToggleTriptychLink,
               isEditMode: props.isEditMode,
               isZoomPanMode: props.isZoomPanMode,
+              isTriptychLinked: props.isTriptychLinked,
               selectedProportion: props.selectedProportion,
               shouldConfirmSplit: props.shouldConfirmSplit,
               selectedPaintingSize: props.selectedPaintingSize,
@@ -163,10 +165,12 @@ describe("ImageUploader", () => {
       fireEvent.click(splitButton);
 
       await waitFor(() => {
-        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile,
-        });
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+          expect.objectContaining({
+            previewUrl: expect.stringContaining("blob:"),
+            sourceFile,
+          }),
+        );
       });
 
       await waitFor(() => {
@@ -191,6 +195,69 @@ describe("ImageUploader", () => {
       expect(
         screen.getByTestId("selected-image-preview-placeholder"),
       ).toBeInTheDocument();
+    }
+  });
+
+  it("links triptych parts by default and toggles the link state", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
+      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
+      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSelectedImage"),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      // After splitting the parts are linked by default.
+      const linkToggle = await screen.findByTestId("triptych-link-toggle");
+      expect(linkToggle).toHaveAttribute("data-linked", "true");
+
+      // Unlinking flips the state.
+      fireEvent.click(linkToggle);
+      await waitFor(() => {
+        expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
+          "data-linked",
+          "false",
+        );
+      });
+
+      // Re-linking restores the bound state.
+      fireEvent.click(screen.getByTestId("triptych-link-toggle"));
+      await waitFor(() => {
+        expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
+          "data-linked",
+          "true",
+        );
+      });
     }
   });
 
@@ -260,10 +327,12 @@ describe("ImageUploader", () => {
       );
 
       await waitFor(() => {
-        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile: firstFile,
-        });
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+          expect.objectContaining({
+            previewUrl: expect.stringContaining("blob:"),
+            sourceFile: firstFile,
+          }),
+        );
       });
     }
   });
@@ -374,10 +443,12 @@ describe("ImageUploader", () => {
       );
 
       await waitFor(() => {
-        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile,
-        });
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+          expect.objectContaining({
+            previewUrl: expect.stringContaining("blob:"),
+            sourceFile,
+          }),
+        );
       });
     }
   });
@@ -1242,10 +1313,12 @@ describe("ImageUploader", () => {
       fireEvent.click(splitButton);
 
       await waitFor(() => {
-        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile,
-        });
+        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+          expect.objectContaining({
+            previewUrl: expect.stringContaining("blob:"),
+            sourceFile,
+          }),
+        );
       });
 
       // After split, all three slots should be populated with new images
@@ -1400,10 +1473,12 @@ describe("ImageUploader", () => {
     fireEvent.click(splitButton);
 
     await waitFor(() => {
-      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-        previewUrl: expect.stringContaining("blob:"),
-        sourceFile,
-      });
+      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+        expect.objectContaining({
+          previewUrl: expect.stringContaining("blob:"),
+          sourceFile,
+        }),
+      );
     });
 
     await waitFor(() => {

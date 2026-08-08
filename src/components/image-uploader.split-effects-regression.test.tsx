@@ -136,10 +136,12 @@ describe("ImageUploader split effects regression", () => {
     fireEvent.click(screen.getByTestId("split-active-image"));
 
     await waitFor(() => {
-      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-        previewUrl: expect.stringContaining("blob:"),
-        sourceFile,
-      });
+      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+        expect.objectContaining({
+          previewUrl: expect.stringContaining("blob:"),
+          sourceFile,
+        }),
+      );
     });
 
     await waitFor(() => {
@@ -201,10 +203,12 @@ describe("ImageUploader split effects regression", () => {
     fireEvent.click(screen.getByTestId("split-active-image"));
 
     await waitFor(() => {
-      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith({
-        previewUrl: expect.stringContaining("blob:"),
-        sourceFile,
-      });
+      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
+        expect.objectContaining({
+          previewUrl: expect.stringContaining("blob:"),
+          sourceFile,
+        }),
+      );
     });
 
     // After split the size stays at 2 (source height preserved), never upgraded
