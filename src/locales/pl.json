@@ -22,7 +22,7 @@
     "on": "Wł.",
     "off": "Wył.",
     "contentNotFound": "Nie znaleziono treści",
-    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Sprawdź, czy plik markdown istnieje w katalogu content/legal/.",
+    "contentNotFoundHint": "Nie udało się załadować treści tej strony. Treść może być nieopublikowana lub brakować w ustawieniach treści.",
     "footerContactLink": "Kontakt",
     "lastUpdated": "Ostatnia aktualizacja:"
   },
@@ -523,7 +523,8 @@
       "admins": "Administratorzy",
       "signOut": "Wyloguj się",
       "adminPanel": "Panel administracyjny",
-      "settings": "Ustawienia"
+      "settings": "Ustawienia",
+      "contentPages": "Treści"
     },
     "statuses": {
       "order": {
@@ -785,7 +786,31 @@
       "dpiThreshold_excellent": "Doskonała (zielony)",
       "dpiThreshold_good": "Dobra (żółty)",
       "dpiThreshold_acceptable": "Akceptowalna (szary)",
-      "dpiThresholdOrderError": "Progi jakości muszą być uporządkowane: Doskonała > Dobra > Akceptowalna."
+      "dpiThresholdOrderError": "Progi jakości muszą być uporządkowane: Doskonała > Dobra > Akceptowalna.",
+      "contentTitle": "Strony treści",
+      "editContent": "Edytuj treść",
+      "contentNotFound": "Strona treści nie została znaleziona.",
+      "contentSlug": "Slug",
+      "contentSlugHint": "Identyfikator trasy (tylko do odczytu).",
+      "contentBody": "Treść (Markdown)",
+      "contentMenuSection": "Sekcja menu",
+      "contentMenuOrder": "Kolejność w menu",
+      "contentLastUpdated": "Ostatnia aktualizacja",
+      "contentLang": "Język",
+      "contentPublished": "Opublikowane",
+      "contentPublishedHint": "Nieopublikowane strony są ukryte w sklepie.",
+      "contentSectionLegal": "Informacje prawne",
+      "contentSectionPayments": "Płatności",
+      "contentSectionCompany": "Firma",
+      "triggerRebuild": "Uruchom przebudowę",
+      "rebuilding": "Uruchamianie…",
+      "rebuildPromptTitle": "Uruchomić przebudowę witryny?",
+      "rebuildPromptBody": "Zmiany treści są widoczne dopiero po przebudowie. Uruchomić teraz?",
+      "rebuildNow": "Przebuduj teraz",
+      "notNow": "Nie teraz",
+      "rebuildTriggered": "Przebudowa uruchomiona. Publikacja może potrwać kilka minut.",
+      "rebuildFailed": "Nie udało się uruchomić przebudowy.",
+      "rebuildNotConfigured": "Wyzwalacz przebudowy nie jest skonfigurowany."
     }
   }
 }

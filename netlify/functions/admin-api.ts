@@ -49,6 +49,7 @@ const ALLOWED_RESOURCES = new Set([
   "partner_refs",
   "promotions",
   "app_settings",
+  "content_pages",
 ]);
 
 const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {

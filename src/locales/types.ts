@@ -509,6 +509,7 @@ export interface Translations {
       signOut: string;
       adminPanel: string;
       settings: string;
+      contentPages: string;
     };
     statuses: {
       order: {
@@ -742,6 +743,30 @@ export interface Translations {
       dpiThreshold_good: string;
       dpiThreshold_acceptable: string;
       dpiThresholdOrderError: string;
+      contentTitle: string;
+      editContent: string;
+      contentNotFound: string;
+      contentSlug: string;
+      contentSlugHint: string;
+      contentBody: string;
+      contentMenuSection: string;
+      contentMenuOrder: string;
+      contentLastUpdated: string;
+      contentLang: string;
+      contentPublished: string;
+      contentPublishedHint: string;
+      contentSectionLegal: string;
+      contentSectionPayments: string;
+      contentSectionCompany: string;
+      triggerRebuild: string;
+      rebuilding: string;
+      rebuildPromptTitle: string;
+      rebuildPromptBody: string;
+      rebuildNow: string;
+      notNow: string;
+      rebuildTriggered: string;
+      rebuildFailed: string;
+      rebuildNotConfigured: string;
     };
   };
 }

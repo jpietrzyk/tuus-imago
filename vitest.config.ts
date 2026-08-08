@@ -26,6 +26,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'virtual:tuus-content': path.resolve(__dirname, './src/test/fixtures/content-pages.json'),
     },
   },
   test: {

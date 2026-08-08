@@ -102,6 +102,8 @@ const PromotionCreatePage = lazy(() => import("./admin/pages/promotion-create").
 const PromotionShowPage = lazy(() => import("./admin/pages/promotion-show").then((m) => ({ default: m.PromotionShowPage })));
 const PromotionEditPage = lazy(() => import("./admin/pages/promotion-edit").then((m) => ({ default: m.PromotionEditPage })));
 const SettingsPage = lazy(() => import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })));
+const ContentListPage = lazy(() => import("./admin/pages/content-list").then((m) => ({ default: m.ContentListPage })));
+const ContentEditPage = lazy(() => import("./admin/pages/content-edit").then((m) => ({ default: m.ContentEditPage })));
 
 function AdminPageLoader() {
   return (
@@ -151,6 +153,8 @@ export function App() {
             <Route path="promotions/:id" element={<Suspense fallback={<AdminPageLoader />}><PromotionShowPage /></Suspense>} />
             <Route path="promotions/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PromotionEditPage /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<AdminPageLoader />}><SettingsPage /></Suspense>} />
+            <Route path="content" element={<Suspense fallback={<AdminPageLoader />}><ContentListPage /></Suspense>} />
+            <Route path="content/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><ContentEditPage /></Suspense>} />
           </Route>
         </Routes>
       </AdminApp>
