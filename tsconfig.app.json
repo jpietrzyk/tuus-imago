@@ -27,6 +27,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "exclude": ["src/components/**/*.stories.*", "src/components/**/*.mdx"]
+  "include": ["src"]
 }
