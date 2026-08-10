@@ -9,7 +9,7 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
-import { getTargetAspectRatio } from "./image-proportion-calculator";
+import { calculateMaxCenteredCrop, getTargetAspectRatio } from "./image-proportion-calculator";
 import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
 import type { CropAdjust } from "./use-crop-adjust";
 
@@ -32,10 +32,19 @@ interface TriptychSidePanelProps {
  * applied to local (pre-upload) previews. The side panel reflects the slot's
  * own state; when the triptych is linked, that state is kept identical to the
  * active slot, so all panels move together live.
+ *
+ * The pan translate is computed from how much the source image overflows the
+ * centered base crop (widthScale / heightScale). For aspect-matched images
+ * this overflows ratio is 1 (no translate at zoom 1) and the formula reduces
+ * to the original zoom-only expression. For triptych panels whose vertical
+ * third is taller than the portrait frame, the ratio is < 1 in the overflow
+ * axis, producing a non-zero translate even at zoom 1 so the user can drag to
+ * reveal masked edges.
  */
 const buildSidePanelTransform = (
   image: SelectedImageItem,
   useCloudPreview: boolean,
+  fallbackDimensions?: { width: number; height: number } | null,
 ): string | undefined => {
   if (useCloudPreview) {
     return undefined;
@@ -58,12 +67,41 @@ const buildSidePanelTransform = (
 
   const cropAdjust = image.previewCropAdjust;
   const zoom = cropAdjust?.zoom ?? 1;
-  if (zoom > 1) {
-    // Translate as a fraction of the element size so panning scales with zoom.
-    const panRange = (zoom - 1) / zoom;
-    const tx = -panRange * 50 * (cropAdjust?.panX ?? 0);
-    const ty = -panRange * 50 * (cropAdjust?.panY ?? 0);
-    parts.push(`scale(${zoom})`);
+  const panX = cropAdjust?.panX ?? 0;
+  const panY = cropAdjust?.panY ?? 0;
+  const effectiveZoom = Math.max(1, zoom);
+
+  // Compute how much of the source the centered base crop covers in each axis.
+  // widthScale/heightScale = 1 means the crop fills the source (no overflow);
+  // < 1 means the source is larger (overflow that can be revealed by panning).
+  const metadata = image.metadata
+    ?? (fallbackDimensions
+      ? { width: fallbackDimensions.width, height: fallbackDimensions.height }
+      : null);
+  let widthScale = 1;
+  let heightScale = 1;
+  if (metadata && metadata.width > 0 && metadata.height > 0) {
+    const baseCrop = calculateMaxCenteredCrop({
+      sourceWidth: metadata.width,
+      sourceHeight: metadata.height,
+      proportion: image.displayImageProportion,
+    });
+    widthScale = baseCrop.widthScale;
+    heightScale = baseCrop.heightScale;
+  }
+
+  // Pre-scale translate percentages. The translate runs before scale in the
+  // CSS transform list, so the scale(zoom) factor amplifies it. The formula
+  // (1/scaleFraction - 1/zoom) * 50 * pan reduces to (zoom-1)/zoom * 50 * pan
+  // when scaleFraction is 1 (no overflow), matching the original expression.
+  const tx = -(1 / widthScale - 1 / effectiveZoom) * 50 * panX;
+  const ty = -(1 / heightScale - 1 / effectiveZoom) * 50 * panY;
+
+  if (effectiveZoom > 1) {
+    parts.push(`scale(${effectiveZoom})`);
+  }
+
+  if (tx !== 0 || ty !== 0) {
     parts.push(`translate(${tx}%, ${ty}%)`);
   }
 
@@ -82,6 +120,10 @@ function TriptychSidePanel({
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
   );
+  const [imgDimensions, setImgDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const effectivePreviewUrl = previewUrl ?? image.previewUrl;
   const isEffectImageLoading =
     useCloudPreview &&
@@ -90,7 +132,7 @@ function TriptychSidePanel({
 
   const previewStyle: React.CSSProperties = {
     filter: buildPreviewEffectFilter(image, useCloudPreview),
-    transform: buildSidePanelTransform(image, useCloudPreview),
+    transform: buildSidePanelTransform(image, useCloudPreview, imgDimensions),
   };
 
   return (
@@ -112,7 +154,16 @@ function TriptychSidePanel({
           className="h-full w-full object-cover object-center transition-transform duration-100 ease-out motion-reduce:transition-none"
           style={previewStyle}
           draggable={false}
-          onLoad={() => setConfirmedCloudUrl(effectivePreviewUrl)}
+          onLoad={(e) => {
+            setConfirmedCloudUrl(effectivePreviewUrl);
+            const img = e.currentTarget;
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              setImgDimensions({
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+              });
+            }
+          }}
           onError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
         />
         <UploadProgressOverlay

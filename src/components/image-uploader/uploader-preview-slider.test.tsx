@@ -334,6 +334,39 @@ describe("UploaderPreviewSlider", () => {
     expect(sideImg?.getAttribute("style") ?? "").toMatch(/scale\(2\)/);
   });
 
+  it("mirrors overflow pan onto side panel transform at zoom 1 (triptych)", () => {
+    const props = createProps();
+    const left = createItem("left");
+    left.metadata = { width: 333, height: 1000, aspectRatio: "333:1000" };
+    left.displayImageProportion = "vertical";
+    left.previewCropAdjust = { zoom: 1, panX: 0, panY: -0.5 };
+    const slots: Array<SelectedImageItem | null> = [
+      left,
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    const sideImg = screen
+      .getByTestId("triptych-side-panel-0")
+      .querySelector("img");
+
+    expect(sideImg).not.toBeNull();
+    const style = sideImg?.getAttribute("style") ?? "";
+    // No scale at zoom 1, but a non-zero translate reveals the masked edge.
+    expect(style).not.toMatch(/scale\(/);
+    expect(style).toMatch(/translate\(/);
+  });
+
   it("mirrors the slot rotation onto the side panel image transform", () => {
     const props = createProps();
     const left = createItem("left");

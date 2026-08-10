@@ -449,4 +449,100 @@ describe("useCanvasPanZoom", () => {
 
     expect(onPanChange).toHaveBeenCalled();
   });
+
+  it("allows dragging to pan at zoom 1 when canPanY is true (triptych overflow)", () => {
+    const onPanChange = vi.fn();
+    const Host = () => {
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      useCanvasPanZoom({
+        canvasRef,
+        isEditMode: true,
+        zoom: 1,
+        panX: 0,
+        panY: 0,
+        onZoomChange: vi.fn(),
+        onPanChange,
+        canPanY: true,
+      });
+      return <canvas ref={canvasRef} data-testid="test-canvas" width={400} height={300} style={{ width: 400, height: 300 }} />;
+    };
+    render(<Host />);
+    const canvas = getCanvas();
+
+    act(() => {
+      canvas.dispatchEvent(createMouseEvent("mousedown", { clientX: 200, clientY: 150, button: 0 }));
+    });
+    act(() => {
+      window.dispatchEvent(createMouseEvent("mousemove", { clientX: 200, clientY: 120 }));
+    });
+    act(() => {
+      window.dispatchEvent(createMouseEvent("mouseup"));
+    });
+
+    expect(onPanChange).toHaveBeenCalled();
+    const [, panY] = onPanChange.mock.calls[0];
+    expect(panY).not.toBe(0);
+  });
+
+  it("blocks pan at zoom 1 when neither canPanX nor canPanY is set", () => {
+    const onPanChange = vi.fn();
+    const Host = () => {
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      useCanvasPanZoom({
+        canvasRef,
+        isEditMode: true,
+        zoom: 1,
+        panX: 0,
+        panY: 0,
+        onZoomChange: vi.fn(),
+        onPanChange,
+      });
+      return <canvas ref={canvasRef} data-testid="test-canvas" width={400} height={300} style={{ width: 400, height: 300 }} />;
+    };
+    render(<Host />);
+    const canvas = getCanvas();
+
+    act(() => {
+      canvas.dispatchEvent(createMouseEvent("mousedown", { clientX: 200, clientY: 150, button: 0 }));
+    });
+    act(() => {
+      window.dispatchEvent(createMouseEvent("mousemove", { clientX: 180, clientY: 130 }));
+    });
+    act(() => {
+      window.dispatchEvent(createMouseEvent("mouseup"));
+    });
+
+    // Pan is forced to 0 when zoom <= 1 and no overflow.
+    expect(onPanChange).toHaveBeenCalledWith(0, 0);
+  });
+
+  it("preserves overflow-axis pan when zoom returns to 1", async () => {
+    const onPanChange = vi.fn();
+    const Host = () => {
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      useCanvasPanZoom({
+        canvasRef,
+        isEditMode: true,
+        zoom: 1.05,
+        panX: 0,
+        panY: 0.4,
+        onZoomChange: vi.fn(),
+        onPanChange,
+        canPanY: true,
+      });
+      return <canvas ref={canvasRef} data-testid="test-canvas" width={400} height={300} style={{ width: 400, height: 300 }} />;
+    };
+    render(<Host />);
+    const canvas = getCanvas();
+
+    act(() => {
+      canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    });
+    await act(() => flushAnimationFrames());
+
+    // panY should be preserved (not zeroed) because canPanY is true.
+    expect(onPanChange).toHaveBeenCalled();
+    const lastCall = onPanChange.mock.calls[onPanChange.mock.calls.length - 1];
+    expect(lastCall[1]).toBe(0.4);
+  });
 });

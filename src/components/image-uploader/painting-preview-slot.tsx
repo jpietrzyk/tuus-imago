@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IconAdd from "@/components/icons/icon-add.svg?react";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
 import { t } from "@/locales/i18n";
@@ -7,6 +7,7 @@ import { type ImageDisplayProportion, getFrameAspectRatioClassName } from "./ima
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
 import { useCanvasPanZoom } from "./use-canvas-pan-zoom";
+import { resolvePanAvailability } from "./use-crop-adjust";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -132,6 +133,22 @@ export default function PaintingPreviewSlot({
     [],
   );
 
+  // Determine whether the source overflows the centered base crop in each
+  // axis. Triptych panels (vertical thirds taller than the portrait frame)
+  // overflow vertically, so the user can drag to reveal masked edges even at
+  // zoom 1.
+  const { canPanX, canPanY } = useMemo(
+    () =>
+      selectedImageMetadata
+        ? resolvePanAvailability({
+            sourceWidth: selectedImageMetadata.width,
+            sourceHeight: selectedImageMetadata.height,
+            proportion: userSelectedProportion,
+          })
+        : { canPanX: false, canPanY: false },
+    [selectedImageMetadata, userSelectedProportion],
+  );
+
   useCanvasPanZoom({
     canvasRef: previewCanvasRef,
     isEditMode: isEditMode && !!onCropAdjustChange,
@@ -141,6 +158,8 @@ export default function PaintingPreviewSlot({
     onZoomChange: handleZoomChange,
     onPanChange: handlePanChange,
     requestDrawRef,
+    canPanX,
+    canPanY,
   });
 
   useEffect(() => {
