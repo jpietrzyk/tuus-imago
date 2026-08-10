@@ -14,6 +14,9 @@ interface UseCanvasPanZoomParams {
   onPanChange: (panX: number, panY: number) => void;
   /** Ref to a function that triggers an immediate canvas redraw with the given crop adjust. */
   requestDrawRef?: React.MutableRefObject<(cropAdjust: { zoom: number; panX: number; panY: number }) => void>;
+  /** Whether the source overflows the base crop on each axis, enabling drag-to-reveal at zoom 1. */
+  canPanX?: boolean;
+  canPanY?: boolean;
 }
 
 export function useCanvasPanZoom({
@@ -25,6 +28,8 @@ export function useCanvasPanZoom({
   onZoomChange,
   onPanChange,
   requestDrawRef,
+  canPanX = false,
+  canPanY = false,
 }: UseCanvasPanZoomParams) {
   const isDraggingRef = useRef(false);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
@@ -38,16 +43,17 @@ export function useCanvasPanZoom({
   const panYRef = useRef(panY);
   const onZoomChangeRef = useRef(onZoomChange);
   const onPanChangeRef = useRef(onPanChange);
+  const canPanXRef = useRef(canPanX);
+  const canPanYRef = useRef(canPanY);
 
   const clampPan = useCallback(
-    (newPanX: number, newPanY: number, currentZoom: number): { panX: number; panY: number } => {
-      if (currentZoom <= 1) {
-        return { panX: 0, panY: 0 };
-      }
-
-      const clampedPanX = Math.max(-1, Math.min(1, newPanX));
-      const clampedPanY = Math.max(-1, Math.min(1, newPanY));
-      return { panX: clampedPanX, panY: clampedPanY };
+    (newPanX: number, newPanY: number, currentZoom: number, allowX: boolean, allowY: boolean): { panX: number; panY: number } => {
+      const xEnabled = currentZoom > 1 || allowX;
+      const yEnabled = currentZoom > 1 || allowY;
+      return {
+        panX: xEnabled ? Math.max(-1, Math.min(1, newPanX)) : 0,
+        panY: yEnabled ? Math.max(-1, Math.min(1, newPanY)) : 0,
+      };
     },
     [],
   );
@@ -62,6 +68,8 @@ export function useCanvasPanZoom({
     panYRef.current = panY;
     onZoomChangeRef.current = onZoomChange;
     onPanChangeRef.current = onPanChange;
+    canPanXRef.current = canPanX;
+    canPanYRef.current = canPanY;
     clampPanRef.current = clampPan;
   });
 
@@ -97,7 +105,11 @@ export function useCanvasPanZoom({
         pendingZoomCommit = null;
         onZoomChangeRef.current(zoomToCommit);
         if (zoomToCommit <= 1) {
-          onPanChangeRef.current(0, 0);
+          // Only zero pan on axes that have no overflow room at zoom 1.
+          onPanChangeRef.current(
+            canPanXRef.current ? panXRef.current : 0,
+            canPanYRef.current ? panYRef.current : 0,
+          );
         }
       }
     };
@@ -132,7 +144,7 @@ export function useCanvasPanZoom({
       const newPanX = panAtDragStartRef.current.panX + panDeltaX;
       const newPanY = panAtDragStartRef.current.panY + panDeltaY;
 
-      const clamped = clampPanRef.current(newPanX, newPanY, zoomRef.current);
+      const clamped = clampPanRef.current(newPanX, newPanY, zoomRef.current, canPanXRef.current, canPanYRef.current);
       onPanChangeRef.current(clamped.panX, clamped.panY);
     };
 
@@ -197,7 +209,7 @@ export function useCanvasPanZoom({
         const newPanX = panAtDragStartRef.current.panX + panDeltaX;
         const newPanY = panAtDragStartRef.current.panY + panDeltaY;
 
-        const clamped = clampPanRef.current(newPanX, newPanY, zoomRef.current);
+        const clamped = clampPanRef.current(newPanX, newPanY, zoomRef.current, canPanXRef.current, canPanYRef.current);
         onPanChangeRef.current(clamped.panX, clamped.panY);
       } else if (e.touches.length === 2 && lastPinchDistRef.current !== null) {
         const dx = e.touches[0].clientX - e.touches[1].clientX;

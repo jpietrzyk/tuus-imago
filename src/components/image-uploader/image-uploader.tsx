@@ -56,6 +56,7 @@ import {
 } from "./split-printability-projection";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
+import { adjustCropForZoomPan } from "./use-crop-adjust";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 export interface ImageTransformations {
@@ -221,32 +222,30 @@ function getUploadTransformations(
     blur: 0,
   };
 
-  if (
-    image.previewCropAdjust &&
-    image.previewCropAdjust.zoom > 1 &&
-    image.metadata
-  ) {
+  if (image.previewCropAdjust && image.metadata) {
     const baseCrop = calculateMaxCenteredCrop({
       sourceWidth: image.metadata.width,
       sourceHeight: image.metadata.height,
       proportion: image.displayImageProportion,
     });
-    const zoomScale = 1 / image.previewCropAdjust.zoom;
-    const adjustedWidth = baseCrop.cropWidth * zoomScale;
-    const adjustedHeight = baseCrop.cropHeight * zoomScale;
-    const maxPanOffsetX = (baseCrop.cropWidth - adjustedWidth) / 2;
-    const maxPanOffsetY = (baseCrop.cropHeight - adjustedHeight) / 2;
-    const centerX = baseCrop.cropX + baseCrop.cropWidth / 2;
-    const centerY = baseCrop.cropY + baseCrop.cropHeight / 2;
-    const offsetX = image.previewCropAdjust.panX * maxPanOffsetX;
-    const offsetY = image.previewCropAdjust.panY * maxPanOffsetY;
-    let cropX = centerX - adjustedWidth / 2 + offsetX;
-    let cropY = centerY - adjustedHeight / 2 + offsetY;
-    const maxX = image.metadata.width - adjustedWidth;
-    const maxY = image.metadata.height - adjustedHeight;
-    cropX = Math.max(0, Math.min(cropX, maxX));
-    cropY = Math.max(0, Math.min(cropY, maxY));
-    result.custom_coordinates = `${Math.round(cropX)},${Math.round(cropY)},${Math.round(adjustedWidth)},${Math.round(adjustedHeight)}`;
+    const effective = adjustCropForZoomPan(
+      baseCrop,
+      image.previewCropAdjust.zoom,
+      image.previewCropAdjust.panX,
+      image.previewCropAdjust.panY,
+    );
+    // Send crop coordinates whenever the effective crop differs from the
+    // centered base crop — this covers both zoom-in and drag-to-reveal pan
+    // at zoom 1 for images that overflow the frame (e.g. triptych panels).
+    const hasCropShift =
+      effective !== baseCrop &&
+      (Math.abs(effective.cropX - baseCrop.cropX) > 0.5 ||
+        Math.abs(effective.cropY - baseCrop.cropY) > 0.5 ||
+        Math.abs(effective.cropWidth - baseCrop.cropWidth) > 0.5 ||
+        Math.abs(effective.cropHeight - baseCrop.cropHeight) > 0.5);
+    if (hasCropShift) {
+      result.custom_coordinates = `${Math.round(effective.cropX)},${Math.round(effective.cropY)},${Math.round(effective.cropWidth)},${Math.round(effective.cropHeight)}`;
+    }
   }
 
   return result;

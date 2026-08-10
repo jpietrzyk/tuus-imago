@@ -9,9 +9,9 @@ import type {
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
-import { getTargetAspectRatio } from "./image-proportion-calculator";
+import { calculateMaxCenteredCrop, getTargetAspectRatio } from "./image-proportion-calculator";
 import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
-import type { CropAdjust } from "./use-crop-adjust";
+import { adjustCropForZoomPan, type CropAdjust } from "./use-crop-adjust";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
 const TRIPTYCH_PANEL_COUNT = 3;
@@ -27,47 +27,92 @@ interface TriptychSidePanelProps {
 }
 
 /**
- * Build the CSS `transform` mirroring a slot's zoom/pan crop and rotation/flip.
- * Cloud previews already encode these server-side, so the mirror is only
- * applied to local (pre-upload) previews. The side panel reflects the slot's
- * own state; when the triptych is linked, that state is kept identical to the
- * active slot, so all panels move together live.
+ * Compute the inline sizing/positioning for a triptych side-panel <img> so it
+ * mirrors the active slot's zoom/pan crop.
+ *
+ * The image is sized larger than the (overflow-hidden) frame and positioned so
+ * the adjusted crop region exactly fills the frame; the surrounding source
+ * pixels overflow and are clipped by the frame. Because the <img> is always at
+ * least as large as the frame, panning shifts the source within the fixed clip
+ * window and never exposes an empty gap — unlike translating an `object-cover`
+ * element, which drags its own clip box along and leaves the frame blank (the
+ * previous behaviour that made the left/right panels vanish while dragging).
+ *
+ * Cloud previews already encode the crop/transform server-side, so the source
+ * simply fills the frame centered. Rotation/flip are applied as a transform on
+ * the sized image (cloud previews encode them too, so they are skipped there).
  */
-const buildSidePanelTransform = (
+const buildSidePanelCropStyle = (
   image: SelectedImageItem,
   useCloudPreview: boolean,
-): string | undefined => {
+  fallbackDimensions?: { width: number; height: number } | null,
+): {
+  width: string;
+  height: string;
+  top: string;
+  left: string;
+  transform?: string;
+} => {
   if (useCloudPreview) {
-    return undefined;
+    return { width: "100%", height: "100%", top: "0%", left: "0%" };
   }
 
-  const parts: string[] = [];
-  const transform = image.previewTransform;
+  let width = "100%";
+  let height = "100%";
+  let top = "0%";
+  let left = "0%";
 
+  const metadata = image.metadata
+    ?? (fallbackDimensions
+      ? { width: fallbackDimensions.width, height: fallbackDimensions.height }
+      : null);
+
+  if (metadata && metadata.width > 0 && metadata.height > 0) {
+    const baseCrop = calculateMaxCenteredCrop({
+      sourceWidth: metadata.width,
+      sourceHeight: metadata.height,
+      proportion: image.displayImageProportion,
+    });
+
+    const cropAdjust = image.previewCropAdjust;
+    const adjusted = cropAdjust
+      ? adjustCropForZoomPan(
+          baseCrop,
+          cropAdjust.zoom,
+          cropAdjust.panX,
+          cropAdjust.panY,
+        )
+      : baseCrop;
+
+    // Size the <img> so the adjusted crop fills the frame and the rest of the
+    // source overflows it; offset so the crop's top-left aligns with the
+    // frame's. Percentages are relative to the frame box.
+    width = `${(metadata.width / adjusted.cropWidth) * 100}%`;
+    height = `${(metadata.height / adjusted.cropHeight) * 100}%`;
+    left = `${-(adjusted.cropX / adjusted.cropWidth) * 100}%`;
+    top = `${-(adjusted.cropY / adjusted.cropHeight) * 100}%`;
+  }
+
+  const transformParts: string[] = [];
+  const transform = image.previewTransform;
   if (transform) {
-    const rotation = transform.rotation;
-    if (rotation) {
-      parts.push(`rotate(${rotation}deg)`);
+    if (transform.rotation) {
+      transformParts.push(`rotate(${transform.rotation}deg)`);
     }
     if (transform.flipHorizontal || transform.flipVertical) {
-      parts.push(
+      transformParts.push(
         `scale(${transform.flipHorizontal ? -1 : 1}, ${transform.flipVertical ? -1 : 1})`,
       );
     }
   }
 
-  const cropAdjust = image.previewCropAdjust;
-  const zoom = cropAdjust?.zoom ?? 1;
-  if (zoom > 1) {
-    // Translate as a fraction of the element size so panning scales with zoom.
-    const panRange = (zoom - 1) / zoom;
-    const tx = -panRange * 50 * (cropAdjust?.panX ?? 0);
-    const ty = -panRange * 50 * (cropAdjust?.panY ?? 0);
-    parts.push(`scale(${zoom})`);
-    parts.push(`translate(${tx}%, ${ty}%)`);
-  }
-
-  return parts.length > 0 ? parts.join(" ") : undefined;
+  return {
+    width,
+    height,
+    top,
+    left,
+    transform: transformParts.length > 0 ? transformParts.join(" ") : undefined,
+  };
 };
 
 function TriptychSidePanel({
@@ -82,15 +127,25 @@ function TriptychSidePanel({
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
   );
+  const [imgDimensions, setImgDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const effectivePreviewUrl = previewUrl ?? image.previewUrl;
   const isEffectImageLoading =
     useCloudPreview &&
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
 
+  const cropStyle = buildSidePanelCropStyle(image, useCloudPreview, imgDimensions);
+
   const previewStyle: React.CSSProperties = {
     filter: buildPreviewEffectFilter(image, useCloudPreview),
-    transform: buildSidePanelTransform(image, useCloudPreview),
+    width: cropStyle.width,
+    height: cropStyle.height,
+    top: cropStyle.top,
+    left: cropStyle.left,
+    transform: cropStyle.transform,
   };
 
   return (
@@ -109,10 +164,19 @@ function TriptychSidePanel({
         <img
           src={effectivePreviewUrl}
           alt={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
-          className="h-full w-full object-cover object-center transition-transform duration-100 ease-out motion-reduce:transition-none"
+          className="absolute object-cover will-change-transform transition-transform duration-100 ease-out motion-reduce:transition-none"
           style={previewStyle}
           draggable={false}
-          onLoad={() => setConfirmedCloudUrl(effectivePreviewUrl)}
+          onLoad={(e) => {
+            setConfirmedCloudUrl(effectivePreviewUrl);
+            const img = e.currentTarget;
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              setImgDimensions({
+                width: img.naturalWidth,
+                height: img.naturalHeight,
+              });
+            }
+          }}
           onError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
         />
         <UploadProgressOverlay
