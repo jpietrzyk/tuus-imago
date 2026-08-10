@@ -11,7 +11,7 @@ import type {
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import { calculateMaxCenteredCrop, getTargetAspectRatio } from "./image-proportion-calculator";
 import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
-import type { CropAdjust } from "./use-crop-adjust";
+import { adjustCropForZoomPan, type CropAdjust } from "./use-crop-adjust";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
 const TRIPTYCH_PANEL_COUNT = 3;
@@ -27,85 +27,92 @@ interface TriptychSidePanelProps {
 }
 
 /**
- * Build the CSS `transform` mirroring a slot's zoom/pan crop and rotation/flip.
- * Cloud previews already encode these server-side, so the mirror is only
- * applied to local (pre-upload) previews. The side panel reflects the slot's
- * own state; when the triptych is linked, that state is kept identical to the
- * active slot, so all panels move together live.
+ * Compute the inline sizing/positioning for a triptych side-panel <img> so it
+ * mirrors the active slot's zoom/pan crop.
  *
- * The pan translate is computed from how much the source image overflows the
- * centered base crop (widthScale / heightScale). For aspect-matched images
- * this overflows ratio is 1 (no translate at zoom 1) and the formula reduces
- * to the original zoom-only expression. For triptych panels whose vertical
- * third is taller than the portrait frame, the ratio is < 1 in the overflow
- * axis, producing a non-zero translate even at zoom 1 so the user can drag to
- * reveal masked edges.
+ * The image is sized larger than the (overflow-hidden) frame and positioned so
+ * the adjusted crop region exactly fills the frame; the surrounding source
+ * pixels overflow and are clipped by the frame. Because the <img> is always at
+ * least as large as the frame, panning shifts the source within the fixed clip
+ * window and never exposes an empty gap — unlike translating an `object-cover`
+ * element, which drags its own clip box along and leaves the frame blank (the
+ * previous behaviour that made the left/right panels vanish while dragging).
+ *
+ * Cloud previews already encode the crop/transform server-side, so the source
+ * simply fills the frame centered. Rotation/flip are applied as a transform on
+ * the sized image (cloud previews encode them too, so they are skipped there).
  */
-const buildSidePanelTransform = (
+const buildSidePanelCropStyle = (
   image: SelectedImageItem,
   useCloudPreview: boolean,
   fallbackDimensions?: { width: number; height: number } | null,
-): string | undefined => {
+): {
+  width: string;
+  height: string;
+  top: string;
+  left: string;
+  transform?: string;
+} => {
   if (useCloudPreview) {
-    return undefined;
+    return { width: "100%", height: "100%", top: "0%", left: "0%" };
   }
 
-  const parts: string[] = [];
-  const transform = image.previewTransform;
+  let width = "100%";
+  let height = "100%";
+  let top = "0%";
+  let left = "0%";
 
-  if (transform) {
-    const rotation = transform.rotation;
-    if (rotation) {
-      parts.push(`rotate(${rotation}deg)`);
-    }
-    if (transform.flipHorizontal || transform.flipVertical) {
-      parts.push(
-        `scale(${transform.flipHorizontal ? -1 : 1}, ${transform.flipVertical ? -1 : 1})`,
-      );
-    }
-  }
-
-  const cropAdjust = image.previewCropAdjust;
-  const zoom = cropAdjust?.zoom ?? 1;
-  const panX = cropAdjust?.panX ?? 0;
-  const panY = cropAdjust?.panY ?? 0;
-  const effectiveZoom = Math.max(1, zoom);
-
-  // Compute how much of the source the centered base crop covers in each axis.
-  // widthScale/heightScale = 1 means the crop fills the source (no overflow);
-  // < 1 means the source is larger (overflow that can be revealed by panning).
   const metadata = image.metadata
     ?? (fallbackDimensions
       ? { width: fallbackDimensions.width, height: fallbackDimensions.height }
       : null);
-  let widthScale = 1;
-  let heightScale = 1;
+
   if (metadata && metadata.width > 0 && metadata.height > 0) {
     const baseCrop = calculateMaxCenteredCrop({
       sourceWidth: metadata.width,
       sourceHeight: metadata.height,
       proportion: image.displayImageProportion,
     });
-    widthScale = baseCrop.widthScale;
-    heightScale = baseCrop.heightScale;
+
+    const cropAdjust = image.previewCropAdjust;
+    const adjusted = cropAdjust
+      ? adjustCropForZoomPan(
+          baseCrop,
+          cropAdjust.zoom,
+          cropAdjust.panX,
+          cropAdjust.panY,
+        )
+      : baseCrop;
+
+    // Size the <img> so the adjusted crop fills the frame and the rest of the
+    // source overflows it; offset so the crop's top-left aligns with the
+    // frame's. Percentages are relative to the frame box.
+    width = `${(metadata.width / adjusted.cropWidth) * 100}%`;
+    height = `${(metadata.height / adjusted.cropHeight) * 100}%`;
+    left = `${-(adjusted.cropX / adjusted.cropWidth) * 100}%`;
+    top = `${-(adjusted.cropY / adjusted.cropHeight) * 100}%`;
   }
 
-  // Pre-scale translate percentages. The translate runs before scale in the
-  // CSS transform list, so the scale(zoom) factor amplifies it. The formula
-  // (1/scaleFraction - 1/zoom) * 50 * pan reduces to (zoom-1)/zoom * 50 * pan
-  // when scaleFraction is 1 (no overflow), matching the original expression.
-  const tx = -(1 / widthScale - 1 / effectiveZoom) * 50 * panX;
-  const ty = -(1 / heightScale - 1 / effectiveZoom) * 50 * panY;
-
-  if (effectiveZoom > 1) {
-    parts.push(`scale(${effectiveZoom})`);
+  const transformParts: string[] = [];
+  const transform = image.previewTransform;
+  if (transform) {
+    if (transform.rotation) {
+      transformParts.push(`rotate(${transform.rotation}deg)`);
+    }
+    if (transform.flipHorizontal || transform.flipVertical) {
+      transformParts.push(
+        `scale(${transform.flipHorizontal ? -1 : 1}, ${transform.flipVertical ? -1 : 1})`,
+      );
+    }
   }
 
-  if (tx !== 0 || ty !== 0) {
-    parts.push(`translate(${tx}%, ${ty}%)`);
-  }
-
-  return parts.length > 0 ? parts.join(" ") : undefined;
+  return {
+    width,
+    height,
+    top,
+    left,
+    transform: transformParts.length > 0 ? transformParts.join(" ") : undefined,
+  };
 };
 
 function TriptychSidePanel({
@@ -130,9 +137,15 @@ function TriptychSidePanel({
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
 
+  const cropStyle = buildSidePanelCropStyle(image, useCloudPreview, imgDimensions);
+
   const previewStyle: React.CSSProperties = {
     filter: buildPreviewEffectFilter(image, useCloudPreview),
-    transform: buildSidePanelTransform(image, useCloudPreview, imgDimensions),
+    width: cropStyle.width,
+    height: cropStyle.height,
+    top: cropStyle.top,
+    left: cropStyle.left,
+    transform: cropStyle.transform,
   };
 
   return (
@@ -151,7 +164,7 @@ function TriptychSidePanel({
         <img
           src={effectivePreviewUrl}
           alt={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
-          className="h-full w-full object-cover object-center transition-transform duration-100 ease-out motion-reduce:transition-none"
+          className="absolute object-cover will-change-transform transition-transform duration-100 ease-out motion-reduce:transition-none"
           style={previewStyle}
           draggable={false}
           onLoad={(e) => {

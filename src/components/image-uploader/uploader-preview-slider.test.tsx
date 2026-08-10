@@ -306,9 +306,11 @@ describe("UploaderPreviewSlider", () => {
     }
   });
 
-  it("mirrors the slot zoom/pan onto the side panel image transform", () => {
+  it("mirrors the slot zoom/pan onto the side panel image sizing", () => {
     const props = createProps();
     const left = createItem("left");
+    left.metadata = { width: 1000, height: 1000, aspectRatio: "1:1" };
+    left.displayImageProportion = "square";
     left.previewCropAdjust = { zoom: 2, panX: 0.5, panY: 0 };
     const slots: Array<SelectedImageItem | null> = [
       left,
@@ -331,10 +333,17 @@ describe("UploaderPreviewSlider", () => {
       .querySelector("img");
 
     expect(sideImg).not.toBeNull();
-    expect(sideImg?.getAttribute("style") ?? "").toMatch(/scale\(2\)/);
+    const style = sideImg?.getAttribute("style") ?? "";
+    // Zoom is expressed as the image growing beyond the frame (200% at zoom 2)
+    // rather than a transform scale, so the frame is always fully covered.
+    expect(style).toMatch(/width:\s*200%/);
+    expect(style).toMatch(/height:\s*200%/);
+    // Pan shifts the image within the fixed clip window (no translate).
+    expect(style).not.toMatch(/translate\(/);
+    expect(style).toMatch(/left:\s*-75%/);
   });
 
-  it("mirrors overflow pan onto side panel transform at zoom 1 (triptych)", () => {
+  it("sizes the side panel image to overflow the frame so panning reveals edges (triptych)", () => {
     const props = createProps();
     const left = createItem("left");
     left.metadata = { width: 333, height: 1000, aspectRatio: "333:1000" };
@@ -362,9 +371,14 @@ describe("UploaderPreviewSlider", () => {
 
     expect(sideImg).not.toBeNull();
     const style = sideImg?.getAttribute("style") ?? "";
-    // No scale at zoom 1, but a non-zero translate reveals the masked edge.
-    expect(style).not.toMatch(/scale\(/);
-    expect(style).toMatch(/translate\(/);
+    // The source is taller than the portrait frame, so the image overflows
+    // vertically (height ~200%) and is shifted up to reveal the masked edge.
+    expect(style).toMatch(/height:\s*200\.\d+%/);
+    expect(style).toMatch(/width:\s*100%/);
+    // Panning repositions the overflowing image — never a translate (which
+    // would drag the clip box and leave the frame blank).
+    expect(style).not.toMatch(/translate\(/);
+    expect(style).toMatch(/top:\s*-25\.\d+%/);
   });
 
   it("mirrors the slot rotation onto the side panel image transform", () => {
