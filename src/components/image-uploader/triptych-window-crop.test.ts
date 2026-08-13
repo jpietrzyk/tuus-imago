@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeTriptychWindowCrop,
   isWidePanoramaForTriptych,
+  resolveTriptychSlotCrop,
 } from "./triptych-window-crop";
 
 // Portrait frame aspect (vertical proportion) = 2/3.
@@ -134,5 +135,169 @@ describe("computeTriptychWindowCrop", () => {
       panX: 1,
     });
     expect(over.cropX).toBeCloseTo(atMax.cropX, 4);
+  });
+
+  it("shrinks every window by the shared zoom while keeping contiguity and frame aspect", () => {
+    const w = 3000;
+    const h = 1000;
+    const zoom = 2;
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex: i,
+        panX: 0,
+        panY: 0,
+        zoom,
+      }),
+    );
+
+    // Each window keeps the frame aspect and is half the base size.
+    for (const c of crops) {
+      expect(c.cropWidth / c.cropHeight).toBeCloseTo(FRAME, 4);
+      expect(c.cropHeight).toBeCloseTo(h / zoom, 4);
+      expect(c.cropWidth).toBeCloseTo((h / zoom) * FRAME, 4);
+    }
+
+    // Windows stay contiguous at zoom 2 (panel N right edge == panel N+1 left).
+    expect(crops[0].cropX + crops[0].cropWidth).toBeCloseTo(crops[1].cropX, 4);
+    expect(crops[1].cropX + crops[1].cropWidth).toBeCloseTo(crops[2].cropX, 4);
+
+    // Zoom creates vertical headroom; at zoom 1 there is none.
+    expect(crops[0].panRangeY).toBeCloseTo(h - h / zoom, 4);
+    const baseZoom1 = computeTriptychWindowCrop({
+      sourceWidth: w,
+      sourceHeight: h,
+      frameAspectRatio: FRAME,
+      windowIndex: 0,
+      panX: 0,
+    });
+    expect(baseZoom1.panRangeY).toBe(0);
+  });
+
+  it("travels windows vertically via panY and clamps within the source height", () => {
+    const w = 3000;
+    const h = 1000;
+    const zoom = 2; // cropHeight = 500, vertical room = 500
+
+    for (const panY of [-1, -0.5, 0, 0.5, 1]) {
+      const crops = [0, 1, 2].map((i) =>
+        computeTriptychWindowCrop({
+          sourceWidth: w,
+          sourceHeight: h,
+          frameAspectRatio: FRAME,
+          windowIndex: i,
+          panX: 0,
+          panY,
+          zoom,
+        }),
+      );
+
+      // panY shifts every window by the same amount (shared), so contiguity
+      // is preserved and the window never leaves the source vertically.
+      for (const c of crops) {
+        expect(c.cropY).toBeGreaterThanOrEqual(-1e-6);
+        expect(c.cropY + c.cropHeight).toBeLessThanOrEqual(h + 1e-6);
+      }
+      // All three windows share the same vertical position.
+      expect(crops[0].cropY).toBeCloseTo(crops[1].cropY, 4);
+      expect(crops[1].cropY).toBeCloseTo(crops[2].cropY, 4);
+    }
+
+    // At panY = 0 the zoomed window is vertically centred.
+    const centered = computeTriptychWindowCrop({
+      sourceWidth: w,
+      sourceHeight: h,
+      frameAspectRatio: FRAME,
+      windowIndex: 0,
+      panX: 0,
+      panY: 0,
+      zoom: 2,
+    });
+    expect(centered.cropY).toBeCloseTo((h - 500) / 2, 4);
+  });
+
+  it("matches the legacy (no-zoom) output exactly at the defaults", () => {
+    const w = 3000;
+    const h = 1000;
+    const explicit = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex: i,
+        panX: 0,
+        zoom: 1,
+        panY: 0,
+      }),
+    );
+    const defaulted = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex: i,
+        panX: 0,
+      }),
+    );
+
+    for (let i = 0; i < 3; i += 1) {
+      expect(explicit[i].cropX).toBe(defaulted[i].cropX);
+      expect(explicit[i].cropY).toBe(defaulted[i].cropY);
+      expect(explicit[i].cropWidth).toBe(defaulted[i].cropWidth);
+      expect(explicit[i].cropHeight).toBe(defaulted[i].cropHeight);
+      expect(explicit[i].cropHeight).toBe(h);
+    }
+  });
+});
+
+describe("resolveTriptychSlotCrop", () => {
+  it("derives the frame aspect from the display proportion and applies cropAdjust", () => {
+    const w = 3000;
+    const h = 1000;
+    const cropAdjust = { zoom: 2, panX: 0.4, panY: -0.5 };
+
+    for (const windowIndex of [0, 1, 2]) {
+      const resolved = resolveTriptychSlotCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        displayImageProportion: "vertical",
+        windowIndex,
+        cropAdjust,
+      });
+      const direct = computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex,
+        panX: cropAdjust.panX,
+        panY: cropAdjust.panY,
+        zoom: cropAdjust.zoom,
+      });
+
+      expect(resolved.cropX).toBe(direct.cropX);
+      expect(resolved.cropY).toBe(direct.cropY);
+      expect(resolved.cropWidth).toBe(direct.cropWidth);
+      expect(resolved.cropHeight).toBe(direct.cropHeight);
+    }
+  });
+
+  it("defaults to zoom 1 / no pan when cropAdjust is absent", () => {
+    const resolved = resolveTriptychSlotCrop({
+      sourceWidth: 3000,
+      sourceHeight: 1000,
+      displayImageProportion: "vertical",
+      windowIndex: 0,
+    });
+    const baseZoom1 = computeTriptychWindowCrop({
+      sourceWidth: 3000,
+      sourceHeight: 1000,
+      frameAspectRatio: FRAME,
+      windowIndex: 0,
+      panX: 0,
+    });
+    expect(resolved.cropX).toBe(baseZoom1.cropX);
+    expect(resolved.cropHeight).toBe(1000);
   });
 });

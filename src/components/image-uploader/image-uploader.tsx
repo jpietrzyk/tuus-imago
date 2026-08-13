@@ -50,7 +50,7 @@ import {
 } from "./painting-size";
 import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
-import { isWidePanoramaForTriptych, computeTriptychWindowCrop } from "./triptych-window-crop";
+import { isWidePanoramaForTriptych, resolveTriptychSlotCrop } from "./triptych-window-crop";
 import {
   projectTriptychPrintability,
   resolveTriptychTargetSizeIndex,
@@ -237,12 +237,12 @@ function getUploadTransformations(
     // Seamless wide-panorama triptych: crop the shared panorama to this
     // panel's contiguous portrait window so the three uploaded canvases meet
     // edge-to-edge exactly as previewed.
-    const windowCrop = computeTriptychWindowCrop({
+    const windowCrop = resolveTriptychSlotCrop({
       sourceWidth: image.metadata.width,
       sourceHeight: image.metadata.height,
-      frameAspectRatio: getTargetAspectRatio(image.displayImageProportion),
+      displayImageProportion: image.displayImageProportion,
       windowIndex: image.triptychWindowIndex,
-      panX: image.previewCropAdjust?.panX ?? 0,
+      cropAdjust: image.previewCropAdjust,
     });
     result.custom_coordinates = `${Math.round(windowCrop.cropX)},${Math.round(windowCrop.cropY)},${Math.round(windowCrop.cropWidth)},${Math.round(windowCrop.cropHeight)}`;
   } else if (image.previewCropAdjust && image.metadata) {
@@ -1523,11 +1523,11 @@ export const ImageUploader = forwardRef<
     try {
       // Wide panoramas use the seamless window model: each of the three panels
       // becomes a contiguous portrait window cut from the shared panorama, so
-      // they meet edge-to-edge and can be dragged as one continuous image with
-      // no gaps (mirroring the square-image top/bottom pan on the horizontal
-      // axis). This needs the raw panorama with nothing baked up front, so a
-      // pre-split rotation/flip/zoom (which would have to be baked) falls back
-      // to the legacy equal-thirds split.
+      // they meet edge-to-edge and can be dragged/zoomed as one continuous
+      // image with no gaps (mirroring the square-image top/bottom pan on the
+      // horizontal axis). A shared zoom is supported natively by the window
+      // crop, so only a pre-split rotation/flip (which would have to be baked)
+      // falls back to the legacy equal-thirds split.
       const panoWidth =
         activeImage.metadata?.width ?? selectedImageMetadata?.width ?? 0;
       const panoHeight =
@@ -1536,16 +1536,15 @@ export const ImageUploader = forwardRef<
       const preTransform = activeImage.previewTransform;
       const preRotation =
         (((preTransform?.rotation ?? 0) % 360) + 360) % 360;
-      const hasPreTransformOrZoom =
+      const hasPreTransform =
         preRotation !== 0 ||
         !!preTransform?.flipHorizontal ||
-        !!preTransform?.flipVertical ||
-        !!(activeImage.previewCropAdjust && activeImage.previewCropAdjust.zoom > 1);
+        !!preTransform?.flipVertical;
       const useSeamlessWindows =
         panoWidth > 0 &&
         panoHeight > 0 &&
         isWidePanoramaForTriptych(panoWidth, panoHeight, verticalFrameAspect) &&
-        !hasPreTransformOrZoom;
+        !hasPreTransform;
 
       if (useSeamlessWindows) {
         setSelectedImages((prevImages) => {
@@ -1567,7 +1566,19 @@ export const ImageUploader = forwardRef<
               flipHorizontal: false,
               flipVertical: false,
             },
-            previewCropAdjust: undefined,
+            // Carry the pre-split zoom into the windows so the user does not
+            // lose their zoom level at split time; pan is reset because the
+            // window model recenters the band (its pan range differs from the
+            // pre-split centered-crop pan range).
+            previewCropAdjust:
+              activeImage.previewCropAdjust &&
+              activeImage.previewCropAdjust.zoom > 1
+                ? {
+                    zoom: activeImage.previewCropAdjust.zoom,
+                    panX: 0,
+                    panY: 0,
+                  }
+                : undefined,
             triptychWindowIndex: windowIndex,
           }));
         });

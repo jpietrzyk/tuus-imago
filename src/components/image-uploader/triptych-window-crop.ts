@@ -1,4 +1,8 @@
-import type { CropCalculationResult } from "./image-proportion-calculator";
+import {
+  getTargetAspectRatio,
+  type CropCalculationResult,
+  type ImageDisplayProportion,
+} from "./image-proportion-calculator";
 
 /**
  * When a panorama is split into a triptych, each panel becomes a portrait
@@ -28,16 +32,21 @@ export interface TriptychWindowCropResult extends CropCalculationResult {
   panRange: number;
   /** Width of a single portrait window in source px. */
   windowWidth: number;
+  /** Vertical room (in source px) a window can travel (0 at zoom = 1). */
+  panRangeY: number;
 }
 
 /**
  * Compute the portrait window crop for one seamless-triptych panel.
  *
  * The three windows (indices 0, 1, 2) are contiguous portrait slices whose
- * combined width is `3 * frameAspectRatio * sourceHeight`. `panX ∈ [-1, 1]`
- * shifts the whole band within the source so the user can scroll a wide
- * panorama. Because every window shifts by the same amount, adjacent windows
- * always share an edge (panel N's right edge == panel N+1's left edge) and the
+ * combined width is `3 * windowWidth`. `panX ∈ [-1, 1]` shifts the whole band
+ * within the source so the user can scroll a wide panorama. A shared `zoom ≥ 1`
+ * shrinks every window by the same factor (the band simply reveals more of the
+ * panorama), and `panY ∈ [-1, 1]` travels the window vertically once zoom
+ * creates vertical headroom. Because every window shares the same zoom/panX/panY
+ * and is offset by a whole `windowWidth`, adjacent windows always share an edge
+ * (panel N's right edge == panel N+1's left edge) at any zoom level, and the
  * frame is always exactly filled — there is never an empty gap, exactly like
  * the vertical top/bottom pan of a square image.
  */
@@ -47,26 +56,44 @@ export function computeTriptychWindowCrop({
   frameAspectRatio,
   windowIndex,
   panX,
+  zoom = 1,
+  panY = 0,
 }: {
   sourceWidth: number;
   sourceHeight: number;
   frameAspectRatio: number;
   windowIndex: number;
   panX: number;
+  zoom?: number;
+  panY?: number;
 }): TriptychWindowCropResult {
   const safeWidth = Math.max(1, sourceWidth);
   const safeHeight = Math.max(1, sourceHeight);
 
-  const windowWidth = safeHeight * frameAspectRatio;
+  const effectiveZoom = Math.max(1, zoom);
+
+  const cropHeight = safeHeight / effectiveZoom;
+  const windowWidth = cropHeight * frameAspectRatio;
   const totalWidth = windowWidth * 3;
+
   const panRange = Math.max(0, safeWidth - totalWidth);
-  const clampedPan = Math.max(-1, Math.min(1, panX));
-  const shift = (clampedPan * panRange) / 2;
-  const baseX = (safeWidth - totalWidth) / 2 + shift;
+  const panRangeY = Math.max(0, safeHeight - cropHeight);
+
+  const clampedPanX = Math.max(-1, Math.min(1, panX));
+  const clampedPanY = Math.max(-1, Math.min(1, panY));
+
+  const shiftX = (clampedPanX * panRange) / 2;
+  const shiftY = (clampedPanY * panRangeY) / 2;
+
+  const baseX = (safeWidth - totalWidth) / 2 + shiftX;
   const cropX = baseX + windowIndex * windowWidth;
-  const cropY = 0;
   const cropWidth = windowWidth;
-  const cropHeight = safeHeight;
+
+  const rawCropY = (safeHeight - cropHeight) / 2 + shiftY;
+  const cropY = Math.max(
+    0,
+    Math.min(rawCropY, Math.max(0, safeHeight - cropHeight)),
+  );
 
   const sourceArea = safeWidth * safeHeight;
   const cropArea = cropWidth * cropHeight;
@@ -86,5 +113,38 @@ export function computeTriptychWindowCrop({
     heightScale: cropHeight / safeHeight,
     panRange,
     windowWidth,
+    panRangeY,
   };
+}
+
+export interface ResolveTriptychSlotCropArgs {
+  sourceWidth: number;
+  sourceHeight: number;
+  displayImageProportion: ImageDisplayProportion;
+  windowIndex: number;
+  cropAdjust?: { zoom?: number; panX?: number; panY?: number } | null;
+}
+
+/**
+ * Single source of truth for a seamless-triptych panel crop. Derives the frame
+ * aspect from the slot's display proportion and applies the shared zoom/pan,
+ * so the live canvas preview, the side-panel CSS sizing, and the uploaded
+ * `custom_coordinates` all compute the identical window.
+ */
+export function resolveTriptychSlotCrop({
+  sourceWidth,
+  sourceHeight,
+  displayImageProportion,
+  windowIndex,
+  cropAdjust,
+}: ResolveTriptychSlotCropArgs): TriptychWindowCropResult {
+  return computeTriptychWindowCrop({
+    sourceWidth,
+    sourceHeight,
+    frameAspectRatio: getTargetAspectRatio(displayImageProportion),
+    windowIndex,
+    panX: cropAdjust?.panX ?? 0,
+    panY: cropAdjust?.panY ?? 0,
+    zoom: cropAdjust?.zoom ?? 1,
+  });
 }

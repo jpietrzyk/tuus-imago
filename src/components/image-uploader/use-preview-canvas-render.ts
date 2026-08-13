@@ -7,10 +7,9 @@ import {
 } from "./preview-canvas-utils";
 import { buildPreviewRenderPlan } from "./preview-render-plan";
 import { adjustCropForZoomPan } from "./use-crop-adjust";
-import { computeTriptychWindowCrop } from "./triptych-window-crop";
+import { resolveTriptychSlotCrop } from "./triptych-window-crop";
 import {
   calculateMaxCenteredCrop,
-  getTargetAspectRatio,
   invertDisplayProportion,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
@@ -143,18 +142,18 @@ export const usePreviewCanvasRender = ({
       const cropAdjust = cropAdjustOverride ?? previewCropAdjust;
 
       // Seamless wide-panorama triptych: the crop is a contiguous portrait
-      // window into the shared panorama, shifted horizontally by the shared
-      // pan. This bypasses the centered-crop + zoom/pan math so the three
-      // panels always meet edge-to-edge (zoom/vertical pan are intentionally
-      // ignored here — the panorama scrolls as one continuous band).
+      // window into the shared panorama. A shared zoom shrinks every window by
+      // the same factor and panY travels it vertically, while panX scrolls the
+      // whole band — all three panels share the same zoom/panX/panY, so they
+      // always meet edge-to-edge at any zoom level.
       let crop;
       if (triptychWindowIndex !== undefined) {
-        crop = computeTriptychWindowCrop({
+        crop = resolveTriptychSlotCrop({
           sourceWidth,
           sourceHeight,
-          frameAspectRatio: getTargetAspectRatio(nextDisplayImageProportion),
+          displayImageProportion: nextDisplayImageProportion,
           windowIndex: triptychWindowIndex,
-          panX: cropAdjust?.panX ?? 0,
+          cropAdjust,
         });
       } else {
         // For 90°/270° rotations the image orientation swaps, so the crop that
