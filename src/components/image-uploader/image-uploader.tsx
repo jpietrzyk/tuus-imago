@@ -50,9 +50,11 @@ import {
 } from "./painting-size";
 import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
+import { isWidePanoramaForTriptych, computeTriptychWindowCrop } from "./triptych-window-crop";
 import {
   projectTriptychPrintability,
   resolveTriptychTargetSizeIndex,
+  TRIPTYCH_PROJECTED_SHAPE,
 } from "./split-printability-projection";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
 import { validateImageFile } from "./image-file-validator";
@@ -167,6 +169,15 @@ export interface SelectedImageItem {
     panX: number;
     panY: number;
   };
+  /**
+   * Set on each slot of a seamless wide-panorama triptych (0 = left, 1 = center,
+   * 2 = right). When present, the slot's source is the full shared panorama and
+   * the visible crop is a contiguous portrait "window" computed from this index
+   * plus the shared pan — so the three panels meet edge-to-edge and can be
+   * dragged as one continuous image (no gaps), mirroring the square-image
+   * top/bottom behaviour on the horizontal axis.
+   */
+  triptychWindowIndex?: number;
   uploadedAsset?: {
     publicId: string;
     secureUrl: string;
@@ -222,7 +233,19 @@ function getUploadTransformations(
     blur: 0,
   };
 
-  if (image.previewCropAdjust && image.metadata) {
+  if (image.triptychWindowIndex !== undefined && image.metadata) {
+    // Seamless wide-panorama triptych: crop the shared panorama to this
+    // panel's contiguous portrait window so the three uploaded canvases meet
+    // edge-to-edge exactly as previewed.
+    const windowCrop = computeTriptychWindowCrop({
+      sourceWidth: image.metadata.width,
+      sourceHeight: image.metadata.height,
+      frameAspectRatio: getTargetAspectRatio(image.displayImageProportion),
+      windowIndex: image.triptychWindowIndex,
+      panX: image.previewCropAdjust?.panX ?? 0,
+    });
+    result.custom_coordinates = `${Math.round(windowCrop.cropX)},${Math.round(windowCrop.cropY)},${Math.round(windowCrop.cropWidth)},${Math.round(windowCrop.cropHeight)}`;
+  } else if (image.previewCropAdjust && image.metadata) {
     const baseCrop = calculateMaxCenteredCrop({
       sourceWidth: image.metadata.width,
       sourceHeight: image.metadata.height,
@@ -1479,10 +1502,17 @@ export const ImageUploader = forwardRef<
 
     let targetSize = selectedPaintingSize;
     if (selectedImageMetadata) {
+      // Project printability at the seamless window width (portrait window of
+      // the panorama) so the auto-selected triptych size matches what each
+      // printed canvas can actually support — wide panoramas yield narrower
+      // windows and thus a smaller recommended size, without losing the masked
+      // left/right edges the user can still drag to reveal.
       const projection = projectTriptychPrintability(
         selectedImageMetadata.width,
         selectedImageMetadata.height,
         selectedPaintingSize,
+        TRIPTYCH_PROJECTED_SHAPE,
+        getTargetAspectRatio("vertical"),
       );
       targetSize = resolveTriptychTargetSizeIndex(
         selectedPaintingSize,
@@ -1491,31 +1521,83 @@ export const ImageUploader = forwardRef<
     }
 
     try {
-      const splitFiles = await splitImageIntoVerticalThirdFiles({
-        previewUrl: activeImage.previewUrl,
-        sourceFile: activeImage.file,
-        metadata: activeImage.metadata,
-        proportion: activeImage.displayImageProportion,
-        previewTransform: activeImage.previewTransform,
-        previewCropAdjust: activeImage.previewCropAdjust,
-      });
+      // Wide panoramas use the seamless window model: each of the three panels
+      // becomes a contiguous portrait window cut from the shared panorama, so
+      // they meet edge-to-edge and can be dragged as one continuous image with
+      // no gaps (mirroring the square-image top/bottom pan on the horizontal
+      // axis). This needs the raw panorama with nothing baked up front, so a
+      // pre-split rotation/flip/zoom (which would have to be baked) falls back
+      // to the legacy equal-thirds split.
+      const panoWidth =
+        activeImage.metadata?.width ?? selectedImageMetadata?.width ?? 0;
+      const panoHeight =
+        activeImage.metadata?.height ?? selectedImageMetadata?.height ?? 0;
+      const verticalFrameAspect = getTargetAspectRatio("vertical");
+      const preTransform = activeImage.previewTransform;
+      const preRotation =
+        (((preTransform?.rotation ?? 0) % 360) + 360) % 360;
+      const hasPreTransformOrZoom =
+        preRotation !== 0 ||
+        !!preTransform?.flipHorizontal ||
+        !!preTransform?.flipVertical ||
+        !!(activeImage.previewCropAdjust && activeImage.previewCropAdjust.zoom > 1);
+      const useSeamlessWindows =
+        panoWidth > 0 &&
+        panoHeight > 0 &&
+        isWidePanoramaForTriptych(panoWidth, panoHeight, verticalFrameAspect) &&
+        !hasPreTransformOrZoom;
 
-      setSelectedImages((prevImages) => {
-        if (prevImages.some(Boolean)) {
-          revokePreviewUrls(prevImages);
-        }
+      if (useSeamlessWindows) {
+        setSelectedImages((prevImages) => {
+          if (prevImages.some(Boolean)) {
+            revokePreviewUrls(prevImages);
+          }
 
-        return splitFiles.map((file) => ({
-          ...buildSelectedImageItem(file, false),
-          displayImageProportion: "vertical" as ImageDisplayProportion,
-          previewEffects: {
-            ...activeImage.previewEffects,
-          },
-          // The pre-split crop/transform is now baked into the slices, so the
-          // parts start without any local crop adjust.
-          previewCropAdjust: undefined,
-        }));
-      });
+          return [0, 1, 2].map((windowIndex) => ({
+            ...buildSelectedImageItem(activeImage.file, false),
+            displayImageProportion: "vertical" as ImageDisplayProportion,
+            // Every window slot shows the full shared panorama; the visible
+            // region is a per-panel window crop computed at render time.
+            metadata: activeImage.metadata ?? null,
+            previewEffects: {
+              ...activeImage.previewEffects,
+            },
+            previewTransform: {
+              rotation: 0,
+              flipHorizontal: false,
+              flipVertical: false,
+            },
+            previewCropAdjust: undefined,
+            triptychWindowIndex: windowIndex,
+          }));
+        });
+      } else {
+        const splitFiles = await splitImageIntoVerticalThirdFiles({
+          previewUrl: activeImage.previewUrl,
+          sourceFile: activeImage.file,
+          metadata: activeImage.metadata,
+          proportion: activeImage.displayImageProportion,
+          previewTransform: activeImage.previewTransform,
+          previewCropAdjust: activeImage.previewCropAdjust,
+        });
+
+        setSelectedImages((prevImages) => {
+          if (prevImages.some(Boolean)) {
+            revokePreviewUrls(prevImages);
+          }
+
+          return splitFiles.map((file) => ({
+            ...buildSelectedImageItem(file, false),
+            displayImageProportion: "vertical" as ImageDisplayProportion,
+            previewEffects: {
+              ...activeImage.previewEffects,
+            },
+            // The pre-split crop/transform is now baked into the slices, so the
+            // parts start without any local crop adjust.
+            previewCropAdjust: undefined,
+          }));
+        });
+      }
 
       setActiveImageIndex(CENTER_SLOT_INDEX);
       activeImageIndexRef.current = CENTER_SLOT_INDEX;

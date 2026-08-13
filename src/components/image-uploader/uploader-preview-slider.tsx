@@ -12,6 +12,7 @@ import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import { calculateMaxCenteredCrop, getTargetAspectRatio } from "./image-proportion-calculator";
 import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
 import { adjustCropForZoomPan, type CropAdjust } from "./use-crop-adjust";
+import { computeTriptychWindowCrop } from "./triptych-window-crop";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
 const TRIPTYCH_PANEL_COUNT = 3;
@@ -68,21 +69,35 @@ const buildSidePanelCropStyle = (
       : null);
 
   if (metadata && metadata.width > 0 && metadata.height > 0) {
-    const baseCrop = calculateMaxCenteredCrop({
-      sourceWidth: metadata.width,
-      sourceHeight: metadata.height,
-      proportion: image.displayImageProportion,
-    });
-
-    const cropAdjust = image.previewCropAdjust;
-    const adjusted = cropAdjust
-      ? adjustCropForZoomPan(
-          baseCrop,
-          cropAdjust.zoom,
-          cropAdjust.panX,
-          cropAdjust.panY,
-        )
-      : baseCrop;
+    // Seamless wide-panorama triptych: the crop is a contiguous portrait
+    // window into the shared panorama, so adjacent panels always meet
+    // edge-to-edge while the shared pan scrolls the band as one image.
+    const windowIndex = image.triptychWindowIndex;
+    const adjusted =
+      windowIndex !== undefined
+        ? computeTriptychWindowCrop({
+            sourceWidth: metadata.width,
+            sourceHeight: metadata.height,
+            frameAspectRatio: getTargetAspectRatio(image.displayImageProportion),
+            windowIndex,
+            panX: image.previewCropAdjust?.panX ?? 0,
+          })
+        : (() => {
+            const baseCrop = calculateMaxCenteredCrop({
+              sourceWidth: metadata.width,
+              sourceHeight: metadata.height,
+              proportion: image.displayImageProportion,
+            });
+            const cropAdjust = image.previewCropAdjust;
+            return cropAdjust
+              ? adjustCropForZoomPan(
+                  baseCrop,
+                  cropAdjust.zoom,
+                  cropAdjust.panX,
+                  cropAdjust.panY,
+                )
+              : baseCrop;
+          })();
 
     // Size the <img> so the adjusted crop fills the frame and the rest of the
     // source overflows it; offset so the crop's top-left aligns with the

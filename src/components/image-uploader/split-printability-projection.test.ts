@@ -47,6 +47,33 @@ describe("projectTriptychPrintability", () => {
   it("uses rectangular as the default projected shape", () => {
     expect(TRIPTYCH_PROJECTED_SHAPE).toBe("rectangular");
   });
+
+  it("projects at the seamless window width for wide panoramas when frameAspectRatio is given", () => {
+    // 7800x1800 panorama (4.33:1). Equal-third width = 2600, but a portrait
+    // window is only 2/3 * 1800 = 1200 wide. Projecting at the window width
+    // is more restrictive than the third width.
+    const FRAME = 2 / 3;
+    const byThird = projectTriptychPrintability(7800, 1800, 2);
+    const byWindow = projectTriptychPrintability(7800, 1800, 2, TRIPTYCH_PROJECTED_SHAPE, FRAME);
+
+    // Both still allow some size to print.
+    expect(byThird.noSizePrintable).toBe(false);
+    expect(byWindow.noSizePrintable).toBe(false);
+    // The narrower window blocks more sizes than the wider third.
+    const thirdAvailable = byThird.projectedSizesDpiInfo.filter((i) => i.isAvailable).length;
+    const windowAvailable = byWindow.projectedSizesDpiInfo.filter((i) => i.isAvailable).length;
+    expect(windowAvailable).toBeLessThanOrEqual(thirdAvailable);
+  });
+
+  it("matches the legacy third-width projection when the source is not wide", () => {
+    // 1800x1800 (1:1): window width (2/3*1800=1200) is wider than a third
+    // (1800/3=600), so the third width is the limiting one — identical to legacy.
+    const FRAME = 2 / 3;
+    const legacy = projectTriptychPrintability(1800, 1800, 2);
+    const withFrame = projectTriptychPrintability(1800, 1800, 2, TRIPTYCH_PROJECTED_SHAPE, FRAME);
+    expect(withFrame.willSelectedSizeBeBlocked).toBe(legacy.willSelectedSizeBeBlocked);
+    expect(withFrame.noSizePrintable).toBe(legacy.noSizePrintable);
+  });
 });
 
 describe("resolveTriptychTargetSizeIndex", () => {

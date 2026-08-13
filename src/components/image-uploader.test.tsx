@@ -327,12 +327,9 @@ describe("ImageUploader", () => {
       );
 
       await waitFor(() => {
-        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
-          expect.objectContaining({
-            previewUrl: expect.stringContaining("blob:"),
-            sourceFile: firstFile,
-          }),
-        );
+        // The split populated the previously-empty left slot (wide panoramas
+        // use the seamless window model, so no third-file split is invoked).
+        expect(slotDotHasImage(0)).toBe(true);
       });
     }
   });
@@ -443,12 +440,10 @@ describe("ImageUploader", () => {
       );
 
       await waitFor(() => {
-        expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
-          expect.objectContaining({
-            previewUrl: expect.stringContaining("blob:"),
-            sourceFile,
-          }),
-        );
+        // Wide panoramas use the seamless window model (no third-file split);
+        // verify the split completed by checking the side slots are populated.
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
       });
     }
   });
@@ -1472,15 +1467,8 @@ describe("ImageUploader", () => {
     });
     fireEvent.click(splitButton);
 
-    await waitFor(() => {
-      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
-        expect.objectContaining({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile,
-        }),
-      );
-    });
-
+    // Wide panoramas use the seamless window model (no third-file split); the
+    // outcome is verified by the slot population + fresh uploads below.
     await waitFor(() => {
       expect(slotDotHasImage(0)).toBe(true);
       expect(slotDotHasImage(2)).toBe(true);

@@ -87,6 +87,7 @@ export default function PaintingPreviewSlot({
     previewEffects: effectivePreviewEffects,
     previewTransform: effectivePreviewTransform,
     previewCropAdjust,
+    triptychWindowIndex: selectedImage?.triptychWindowIndex,
   });
 
   // Use refs for values read inside callbacks so the callbacks remain
