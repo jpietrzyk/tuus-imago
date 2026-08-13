@@ -381,6 +381,70 @@ describe("UploaderPreviewSlider", () => {
     expect(style).toMatch(/top:\s*-25\.\d+%/);
   });
 
+  it("renders seamless contiguous windows for a wide-panorama triptych (no gaps)", () => {
+    const props = createProps();
+    // 3:1 panorama; each window is 2/3 * 1000 = 666.67 wide, 3 windows = 2000
+    // (1000px of panorama scroll left over).
+    const pano = { width: 3000, height: 1000, aspectRatio: "3:1" };
+    const makeWindow = (windowIndex: number): SelectedImageItem => ({
+      ...createItem(`w${windowIndex}`),
+      metadata: pano,
+      displayImageProportion: "vertical",
+      triptychWindowIndex: windowIndex,
+      previewCropAdjust: { zoom: 1, panX: 0, panY: 0 },
+    });
+    const slots: Array<SelectedImageItem | null> = [
+      makeWindow(0),
+      makeWindow(1),
+      makeWindow(2),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    // Windows 0 and 2 are side panels; window 1 is the (mocked) center.
+    const parse = (style: string, prop: string) =>
+      parseFloat(
+        (style.match(new RegExp(`${prop}:\\s*(-?[\\d.]+)%`)) || [])[1] ?? "0",
+      );
+
+    for (const idx of [0, 2] as const) {
+      const img = screen
+        .getByTestId(`triptych-side-panel-${idx}`)
+        .querySelector("img");
+      const style = img?.getAttribute("style") ?? "";
+      const w = parse(style, "width");
+      const l = parse(style, "left");
+      // The <img> always covers the frame — never a gap, even at the pan edges.
+      expect(l).toBeLessThanOrEqual(0);
+      expect(l + w).toBeGreaterThanOrEqual(100);
+      // No translate (the image is sized, not transformed, to fill the frame).
+      expect(style).not.toMatch(/translate\(/);
+    }
+
+    // Window 0 starts at panorama x=500 (centered band), window 2 at x=1833:
+    // the band is centered so 500px of panorama sits on each side.
+    const left0 = parse(
+      screen.getByTestId("triptych-side-panel-0").querySelector("img")?.getAttribute("style") ?? "",
+      "left",
+    );
+    const width0 = parse(
+      screen.getByTestId("triptych-side-panel-0").querySelector("img")?.getAttribute("style") ?? "",
+      "width",
+    );
+    // cropX / cropWidth = 500 / 666.67 -> left = -75%.
+    expect(left0).toBeCloseTo(-75, 0);
+    // sourceWidth / cropWidth = 3000 / 666.67 -> width = 450%.
+    expect(width0).toBeCloseTo(450, 0);
+  });
+
   it("mirrors the slot rotation onto the side panel image transform", () => {
     const props = createProps();
     const left = createItem("left");

@@ -7,6 +7,7 @@ import {
 } from "./preview-canvas-utils";
 import { buildPreviewRenderPlan } from "./preview-render-plan";
 import { adjustCropForZoomPan } from "./use-crop-adjust";
+import { resolveTriptychSlotCrop } from "./triptych-window-crop";
 import {
   calculateMaxCenteredCrop,
   invertDisplayProportion,
@@ -31,6 +32,7 @@ interface UsePreviewCanvasRenderArgs {
     previewEffects: { brightness: number; contrast: number } | null;
     previewTransform: PreviewTransform | null;
     previewCropAdjust?: CropAdjust;
+    triptychWindowIndex?: number;
   }>;
   /**
    * External ref that will be populated with a function for immediate
@@ -112,6 +114,7 @@ export const usePreviewCanvasRender = ({
         previewEffects,
         previewTransform,
         previewCropAdjust,
+        triptychWindowIndex,
       } = latestRenderConfigRef.current;
 
       const {
@@ -134,37 +137,53 @@ export const usePreviewCanvasRender = ({
         shouldAutoSelectOptimalProportion,
       });
 
-      // For 90°/270° rotations the image orientation swaps, so the crop that
-      // fills the frame after rotation must be selected against the inverse
-      // frame aspect (horizontal ↔ vertical).  Metadata and the proportion
-      // decision stay on the original dimensions so the user's chosen frame
-      // proportion is not yanked around by rotating.
-      const normalizedRotation =
-        previewTransform != null
-          ? ((previewTransform.rotation % 360) + 360) % 360
-          : 0;
-      const isQuarterTurn =
-        normalizedRotation === 90 || normalizedRotation === 270;
-      const baseCrop = isQuarterTurn
-        ? calculateMaxCenteredCrop({
-            sourceWidth,
-            sourceHeight,
-            proportion: invertDisplayProportion(nextDisplayImageProportion),
-          })
-        : planCrop;
-
       // Use the override when provided (e.g. during wheel zoom for immediate
       // visual feedback), otherwise fall back to the React-committed value.
       const cropAdjust = cropAdjustOverride ?? previewCropAdjust;
 
-      const crop = cropAdjust
-        ? adjustCropForZoomPan(
-            baseCrop,
-            cropAdjust.zoom,
-            cropAdjust.panX,
-            cropAdjust.panY,
-          )
-        : baseCrop;
+      // Seamless wide-panorama triptych: the crop is a contiguous portrait
+      // window into the shared panorama. A shared zoom shrinks every window by
+      // the same factor and panY travels it vertically, while panX scrolls the
+      // whole band — all three panels share the same zoom/panX/panY, so they
+      // always meet edge-to-edge at any zoom level.
+      let crop;
+      if (triptychWindowIndex !== undefined) {
+        crop = resolveTriptychSlotCrop({
+          sourceWidth,
+          sourceHeight,
+          displayImageProportion: nextDisplayImageProportion,
+          windowIndex: triptychWindowIndex,
+          cropAdjust,
+        });
+      } else {
+        // For 90°/270° rotations the image orientation swaps, so the crop that
+        // fills the frame after rotation must be selected against the inverse
+        // frame aspect (horizontal ↔ vertical).  Metadata and the proportion
+        // decision stay on the original dimensions so the user's chosen frame
+        // proportion is not yanked around by rotating.
+        const normalizedRotation =
+          previewTransform != null
+            ? ((previewTransform.rotation % 360) + 360) % 360
+            : 0;
+        const isQuarterTurn =
+          normalizedRotation === 90 || normalizedRotation === 270;
+        const baseCrop = isQuarterTurn
+          ? calculateMaxCenteredCrop({
+              sourceWidth,
+              sourceHeight,
+              proportion: invertDisplayProportion(nextDisplayImageProportion),
+            })
+          : planCrop;
+
+        crop = cropAdjust
+          ? adjustCropForZoomPan(
+              baseCrop,
+              cropAdjust.zoom,
+              cropAdjust.panX,
+              cropAdjust.panY,
+            )
+          : baseCrop;
+      }
 
       // Use cached dimensions during zoom/pan to avoid forced reflow.
       // Only fall back to getBoundingClientRect if we have no cache yet.

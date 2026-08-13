@@ -252,6 +252,15 @@ export function UploaderPreviewToolsPanel({
                       })
                    : undefined
                }
+              onResetCropAdjust={
+                onUpdateCropAdjust &&
+                activeImageCropAdjust &&
+                (activeImageCropAdjust.zoom > 1 + 1e-6 ||
+                  Math.abs(activeImageCropAdjust.panX) > 1e-6 ||
+                  Math.abs(activeImageCropAdjust.panY) > 1e-6)
+                  ? () => onUpdateCropAdjust(undefined)
+                  : undefined
+              }
               effectsMode={effectsMode}
             />
           </div>

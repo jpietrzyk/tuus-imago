@@ -20,8 +20,22 @@ export function projectTriptychPrintability(
   sourceHeight: number,
   selectedIndex: PaintingSizeIndex,
   projectedShape: PaintingShape = TRIPTYCH_PROJECTED_SHAPE,
+  /**
+   * When provided, wide panoramas are projected at their seamless window width
+   * (sourceHeight * frameAspectRatio) instead of the equal-third width, since
+   * each printed canvas is a portrait window rather than an equal-width strip.
+   * For non-wide sources this is identical to the legacy third width.
+   */
+  frameAspectRatio?: number,
 ): SplitPrintabilityProjection {
-  const partWidth = Math.floor(sourceWidth / TRIPTYCH_PART_COUNT);
+  const equalThirdWidth = Math.floor(sourceWidth / TRIPTYCH_PART_COUNT);
+  const partWidth =
+    frameAspectRatio && frameAspectRatio > 0
+      ? Math.min(
+          equalThirdWidth,
+          Math.round(sourceHeight * frameAspectRatio),
+        )
+      : equalThirdWidth;
   const projectedSizesDpiInfo = computeSizesDpiAvailability(
     partWidth,
     sourceHeight,

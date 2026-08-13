@@ -226,6 +226,7 @@
     "effectsCancel": "Cancel",
     "zoom": "Zoom",
     "zoomReset": "Reset Zoom",
+    "cropReset": "Reset Crop",
     "rotation": "Rotation",
     "rotateMinus90": "Rotate -90°",
     "rotatePlus90": "Rotate +90°",

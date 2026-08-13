@@ -223,6 +223,7 @@ export interface Translations {
     effectsCancel: string;
     zoom: string;
     zoomReset: string;
+    cropReset: string;
     rotation: string;
     rotateMinus90: string;
     rotatePlus90: string;

@@ -11,6 +11,8 @@ interface PreviewRenderConfig {
   previewEffects: { brightness: number; contrast: number } | null;
   previewTransform: PreviewTransform | null;
   previewCropAdjust?: CropAdjust;
+  /** When set, the slot is a seamless wide-panorama triptych window. */
+  triptychWindowIndex?: number;
 }
 
 export const usePreviewRenderConfig = ({
@@ -20,6 +22,7 @@ export const usePreviewRenderConfig = ({
   previewEffects,
   previewTransform,
   previewCropAdjust,
+  triptychWindowIndex,
 }: PreviewRenderConfig) => {
   const latestRenderConfigRef = useRef<PreviewRenderConfig>({
     selectedImageMetadata,
@@ -28,6 +31,7 @@ export const usePreviewRenderConfig = ({
     previewEffects,
     previewTransform,
     previewCropAdjust,
+    triptychWindowIndex,
   });
 
   useEffect(() => {
@@ -38,8 +42,9 @@ export const usePreviewRenderConfig = ({
       previewEffects,
       previewTransform,
       previewCropAdjust,
+      triptychWindowIndex,
     };
-  }, [bestProportion, selectedImageMetadata, userSelectedProportion, previewEffects, previewTransform, previewCropAdjust]);
+  }, [bestProportion, selectedImageMetadata, userSelectedProportion, previewEffects, previewTransform, previewCropAdjust, triptychWindowIndex]);
 
   return latestRenderConfigRef;
 };

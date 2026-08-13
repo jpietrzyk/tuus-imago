@@ -15,6 +15,7 @@ import {
   FlipHorizontal2,
   FlipVertical2,
   ChevronDown,
+  Crosshair,
 } from "lucide-react";
 import { t } from "@/locales/i18n";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,8 @@ export interface UploaderEffectsPanelContentProps {
   maxZoom?: number;
   isZoomAvailable?: boolean;
   onZoomChange?: (zoom: number) => void;
+  /** When provided, a "reset crop" button is shown in the crop group. */
+  onResetCropAdjust?: () => void;
   effectsMode?: EffectsMode;
 }
 
@@ -121,6 +124,7 @@ export function UploaderEffectsPanelContent({
   maxZoom = 3,
   isZoomAvailable = false,
   onZoomChange,
+  onResetCropAdjust,
   effectsMode,
 }: UploaderEffectsPanelContentProps) {
   const effectValues = effects ?? {
@@ -168,6 +172,20 @@ export function UploaderEffectsPanelContent({
                 onChange={onZoomChange}
                 disabled={disabled}
               />
+              {onResetCropAdjust && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onResetCropAdjust}
+                  disabled={disabled}
+                  aria-label={t("uploader.cropReset")}
+                  className="h-8 w-full gap-1.5"
+                >
+                  <Crosshair className="h-3.5 w-3.5" />
+                  {t("uploader.cropReset")}
+                </Button>
+              )}
             </div>
           </CollapsibleContent>
         </Collapsible>
