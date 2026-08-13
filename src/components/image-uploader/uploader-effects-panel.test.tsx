@@ -251,7 +251,7 @@ describe("UploaderEffectsPanelContent", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("does not render zoom reset button", () => {
+  it("does not render crop reset button when handler is absent", () => {
     renderContent({
       zoom: 2,
       isZoomAvailable: true,
@@ -259,8 +259,38 @@ describe("UploaderEffectsPanelContent", () => {
     });
 
     expect(
-      screen.queryByText(t("uploader.zoomReset")),
+      screen.queryByText(t("uploader.cropReset")),
     ).not.toBeInTheDocument();
+  });
+
+  it("renders crop reset button when handler is provided and zoom > 1", () => {
+    const onResetCropAdjust = vi.fn();
+    renderContent({
+      zoom: 2,
+      isZoomAvailable: true,
+      onZoomChange: vi.fn(),
+      onResetCropAdjust,
+    });
+
+    expect(
+      screen.getByRole("button", { name: t("uploader.cropReset") }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onResetCropAdjust when reset button is clicked", () => {
+    const onResetCropAdjust = vi.fn();
+    renderContent({
+      zoom: 2,
+      isZoomAvailable: true,
+      onZoomChange: vi.fn(),
+      onResetCropAdjust,
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: t("uploader.cropReset") }),
+    );
+
+    expect(onResetCropAdjust).toHaveBeenCalledOnce();
   });
 
   describe("collapsible default states", () => {
