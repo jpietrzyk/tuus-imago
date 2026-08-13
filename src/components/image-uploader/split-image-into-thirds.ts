@@ -138,6 +138,90 @@ const composeSourceDrawable = (params: ComposeSourceParams): ComposedDrawable =>
   return { drawable: canvas, width: canvasWidth, height: canvasHeight };
 };
 
+export interface ComposeFullTransformedResult {
+  file: File;
+  /** Composed buffer width in px (axes swapped for 90°/270°). */
+  width: number;
+  /** Composed buffer height in px (axes swapped for 90°/270°). */
+  height: number;
+}
+
+/**
+ * Bake a rotation/flip into the FULL source image (no crop), producing a single
+ * upright/unflipped buffer. Used so a seamless wide-panorama triptych can share
+ * one pre-transformed image across its three scrolling windows — the window
+ * crop math then runs in display space without re-applying the transform.
+ */
+export const composeFullTransformedImage = async ({
+  previewUrl,
+  sourceFile,
+  previewTransform,
+}: {
+  previewUrl: string;
+  sourceFile: File;
+  previewTransform?: PreviewTransform | null;
+}): Promise<ComposeFullTransformedResult> => {
+  const image = await loadImageElement(previewUrl);
+  const { sourceWidth, sourceHeight } = resolveImageDimensions(image);
+
+  if (sourceWidth <= 0 || sourceHeight <= 0) {
+    throw new Error("Cannot compose image with invalid dimensions");
+  }
+
+  const normalizedRotation = normalizeRotation(previewTransform?.rotation);
+  const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
+
+  // A 90°/270° rotation swaps the on-screen axes, so the buffer dims swap too.
+  const canvasWidth = isQuarterTurn ? sourceHeight : sourceWidth;
+  const canvasHeight = isQuarterTurn ? sourceWidth : sourceHeight;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Unable to prepare image composition canvas context");
+  }
+
+  // Order matches the live canvas preview, Cloudinary transform and
+  // composeSourceDrawable: rotate, then hflip, then vflip.
+  context.save();
+  context.translate(canvasWidth / 2, canvasHeight / 2);
+  context.rotate((normalizedRotation * Math.PI) / 180);
+  if (previewTransform?.flipHorizontal) {
+    context.scale(-1, 1);
+  }
+  if (previewTransform?.flipVertical) {
+    context.scale(1, -1);
+  }
+
+  const rectWidth = isQuarterTurn ? sourceHeight : sourceWidth;
+  const rectHeight = isQuarterTurn ? sourceWidth : sourceHeight;
+
+  context.drawImage(
+    image,
+    -rectWidth / 2,
+    -rectHeight / 2,
+    rectWidth,
+    rectHeight,
+  );
+  context.restore();
+
+  const outputMimeType = resolveOutputMimeType(sourceFile.type);
+  const outputExtension = inferExtension(outputMimeType);
+  const baseFilename = stripExtension(sourceFile.name);
+  const blob = await canvasToBlob(canvas, outputMimeType);
+
+  const file = new File(
+    [blob],
+    `${baseFilename}-transformed.${outputExtension}`,
+    { type: outputMimeType, lastModified: Date.now() },
+  );
+
+  return { file, width: canvasWidth, height: canvasHeight };
+};
+
 const resolveOutputMimeType = (sourceMimeType: string): string => {
   if (
     sourceMimeType === "image/jpeg" ||

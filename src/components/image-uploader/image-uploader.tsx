@@ -36,6 +36,7 @@ import { useSliderSwipeNavigation } from "./use-slider-swipe-navigation";
 import {
   calculateAllProportions,
   calculateMaxCenteredCrop,
+  formatAspectRatio,
   getOptimalDisplayProportion,
   getTargetAspectRatio,
   type ImageDisplayProportion,
@@ -49,7 +50,7 @@ import {
   getPaintingSizeOptions,
 } from "./painting-size";
 import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
-import { splitImageIntoVerticalThirdFiles } from "./split-image-into-thirds";
+import { splitImageIntoVerticalThirdFiles, composeFullTransformedImage } from "./split-image-into-thirds";
 import { isWidePanoramaForTriptych, resolveTriptychSlotCrop } from "./triptych-window-crop";
 import {
   projectTriptychPrintability,
@@ -1526,38 +1527,65 @@ export const ImageUploader = forwardRef<
       // they meet edge-to-edge and can be dragged/zoomed as one continuous
       // image with no gaps (mirroring the square-image top/bottom pan on the
       // horizontal axis). A shared zoom is supported natively by the window
-      // crop, so only a pre-split rotation/flip (which would have to be baked)
-      // falls back to the legacy equal-thirds split.
-      const panoWidth =
+      // crop. A pre-split rotation/flip is baked into a single transformed
+      // source so the windows can still share one image in display space.
+      const sourceWidth =
         activeImage.metadata?.width ?? selectedImageMetadata?.width ?? 0;
-      const panoHeight =
+      const sourceHeight =
         activeImage.metadata?.height ?? selectedImageMetadata?.height ?? 0;
       const verticalFrameAspect = getTargetAspectRatio("vertical");
       const preTransform = activeImage.previewTransform;
       const preRotation =
         (((preTransform?.rotation ?? 0) % 360) + 360) % 360;
-      const hasPreTransform =
-        preRotation !== 0 ||
-        !!preTransform?.flipHorizontal ||
-        !!preTransform?.flipVertical;
+      const isQuarterTurn = preRotation === 90 || preRotation === 270;
+      // Effective dimensions after rotation — 90°/270° swap the axes.
+      const effectiveWidth = isQuarterTurn ? sourceHeight : sourceWidth;
+      const effectiveHeight = isQuarterTurn ? sourceWidth : sourceHeight;
       const useSeamlessWindows =
-        panoWidth > 0 &&
-        panoHeight > 0 &&
-        isWidePanoramaForTriptych(panoWidth, panoHeight, verticalFrameAspect) &&
-        !hasPreTransform;
+        effectiveWidth > 0 &&
+        effectiveHeight > 0 &&
+        isWidePanoramaForTriptych(
+          effectiveWidth,
+          effectiveHeight,
+          verticalFrameAspect,
+        );
 
       if (useSeamlessWindows) {
+        const hasPreTransform =
+          preRotation !== 0 ||
+          !!preTransform?.flipHorizontal ||
+          !!preTransform?.flipVertical;
+
+        // Source shared by all three windows. When a transform is present it
+        // is baked once into a single upright buffer; the window crop math
+        // then runs in display space with an identity transform.
+        let sharedFile = activeImage.file;
+        let sharedMetadata = activeImage.metadata ?? null;
+        if (hasPreTransform) {
+          const composed = await composeFullTransformedImage({
+            previewUrl: activeImage.previewUrl,
+            sourceFile: activeImage.file,
+            previewTransform: preTransform,
+          });
+          sharedFile = composed.file;
+          sharedMetadata = {
+            width: composed.width,
+            height: composed.height,
+            aspectRatio: formatAspectRatio(composed.width, composed.height),
+          };
+        }
+
         setSelectedImages((prevImages) => {
           if (prevImages.some(Boolean)) {
             revokePreviewUrls(prevImages);
           }
 
           return [0, 1, 2].map((windowIndex) => ({
-            ...buildSelectedImageItem(activeImage.file, false),
+            ...buildSelectedImageItem(sharedFile, false),
             displayImageProportion: "vertical" as ImageDisplayProportion,
             // Every window slot shows the full shared panorama; the visible
             // region is a per-panel window crop computed at render time.
-            metadata: activeImage.metadata ?? null,
+            metadata: sharedMetadata,
             previewEffects: {
               ...activeImage.previewEffects,
             },
