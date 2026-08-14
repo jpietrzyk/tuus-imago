@@ -24,6 +24,9 @@ dist-ssr
 *.sw?
 *.env
 
+# trip experiment
+src/assets/triptich-experiment
+
 # Local Netlify folder
 .netlify
 q
