@@ -33,6 +33,7 @@ import { ShippingPage } from "./pages/shipping";
 import { TermsPage } from "./pages/terms";
 import { PaymentsPage } from "./pages/payments";
 import { ComplaintPage } from "./pages/complaint";
+import { PanoramkaPage } from "./pages/panoramka";
 import { CANVAS_PRINT_UNIT_PRICE } from "@/lib/pricing";
 import { getPageBySlug } from "@/lib/content-loader";
 import { ContentPageOverlay } from "@/components/content-page-overlay";
@@ -459,6 +460,7 @@ function StorefrontApp() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/payments" element={<PaymentsPage />} />
           <Route path="/complaint" element={<ComplaintPage />} />
+          <Route path="/panoramka" element={<PanoramkaPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
