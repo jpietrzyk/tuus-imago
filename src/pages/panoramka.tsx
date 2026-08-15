@@ -1,25 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const MASK_ASPECT = 2;
+const PART_SHAPES = {
+  portrait: { label: "portrait", partAspect: 2 / 3 },
+  square: { label: "square", partAspect: 1 },
+  landscape: { label: "landscape", partAspect: 3 / 2 },
+} as const;
+
+type PartShape = keyof typeof PART_SHAPES;
+
+const PART_COUNT = 3;
 const SLOT_WIDTH = 200;
 
 export function PanoramkaPage() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [crops, setCrops] = useState<string[]>([]);
+  const [partShape, setPartShape] = useState<PartShape>("portrait");
   const objectUrlRef = useRef<string | null>(null);
 
   const mask = useMemo(() => {
     if (imageSize === null) return null;
+    const maskAspect = PART_COUNT * PART_SHAPES[partShape].partAspect;
     const imageAspect = imageSize.width / imageSize.height;
     let widthPx: number;
     let heightPx: number;
-    if (imageAspect >= MASK_ASPECT) {
+    if (imageAspect >= maskAspect) {
       heightPx = imageSize.height;
-      widthPx = imageSize.height * MASK_ASPECT;
+      widthPx = imageSize.height * maskAspect;
     } else {
       widthPx = imageSize.width;
-      heightPx = imageSize.width / MASK_ASPECT;
+      heightPx = imageSize.width / maskAspect;
     }
     return {
       leftPx: (imageSize.width - widthPx) / 2,
@@ -29,13 +39,13 @@ export function PanoramkaPage() {
       widthPx,
       heightPx,
     };
-  }, [imageSize]);
+  }, [imageSize, partShape]);
 
   useEffect(() => {
     if (mask === null || imageSrc === null) return;
     const img = new Image();
     img.onload = () => {
-      const partWidth = mask.widthPx / 3;
+      const partWidth = mask.widthPx / PART_COUNT;
       const urls = [0, 1, 2].map((i) => {
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(partWidth);
@@ -77,7 +87,9 @@ export function PanoramkaPage() {
     setImageSrc(url);
   };
 
-  const partAspect = mask ? mask.widthPx / 3 / mask.heightPx : 1;
+  const partAspect = mask
+    ? mask.widthPx / PART_COUNT / mask.heightPx
+    : PART_SHAPES[partShape].partAspect;
 
   return (
     <div style={{ margin: 0, padding: 0, background: "white", width: "100vw", minHeight: "100vh", overflow: "auto" }}>
@@ -101,6 +113,20 @@ export function PanoramkaPage() {
         >
           Load image
           <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+          Part shape:
+          <select
+            value={partShape}
+            onChange={(e) => setPartShape(e.target.value as PartShape)}
+            style={{ padding: "4px 8px", fontSize: "14px" }}
+          >
+            {Object.entries(PART_SHAPES).map(([key, value]) => (
+              <option key={key} value={key}>
+                {value.label}
+              </option>
+            ))}
+          </select>
         </label>
         {imageSize && (
           <span style={{ fontSize: "13px", color: "#333" }}>
@@ -167,8 +193,8 @@ export function PanoramkaPage() {
                     style={{
                       position: "absolute",
                       top: "0%",
-                      left: `${(i * 100) / 3}%`,
-                      width: `${100 / 3}%`,
+                      left: `${(i * 100) / PART_COUNT}%`,
+                      width: `${100 / PART_COUNT}%`,
                       height: "100%",
                       border: "2px dashed rgba(255, 255, 255, 0.9)",
                       boxSizing: "border-box",
