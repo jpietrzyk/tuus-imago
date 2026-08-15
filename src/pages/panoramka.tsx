@@ -10,12 +10,14 @@ type PartShape = keyof typeof PART_SHAPES;
 
 const PART_COUNT = 3;
 const SLOT_WIDTH = 200;
+const COVERAGE_OPTIONS = [1, 0.8] as const;
 
 export function PanoramkaPage() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [crops, setCrops] = useState<string[]>([]);
   const [partShape, setPartShape] = useState<PartShape>("portrait");
+  const [coverage, setCoverage] = useState<number>(1);
   const objectUrlRef = useRef<string | null>(null);
 
   const mask = useMemo(() => {
@@ -31,6 +33,8 @@ export function PanoramkaPage() {
       widthPx = imageSize.width;
       heightPx = imageSize.width / maskAspect;
     }
+    widthPx *= coverage;
+    heightPx *= coverage;
     return {
       leftPx: (imageSize.width - widthPx) / 2,
       topPx: (imageSize.height - heightPx) / 2,
@@ -39,7 +43,7 @@ export function PanoramkaPage() {
       widthPx,
       heightPx,
     };
-  }, [imageSize, partShape]);
+  }, [imageSize, partShape, coverage]);
 
   useEffect(() => {
     if (mask === null || imageSrc === null) return;
@@ -124,6 +128,20 @@ export function PanoramkaPage() {
             {Object.entries(PART_SHAPES).map(([key, value]) => (
               <option key={key} value={key}>
                 {value.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+          Coverage:
+          <select
+            value={coverage}
+            onChange={(e) => setCoverage(Number(e.target.value))}
+            style={{ padding: "4px 8px", fontSize: "14px" }}
+          >
+            {COVERAGE_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {value * 100}%
               </option>
             ))}
           </select>
