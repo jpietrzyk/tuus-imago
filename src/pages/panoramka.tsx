@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import panoramka from "@/assets/triptich-experiment/panoramka_duza_1.jpg";
 
 const MASK_ASPECT = 2;
+const SLOT_WIDTH = 200;
 
 export function PanoramkaPage() {
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+  const [crops, setCrops] = useState<string[]>([]);
 
   const mask =
     imageSize === null
@@ -21,12 +23,45 @@ export function PanoramkaPage() {
             heightPx = imageSize.width / MASK_ASPECT;
           }
           return {
+            leftPx: (imageSize.width - widthPx) / 2,
+            topPx: (imageSize.height - heightPx) / 2,
             widthPct: (widthPx / imageSize.width) * 100,
             heightPct: (heightPx / imageSize.height) * 100,
             widthPx,
             heightPx,
           };
         })();
+
+  useEffect(() => {
+    if (mask === null) return;
+    const img = new Image();
+    img.onload = () => {
+      const partWidth = mask.widthPx / 3;
+      const urls = [0, 1, 2].map((i) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(partWidth);
+        canvas.height = Math.round(mask.heightPx);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return "";
+        ctx.drawImage(
+          img,
+          mask.leftPx + i * partWidth,
+          mask.topPx,
+          partWidth,
+          mask.heightPx,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        return canvas.toDataURL("image/jpeg");
+      });
+      setCrops(urls);
+    };
+    img.src = panoramka;
+  }, [mask]);
+
+  const partAspect = mask ? mask.widthPx / 3 / mask.heightPx : 1;
 
   return (
     <div style={{ margin: 0, padding: 0, background: "white", width: "100vw", minHeight: "100vh", overflow: "auto" }}>
@@ -103,12 +138,12 @@ export function PanoramkaPage() {
         )}
       </div>
       <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "24px", width: "100%" }}>
-        {["A'", "B'", "C'"].map((label) => (
+        {["A'", "B'", "C'"].map((label, i) => (
           <div
             key={label}
             style={{
-              width: "200px",
-              height: "200px",
+              width: `${SLOT_WIDTH}px`,
+              height: `${SLOT_WIDTH / partAspect}px`,
               background: "#e5e5e5",
               border: "2px solid #333",
               position: "relative",
@@ -117,7 +152,28 @@ export function PanoramkaPage() {
               justifyContent: "center",
             }}
           >
-            <span style={{ fontSize: "48px", fontWeight: "bold", color: "#333" }}>{label}</span>
+            {crops[i] ? (
+              <img
+                src={crops[i]}
+                alt={label}
+                style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
+              />
+            ) : (
+              <span style={{ fontSize: "48px", fontWeight: "bold", color: "#333" }}>{label}</span>
+            )}
+            <span
+              style={{
+                position: "absolute",
+                top: "8px",
+                left: "8px",
+                fontSize: "20px",
+                fontWeight: "bold",
+                color: "white",
+                textShadow: "1px 1px 2px black",
+              }}
+            >
+              {label}
+            </span>
           </div>
         ))}
       </div>
