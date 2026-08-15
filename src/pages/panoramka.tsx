@@ -68,6 +68,21 @@ export function PanoramkaPage() {
             >
               {mask.widthPx} x {mask.heightPx} = {mask.widthPx / mask.heightPx}
             </div>
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  top: "0%",
+                  left: `${(i * 100) / 3}%`,
+                  width: `${100 / 3}%`,
+                  height: "100%",
+                  border: "2px dashed rgba(255, 255, 255, 0.9)",
+                  boxSizing: "border-box",
+                  pointerEvents: "none",
+                }}
+              />
+            ))}
           </div>
         )}
       </div>
