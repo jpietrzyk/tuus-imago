@@ -11,6 +11,11 @@ type PartShape = keyof typeof PART_SHAPES;
 const PART_COUNT = 3;
 const SLOT_WIDTH = 200;
 const COVERAGE_OPTIONS = [1, 0.8] as const;
+const SLOT_SCALE_OPTIONS = [
+  { value: 1, scale: 0.5 },
+  { value: 2, scale: 1 },
+  { value: 3, scale: 1.5 },
+] as const;
 
 export function PanoramkaPage() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -18,6 +23,7 @@ export function PanoramkaPage() {
   const [crops, setCrops] = useState<string[]>([]);
   const [partShape, setPartShape] = useState<PartShape>("portrait");
   const [coverage, setCoverage] = useState<number>(1);
+  const [slotScale, setSlotScale] = useState<number>(2);
   const objectUrlRef = useRef<string | null>(null);
 
   const mask = useMemo(() => {
@@ -94,6 +100,9 @@ export function PanoramkaPage() {
   const partAspect = mask
     ? mask.widthPx / PART_COUNT / mask.heightPx
     : PART_SHAPES[partShape].partAspect;
+  const slotScaleFactor =
+    SLOT_SCALE_OPTIONS.find(({ value }) => value === slotScale)?.scale ?? 1;
+  const slotWidth = SLOT_WIDTH * slotScaleFactor;
 
   return (
     <div style={{ margin: 0, padding: 0, background: "white", width: "100vw", minHeight: "100vh", overflow: "auto" }}>
@@ -142,6 +151,20 @@ export function PanoramkaPage() {
             {COVERAGE_OPTIONS.map((value) => (
               <option key={value} value={value}>
                 {value * 100}%
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+          Slot size:
+          <select
+            value={slotScale}
+            onChange={(e) => setSlotScale(Number(e.target.value))}
+            style={{ padding: "4px 8px", fontSize: "14px" }}
+          >
+            {SLOT_SCALE_OPTIONS.map(({ value }) => (
+              <option key={value} value={value}>
+                {value}
               </option>
             ))}
           </select>
@@ -245,8 +268,8 @@ export function PanoramkaPage() {
                 <div
                   key={label}
                   style={{
-                    width: `${SLOT_WIDTH}px`,
-                    height: `${SLOT_WIDTH / partAspect}px`,
+                    width: `${slotWidth}px`,
+                    height: `${slotWidth / partAspect}px`,
                     background: "#e5e5e5",
                     border: "2px solid #333",
                     position: "relative",
