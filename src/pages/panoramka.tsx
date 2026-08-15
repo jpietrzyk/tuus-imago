@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import panoramka from "@/assets/triptich-experiment/panoramka_duza_1.jpg";
 
 const MASK_ASPECT = 2;
+const SLOT_WIDTH = 200;
 
 export function PanoramkaPage() {
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+  const [crops, setCrops] = useState<string[]>([]);
 
   const mask =
     imageSize === null
@@ -21,6 +23,8 @@ export function PanoramkaPage() {
             heightPx = imageSize.width / MASK_ASPECT;
           }
           return {
+            leftPx: (imageSize.width - widthPx) / 2,
+            topPx: (imageSize.height - heightPx) / 2,
             widthPct: (widthPx / imageSize.width) * 100,
             heightPct: (heightPx / imageSize.height) * 100,
             widthPx,
@@ -28,8 +32,39 @@ export function PanoramkaPage() {
           };
         })();
 
+  useEffect(() => {
+    if (mask === null) return;
+    const img = new Image();
+    img.onload = () => {
+      const partWidth = mask.widthPx / 3;
+      const urls = [0, 1, 2].map((i) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(partWidth);
+        canvas.height = Math.round(mask.heightPx);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return "";
+        ctx.drawImage(
+          img,
+          mask.leftPx + i * partWidth,
+          mask.topPx,
+          partWidth,
+          mask.heightPx,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        return canvas.toDataURL("image/jpeg");
+      });
+      setCrops(urls);
+    };
+    img.src = panoramka;
+  }, [mask]);
+
+  const partAspect = mask ? mask.widthPx / 3 / mask.heightPx : 1;
+
   return (
-    <div style={{ margin: 0, padding: 0, background: "white", width: "100vw", height: "100vh", overflow: "auto" }}>
+    <div style={{ margin: 0, padding: 0, background: "white", width: "100vw", minHeight: "100vh", overflow: "auto" }}>
       <div style={{ position: "relative", display: "inline-block" }}>
         <img
           src={panoramka}
@@ -54,21 +89,21 @@ export function PanoramkaPage() {
               pointerEvents: "none",
             }}
           >
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: "white",
-                fontSize: "48px",
-                fontWeight: "bold",
-                textShadow: "2px 2px 4px black",
-              }}
-            >
-              {mask.widthPx} x {mask.heightPx} = {mask.widthPx / mask.heightPx}
-            </div>
-            {[0, 1, 2].map((i) => (
+          <div
+            style={{
+              position: "absolute",
+              top: "5%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              color: "#ffffff",
+              fontSize: "48px",
+              fontWeight: "bold",
+              textShadow: "2px 2px 4px black",
+            }}
+          >
+            {mask.widthPx} x {mask.heightPx} = {mask.widthPx / mask.heightPx}
+          </div>
+            {["A", "B", "C"].map((label, i) => (
               <div
                 key={i}
                 style={{
@@ -81,10 +116,66 @@ export function PanoramkaPage() {
                   boxSizing: "border-box",
                   pointerEvents: "none",
                 }}
-              />
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    color: "white",
+                    fontSize: "72px",
+                    fontWeight: "bold",
+                    textShadow: "2px 2px 4px black",
+                    pointerEvents: "none",
+                  }}
+                >
+                  {label}
+                </div>
+              </div>
             ))}
           </div>
         )}
+      </div>
+      <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "24px", width: "100%" }}>
+        {["A'", "B'", "C'"].map((label, i) => (
+          <div
+            key={label}
+            style={{
+              width: `${SLOT_WIDTH}px`,
+              height: `${SLOT_WIDTH / partAspect}px`,
+              background: "#e5e5e5",
+              border: "2px solid #333",
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {crops[i] ? (
+              <img
+                src={crops[i]}
+                alt={label}
+                style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
+              />
+            ) : (
+              <span style={{ fontSize: "48px", fontWeight: "bold", color: "#333" }}>{label}</span>
+            )}
+            <span
+              style={{
+                position: "absolute",
+                top: "8px",
+                left: "8px",
+                fontSize: "20px",
+                fontWeight: "bold",
+                color: "white",
+                textShadow: "1px 1px 2px black",
+              }}
+            >
+              {label}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
