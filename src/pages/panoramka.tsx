@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const PART_SHAPES = {
   portrait: { label: "portrait", partAspect: 2 / 3 },
   square: { label: "square", partAspect: 1 },
+  landscape: { label: "landscape", partAspect: 3 / 2 },
 } as const;
 
 type PartShape = keyof typeof PART_SHAPES;
