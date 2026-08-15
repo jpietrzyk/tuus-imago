@@ -1,36 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import panoramka from "@/assets/triptich-experiment/panoramka_duza_1.jpg";
 
 const MASK_ASPECT = 2;
 const SLOT_WIDTH = 200;
 
 export function PanoramkaPage() {
+  const [imageSrc, setImageSrc] = useState<string>(panoramka);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [crops, setCrops] = useState<string[]>([]);
+  const objectUrlRef = useRef<string | null>(null);
 
-  const mask =
-    imageSize === null
-      ? null
-      : (() => {
-          const imageAspect = imageSize.width / imageSize.height;
-          let widthPx: number;
-          let heightPx: number;
-          if (imageAspect >= MASK_ASPECT) {
-            heightPx = imageSize.height;
-            widthPx = imageSize.height * MASK_ASPECT;
-          } else {
-            widthPx = imageSize.width;
-            heightPx = imageSize.width / MASK_ASPECT;
-          }
-          return {
-            leftPx: (imageSize.width - widthPx) / 2,
-            topPx: (imageSize.height - heightPx) / 2,
-            widthPct: (widthPx / imageSize.width) * 100,
-            heightPct: (heightPx / imageSize.height) * 100,
-            widthPx,
-            heightPx,
-          };
-        })();
+  const mask = useMemo(() => {
+    if (imageSize === null) return null;
+    const imageAspect = imageSize.width / imageSize.height;
+    let widthPx: number;
+    let heightPx: number;
+    if (imageAspect >= MASK_ASPECT) {
+      heightPx = imageSize.height;
+      widthPx = imageSize.height * MASK_ASPECT;
+    } else {
+      widthPx = imageSize.width;
+      heightPx = imageSize.width / MASK_ASPECT;
+    }
+    return {
+      leftPx: (imageSize.width - widthPx) / 2,
+      topPx: (imageSize.height - heightPx) / 2,
+      widthPct: (widthPx / imageSize.width) * 100,
+      heightPct: (heightPx / imageSize.height) * 100,
+      widthPx,
+      heightPx,
+    };
+  }, [imageSize]);
 
   useEffect(() => {
     if (mask === null) return;
@@ -58,16 +58,60 @@ export function PanoramkaPage() {
       });
       setCrops(urls);
     };
-    img.src = panoramka;
-  }, [mask]);
+    img.src = imageSrc;
+  }, [mask, imageSrc]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    };
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    const url = URL.createObjectURL(file);
+    objectUrlRef.current = url;
+    setImageSize(null);
+    setCrops([]);
+    setImageSrc(url);
+  };
 
   const partAspect = mask ? mask.widthPx / 3 / mask.heightPx : 1;
 
   return (
     <div style={{ margin: 0, padding: 0, background: "white", width: "100vw", minHeight: "100vh", overflow: "auto" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          padding: "12px 16px",
+          borderBottom: "1px solid #ccc",
+        }}
+      >
+        <label
+          style={{
+            padding: "6px 14px",
+            background: "#e5e5e5",
+            border: "1px solid #333",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          Load image
+          <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
+        </label>
+        {imageSize && (
+          <span style={{ fontSize: "13px", color: "#333" }}>
+            {imageSize.width} x {imageSize.height} (ratio {(imageSize.width / imageSize.height).toFixed(2)})
+          </span>
+        )}
+      </div>
       <div style={{ position: "relative", display: "inline-block" }}>
         <img
-          src={panoramka}
+          src={imageSrc}
           alt="panoramka"
           style={{ display: "block", maxWidth: "none" }}
           onLoad={(e) => {
