@@ -24,7 +24,17 @@ export function PanoramkaPage() {
   const [partShape, setPartShape] = useState<PartShape>("portrait");
   const [coverage, setCoverage] = useState<number>(1);
   const [slotScale, setSlotScale] = useState<number>(2);
+  const [maskOffset, setMaskOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const objectUrlRef = useRef<string | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const dragStateRef = useRef<{
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+    scale: number;
+  } | null>(null);
 
   const mask = useMemo(() => {
     if (imageSize === null) return null;
@@ -41,15 +51,21 @@ export function PanoramkaPage() {
     }
     widthPx *= coverage;
     heightPx *= coverage;
+    const baseLeftPx = (imageSize.width - widthPx) / 2;
+    const baseTopPx = (imageSize.height - heightPx) / 2;
+    const offsetX = Math.max(-baseLeftPx, Math.min(baseLeftPx, maskOffset.x));
+    const offsetY = Math.max(-baseTopPx, Math.min(baseTopPx, maskOffset.y));
     return {
-      leftPx: (imageSize.width - widthPx) / 2,
-      topPx: (imageSize.height - heightPx) / 2,
+      leftPx: baseLeftPx + offsetX,
+      topPx: baseTopPx + offsetY,
       widthPct: (widthPx / imageSize.width) * 100,
       heightPct: (heightPx / imageSize.height) * 100,
+      leftPct: ((baseLeftPx + offsetX) / imageSize.width) * 100,
+      topPct: ((baseTopPx + offsetY) / imageSize.height) * 100,
       widthPx,
       heightPx,
     };
-  }, [imageSize, partShape, coverage]);
+  }, [imageSize, partShape, coverage, maskOffset]);
 
   useEffect(() => {
     if (mask === null || imageSrc === null) return;
@@ -94,7 +110,37 @@ export function PanoramkaPage() {
     objectUrlRef.current = url;
     setImageSize(null);
     setCrops([]);
+    setMaskOffset({ x: 0, y: 0 });
     setImageSrc(url);
+  };
+
+  const handleMaskPointerDown = (e: React.PointerEvent) => {
+    if (!mask || !imageSize || !imgRef.current) return;
+    const imgRect = imgRef.current.getBoundingClientRect();
+    const scale = imageSize.width / imgRect.width;
+    dragStateRef.current = {
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startOffsetX: mask.leftPx - (imageSize.width - mask.widthPx) / 2,
+      startOffsetY: mask.topPx - (imageSize.height - mask.heightPx) / 2,
+      scale,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleMaskPointerMove = (e: React.PointerEvent) => {
+    const drag = dragStateRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    setMaskOffset({
+      x: drag.startOffsetX + (e.clientX - drag.startClientX) * drag.scale,
+      y: drag.startOffsetY + (e.clientY - drag.startClientY) * drag.scale,
+    });
+  };
+
+  const handleMaskPointerEnd = (e: React.PointerEvent) => {
+    if (dragStateRef.current?.pointerId !== e.pointerId) return;
+    dragStateRef.current = null;
   };
 
   const partAspect = mask
@@ -192,6 +238,7 @@ export function PanoramkaPage() {
         <>
           <div style={{ position: "relative", display: "inline-block" }}>
             <img
+              ref={imgRef}
               src={imageSrc}
               alt="panoramka"
               style={{ display: "block", maxWidth: "none" }}
@@ -206,13 +253,18 @@ export function PanoramkaPage() {
               <div
                 style={{
                   position: "absolute",
-                  top: `${(100 - mask.heightPct) / 2}%`,
-                  left: `${(100 - mask.widthPct) / 2}%`,
+                  top: `${mask.topPct}%`,
+                  left: `${mask.leftPct}%`,
                   width: `${mask.widthPct}%`,
                   height: `${mask.heightPct}%`,
                   background: "rgba(0, 0, 255, 0.3)",
-                  pointerEvents: "none",
+                  cursor: "grab",
+                  touchAction: "none",
                 }}
+                onPointerDown={handleMaskPointerDown}
+                onPointerMove={handleMaskPointerMove}
+                onPointerUp={handleMaskPointerEnd}
+                onPointerCancel={handleMaskPointerEnd}
               >
                 <div
                   style={{
