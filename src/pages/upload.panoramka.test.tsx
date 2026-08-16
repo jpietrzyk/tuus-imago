@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
 
@@ -37,7 +37,23 @@ vi.mock("@/components/image-uploader", () => ({
 }));
 
 describe("UploadPage panoramka integration", () => {
-  it("should keep panoramka folded by default", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("should hide panoramka when debug mode is off", () => {
+    vi.stubEnv("VITE_SHOW_UPLOADER_DEBUG", "false");
+    render(
+      <MemoryRouter>
+        <UploadPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("Panoramka")).not.toBeInTheDocument();
+  });
+
+  it("should keep panoramka folded by default in debug mode", () => {
+    vi.stubEnv("VITE_SHOW_UPLOADER_DEBUG", "true");
     render(
       <MemoryRouter>
         <UploadPage />
@@ -49,6 +65,7 @@ describe("UploadPage panoramka integration", () => {
   });
 
   it("should show uploader image source in panoramka after expanding", () => {
+    vi.stubEnv("VITE_SHOW_UPLOADER_DEBUG", "true");
     render(
       <MemoryRouter>
         <UploadPage />
@@ -63,6 +80,7 @@ describe("UploadPage panoramka integration", () => {
   });
 
   it("should hide the panoramka own image loader when wired to the uploader", () => {
+    vi.stubEnv("VITE_SHOW_UPLOADER_DEBUG", "true");
     render(
       <MemoryRouter>
         <UploadPage />
@@ -77,6 +95,7 @@ describe("UploadPage panoramka integration", () => {
   });
 
   it("should clear panoramka image when uploader clears its selection", () => {
+    vi.stubEnv("VITE_SHOW_UPLOADER_DEBUG", "true");
     render(
       <MemoryRouter>
         <UploadPage />

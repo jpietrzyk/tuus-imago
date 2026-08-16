@@ -453,6 +453,13 @@ export const ImageUploader = forwardRef<
   const [isTriptychLinked, setIsTriptychLinked] = useState(true);
   const isTriptychSplitRef = useRef(false);
   const isTriptychLinkedRef = useRef(true);
+  /**
+   * Preview URL of the image the user had loaded when entering triptych mode.
+   * While the split is active, external consumers (panoramka) keep seeing this
+   * source instead of the per-slot part/window URLs. The URL is exempt from
+   * split-time revocation because its ownership moves to the consumer.
+   */
+  const triptychSourceUrlRef = useRef<string | null>(null);
   const [selectedPaintingSize, setSelectedPaintingSize] =
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const userSelectedPaintingSizeRef = useRef(false);
@@ -506,9 +513,9 @@ export const ImageUploader = forwardRef<
   }, [isTriptychLinked]);
 
   const revokePreviewUrls = useCallback(
-    (images: Array<SelectedImageItem | null>) => {
+    (images: Array<SelectedImageItem | null>, preserveUrl?: string | null) => {
       images.forEach((image) => {
-        if (image) {
+        if (image && image.previewUrl !== preserveUrl) {
           URL.revokeObjectURL(image.previewUrl);
         }
       });
@@ -1524,6 +1531,10 @@ export const ImageUploader = forwardRef<
     }
 
     try {
+      // Remember the pre-split source so external consumers (panoramka) keep
+      // displaying the image the user originally loaded.
+      triptychSourceUrlRef.current = activeImage.previewUrl;
+
       // Wide panoramas use the seamless window model: each of the three panels
       // becomes a contiguous portrait window cut from the shared panorama, so
       // they meet edge-to-edge and can be dragged/zoomed as one continuous
@@ -1579,7 +1590,7 @@ export const ImageUploader = forwardRef<
 
         setSelectedImages((prevImages) => {
           if (prevImages.some(Boolean)) {
-            revokePreviewUrls(prevImages);
+            revokePreviewUrls(prevImages, triptychSourceUrlRef.current);
           }
 
           return [0, 1, 2].map((windowIndex) => ({
@@ -1624,7 +1635,7 @@ export const ImageUploader = forwardRef<
 
         setSelectedImages((prevImages) => {
           if (prevImages.some(Boolean)) {
-            revokePreviewUrls(prevImages);
+            revokePreviewUrls(prevImages, triptychSourceUrlRef.current);
           }
 
           return splitFiles.map((file) => ({
@@ -2119,10 +2130,24 @@ export const ImageUploader = forwardRef<
     onSelectionStateChange?.(selectedImageCount > 0);
   }, [onSelectionStateChange, selectedImageCount]);
 
-  const activeImageSrc = activeImage?.previewUrl ?? null;
+  // While triptych mode is active, keep reporting the pre-split source: the
+  // slots hold parts/windows of it, not the image the user loaded.
+  const activeImageSrc = isTriptychSplit
+    ? triptychSourceUrlRef.current
+    : (activeImage?.previewUrl ?? null);
   useEffect(() => {
     onActiveImageSrcChange?.(activeImageSrc);
   }, [onActiveImageSrcChange, activeImageSrc]);
+
+  // Release the preserved triptych source once the mode is exited; by then the
+  // notification above has already switched consumers to the current source.
+  useEffect(() => {
+    if (isTriptychSplit || triptychSourceUrlRef.current === null) {
+      return;
+    }
+    URL.revokeObjectURL(triptychSourceUrlRef.current);
+    triptychSourceUrlRef.current = null;
+  }, [isTriptychSplit]);
 
   useEffect(() => {
     onOrderableSlotsChange?.(
@@ -2147,6 +2172,10 @@ export const ImageUploader = forwardRef<
     return () => {
       if (selectedImagesRef.current.some(Boolean)) {
         revokePreviewUrls(selectedImagesRef.current);
+      }
+      if (triptychSourceUrlRef.current !== null) {
+        URL.revokeObjectURL(triptychSourceUrlRef.current);
+        triptychSourceUrlRef.current = null;
       }
     };
   }, [revokePreviewUrls]);
