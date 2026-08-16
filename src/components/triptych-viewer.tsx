@@ -35,9 +35,12 @@ const PART_LABELS = ["A", "B", "C"] as const;
 const SLOT_WIDTH = 200;
 const COVERAGE_OPTIONS = [1, 0.8] as const;
 const SLOT_SCALE_OPTIONS = [
-  { value: 1, scale: 0.5 },
-  { value: 2, scale: 1 },
-  { value: 3, scale: 1.5 },
+  { value: 1, scale: 1 / 3 },
+  { value: 2, scale: 2 / 3 },
+  { value: 3, scale: 1 },
+  { value: 4, scale: 4 / 3 },
+  { value: 5, scale: 5 / 3 },
+  { value: 6, scale: 2 },
 ] as const;
 const DEFAULT_OUTPUT_MIME = "image/jpeg";
 
@@ -85,7 +88,7 @@ export function TriptychViewer({
   const [internalImageSrc, setInternalImageSrc] = useState<string | null>(null);
   const [internalPartShape, setInternalPartShape] = useState<TriptychPartShape>("portrait");
   const [internalCoverage, setInternalCoverage] = useState<number>(1);
-  const [internalSlotScale, setInternalSlotScale] = useState<number>(2);
+  const [internalSlotScale, setInternalSlotScale] = useState<number>(3);
   const [internalFitToContainer, setInternalFitToContainer] = useState(false);
   const [loadedImage, setLoadedImage] = useState<{
     src: string;
