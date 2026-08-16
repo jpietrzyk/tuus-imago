@@ -12,10 +12,16 @@ import { type ImageDebugData } from "@/components/image-debug-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { TriptychViewer } from "@/components/triptych-viewer";
+import {
   cloudinaryConfig,
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
-import { CheckCircle2, AlertCircle, ExternalLink, Sliders } from "lucide-react";
+import { CheckCircle2, AlertCircle, ChevronDown, ExternalLink, Sliders } from "lucide-react";
 import { t } from "@/locales/i18n";
 import {
   type ImageTransformations,
@@ -653,6 +659,19 @@ export function UploadPage({
       <div className="w-full h-full transition-all duration-500 ease-in-out max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl overflow-hidden lg:overflow-visible">
         <Card className="h-full border-0 bg-transparent! shadow-none! ring-0!">
           <CardContent className="h-full space-y-4">
+            {/* Panoramka (foldable, collapsed by default) */}
+            <Collapsible className="rounded-xl border border-slate-200 bg-white/85 px-4 shadow-sm backdrop-blur-sm">
+              <CollapsibleTrigger className="py-2.5 text-sm font-semibold text-slate-900 hover:no-underline">
+                <span>Panoramka</span>
+                <ChevronDown className="h-4 w-4 text-slate-500" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="overflow-x-auto pb-4">
+                  <TriptychViewer />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
             {/* Status Messages */}
             {isSuccess && (
               <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-lg border border-green-200">
