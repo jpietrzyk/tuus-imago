@@ -495,16 +495,16 @@ export function TriptychViewer({
                 <div
                   style={{
                     position: "absolute",
-                    top: "5%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
+                    top: "4px",
+                    left: "4px",
                     color: "#ffffff",
-                    fontSize: "48px",
+                    fontSize: "11px",
                     fontWeight: "bold",
-                    textShadow: "2px 2px 4px black",
+                    textShadow: "1px 1px 2px black",
+                    pointerEvents: "none",
                   }}
                 >
-                  {mask.widthPx} x {mask.heightPx} = {mask.widthPx / mask.heightPx}
+                  {Math.round(mask.widthPx)} x {Math.round(mask.heightPx)} = {(mask.widthPx / mask.heightPx).toFixed(2)}
                 </div>
                 {PART_LABELS.map((label, i) => (
                   <div
