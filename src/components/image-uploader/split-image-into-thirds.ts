@@ -337,6 +337,30 @@ const drawSliceToCanvas = ({
   return canvas;
 };
 
+export interface VerticalThirdSliceRange {
+  sliceStartX: number;
+  sliceWidth: number;
+}
+
+/**
+ * Single source of truth for splitting a composed width into three vertical
+ * thirds: floor division with the remainder assigned to the last slice so the
+ * parts tile the composed width exactly.
+ */
+export function getVerticalThirdSliceRanges(
+  composedWidth: number,
+): [VerticalThirdSliceRange, VerticalThirdSliceRange, VerticalThirdSliceRange] {
+  const singleSliceWidth = Math.floor(composedWidth / PART_COUNT);
+
+  return Array.from({ length: PART_COUNT }, (_, index) => ({
+    sliceStartX: singleSliceWidth * index,
+    sliceWidth:
+      index === PART_COUNT - 1
+        ? composedWidth - singleSliceWidth * index
+        : singleSliceWidth,
+  })) as [VerticalThirdSliceRange, VerticalThirdSliceRange, VerticalThirdSliceRange];
+}
+
 const sliceDrawableIntoFiles = async ({
   drawable,
   drawableWidth,
@@ -352,16 +376,10 @@ const sliceDrawableIntoFiles = async ({
   outputMimeType: string;
   outputExtension: string;
 }): Promise<[File, File, File]> => {
-  const singleSliceWidth = Math.floor(drawableWidth / PART_COUNT);
+  const sliceRanges = getVerticalThirdSliceRanges(drawableWidth);
 
   const splitFiles = await Promise.all(
-    Array.from({ length: PART_COUNT }, async (_, index) => {
-      const sliceStartX = singleSliceWidth * index;
-      const sliceWidth =
-        index === PART_COUNT - 1
-          ? drawableWidth - sliceStartX
-          : singleSliceWidth;
-
+    sliceRanges.map(async ({ sliceStartX, sliceWidth }, index) => {
       const canvas = drawSliceToCanvas({
         drawable,
         sliceStartX,
@@ -402,10 +420,7 @@ const drawDirectCropSliceToCanvas = ({
 }): HTMLCanvasElement => {
   const composedWidth = Math.max(1, Math.round(crop.cropWidth));
   const composedHeight = Math.max(1, Math.round(crop.cropHeight));
-  const singleSliceWidth = Math.floor(composedWidth / PART_COUNT);
-  const sliceStartX = singleSliceWidth * index;
-  const sliceWidth =
-    index === PART_COUNT - 1 ? composedWidth - sliceStartX : singleSliceWidth;
+  const { sliceStartX, sliceWidth } = getVerticalThirdSliceRanges(composedWidth)[index];
 
   // Map the slice columns back to source-crop space proportionally.
   const sourceSliceX =
