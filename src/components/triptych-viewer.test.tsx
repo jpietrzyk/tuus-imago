@@ -105,6 +105,49 @@ describe("TriptychViewer Component", () => {
     expect(screen.queryByLabelText("Slot size:")).not.toBeInTheDocument();
   });
 
+  it("should render fit preview switch off by default", () => {
+    render(<TriptychViewer imageSrc={null} />);
+
+    expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("should notify fit to container change when switch is toggled", () => {
+    const onFitToContainerChange = vi.fn();
+    render(
+      <TriptychViewer
+        imageSrc={null}
+        onFitToContainerChange={onFitToContainerChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("switch"));
+
+    expect(onFitToContainerChange).toHaveBeenCalledWith(true);
+  });
+
+  it("should reflect controlled fit to container value", () => {
+    render(<TriptychViewer imageSrc={null} fitToContainer={true} />);
+
+    expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("should constrain image with proportional fit style when enabled", () => {
+    render(<TriptychViewer imageSrc="blob:mock-image" fitToContainer={true} />);
+
+    expect(screen.getByAltText("triptych")).toHaveStyle({
+      maxWidth: "100%",
+      height: "auto",
+    });
+  });
+
+  it("should keep natural image size when fit is disabled", () => {
+    render(<TriptychViewer imageSrc="blob:mock-image" fitToContainer={false} />);
+
+    expect(screen.getByAltText("triptych")).toHaveStyle({
+      maxWidth: "none",
+    });
+  });
+
   it("should notify crops change with generated crop data urls", async () => {
     vi.stubGlobal("Image", MockImage);
     const toDataURLMock = vi

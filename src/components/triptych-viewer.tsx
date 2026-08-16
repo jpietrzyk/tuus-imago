@@ -1,10 +1,23 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { Switch } from "@/components/ui/switch";
 import {
   calculateMaxCenteredCropForAspectRatio,
   getTargetAspectRatio,
   type ImageDisplayProportion,
 } from "@/components/image-uploader/image-proportion-calculator";
 import { getVerticalThirdSliceRanges } from "@/components/image-uploader/split-image-into-thirds";
+
+const findScrollableAncestor = (start: HTMLElement): HTMLElement | null => {
+  let node = start.parentElement;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    if (/(auto|scroll)/.test(`${style.overflow} ${style.overflowX} ${style.overflowY}`)) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
+};
 
 const PART_SHAPES = {
   portrait: { label: "portrait", proportion: "vertical" as ImageDisplayProportion },
@@ -39,6 +52,8 @@ export interface TriptychViewerProps {
   onCoverageChange?: (coverage: number) => void;
   slotScale?: number;
   onSlotScaleChange?: (slotScale: number) => void;
+  fitToContainer?: boolean;
+  onFitToContainerChange?: (fitToContainer: boolean) => void;
   onCropsChange?: (crops: string[]) => void;
   showImageLoader?: boolean;
   showControls?: boolean;
@@ -57,6 +72,8 @@ export function TriptychViewer({
   onCoverageChange,
   slotScale: slotScaleProp,
   onSlotScaleChange,
+  fitToContainer: fitToContainerProp,
+  onFitToContainerChange,
   onCropsChange,
   showImageLoader = true,
   showControls = true,
@@ -69,6 +86,7 @@ export function TriptychViewer({
   const [internalPartShape, setInternalPartShape] = useState<TriptychPartShape>("portrait");
   const [internalCoverage, setInternalCoverage] = useState<number>(1);
   const [internalSlotScale, setInternalSlotScale] = useState<number>(2);
+  const [internalFitToContainer, setInternalFitToContainer] = useState(false);
   const [loadedImage, setLoadedImage] = useState<{
     src: string;
     size: { width: number; height: number };
@@ -77,6 +95,8 @@ export function TriptychViewer({
   const [maskOffset, setMaskOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const objectUrlRef = useRef<string | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const imageWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [fitViewport, setFitViewport] = useState<{ width: number; height: number } | null>(null);
   const dragStateRef = useRef<{
     pointerId: number;
     startClientX: number;
@@ -93,10 +113,14 @@ export function TriptychViewer({
   const isPartShapeControlled = partShapeProp !== undefined;
   const isCoverageControlled = coverageProp !== undefined;
   const isSlotScaleControlled = slotScaleProp !== undefined;
+  const isFitToContainerControlled = fitToContainerProp !== undefined;
   const imageSrc = isImageSrcControlled ? imageSrcProp : internalImageSrc;
   const partShape = isPartShapeControlled ? partShapeProp : internalPartShape;
   const coverage = isCoverageControlled ? coverageProp : internalCoverage;
   const slotScale = isSlotScaleControlled ? slotScaleProp : internalSlotScale;
+  const fitToContainer = isFitToContainerControlled
+    ? fitToContainerProp
+    : internalFitToContainer;
   const imageSize =
     loadedImage !== null && loadedImage.src === imageSrc ? loadedImage.size : null;
   const crops = cropsState !== null && cropsState.src === imageSrc ? cropsState.urls : [];
@@ -142,6 +166,54 @@ export function TriptychViewer({
     },
     [isSlotScaleControlled, onSlotScaleChange],
   );
+
+  const changeFitToContainer = useCallback(
+    (next: boolean) => {
+      if (!isFitToContainerControlled) setInternalFitToContainer(next);
+      onFitToContainerChange?.(next);
+    },
+    [isFitToContainerControlled, onFitToContainerChange],
+  );
+
+  useEffect(() => {
+    if (!fitToContainer) return;
+    const wrapper = imageWrapperRef.current;
+    if (!wrapper) return;
+    const target = findScrollableAncestor(wrapper) ?? wrapper.parentElement;
+    if (!target) return;
+    const update = () => {
+      const width = target.clientWidth;
+      const computedMaxHeight = parseFloat(
+        window.getComputedStyle(target).maxHeight,
+      );
+      const height =
+        Number.isFinite(computedMaxHeight) && computedMaxHeight > 0
+          ? computedMaxHeight
+          : target.clientHeight;
+      setFitViewport(width > 0 && height > 0 ? { width, height } : null);
+    };
+    const raf = requestAnimationFrame(update);
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(update);
+    observer.observe(target);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+    };
+  }, [fitToContainer]);
+
+  const fittedPreviewSize = useMemo(() => {
+    if (!fitToContainer || fitViewport === null || imageSize === null) return null;
+    const scale = Math.min(
+      fitViewport.width / imageSize.width,
+      fitViewport.height / imageSize.height,
+      1,
+    );
+    return {
+      width: Math.max(1, Math.round(imageSize.width * scale)),
+      height: Math.max(1, Math.round(imageSize.height * scale)),
+    };
+  }, [fitToContainer, fitViewport, imageSize]);
 
   const mask = useMemo(() => {
     if (imageSize === null) return null;
@@ -338,6 +410,21 @@ export function TriptychViewer({
                   ))}
                 </select>
               </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                Fit preview:
+                <Switch
+                  checked={fitToContainer}
+                  onCheckedChange={changeFitToContainer}
+                />
+              </label>
             </>
           )}
           {showImageInfo && imageSize && (
@@ -362,12 +449,22 @@ export function TriptychViewer({
         </div>
       ) : (
         <>
-          <div style={{ position: "relative", display: "inline-block" }}>
+          <div ref={imageWrapperRef} style={{ position: "relative", display: "inline-block" }}>
             <img
               ref={imgRef}
               src={imageSrc}
               alt={imageAlt}
-              style={{ display: "block", maxWidth: "none" }}
+              style={
+                fittedPreviewSize
+                  ? {
+                      display: "block",
+                      width: `${fittedPreviewSize.width}px`,
+                      height: `${fittedPreviewSize.height}px`,
+                    }
+                  : fitToContainer
+                    ? { display: "block", maxWidth: "100%", height: "auto" }
+                    : { display: "block", maxWidth: "none" }
+              }
               onLoad={(e) => {
                 setLoadedImage({
                   src: imageSrc ?? e.currentTarget.src,
