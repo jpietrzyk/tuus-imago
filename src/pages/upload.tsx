@@ -71,6 +71,7 @@ export function UploadPage({
   const [uploadedSlots, setUploadedSlots] =
     useState<UploadedSlotResult[]>(restoredSlots);
   const [hasUploaderSelection, setHasUploaderSelection] = useState(false);
+  const [panoramkaImageSrc, setPanoramkaImageSrc] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isBatchUploading, setIsBatchUploading] = useState(false);
@@ -667,7 +668,10 @@ export function UploadPage({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="max-h-[60vh] overflow-auto pb-4">
-                  <TriptychViewer />
+                  <TriptychViewer
+                    imageSrc={panoramkaImageSrc}
+                    showImageLoader={false}
+                  />
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -731,6 +735,7 @@ export function UploadPage({
                     onUploadError={handleUploadError}
                     onUploadAttemptStart={handleUploadAttemptStart}
                     onSelectionStateChange={setHasUploaderSelection}
+                    onActiveImageSrcChange={setPanoramkaImageSrc}
                     onOrderableSlotsChange={onOrderableSlotsChange}
                     onUploadProgress={handleUploadProgress}
                     showDebugData={imageDebugDataEnabled}

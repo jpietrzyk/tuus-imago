@@ -97,6 +97,7 @@ interface ImageUploaderProps {
   onUploadAttemptStart?: () => void;
   onImageMetadataChange?: (metadata: SelectedImageMetadata | null) => void;
   onSelectionStateChange?: (hasSelection: boolean) => void;
+  onActiveImageSrcChange?: (src: string | null) => void;
   onOrderableSlotsChange?: (slots: OrderableSlotSummary[]) => void;
   onUploadProgress?: (progress: {
     currentSlotIndex: number;
@@ -407,6 +408,7 @@ export const ImageUploader = forwardRef<
     onUploadAttemptStart,
     onImageMetadataChange,
     onSelectionStateChange,
+    onActiveImageSrcChange,
     onOrderableSlotsChange,
     onUploadProgress,
     isUploadOverlayVisible = false,
@@ -2116,6 +2118,11 @@ export const ImageUploader = forwardRef<
   useEffect(() => {
     onSelectionStateChange?.(selectedImageCount > 0);
   }, [onSelectionStateChange, selectedImageCount]);
+
+  const activeImageSrc = activeImage?.previewUrl ?? null;
+  useEffect(() => {
+    onActiveImageSrcChange?.(activeImageSrc);
+  }, [onActiveImageSrcChange, activeImageSrc]);
 
   useEffect(() => {
     onOrderableSlotsChange?.(
