@@ -98,6 +98,8 @@ export function UploadPage({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const cloudinaryConfigError = getCloudinaryUploadConfigError();
   const showDebugPanel = import.meta.env.VITE_SHOW_DEBUG_PANEL === "true";
+  const isUploaderDebugMode =
+    import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
   const aiTemplateName =
     (
       import.meta.env.VITE_CLOUDINARY_AI_TEMPLATE as string | undefined
@@ -660,21 +662,23 @@ export function UploadPage({
       <div className="w-full h-full transition-all duration-500 ease-in-out max-w-sm sm:max-w-md md:max-w-3xl lg:max-w-5xl xl:max-w-7xl overflow-hidden lg:overflow-visible">
         <Card className="h-full border-0 bg-transparent! shadow-none! ring-0!">
           <CardContent className="h-full space-y-4">
-            {/* Panoramka (foldable, collapsed by default) */}
-            <Collapsible className="rounded-xl border border-slate-200 bg-white/85 px-4 shadow-sm backdrop-blur-sm">
-              <CollapsibleTrigger className="py-2.5 text-sm font-semibold text-slate-900 hover:no-underline">
-                <span>Panoramka</span>
-                <ChevronDown className="h-4 w-4 text-slate-500" />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="max-h-[60vh] overflow-auto pb-4">
-                  <TriptychViewer
-                    imageSrc={panoramkaImageSrc}
-                    showImageLoader={false}
-                  />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+            {/* Panoramka (foldable, collapsed by default; debug mode only) */}
+            {isUploaderDebugMode && (
+              <Collapsible className="rounded-xl border border-slate-200 bg-white/85 px-4 shadow-sm backdrop-blur-sm">
+                <CollapsibleTrigger className="py-2.5 text-sm font-semibold text-slate-900 hover:no-underline">
+                  <span>Panoramka</span>
+                  <ChevronDown className="h-4 w-4 text-slate-500" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="max-h-[60vh] overflow-auto pb-4">
+                    <TriptychViewer
+                      imageSrc={panoramkaImageSrc}
+                      showImageLoader={false}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
 
             {/* Status Messages */}
             {isSuccess && (

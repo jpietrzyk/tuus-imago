@@ -198,6 +198,70 @@ describe("ImageUploader", () => {
     }
   });
 
+  it("keeps pre-split image source for onActiveImageSrcChange when entering triptych mode", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
+    const onActiveImageSrcChange = vi.fn();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+    const splitPartFiles: [File, File, File] = [
+      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
+      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
+      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
+    ];
+
+    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
+      splitPartFiles,
+    );
+
+    render(
+      <TestWrapper onActiveImageSrcChange={onActiveImageSrcChange} />,
+    );
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      await waitFor(() => {
+        const calls = onActiveImageSrcChange.mock.calls;
+        expect(calls[calls.length - 1]?.[0]).toEqual(
+          expect.stringContaining("blob:"),
+        );
+      });
+      const originalSrc = onActiveImageSrcChange.mock.calls[
+        onActiveImageSrcChange.mock.calls.length - 1
+      ][0];
+      const callsBeforeSplit = onActiveImageSrcChange.mock.calls.length;
+
+      const splitButton = screen.getByRole("button", {
+        name: tr("uploader.splitSelectedImage"),
+      });
+      fireEvent.click(splitButton);
+
+      await waitFor(() => {
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      const callsAfterSplit = onActiveImageSrcChange.mock.calls.slice(
+        callsBeforeSplit,
+      );
+      expect(callsAfterSplit.length).toBeGreaterThanOrEqual(0);
+      for (const call of callsAfterSplit) {
+        expect(call[0]).toBe(originalSrc);
+      }
+      const calls = onActiveImageSrcChange.mock.calls;
+      expect(calls[calls.length - 1]?.[0]).toBe(originalSrc);
+    }
+  });
+
   it("links triptych parts by default and toggles the link state", async () => {
     mockImageWidth = 7800;
     mockImageHeight = 1800;
