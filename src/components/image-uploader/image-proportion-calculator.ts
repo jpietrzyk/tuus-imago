@@ -91,16 +91,19 @@ export const invertDisplayProportion = (
   return proportion;
 };
 
-export const calculateMaxCenteredCrop = ({
+export const calculateMaxCenteredCropForAspectRatio = ({
   sourceWidth,
   sourceHeight,
-  proportion,
-}: CropCalculationInput): CropCalculationResult => {
+  targetAspectRatio,
+}: {
+  sourceWidth: number;
+  sourceHeight: number;
+  targetAspectRatio: number;
+}): CropCalculationResult => {
   const safeWidth = Math.max(1, sourceWidth);
   const safeHeight = Math.max(1, sourceHeight);
   const sourceArea = safeWidth * safeHeight;
 
-  const targetAspectRatio = getTargetAspectRatio(proportion);
   const sourceAspectRatio = safeWidth / safeHeight;
 
   let cropX = 0;
@@ -136,6 +139,17 @@ export const calculateMaxCenteredCrop = ({
     heightScale: cropHeight / safeHeight,
   };
 };
+
+export const calculateMaxCenteredCrop = ({
+  sourceWidth,
+  sourceHeight,
+  proportion,
+}: CropCalculationInput): CropCalculationResult =>
+  calculateMaxCenteredCropForAspectRatio({
+    sourceWidth,
+    sourceHeight,
+    targetAspectRatio: getTargetAspectRatio(proportion),
+  });
 
 export const calculateAllProportions = (
   sourceWidth: number,
