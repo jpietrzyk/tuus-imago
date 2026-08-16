@@ -666,7 +666,7 @@ export function UploadPage({
                 <ChevronDown className="h-4 w-4 text-slate-500" />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="overflow-x-auto pb-4">
+                <div className="max-h-[60vh] overflow-auto pb-4">
                   <TriptychViewer />
                 </div>
               </CollapsibleContent>
