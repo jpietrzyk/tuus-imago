@@ -105,10 +105,10 @@ describe("TriptychViewer Component", () => {
     expect(screen.queryByLabelText("Slot size:")).not.toBeInTheDocument();
   });
 
-  it("should render fit preview switch off by default", () => {
+  it("should render fit preview switch on by default", () => {
     render(<TriptychViewer imageSrc={null} />);
 
-    expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "true");
   });
 
   it("should notify fit to container change when switch is toggled", () => {
@@ -122,7 +122,7 @@ describe("TriptychViewer Component", () => {
 
     fireEvent.click(screen.getByRole("switch"));
 
-    expect(onFitToContainerChange).toHaveBeenCalledWith(true);
+    expect(onFitToContainerChange).toHaveBeenCalledWith(false);
   });
 
   it("should reflect controlled fit to container value", () => {
