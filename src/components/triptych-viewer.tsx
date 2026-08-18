@@ -89,7 +89,7 @@ export function TriptychViewer({
   const [internalPartShape, setInternalPartShape] = useState<TriptychPartShape>("portrait");
   const [internalCoverage, setInternalCoverage] = useState<number>(1);
   const [internalSlotScale, setInternalSlotScale] = useState<number>(3);
-  const [internalFitToContainer, setInternalFitToContainer] = useState(false);
+  const [internalFitToContainer, setInternalFitToContainer] = useState(true);
   const [loadedImage, setLoadedImage] = useState<{
     src: string;
     size: { width: number; height: number };
