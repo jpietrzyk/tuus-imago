@@ -3,16 +3,19 @@ import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
-import { buildPreviewEffectFilter } from "./preview-effect-filter";
+import {
+  computeSidePanelCrop,
+  loadCachedImageElement,
+} from "./side-panel-crop";
+import { drawCroppedImageToCanvas } from "./preview-canvas-utils";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
-import { calculateMaxCenteredCrop, getTargetAspectRatio } from "./image-proportion-calculator";
+import { getTargetAspectRatio } from "./image-proportion-calculator";
 import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
-import { adjustCropForZoomPan, type CropAdjust } from "./use-crop-adjust";
-import { resolveTriptychSlotCrop } from "./triptych-window-crop";
+import type { CropAdjust } from "./use-crop-adjust";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
 const TRIPTYCH_PANEL_COUNT = 3;
@@ -27,108 +30,31 @@ interface TriptychSidePanelProps {
   isLinked: boolean;
 }
 
-/**
- * Compute the inline sizing/positioning for a triptych side-panel <img> so it
- * mirrors the active slot's zoom/pan crop.
- *
- * The image is sized larger than the (overflow-hidden) frame and positioned so
- * the adjusted crop region exactly fills the frame; the surrounding source
- * pixels overflow and are clipped by the frame. Because the <img> is always at
- * least as large as the frame, panning shifts the source within the fixed clip
- * window and never exposes an empty gap — unlike translating an `object-cover`
- * element, which drags its own clip box along and leaves the frame blank (the
- * previous behaviour that made the left/right panels vanish while dragging).
- *
- * Cloud previews already encode the crop/transform server-side, so the source
- * simply fills the frame centered. Rotation/flip are applied as a transform on
- * the sized image (cloud previews encode them too, so they are skipped there).
- */
-const buildSidePanelCropStyle = (
-  image: SelectedImageItem,
-  useCloudPreview: boolean,
-  fallbackDimensions?: { width: number; height: number } | null,
-): {
-  width: string;
-  height: string;
-  top: string;
-  left: string;
-  transform?: string;
-} => {
-  if (useCloudPreview) {
-    return { width: "100%", height: "100%", top: "0%", left: "0%" };
-  }
+// TEMP DEBUG (triptych diagnosis): remove once the split renders correctly.
+const TriptychDebugBadge = ({ label }: { label: string }) => (
+  <div
+    data-testid="triptych-debug-badge"
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      zIndex: 50,
+      background: "rgba(220, 38, 38, 0.92)",
+      color: "white",
+      fontFamily: "monospace",
+      fontSize: "10px",
+      lineHeight: 1.35,
+      padding: "2px 4px",
+      pointerEvents: "none",
+      whiteSpace: "pre",
+      textAlign: "left",
+    }}
+  >
+    {label}
+  </div>
+);
 
-  let width = "100%";
-  let height = "100%";
-  let top = "0%";
-  let left = "0%";
-
-  const metadata = image.metadata
-    ?? (fallbackDimensions
-      ? { width: fallbackDimensions.width, height: fallbackDimensions.height }
-      : null);
-
-  if (metadata && metadata.width > 0 && metadata.height > 0) {
-    // Seamless wide-panorama triptych: the crop is a contiguous portrait
-    // window into the shared panorama, so adjacent panels always meet
-    // edge-to-edge while the shared zoom/pan scrolls the band as one image.
-    const windowIndex = image.triptychWindowIndex;
-    const adjusted =
-      windowIndex !== undefined
-        ? resolveTriptychSlotCrop({
-            sourceWidth: metadata.width,
-            sourceHeight: metadata.height,
-            displayImageProportion: image.displayImageProportion,
-            windowIndex,
-            cropAdjust: image.previewCropAdjust,
-          })
-        : (() => {
-            const baseCrop = calculateMaxCenteredCrop({
-              sourceWidth: metadata.width,
-              sourceHeight: metadata.height,
-              proportion: image.displayImageProportion,
-            });
-            const cropAdjust = image.previewCropAdjust;
-            return cropAdjust
-              ? adjustCropForZoomPan(
-                  baseCrop,
-                  cropAdjust.zoom,
-                  cropAdjust.panX,
-                  cropAdjust.panY,
-                )
-              : baseCrop;
-          })();
-
-    // Size the <img> so the adjusted crop fills the frame and the rest of the
-    // source overflows it; offset so the crop's top-left aligns with the
-    // frame's. Percentages are relative to the frame box.
-    width = `${(metadata.width / adjusted.cropWidth) * 100}%`;
-    height = `${(metadata.height / adjusted.cropHeight) * 100}%`;
-    left = `${-(adjusted.cropX / adjusted.cropWidth) * 100}%`;
-    top = `${-(adjusted.cropY / adjusted.cropHeight) * 100}%`;
-  }
-
-  const transformParts: string[] = [];
-  const transform = image.previewTransform;
-  if (transform) {
-    if (transform.rotation) {
-      transformParts.push(`rotate(${transform.rotation}deg)`);
-    }
-    if (transform.flipHorizontal || transform.flipVertical) {
-      transformParts.push(
-        `scale(${transform.flipHorizontal ? -1 : 1}, ${transform.flipVertical ? -1 : 1})`,
-      );
-    }
-  }
-
-  return {
-    width,
-    height,
-    top,
-    left,
-    transform: transformParts.length > 0 ? transformParts.join(" ") : undefined,
-  };
-};
+const SIDE_PANEL_MAX_DRAW_RETRIES = 10;
 
 function TriptychSidePanel({
   slotIndex,
@@ -142,26 +68,169 @@ function TriptychSidePanel({
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
   );
-  const [imgDimensions, setImgDimensions] = useState<{
-    width: number;
-    height: number;
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imageElRef = useRef<HTMLImageElement | null>(null);
+  const cachedDimsRef = useRef<{ w: number; h: number } | null>(null);
+  const retryStateRef = useRef<{ frame: number | null; failures: number }>({
+    frame: null,
+    failures: 0,
+  });
+  const [decoded, setDecoded] = useState<{
+    url: string;
+    dims: { width: number; height: number };
   } | null>(null);
+  // TEMP DEBUG (triptych diagnosis): canvas buffer size for the badge; refs
+  // must not be read during render, so mirror it into state after each draw.
+  const [debugBufferSize, setDebugBufferSize] = useState<string>("0x0");
   const effectivePreviewUrl = previewUrl ?? image.previewUrl;
   const isEffectImageLoading =
     useCloudPreview &&
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
 
-  const cropStyle = buildSidePanelCropStyle(image, useCloudPreview, imgDimensions);
+  // Local previews decode the source ONCE per URL (shared with the sibling
+  // panels) and render through a canvas at frame resolution — the same path
+  // as the active slot. Sizing a multi-megapixel <img> beyond the frame and
+  // relying on the browser to rasterize the visible window proved unreliable
+  // at panorama sizes: panels painted partially or not at all while the
+  // canvas-drawn center slot stayed correct.
+  useEffect(() => {
+    let active = true;
+    imageElRef.current = null;
+    loadCachedImageElement(effectivePreviewUrl)
+      .then((img) => {
+        if (!active) return;
+        imageElRef.current = img;
+        setDecoded({
+          url: effectivePreviewUrl,
+          dims: { width: img.naturalWidth, height: img.naturalHeight },
+        });
+      })
+      .catch(() => {
+        // Preview load errors are ignored, matching the previous <img>
+        // onError behaviour.
+      });
+    return () => {
+      active = false;
+    };
+  }, [effectivePreviewUrl]);
 
-  const previewStyle: React.CSSProperties = {
-    filter: buildPreviewEffectFilter(image, useCloudPreview),
-    width: cropStyle.width,
-    height: cropStyle.height,
-    top: cropStyle.top,
-    left: cropStyle.left,
-    transform: cropStyle.transform,
+  const sourceDims =
+    image.metadata ??
+    (decoded?.url === effectivePreviewUrl ? decoded.dims : null);
+  const crop = computeSidePanelCrop(image, sourceDims);
+
+  const drawSidePanel = () => {
+    const canvas = canvasRef.current;
+    const img = imageElRef.current;
+    if (!canvas || !img || !crop) {
+      return;
+    }
+
+    const painted = drawCroppedImageToCanvas({
+      canvas,
+      image: img,
+      crop,
+      effects: {
+        brightness: image.previewEffects.brightness,
+        contrast: image.previewEffects.contrast,
+      },
+      transform: image.previewTransform ?? null,
+      cachedDimensions: cachedDimsRef.current ?? undefined,
+    });
+
+    if (painted === false) {
+      const retry = retryStateRef.current;
+      retry.failures += 1;
+      if (retry.failures === 1 || retry.failures > SIDE_PANEL_MAX_DRAW_RETRIES) {
+        console.error(
+          `[triptych-side-panel ${slotIndex}] draw failed (attempt ${retry.failures}): buffer ${canvas.width}x${canvas.height}, crop ${Math.round(crop.cropX)},${Math.round(crop.cropY)} ${Math.round(crop.cropWidth)}x${Math.round(crop.cropHeight)}`,
+        );
+      }
+      if (retry.failures <= SIDE_PANEL_MAX_DRAW_RETRIES && retry.frame === null) {
+        retry.frame = window.requestAnimationFrame(() => {
+          retry.frame = null;
+          drawSidePanel();
+        });
+      }
+    } else {
+      retryStateRef.current.failures = 0;
+      setDebugBufferSize(`${canvas.width}x${canvas.height}`);
+    }
   };
+
+  const drawRef = useRef(drawSidePanel);
+  useEffect(() => {
+    drawRef.current = drawSidePanel;
+    drawSidePanel();
+  });
+
+  // Redraw when the frame resizes; repaint after a GPU context loss.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    // The retry state object is stable for the panel's lifetime; capture it
+    // so the cleanup does not read the ref at unmount time.
+    const retryState = retryStateRef.current;
+
+    const updateCachedDims = () => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width >= 32 && rect.height >= 32) {
+        cachedDimsRef.current = {
+          w: Math.max(1, Math.round(rect.width)),
+          h: Math.max(1, Math.round(rect.height)),
+        };
+      }
+    };
+
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      console.error(
+        `[triptych-side-panel ${slotIndex}] 2D context lost — will redraw on restore`,
+      );
+    };
+    const handleContextRestored = () => {
+      retryState.failures = 0;
+      drawRef.current();
+    };
+
+    updateCachedDims();
+
+    let resizeFrame: number | null = null;
+    const scheduleDraw = () => {
+      updateCachedDims();
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = null;
+        drawRef.current();
+      });
+    };
+
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(scheduleDraw)
+        : null;
+    observer?.observe(canvas);
+    canvas.addEventListener("contextlost", handleContextLost);
+    canvas.addEventListener("contextrestored", handleContextRestored);
+
+    return () => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+      if (retryState.frame !== null) {
+        window.cancelAnimationFrame(retryState.frame);
+      }
+      observer?.disconnect();
+      canvas.removeEventListener("contextlost", handleContextLost);
+      canvas.removeEventListener("contextrestored", handleContextRestored);
+    };
+  }, [slotIndex]);
 
   return (
     <button
@@ -176,29 +245,34 @@ function TriptychSidePanel({
         className="relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none opacity-95 hover:opacity-100"
         style={{ aspectRatio: String(previewFrameAspectRatio) }}
       >
-        <img
-          src={effectivePreviewUrl}
-          alt={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
-          className="absolute object-cover will-change-transform transition-transform duration-100 ease-out motion-reduce:transition-none"
-          style={previewStyle}
-          draggable={false}
-          onLoad={(e) => {
-            setConfirmedCloudUrl(effectivePreviewUrl);
-            const img = e.currentTarget;
-            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-              setImgDimensions({
-                width: img.naturalWidth,
-                height: img.naturalHeight,
-              });
-            }
-          }}
-          onError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
-        />
+        {useCloudPreview ? (
+          <img
+            src={effectivePreviewUrl}
+            alt={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
+            className="absolute object-cover will-change-transform transition-transform duration-100 ease-out motion-reduce:transition-none"
+            style={{ width: "100%", height: "100%", top: "0%", left: "0%" }}
+            draggable={false}
+            onLoad={() => {
+              setConfirmedCloudUrl(effectivePreviewUrl);
+            }}
+            onError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
+          />
+        ) : (
+          <canvas
+            ref={canvasRef}
+            aria-label={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
+            data-testid={`triptych-side-panel-canvas-${slotIndex}`}
+            className="absolute inset-0 h-full w-full"
+          />
+        )}
         <UploadProgressOverlay
           isVisible={useCloudPreview && isEffectImageLoading}
           progress={0}
           isIndeterminate
           label={t("uploader.applyingEffect")}
+        />
+        <TriptychDebugBadge
+          label={`#${slotIndex} wIdx:${image.triptychWindowIndex ?? "-"} ${useCloudPreview ? "cloud-img" : "canvas"}\nmeta:${sourceDims ? `${sourceDims.width}x${sourceDims.height}` : "null"}\ncrop:${crop ? ` ${Math.round(crop.cropX)},${Math.round(crop.cropY)} ${Math.round(crop.cropWidth)}x${Math.round(crop.cropHeight)}` : " n/a"}\nbuf:${debugBufferSize}`}
         />
       </div>
     </button>
@@ -361,7 +435,12 @@ export default function UploaderPreviewSlider({
               ? getTargetAspectRatio(slot.displayImageProportion)
               : paintingAspectRatio;
           const content = isActive ? (
-            previewSlot
+            <>
+              {previewSlot}
+              <TriptychDebugBadge
+                label={`#1 ACTIVE canvas wIdx:${activeImage?.triptychWindowIndex ?? "-"}\nmeta:${selectedImageMetadata ? `${selectedImageMetadata.width}x${selectedImageMetadata.height}` : "null"} prop:${userSelectedProportion} zoom:${activeImage?.previewCropAdjust?.zoom ?? 1}`}
+              />
+            </>
           ) : slot ? (
             <TriptychSidePanel
               slotIndex={index}

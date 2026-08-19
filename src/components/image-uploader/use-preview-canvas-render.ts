@@ -85,6 +85,8 @@ export const usePreviewCanvasRender = ({
 
     let isActive = true;
     let resizeFrameId: number | null = null;
+    let retryFrameId: number | null = null;
+    let drawFailureCount = 0;
     let loadedImage: HTMLImageElement | null = null;
     let sourceWidth = 0;
     let sourceHeight = 0;
@@ -191,7 +193,7 @@ export const usePreviewCanvasRender = ({
         ? { w: cachedDisplayWidth, h: cachedDisplayHeight }
         : null;
 
-      drawCroppedImageToCanvas({
+      const painted = drawCroppedImageToCanvas({
         canvas,
         image: loadedImage,
         crop,
@@ -199,6 +201,26 @@ export const usePreviewCanvasRender = ({
         transform: previewTransform,
         cachedDimensions: cachedDims,
       });
+
+      // A failed draw (null 2D context, most often under canvas/GPU memory
+      // pressure with multi-megapixel sources) used to leave the preview
+      // permanently blank with no signal. Retry on later frames — the
+      // pressure is usually transient (parallel decodes settling, etc.).
+      // Strict `=== false`: the explicit failure signal from a real draw.
+      if (painted === false) {
+        drawFailureCount += 1;
+        console.error(
+          `[preview-canvas] draw failed (attempt ${drawFailureCount}): buffer ${canvas.width}x${canvas.height}, crop ${Math.round(crop.cropX)},${Math.round(crop.cropY)} ${Math.round(crop.cropWidth)}x${Math.round(crop.cropHeight)}, source ${sourceWidth}x${sourceHeight}`,
+        );
+        if (isActive && drawFailureCount <= 10 && retryFrameId === null) {
+          retryFrameId = window.requestAnimationFrame(() => {
+            retryFrameId = null;
+            drawPreview(cropAdjustOverride);
+          });
+        }
+      } else {
+        drawFailureCount = 0;
+      }
     };
 
     // Expose drawPreview so the crop-redraw effect can call it.
@@ -208,6 +230,20 @@ export const usePreviewCanvasRender = ({
     requestDrawRef.current = (cropAdjust: CropAdjust) => {
       drawPreview(cropAdjust);
     };
+
+    // The GPU can evict the 2D context under memory pressure (draw calls then
+    // become silent no-ops). Prevent the default loss, and repaint when the
+    // context is restored.
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      console.error("[preview-canvas] 2D context lost — will redraw on restore");
+    };
+    const handleContextRestored = () => {
+      drawFailureCount = 0;
+      drawPreview();
+    };
+    canvas.addEventListener("contextlost", handleContextLost);
+    canvas.addEventListener("contextrestored", handleContextRestored);
 
     const scheduleResizeDraw = () => {
       if (!isActive || !loadedImage) {
@@ -281,6 +317,12 @@ export const usePreviewCanvasRender = ({
       if (resizeFrameId !== null) {
         window.cancelAnimationFrame(resizeFrameId);
       }
+      if (retryFrameId !== null) {
+        window.cancelAnimationFrame(retryFrameId);
+      }
+
+      canvas.removeEventListener("contextlost", handleContextLost);
+      canvas.removeEventListener("contextrestored", handleContextRestored);
 
       window.removeEventListener("resize", scheduleResizeDraw);
       window.removeEventListener("orientationchange", scheduleResizeDraw);
