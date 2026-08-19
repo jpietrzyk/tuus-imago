@@ -30,30 +30,6 @@ interface TriptychSidePanelProps {
   isLinked: boolean;
 }
 
-// TEMP DEBUG (triptych diagnosis): remove once the split renders correctly.
-const TriptychDebugBadge = ({ label }: { label: string }) => (
-  <div
-    data-testid="triptych-debug-badge"
-    style={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      zIndex: 50,
-      background: "rgba(220, 38, 38, 0.92)",
-      color: "white",
-      fontFamily: "monospace",
-      fontSize: "10px",
-      lineHeight: 1.35,
-      padding: "2px 4px",
-      pointerEvents: "none",
-      whiteSpace: "pre",
-      textAlign: "left",
-    }}
-  >
-    {label}
-  </div>
-);
-
 const SIDE_PANEL_MAX_DRAW_RETRIES = 10;
 
 function TriptychSidePanel({
@@ -79,9 +55,6 @@ function TriptychSidePanel({
     url: string;
     dims: { width: number; height: number };
   } | null>(null);
-  // TEMP DEBUG (triptych diagnosis): canvas buffer size for the badge; refs
-  // must not be read during render, so mirror it into state after each draw.
-  const [debugBufferSize, setDebugBufferSize] = useState<string>("0x0");
   const effectivePreviewUrl = previewUrl ?? image.previewUrl;
   const isEffectImageLoading =
     useCloudPreview &&
@@ -155,7 +128,6 @@ function TriptychSidePanel({
       }
     } else {
       retryStateRef.current.failures = 0;
-      setDebugBufferSize(`${canvas.width}x${canvas.height}`);
     }
   };
 
@@ -270,9 +242,6 @@ function TriptychSidePanel({
           progress={0}
           isIndeterminate
           label={t("uploader.applyingEffect")}
-        />
-        <TriptychDebugBadge
-          label={`#${slotIndex} wIdx:${image.triptychWindowIndex ?? "-"} ${useCloudPreview ? "cloud-img" : "canvas"}\nmeta:${sourceDims ? `${sourceDims.width}x${sourceDims.height}` : "null"}\ncrop:${crop ? ` ${Math.round(crop.cropX)},${Math.round(crop.cropY)} ${Math.round(crop.cropWidth)}x${Math.round(crop.cropHeight)}` : " n/a"}\nbuf:${debugBufferSize}`}
         />
       </div>
     </button>
@@ -435,12 +404,7 @@ export default function UploaderPreviewSlider({
               ? getTargetAspectRatio(slot.displayImageProportion)
               : paintingAspectRatio;
           const content = isActive ? (
-            <>
-              {previewSlot}
-              <TriptychDebugBadge
-                label={`#1 ACTIVE canvas wIdx:${activeImage?.triptychWindowIndex ?? "-"}\nmeta:${selectedImageMetadata ? `${selectedImageMetadata.width}x${selectedImageMetadata.height}` : "null"} prop:${userSelectedProportion} zoom:${activeImage?.previewCropAdjust?.zoom ?? 1}`}
-              />
-            </>
+            previewSlot
           ) : slot ? (
             <TriptychSidePanel
               slotIndex={index}
