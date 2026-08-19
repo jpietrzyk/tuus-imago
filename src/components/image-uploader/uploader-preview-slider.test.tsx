@@ -1,12 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import UploaderPreviewSlider from "./uploader-preview-slider";
+import { computeSidePanelCrop } from "./side-panel-crop";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import type { CropAdjust } from "./use-crop-adjust";
+
+const canvasDrawMock = vi.hoisted(() => vi.fn(() => true));
+const loadImageElementMock = vi.hoisted(() =>
+  vi.fn(() =>
+    Promise.resolve({
+      naturalWidth: 1000,
+      naturalHeight: 1000,
+    } as HTMLImageElement),
+  ),
+);
+
+vi.mock("./preview-canvas-utils", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  loadImageElement: loadImageElementMock,
+  drawCroppedImageToCanvas: canvasDrawMock,
+}));
 
 vi.mock("./painting-preview-slot", () => ({
   default: ({
@@ -306,7 +323,7 @@ describe("UploaderPreviewSlider", () => {
     }
   });
 
-  it("mirrors the slot zoom/pan onto the side panel image sizing", () => {
+  it("mirrors the slot zoom/pan onto the side panel canvas crop", async () => {
     const props = createProps();
     const left = createItem("left");
     left.metadata = { width: 1000, height: 1000, aspectRatio: "1:1" };
@@ -328,60 +345,43 @@ describe("UploaderPreviewSlider", () => {
       />,
     );
 
-    const sideImg = screen
+    // Local previews render through a canvas, not an oversized <img>.
+    const sideCanvas = screen
       .getByTestId("triptych-side-panel-0")
-      .querySelector("img");
+      .querySelector("canvas");
+    expect(sideCanvas).not.toBeNull();
 
-    expect(sideImg).not.toBeNull();
-    const style = sideImg?.getAttribute("style") ?? "";
-    // Zoom is expressed as the image growing beyond the frame (200% at zoom 2)
-    // rather than a transform scale, so the frame is always fully covered.
-    expect(style).toMatch(/width:\s*200%/);
-    expect(style).toMatch(/height:\s*200%/);
-    // Pan shifts the image within the fixed clip window (no translate).
-    expect(style).not.toMatch(/translate\(/);
-    expect(style).toMatch(/left:\s*-75%/);
+    // The drawn crop is the zoom/pan-adjusted centered crop.
+    await waitFor(() => {
+      expect(canvasDrawMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          crop: expect.objectContaining({
+            cropX: 375,
+            cropY: 250,
+            cropWidth: 500,
+            cropHeight: 500,
+          }),
+        }),
+      );
+    });
   });
 
-  it("sizes the side panel image to overflow the frame so panning reveals edges (triptych)", () => {
-    const props = createProps();
+  it("draws the overflowing vertical crop so panning reveals masked edges (triptych)", () => {
     const left = createItem("left");
     left.metadata = { width: 333, height: 1000, aspectRatio: "333:1000" };
     left.displayImageProportion = "vertical";
     left.previewCropAdjust = { zoom: 1, panX: 0, panY: -0.5 };
-    const slots: Array<SelectedImageItem | null> = [
-      left,
-      createItem("center"),
-      createItem("right"),
-    ];
 
-    render(
-      <UploaderPreviewSlider
-        {...props}
-        slots={slots}
-        onSelectSlot={vi.fn()}
-        getSlotPreviewUrl={(image) => image.previewUrl}
-        isDesktopTriptych={true}
-      />,
-    );
-
-    const sideImg = screen
-      .getByTestId("triptych-side-panel-0")
-      .querySelector("img");
-
-    expect(sideImg).not.toBeNull();
-    const style = sideImg?.getAttribute("style") ?? "";
-    // The source is taller than the portrait frame, so the image overflows
-    // vertically (height ~200%) and is shifted up to reveal the masked edge.
-    expect(style).toMatch(/height:\s*200\.\d+%/);
-    expect(style).toMatch(/width:\s*100%/);
-    // Panning repositions the overflowing image — never a translate (which
-    // would drag the clip box and leave the frame blank).
-    expect(style).not.toMatch(/translate\(/);
-    expect(style).toMatch(/top:\s*-25\.\d+%/);
+    // The source is taller than the portrait frame: the adjusted crop is the
+    // centered 2:3 window shifted up by half the vertical overflow.
+    const crop = computeSidePanelCrop(left, left.metadata);
+    expect(crop).not.toBeNull();
+    expect(crop?.cropWidth).toBeCloseTo(333, 0);
+    expect(crop?.cropHeight).toBeCloseTo(499.5, 0);
+    expect(crop?.cropY).toBeCloseTo(125.125, 2);
   });
 
-  it("renders seamless contiguous windows for a wide-panorama triptych (no gaps)", () => {
+  it("renders seamless contiguous window crops for a wide-panorama triptych (no gaps)", async () => {
     const props = createProps();
     // 3:1 panorama; each window is 2/3 * 1000 = 666.67 wide, 3 windows = 2000
     // (1000px of panorama scroll left over).
@@ -409,45 +409,44 @@ describe("UploaderPreviewSlider", () => {
       />,
     );
 
-    // Windows 0 and 2 are side panels; window 1 is the (mocked) center.
-    const parse = (style: string, prop: string) =>
-      parseFloat(
-        (style.match(new RegExp(`${prop}:\\s*(-?[\\d.]+)%`)) || [])[1] ?? "0",
-      );
-
     for (const idx of [0, 2] as const) {
-      const img = screen
-        .getByTestId(`triptych-side-panel-${idx}`)
-        .querySelector("img");
-      const style = img?.getAttribute("style") ?? "";
-      const w = parse(style, "width");
-      const l = parse(style, "left");
-      // The <img> always covers the frame — never a gap, even at the pan edges.
-      expect(l).toBeLessThanOrEqual(0);
-      expect(l + w).toBeGreaterThanOrEqual(100);
-      // No translate (the image is sized, not transformed, to fill the frame).
-      expect(style).not.toMatch(/translate\(/);
+      expect(
+        screen
+          .getByTestId(`triptych-side-panel-${idx}`)
+          .querySelector("canvas"),
+      ).not.toBeNull();
     }
 
-    // Window 0 starts at panorama x=500 (centered band), window 2 at x=1833:
-    // the band is centered so 500px of panorama sits on each side.
-    const left0 = parse(
-      screen.getByTestId("triptych-side-panel-0").querySelector("img")?.getAttribute("style") ?? "",
-      "left",
+    // Windows are contiguous source crops: panel N's right edge is panel
+    // N+1's left edge, and the band is centered (window 0 at x=500).
+    const [crop0, crop1, crop2] = [0, 1, 2].map((i) =>
+      computeSidePanelCrop(slots[i]!, pano),
     );
-    const width0 = parse(
-      screen.getByTestId("triptych-side-panel-0").querySelector("img")?.getAttribute("style") ?? "",
-      "width",
-    );
-    // cropX / cropWidth = 500 / 666.67 -> left = -75%.
-    expect(left0).toBeCloseTo(-75, 0);
-    // sourceWidth / cropWidth = 3000 / 666.67 -> width = 450%.
-    expect(width0).toBeCloseTo(450, 0);
+    expect(crop0).not.toBeNull();
+    expect(crop1).not.toBeNull();
+    expect(crop2).not.toBeNull();
+    expect(crop0!.cropX).toBeCloseTo(500, 0);
+    expect(crop0!.cropX + crop0!.cropWidth).toBeCloseTo(crop1!.cropX, 4);
+    expect(crop1!.cropX + crop1!.cropWidth).toBeCloseTo(crop2!.cropX, 4);
+    expect(crop2!.cropX + crop2!.cropWidth).toBeCloseTo(2500, 0);
+
+    // The drawn canvas crop for the left panel matches window 0.
+    await waitFor(() => {
+      expect(canvasDrawMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          crop: expect.objectContaining({
+            cropX: crop0!.cropX,
+            cropWidth: crop0!.cropWidth,
+          }),
+        }),
+      );
+    });
   });
 
-  it("mirrors the slot rotation onto the side panel image transform", () => {
+  it("passes the slot rotation into the side panel canvas draw", async () => {
     const props = createProps();
     const left = createItem("left");
+    left.metadata = { width: 1000, height: 1000, aspectRatio: "1:1" };
     left.previewTransform = {
       rotation: 90,
       flipHorizontal: false,
@@ -469,11 +468,17 @@ describe("UploaderPreviewSlider", () => {
       />,
     );
 
-    const sideImg = screen
-      .getByTestId("triptych-side-panel-0")
-      .querySelector("img");
-
-    expect(sideImg?.getAttribute("style") ?? "").toMatch(/rotate\(90deg\)/);
+    await waitFor(() => {
+      expect(canvasDrawMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          transform: {
+            rotation: 90,
+            flipHorizontal: false,
+            flipVertical: false,
+          },
+        }),
+      );
+    });
   });
 
   it("marks side panels with the linked state", () => {

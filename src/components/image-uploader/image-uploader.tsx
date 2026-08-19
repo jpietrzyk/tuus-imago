@@ -1588,13 +1588,20 @@ export const ImageUploader = forwardRef<
           };
         }
 
+        // Build the base slot once so all three windows share ONE object URL:
+        // three separate URLs of the same multi-megapixel panorama force three
+        // independent decodes (~4 bytes/px each), which can exhaust the
+        // canvas/GPU budget and leave the active slot's preview canvas blank
+        // while the <img> side panels still paint.
+        const sharedWindowBase = buildSelectedImageItem(sharedFile, false);
+
         setSelectedImages((prevImages) => {
           if (prevImages.some(Boolean)) {
             revokePreviewUrls(prevImages, triptychSourceUrlRef.current);
           }
 
           return [0, 1, 2].map((windowIndex) => ({
-            ...buildSelectedImageItem(sharedFile, false),
+            ...sharedWindowBase,
             displayImageProportion: "vertical" as ImageDisplayProportion,
             // Every window slot shows the full shared panorama; the visible
             // region is a per-panel window crop computed at render time.
