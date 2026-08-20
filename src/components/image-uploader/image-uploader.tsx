@@ -1990,14 +1990,25 @@ export const ImageUploader = forwardRef<
 
   const handleSelectProportion = useCallback(
     (proportion: Parameters<FooterToolsBarProps["onSelectProportion"]>[0]) => {
-      updateActiveImage((image) => ({
-        ...image,
-        displayImageProportion:
-          proportion === "rectangle" ? "square" : proportion,
-        previewCropAdjust: undefined,
-      }));
+      const nextProportion: ImageDisplayProportion =
+        proportion === "rectangle" ? "square" : proportion;
+      // When the triptych is linked the frame shape is shared: apply it to
+      // every bound slot so all three windows re-derive their crop, not just
+      // the active one. Unlinked (or non-triptych) keeps per-slot shapes.
+      const boundIndices = resolveBoundSlotIndices();
+      setSelectedImages((prevImages) =>
+        prevImages.map((image, idx) =>
+          image && boundIndices.includes(idx)
+            ? {
+                ...image,
+                displayImageProportion: nextProportion,
+                previewCropAdjust: undefined,
+              }
+            : image,
+        ),
+      );
     },
-    [updateActiveImage],
+    [resolveBoundSlotIndices],
   );
 
   const handleSelectPaintingSize = useCallback(

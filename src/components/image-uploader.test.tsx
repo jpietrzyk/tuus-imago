@@ -325,6 +325,157 @@ describe("ImageUploader", () => {
     }
   });
 
+  it("applies a shape change to all linked triptych parts, but only to the active slot when unlinked", async () => {
+    mockImageWidth = 7800;
+    mockImageHeight = 1800;
+    const onOrderableSlotsChange = vi.fn();
+    const onImageMetadataChange = vi.fn();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+
+    render(
+      <TestWrapper
+        onOrderableSlotsChange={onOrderableSlotsChange}
+        onImageMetadataChange={onImageMetadataChange}
+      />,
+    );
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      // Wait for the metadata to resolve so the wide panorama takes the
+      // seamless window model (not the legacy third-file split).
+      await waitFor(() => {
+        expect(onImageMetadataChange).toHaveBeenCalledWith(
+          expect.objectContaining({ width: 7800, height: 1800 }),
+        );
+      });
+
+      // Pick the vertical frame explicitly — this also refreshes the tools
+      // bar props so the split handler runs with the resolved metadata.
+      fireEvent.pointerDown(
+        screen.getByTestId("image-proportions-dropdown-trigger"),
+      );
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
+
+      const previewCanvas = (await screen.findByTestId(
+        "selected-image-preview-canvas",
+      )) as HTMLCanvasElement;
+      await waitFor(() => {
+        // Vertical crop of the 7800x1800 panorama is 1200x1800.
+        expect(previewCanvas.width).toBe(1200);
+        expect(previewCanvas.height).toBe(1800);
+      });
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSelectedImage"),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+      expect(splitImageIntoVerticalThirdFiles).not.toHaveBeenCalled();
+
+      const lastSlots = () => {
+        const calls = onOrderableSlotsChange.mock.calls;
+        return calls[calls.length - 1]?.[0] as Array<{
+          slotIndex: number;
+          displayImageProportion: string;
+        }>;
+      };
+
+      // After the seamless split all three windows share the vertical shape.
+      await waitFor(() => {
+        expect(lastSlots()).toEqual([
+          expect.objectContaining({
+            slotIndex: 0,
+            displayImageProportion: "vertical",
+          }),
+          expect.objectContaining({
+            slotIndex: 1,
+            displayImageProportion: "vertical",
+          }),
+          expect.objectContaining({
+            slotIndex: 2,
+            displayImageProportion: "vertical",
+          }),
+        ]);
+      });
+
+      // Linked: changing the shape adjusts all three parts together.
+      fireEvent.pointerDown(
+        screen.getByTestId("image-proportions-dropdown-trigger"),
+      );
+      fireEvent.click(
+        screen.getByRole("menuitem", { name: /^Rectangle/ }),
+      );
+
+      await waitFor(() => {
+        expect(lastSlots()).toEqual([
+          expect.objectContaining({
+            slotIndex: 0,
+            displayImageProportion: "square",
+          }),
+          expect.objectContaining({
+            slotIndex: 1,
+            displayImageProportion: "square",
+          }),
+          expect.objectContaining({
+            slotIndex: 2,
+            displayImageProportion: "square",
+          }),
+        ]);
+      });
+
+      // Unlink: a shape change now only affects the edited slot.
+      const linkToggle = screen.getByTestId("triptych-link-toggle");
+      fireEvent.click(linkToggle);
+      await waitFor(() => {
+        expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
+          "data-linked",
+          "false",
+        );
+      });
+
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-0"));
+
+      fireEvent.pointerDown(
+        screen.getByTestId("image-proportions-dropdown-trigger"),
+      );
+      fireEvent.click(
+        screen.getByRole("menuitem", { name: /^Horizontal/ }),
+      );
+
+      await waitFor(() => {
+        expect(lastSlots()).toEqual([
+          expect.objectContaining({
+            slotIndex: 0,
+            displayImageProportion: "horizontal",
+          }),
+          expect.objectContaining({
+            slotIndex: 1,
+            displayImageProportion: "square",
+          }),
+          expect.objectContaining({
+            slotIndex: 2,
+            displayImageProportion: "square",
+          }),
+        ]);
+      });
+    }
+  });
+
   it("asks for confirmation before splitting when other slots are already used", async () => {
     mockImageWidth = 7800;
     mockImageHeight = 1800;
