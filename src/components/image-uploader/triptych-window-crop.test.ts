@@ -250,6 +250,151 @@ describe("computeTriptychWindowCrop", () => {
       expect(explicit[i].cropHeight).toBe(h);
     }
   });
+
+  it("does not raise the effective zoom when the band already fits (vertical regression)", () => {
+    // 3:1 panorama with portrait windows: band = 2.0 × height < width.
+    const crop = computeTriptychWindowCrop({
+      sourceWidth: 3000,
+      sourceHeight: 1000,
+      frameAspectRatio: FRAME,
+      windowIndex: 0,
+      panX: 0,
+    });
+    expect(crop.cropHeight).toBe(1000);
+    expect(crop.panRange).toBeCloseTo(1000, 4);
+    expect(crop.panRangeY).toBe(0);
+  });
+});
+
+describe("linked shape changes", () => {
+  it("tiles square windows exactly across the panorama when the band fits", () => {
+    // 3:1 panorama, square windows: band = 3 × height = source width exactly.
+    const w = 3000;
+    const h = 1000;
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: 1,
+        windowIndex: i,
+        panX: 0,
+      }),
+    );
+
+    for (const c of crops) {
+      expect(c.cropWidth / c.cropHeight).toBeCloseTo(1, 4);
+      expect(c.cropX).toBeGreaterThanOrEqual(-1e-6);
+      expect(c.cropX + c.cropWidth).toBeLessThanOrEqual(w + 1e-6);
+    }
+
+    // The band fills the width exactly: no scroll, windows edge-to-edge.
+    expect(crops[0].cropX).toBeCloseTo(0, 4);
+    expect(crops[0].cropX + crops[0].cropWidth).toBeCloseTo(crops[1].cropX, 4);
+    expect(crops[2].cropX + crops[2].cropWidth).toBeCloseTo(w, 4);
+    expect(crops[0].panRange).toBe(0);
+  });
+
+  it("shrinks windows via the band-fit zoom when a square band would overflow", () => {
+    // 2.5:1 panorama, square windows: fit zoom = 3 / 2.5 = 1.2, so each
+    // window is h/1.2 tall and the band tiles the width exactly.
+    const w = 2500;
+    const h = 1000;
+    const fitZoom = 1.2;
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: 1,
+        windowIndex: i,
+        panX: 0,
+      }),
+    );
+
+    for (const c of crops) {
+      expect(c.cropWidth / c.cropHeight).toBeCloseTo(1, 4);
+      expect(c.cropHeight).toBeCloseTo(h / fitZoom, 4);
+      expect(c.cropX).toBeGreaterThanOrEqual(-1e-6);
+      expect(c.cropX + c.cropWidth).toBeLessThanOrEqual(w + 1e-6);
+      expect(c.cropY).toBeGreaterThanOrEqual(-1e-6);
+      expect(c.cropY + c.cropHeight).toBeLessThanOrEqual(h + 1e-6);
+    }
+
+    expect(crops[0].cropX).toBeCloseTo(0, 4);
+    expect(crops[2].cropX + crops[2].cropWidth).toBeCloseTo(w, 4);
+    // The fit zoom creates vertical pan headroom instead of horizontal room.
+    expect(crops[0].panRange).toBe(0);
+    expect(crops[0].panRangeY).toBeCloseTo(h - h / fitZoom, 4);
+  });
+
+  it("keeps landscape windows in-bounds and contiguous on a 3:1 panorama", () => {
+    // Landscape (3:2) windows: band would be 4.5 × height, so the windows
+    // shrink to fit (fit zoom 1.5) while keeping the landscape aspect.
+    const w = 3000;
+    const h = 1000;
+    const fitZoom = 1.5;
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: 1.5,
+        windowIndex: i,
+        panX: 0,
+      }),
+    );
+
+    for (const c of crops) {
+      expect(c.cropWidth / c.cropHeight).toBeCloseTo(1.5, 4);
+      expect(c.cropHeight).toBeCloseTo(h / fitZoom, 4);
+      expect(c.cropX).toBeGreaterThanOrEqual(-1e-6);
+      expect(c.cropX + c.cropWidth).toBeLessThanOrEqual(w + 1e-6);
+    }
+
+    expect(crops[0].cropX).toBeCloseTo(0, 4);
+    expect(crops[0].cropX + crops[0].cropWidth).toBeCloseTo(crops[1].cropX, 4);
+    expect(crops[1].cropX + crops[1].cropWidth).toBeCloseTo(crops[2].cropX, 4);
+    expect(crops[2].cropX + crops[2].cropWidth).toBeCloseTo(w, 4);
+  });
+
+  it("never lets a user zoom fall below the band-fit zoom", () => {
+    // Zooming out (zoom 1) with landscape windows must not restore the
+    // overflowing band — the fit zoom wins.
+    const crop = computeTriptychWindowCrop({
+      sourceWidth: 3000,
+      sourceHeight: 1000,
+      frameAspectRatio: 1.5,
+      windowIndex: 2,
+      panX: 0,
+      zoom: 1,
+    });
+    expect(crop.cropHeight).toBeCloseTo(1000 / 1.5, 4);
+    expect(crop.cropX + crop.cropWidth).toBeLessThanOrEqual(3000 + 1e-6);
+  });
+
+  it("keeps shape-changed windows contiguous across panY travel", () => {
+    const w = 2500;
+    const h = 1000;
+    for (const panY of [-1, 0, 1]) {
+      const crops = [0, 1, 2].map((i) =>
+        computeTriptychWindowCrop({
+          sourceWidth: w,
+          sourceHeight: h,
+          frameAspectRatio: 1,
+          windowIndex: i,
+          panX: 0,
+          panY,
+        }),
+      );
+
+      expect(crops[0].cropX + crops[0].cropWidth).toBeCloseTo(
+        crops[1].cropX,
+        4,
+      );
+      for (const c of crops) {
+        expect(c.cropY).toBeGreaterThanOrEqual(-1e-6);
+        expect(c.cropY + c.cropHeight).toBeLessThanOrEqual(h + 1e-6);
+      }
+    }
+  });
 });
 
 describe("resolveTriptychSlotCrop", () => {

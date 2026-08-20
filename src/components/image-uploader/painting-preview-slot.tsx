@@ -3,11 +3,12 @@ import IconAdd from "@/components/icons/icon-add.svg?react";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
-import { type ImageDisplayProportion, getFrameAspectRatioClassName } from "./image-proportion-calculator";
+import { type ImageDisplayProportion, getFrameAspectRatioClassName, getTargetAspectRatio } from "./image-proportion-calculator";
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
 import { useCanvasPanZoom } from "./use-canvas-pan-zoom";
 import { resolvePanAvailability } from "./use-crop-adjust";
+import { computeTriptychWindowCrop } from "./triptych-window-crop";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -137,18 +138,35 @@ export default function PaintingPreviewSlot({
   // Determine whether the source overflows the centered base crop in each
   // axis. Triptych panels (vertical thirds taller than the portrait frame)
   // overflow vertically, so the user can drag to reveal masked edges even at
-  // zoom 1.
-  const { canPanX, canPanY } = useMemo(
-    () =>
-      selectedImageMetadata
-        ? resolvePanAvailability({
-            sourceWidth: selectedImageMetadata.width,
-            sourceHeight: selectedImageMetadata.height,
-            proportion: userSelectedProportion,
-          })
-        : { canPanX: false, canPanY: false },
-    [selectedImageMetadata, userSelectedProportion],
-  );
+  // zoom 1. Window slots derive the room from the window model itself: a
+  // shape change can remove the horizontal band travel while adding vertical
+  // headroom (the band-fit zoom shrinks the windows).
+  const triptychWindowIndex = selectedImage?.triptychWindowIndex;
+  const { canPanX, canPanY } = useMemo(() => {
+    if (!selectedImageMetadata) {
+      return { canPanX: false, canPanY: false };
+    }
+
+    if (triptychWindowIndex !== undefined) {
+      const windowCrop = computeTriptychWindowCrop({
+        sourceWidth: selectedImageMetadata.width,
+        sourceHeight: selectedImageMetadata.height,
+        frameAspectRatio: getTargetAspectRatio(userSelectedProportion),
+        windowIndex: triptychWindowIndex,
+        panX: 0,
+      });
+      return {
+        canPanX: windowCrop.panRange > 0.5,
+        canPanY: windowCrop.panRangeY > 0.5,
+      };
+    }
+
+    return resolvePanAvailability({
+      sourceWidth: selectedImageMetadata.width,
+      sourceHeight: selectedImageMetadata.height,
+      proportion: userSelectedProportion,
+    });
+  }, [selectedImageMetadata, userSelectedProportion, triptychWindowIndex]);
 
   useCanvasPanZoom({
     canvasRef: previewCanvasRef,

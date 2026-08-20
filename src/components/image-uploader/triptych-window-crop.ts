@@ -48,7 +48,9 @@ export interface TriptychWindowCropResult extends CropCalculationResult {
  * and is offset by a whole `windowWidth`, adjacent windows always share an edge
  * (panel N's right edge == panel N+1's left edge) at any zoom level, and the
  * frame is always exactly filled — there is never an empty gap, exactly like
- * the vertical top/bottom pan of a square image.
+ * the vertical top/bottom pan of a square image. This also holds when the
+ * shared frame shape changes (e.g. to square/landscape): the effective zoom is
+ * raised until the 3-window band fits the source width again.
  */
 export function computeTriptychWindowCrop({
   sourceWidth,
@@ -70,7 +72,14 @@ export function computeTriptychWindowCrop({
   const safeWidth = Math.max(1, sourceWidth);
   const safeHeight = Math.max(1, sourceHeight);
 
-  const effectiveZoom = Math.max(1, zoom);
+  // Changing the linked triptych's shape can widen the frame (e.g. vertical →
+  // square), making the 3-window band wider than the panorama itself. The
+  // band must always fit edge-to-edge inside the source, so the effective
+  // zoom is raised just enough to shrink the windows until it fits — the same
+  // semantics as a user zoom (it simply adds vertical pan headroom instead of
+  // producing out-of-bounds windows).
+  const bandFitZoom = (3 * frameAspectRatio * safeHeight) / safeWidth;
+  const effectiveZoom = Math.max(1, zoom, bandFitZoom);
 
   const cropHeight = safeHeight / effectiveZoom;
   const windowWidth = cropHeight * frameAspectRatio;

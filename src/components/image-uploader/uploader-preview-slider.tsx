@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
@@ -18,7 +18,6 @@ import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES
 import type { CropAdjust } from "./use-crop-adjust";
 
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
-const TRIPTYCH_PANEL_COUNT = 3;
 
 interface TriptychSidePanelProps {
   slotIndex: number;
@@ -348,11 +347,31 @@ export default function UploaderPreviewSlider({
     slots.length > 0 &&
     typeof onSelectSlot === "function";
 
-  // All triptych panels share the same portrait aspect ratio (each slot is a
-  // vertical third of a horizontal source).
-  const triptychAspect = previewFrameAspectRatio;
+  // Each triptych panel has its own aspect: the active slot follows the
+  // shared frame, side slots follow their own display proportion (equal while
+  // the triptych is linked; may differ per slot once unlinked).
+  const panelAspects = useMemo(
+    () =>
+      (slots ?? []).map((slot, index) =>
+        index === activeImageIndex
+          ? previewFrameAspectRatio
+          : slot
+            ? getTargetAspectRatio(slot.displayImageProportion)
+            : paintingAspectRatio,
+      ),
+    [slots, activeImageIndex, previewFrameAspectRatio, paintingAspectRatio],
+  );
+  const panelAspectsRef = useRef(panelAspects);
+  useEffect(() => {
+    panelAspectsRef.current = panelAspects;
+  }, [panelAspects]);
+  const panelAspectsSignature = panelAspects.join(",");
+
   const triptychContainerRef = useRef<HTMLDivElement>(null);
-  const [triptychFit, setTriptychFit] = useState({ width: 0, height: 0 });
+  const [triptychFit, setTriptychFit] = useState<{ widths: number[]; height: number }>({
+    widths: [],
+    height: 0,
+  });
 
   useEffect(() => {
     if (!showDesktopTriptych) return;
@@ -362,15 +381,15 @@ export default function UploaderPreviewSlider({
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
       if (width === 0 || height === 0) return;
-      // The reference box represents the LARGEST painting size. Three such
-      // portrait panels side-by-side must fit the container in both dimensions;
-      // at the largest size the panels touch each other exactly.
-      const referenceHeight = Math.min(
-        height,
-        width / (TRIPTYCH_PANEL_COUNT * triptychAspect),
-      );
+      const aspects = panelAspectsRef.current;
+      if (aspects.length === 0) return;
+      // The reference box represents the LARGEST painting size. The panels
+      // side-by-side (each at its own aspect) must fit the container in both
+      // dimensions; at the largest size they touch each other exactly.
+      const totalAspect = aspects.reduce((sum, aspect) => sum + aspect, 0);
+      const referenceHeight = Math.min(height, width / totalAspect);
       setTriptychFit({
-        width: referenceHeight * triptychAspect,
+        widths: aspects.map((aspect) => referenceHeight * aspect),
         height: referenceHeight,
       });
     };
@@ -379,7 +398,7 @@ export default function UploaderPreviewSlider({
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [showDesktopTriptych, triptychAspect]);
+  }, [showDesktopTriptych, panelAspectsSignature]);
 
   // Every size is expressed relative to the largest size so the selected panel
   // never overflows its reference box (≤ 100%); the largest size fills it.
@@ -387,7 +406,8 @@ export default function UploaderPreviewSlider({
     getPaintingSizeScale(selectedPaintingSize) / MAX_PAINTING_SIZE_SCALE;
 
   if (showDesktopTriptych) {
-    const hasFit = triptychFit.width > 0 && triptychFit.height > 0;
+    const hasFit =
+      triptychFit.height > 0 && triptychFit.widths.length === slots!.length;
     return (
       <div
         ref={triptychContainerRef}
@@ -425,7 +445,10 @@ export default function UploaderPreviewSlider({
               className="relative h-full shrink-0"
               style={
                 hasFit
-                  ? { width: triptychFit.width, height: triptychFit.height }
+                  ? {
+                      width: triptychFit.widths[index],
+                      height: triptychFit.height,
+                    }
                   : { aspectRatio: String(panelAspectRatio) }
               }
             >
