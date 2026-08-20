@@ -2127,9 +2127,14 @@ export const ImageUploader = forwardRef<
       slots: selectedImages,
       activeSlotIndex: activeImageIndex,
       onSelectSlot: handlePreviewSlotSelect,
-      hidden: isEffectsEditMode || isZoomPanMode || isDesktopTriptych,
+      // The dots bar is permanently hidden from the product UI: on large
+      // screens slot switching is available through the side/triptych panel
+      // previews, and on mobile the user swipes the slider. The props keep
+      // flowing so custom consumers (and tests) can still drive slot
+      // selection through the same API.
+      hidden: true,
     };
-  }, [selectedImageCount, selectedImages, activeImageIndex, handlePreviewSlotSelect, isEffectsEditMode, isZoomPanMode, isDesktopTriptych]);
+  }, [selectedImageCount, selectedImages, activeImageIndex, handlePreviewSlotSelect]);
 
   useEffect(() => {
     if (!onSlotSwitcherPropsChange) return;
