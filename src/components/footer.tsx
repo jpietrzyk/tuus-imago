@@ -33,7 +33,7 @@ export function Footer({
   slotSwitcherProps,
 }: FooterProps) {
   const hasTools = !!toolsBarProps;
-  const hasSlotSwitcher = !!slotSwitcherProps;
+  const hasSlotSwitcher = !!slotSwitcherProps && !slotSwitcherProps.hidden;
 
   return (
     <>

@@ -456,47 +456,29 @@ describe("App Component Routing", () => {
       return;
     }
 
+    // Multi-file selection fills the empty slots in one go (center first,
+    // then the left slot) — no slot switcher needed.
     fireEvent.change(input, {
       target: {
-        files: [new File(["left"], "left.jpg", { type: "image/jpeg" })],
+        files: [
+          new File(["center"], "center.jpg", { type: "image/jpeg" }),
+          new File(["left"], "left.jpg", { type: "image/jpeg" }),
+        ],
       },
     });
 
     await screen.findByRole("img", { name: "Preview" });
 
-    await user.click(screen.getByTestId("uploader-slot-dot-2"));
-
-    const editorInput = document.querySelector(
-      'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
-    ) as HTMLInputElement | null;
-
-    expect(editorInput).toBeDefined();
-
-    if (editorInput) {
-      fireEvent.change(editorInput, {
-        target: {
-          files: [new File(["right"], "right.jpg", { type: "image/jpeg" })],
-        },
-      });
-    }
-
-    await waitFor(() => {
-      const rightDot = screen.getByTestId("uploader-slot-dot-2");
-      const innerSpan = rightDot.querySelector("span");
-      expect(innerSpan).toBeTruthy();
-      expect(innerSpan!.className.includes("border-dashed")).toBe(false);
-    });
-
     await user.click(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: tr("checkout.orderSelectionButton"),
       }),
     );
 
     await user.click(
-      screen.getByRole("checkbox", {
+      await screen.findByRole("checkbox", {
         name: tr("checkout.orderSelectionCheckboxAria", {
-          slot: tr("upload.slotRight"),
+          slot: tr("upload.slotLeft"),
         }),
       }),
     );
@@ -510,10 +492,10 @@ describe("App Component Routing", () => {
     await screen.findByRole("heading", { name: tr("checkout.title") });
 
     expect(screen.getByText(tr("upload.slotCenter"))).toBeInTheDocument();
-    expect(screen.queryByText(tr("upload.slotRight"))).not.toBeInTheDocument();
+    expect(screen.queryByText(tr("upload.slotLeft"))).not.toBeInTheDocument();
   });
 
-  it("should not render the upload slot switcher on /checkout after navigating from /upload", async () => {
+  it("should not render the upload slot switcher on /upload nor persist it on /checkout", async () => {
     const user = userEvent.setup();
 
     render(
@@ -536,10 +518,10 @@ describe("App Component Routing", () => {
 
     await screen.findByRole("img", { name: "Preview" });
 
-    // The footer slot switcher is active while an image is loaded on /upload
-    await waitFor(() => {
-      expect(screen.getByTestId("uploader-slot-dots")).toBeInTheDocument();
-    });
+    // The footer slot switcher is hidden from the product UI everywhere:
+    // desktop users switch slots via the side/triptych panel previews and
+    // mobile users swipe the slider.
+    expect(screen.queryByTestId("uploader-slot-dots")).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole("button", {

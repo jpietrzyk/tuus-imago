@@ -79,7 +79,10 @@ function TestWrapper({
         onSlotSwitcherPropsChange={setSlotSwitcherProps}
       />
       {toolsBarProps && <FooterToolsBar {...toolsBarProps} />}
-      {slotSwitcherProps && !slotSwitcherProps.hidden && (
+      {/* The product UI hides the dots bar (hidden: true), but the harness
+          renders it to drive/observe slot selection through the same props
+          API the uploader exposes. */}
+      {slotSwitcherProps && (
         <UploaderSlotSwitcher {...slotSwitcherProps} />
       )}
     </>
