@@ -328,6 +328,94 @@ describe("ImageUploader", () => {
     }
   });
 
+  it("splits a 2:1 image into seamless windows so zoom stays glued across panels", async () => {
+    mockImageWidth = 5400;
+    mockImageHeight = 2700;
+    const onOrderableSlotsChange = vi.fn();
+    const onImageMetadataChange = vi.fn();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+
+    render(
+      <TestWrapper
+        onOrderableSlotsChange={onOrderableSlotsChange}
+        onImageMetadataChange={onImageMetadataChange}
+      />,
+    );
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files: [sourceFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+
+      // Wait for the metadata to resolve so the split handler sees the real
+      // 2:1 dimensions and takes the seamless window model.
+      await waitFor(() => {
+        expect(onImageMetadataChange).toHaveBeenCalledWith(
+          expect.objectContaining({ width: 5400, height: 2700 }),
+        );
+      });
+
+      fireEvent.pointerDown(
+        screen.getByTestId("image-proportions-dropdown-trigger"),
+      );
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", {
+            name: tr("uploader.splitSelectedImage"),
+          }),
+        ).toBeEnabled();
+      });
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSelectedImage"),
+        }),
+      );
+
+      // Splitting a 2:1 source into portrait parts blocks the pre-split
+      // (landscape) size, so a printability confirmation is required.
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.splitSlotsConfirmAction"),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      // The legacy per-third split must not run: the three slots share the
+      // full 2:1 source as contiguous windows instead of three separate
+      // 2:3 files, so a shared zoom keeps the panels glued edge-to-edge.
+      expect(splitImageIntoVerticalThirdFiles).not.toHaveBeenCalled();
+
+      const lastSlots = () => {
+        const calls = onOrderableSlotsChange.mock.calls;
+        return calls[calls.length - 1]?.[0] as Array<{
+          slotIndex: number;
+          aspectRatio: string | null;
+        }>;
+      };
+
+      await waitFor(() => {
+        expect(lastSlots()).toEqual([
+          expect.objectContaining({ slotIndex: 0, aspectRatio: "2:1" }),
+          expect.objectContaining({ slotIndex: 1, aspectRatio: "2:1" }),
+          expect.objectContaining({ slotIndex: 2, aspectRatio: "2:1" }),
+        ]);
+      });
+    }
+  });
+
   it("applies a shape change to all linked triptych parts, but only to the active slot when unlinked", async () => {
     mockImageWidth = 7800;
     mockImageHeight = 1800;

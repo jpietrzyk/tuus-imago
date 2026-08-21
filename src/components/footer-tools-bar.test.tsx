@@ -394,6 +394,27 @@ describe("FooterToolsBar", () => {
     expect(screen.queryByTestId("triptych-link-toggle")).toBeNull();
   });
 
+  it("replaces the triptych split button with the link toggle in triptych mode", () => {
+    const onSplitImage = vi.fn();
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        onSplitImage={onSplitImage}
+        canToggleTriptychLink={true}
+        isTriptychLinked={true}
+      />,
+    );
+
+    expect(screen.getByTestId("triptych-link-toggle")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: t("uploader.splitSelectedImage"),
+      }),
+    ).toBeNull();
+    expect(onSplitImage).not.toHaveBeenCalled();
+  });
+
   it("renders triptych link toggle when canToggleTriptychLink is true", () => {
     const props = createProps();
     render(

@@ -51,7 +51,7 @@ import {
 } from "./painting-size";
 import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
 import { splitImageIntoVerticalThirdFiles, composeFullTransformedImage } from "./split-image-into-thirds";
-import { isWidePanoramaForTriptych, resolveTriptychSlotCrop } from "./triptych-window-crop";
+import { resolveTriptychSlotCrop, computeTriptychWindowCrop } from "./triptych-window-crop";
 import {
   projectTriptychPrintability,
   resolveTriptychTargetSizeIndex,
@@ -172,8 +172,8 @@ export interface SelectedImageItem {
     panY: number;
   };
   /**
-   * Set on each slot of a seamless wide-panorama triptych (0 = left, 1 = center,
-   * 2 = right). When present, the slot's source is the full shared panorama and
+   * Set on each slot of a seamless triptych (0 = left, 1 = center,
+   * 2 = right). When present, the slot's source is the full shared source and
    * the visible crop is a contiguous portrait "window" computed from this index
    * plus the shared pan — so the three panels meet edge-to-edge and can be
    * dragged as one continuous image (no gaps), mirroring the square-image
@@ -236,9 +236,9 @@ function getUploadTransformations(
   };
 
   if (image.triptychWindowIndex !== undefined && image.metadata) {
-    // Seamless wide-panorama triptych: crop the shared panorama to this
-    // panel's contiguous portrait window so the three uploaded canvases meet
-    // edge-to-edge exactly as previewed.
+    // Seamless triptych: crop the shared source to this panel's contiguous
+    // portrait window so the three uploaded canvases meet edge-to-edge
+    // exactly as previewed.
     const windowCrop = resolveTriptychSlotCrop({
       sourceWidth: image.metadata.width,
       sourceHeight: image.metadata.height,
@@ -503,6 +503,7 @@ export const ImageUploader = forwardRef<
   const selectedImageMetadata = activeImage?.metadata ?? null;
   const displayImageProportion =
     activeImage?.displayImageProportion ?? "horizontal";
+  const triptychWindowIndexOfActiveSlot = activeImage?.triptychWindowIndex;
 
   useEffect(() => {
     isTriptychSplitRef.current = isTriptychSplit;
@@ -1542,11 +1543,15 @@ export const ImageUploader = forwardRef<
       // horizontal axis). A shared zoom is supported natively by the window
       // crop. A pre-split rotation/flip is baked into a single transformed
       // source so the windows can still share one image in display space.
+      // The window model is used for EVERY triptych split, not only wide
+      // panoramas: for narrower sources the band-fit zoom shrinks the windows
+      // until the 3-window band tiles the source width exactly (visually the
+      // same centered crop the legacy per-third split produced at rest), while
+      // zoom/pan stays shared and the panels stay glued edge-to-edge.
       const sourceWidth =
         activeImage.metadata?.width ?? selectedImageMetadata?.width ?? 0;
       const sourceHeight =
         activeImage.metadata?.height ?? selectedImageMetadata?.height ?? 0;
-      const verticalFrameAspect = getTargetAspectRatio("vertical");
       const preTransform = activeImage.previewTransform;
       const preRotation =
         (((preTransform?.rotation ?? 0) % 360) + 360) % 360;
@@ -1554,14 +1559,9 @@ export const ImageUploader = forwardRef<
       // Effective dimensions after rotation — 90°/270° swap the axes.
       const effectiveWidth = isQuarterTurn ? sourceHeight : sourceWidth;
       const effectiveHeight = isQuarterTurn ? sourceWidth : sourceHeight;
-      const useSeamlessWindows =
-        effectiveWidth > 0 &&
-        effectiveHeight > 0 &&
-        isWidePanoramaForTriptych(
-          effectiveWidth,
-          effectiveHeight,
-          verticalFrameAspect,
-        );
+      // Windows need known dimensions to compute contiguous crops; without
+      // metadata fall back to the legacy per-third split of the raw image.
+      const useSeamlessWindows = effectiveWidth > 0 && effectiveHeight > 0;
 
       if (useSeamlessWindows) {
         const hasPreTransform =
@@ -1900,12 +1900,36 @@ export const ImageUploader = forwardRef<
       return undefined;
     }
 
+    // Window slots print a portrait window of the shared source, not the full
+    // source: project the DPI availability at the resting window size (no
+    // user zoom) so narrower sources — whose band-fit zoom shrinks windows
+    // below the full source height — do not overstate printable sizes.
+    if (triptychWindowIndexOfActiveSlot !== undefined) {
+      const windowCrop = computeTriptychWindowCrop({
+        sourceWidth: selectedImageMetadata.width,
+        sourceHeight: selectedImageMetadata.height,
+        frameAspectRatio: getTargetAspectRatio(displayImageProportion),
+        windowIndex: triptychWindowIndexOfActiveSlot,
+        panX: 0,
+      });
+      return computeSizesDpiAvailability(
+        windowCrop.cropWidth,
+        windowCrop.cropHeight,
+        paintingShape,
+      );
+    }
+
     return computeSizesDpiAvailability(
       selectedImageMetadata.width,
       selectedImageMetadata.height,
       paintingShape,
     );
-  }, [selectedImageMetadata, paintingShape]);
+  }, [
+    selectedImageMetadata,
+    paintingShape,
+    triptychWindowIndexOfActiveSlot,
+    displayImageProportion,
+  ]);
 
   const splitPrintability = useMemo(() => {
     if (!selectedImageMetadata) {

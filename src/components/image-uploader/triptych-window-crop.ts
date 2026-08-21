@@ -5,28 +5,17 @@ import {
 } from "./image-proportion-calculator";
 
 /**
- * When a panorama is split into a triptych, each panel becomes a portrait
- * "window". For a *narrow* panorama (aspect ≤ 3 × frame aspect) the three
- * equal-width thirds already fit the portrait frame and meet edge-to-edge, so
- * the legacy per-third crop is used. For a *wide* panorama the equal-width
- * thirds would be wider than the frame and get cropped, which breaks the
- * edge-to-edge continuity (content strips vanish at the panel seams). In that
- * case the three panels instead show three contiguous portrait windows cut from
- * the shared panorama, and the user can drag to scroll the whole band left/right
- * while the panels always stay edge-to-edge — the same feel as dragging the
- * top/bottom of a square image, but on the horizontal axis.
+ * When an image is split into a triptych, each panel becomes a portrait
+ * "window": the three windows are contiguous slices of the shared source, so
+ * they meet edge-to-edge and can be dragged/zoomed as one continuous band.
+ * For a source whose equal-width thirds are wider than the portrait frame
+ * (aspect > 3 × frame aspect) the windows overflow the source, so the band-fit
+ * zoom shrinks them until the band tiles the source width again — this simply
+ * adds vertical pan headroom instead of cropping content strips away at the
+ * panel seams. Every triptych split uses this window model; there is no
+ * separate per-third split, so zoom/pan is always shared and the panels stay
+ * glued at every zoom level.
  */
-export function isWidePanoramaForTriptych(
-  sourceWidth: number,
-  sourceHeight: number,
-  frameAspectRatio: number,
-): boolean {
-  if (sourceHeight <= 0 || frameAspectRatio <= 0) {
-    return false;
-  }
-  return sourceWidth / sourceHeight > 3 * frameAspectRatio + 1e-6;
-}
-
 export interface TriptychWindowCropResult extends CropCalculationResult {
   /** Horizontal room (in source px) the 3-window band can travel. */
   panRange: number;
