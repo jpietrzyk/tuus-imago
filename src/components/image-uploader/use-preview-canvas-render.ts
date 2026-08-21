@@ -143,11 +143,11 @@ export const usePreviewCanvasRender = ({
       // visual feedback), otherwise fall back to the React-committed value.
       const cropAdjust = cropAdjustOverride ?? previewCropAdjust;
 
-      // Seamless wide-panorama triptych: the crop is a contiguous portrait
-      // window into the shared panorama. A shared zoom shrinks every window by
-      // the same factor and panY travels it vertically, while panX scrolls the
-      // whole band — all three panels share the same zoom/panX/panY, so they
-      // always meet edge-to-edge at any zoom level.
+      // Seamless triptych: the crop is a contiguous portrait window into the
+      // shared source. A shared zoom shrinks every window by the same factor
+      // and panY travels it vertically, while panX scrolls the whole band —
+      // all three panels share the same zoom/panX/panY, so they always meet
+      // edge-to-edge at any zoom level.
       let crop;
       if (triptychWindowIndex !== undefined) {
         crop = resolveTriptychSlotCrop({

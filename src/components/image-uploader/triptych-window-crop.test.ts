@@ -1,33 +1,101 @@
 import { describe, expect, it } from "vitest";
 import {
   computeTriptychWindowCrop,
-  isWidePanoramaForTriptych,
   resolveTriptychSlotCrop,
 } from "./triptych-window-crop";
 
 // Portrait frame aspect (vertical proportion) = 2/3.
 const FRAME = 2 / 3;
 
-describe("isWidePanoramaForTriptych", () => {
-  it("is false when thirds fit the portrait frame (aspect <= 3 * frame)", () => {
-    // aspect 2.0 == 3 * (2/3): boundary, thirds exactly fit.
-    expect(isWidePanoramaForTriptych(2000, 1000, FRAME)).toBe(false);
-    expect(isWidePanoramaForTriptych(1500, 1000, FRAME)).toBe(false); // square-ish
-  });
-
-  it("is true when equal-width thirds would be cropped (aspect > 3 * frame)", () => {
-    expect(isWidePanoramaForTriptych(3000, 1000, FRAME)).toBe(true); // 3:1
-    expect(isWidePanoramaForTriptych(4500, 1000, FRAME)).toBe(true); // 4.5:1
-  });
-
-  it("is safe for invalid dimensions", () => {
-    expect(isWidePanoramaForTriptych(0, 0, FRAME)).toBe(false);
-    expect(isWidePanoramaForTriptych(3000, 0, FRAME)).toBe(false);
-    expect(isWidePanoramaForTriptych(3000, 1000, 0)).toBe(false);
-  });
-});
-
 describe("computeTriptychWindowCrop", () => {
+  it("tiles a 2:1 source exactly with no pan room at rest (boundary aspect)", () => {
+    // Aspect 2.0 == 3 × frame: the three full-height windows tile the source
+    // width exactly, matching the legacy centered per-third split at rest —
+    // but zoom/pan stays shared so the panels remain glued.
+    const w = 2400;
+    const h = 1200;
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex: i,
+        panX: 0,
+      }),
+    );
+
+    for (const c of crops) {
+      expect(c.cropWidth / c.cropHeight).toBeCloseTo(FRAME, 4);
+      expect(c.cropHeight).toBe(h);
+      expect(c.cropWidth).toBeCloseTo(w / 3, 4);
+    }
+    expect(crops[0].cropX).toBeCloseTo(0, 4);
+    expect(crops[0].cropX + crops[0].cropWidth).toBeCloseTo(crops[1].cropX, 4);
+    expect(crops[1].cropX + crops[1].cropWidth).toBeCloseTo(crops[2].cropX, 4);
+    expect(crops[2].cropX + crops[2].cropWidth).toBeCloseTo(w, 4);
+    expect(crops[0].panRange).toBe(0);
+    expect(crops[0].panRangeY).toBe(0);
+  });
+
+  it("keeps 2:1 windows glued and centered while zooming (shared band zoom)", () => {
+    // The user-visible regression: zooming a ~2:1 triptych must shrink the
+    // whole band around its shared center so content at a panel seam stays at
+    // the seam, instead of each panel zooming to its own center.
+    const w = 2400;
+    const h = 1200;
+    const zoom = 2;
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex: i,
+        panX: 0,
+        zoom,
+      }),
+    );
+
+    // Zoom creates horizontal band room (source 2400 vs band 1200).
+    expect(crops[0].panRange).toBeCloseTo(w - h, 4);
+    // The band stays centered and contiguous: every window shrinks by zoom,
+    // the seams move with the band, and the middle window stays centered on
+    // the source center (shared zoom, not per-panel center zoom).
+    for (const c of crops) {
+      expect(c.cropWidth).toBeCloseTo((h / zoom) * FRAME, 4);
+    }
+    expect(crops[0].cropX + crops[0].cropWidth).toBeCloseTo(crops[1].cropX, 4);
+    expect(crops[1].cropX + crops[1].cropWidth).toBeCloseTo(crops[2].cropX, 4);
+    expect(crops[1].cropX + crops[1].cropWidth / 2).toBeCloseTo(w / 2, 4);
+  });
+
+  it("shrinks narrower-source windows via the band-fit zoom so the band tiles the width", () => {
+    // 3:2 source: the 3-window band (2 × source height wide) would overflow,
+    // so windows shrink to 2/3 height while keeping the frame aspect — the
+    // same region the legacy centered per-third split showed at rest.
+    const w = 1500;
+    const h = 1000;
+    const fitZoom = 2 * (1 / (w / h));
+    const crops = [0, 1, 2].map((i) =>
+      computeTriptychWindowCrop({
+        sourceWidth: w,
+        sourceHeight: h,
+        frameAspectRatio: FRAME,
+        windowIndex: i,
+        panX: 0,
+      }),
+    );
+
+    for (const c of crops) {
+      expect(c.cropWidth / c.cropHeight).toBeCloseTo(FRAME, 4);
+      expect(c.cropHeight).toBeCloseTo(h / fitZoom, 4);
+      expect(c.cropWidth).toBeCloseTo(w / 3, 4);
+    }
+    expect(crops[0].cropX).toBeCloseTo(0, 4);
+    expect(crops[2].cropX + crops[2].cropWidth).toBeCloseTo(w, 4);
+    expect(crops[0].panRange).toBe(0);
+    expect(crops[0].panRangeY).toBeCloseTo(h - h / fitZoom, 4);
+  });
+
   it("produces three contiguous windows that exactly tile a band", () => {
     // 3:1 panorama, 3 windows of 2/3 * 1000 = 666.67 -> total 2000, overflow 1000.
     const w = 3000;
