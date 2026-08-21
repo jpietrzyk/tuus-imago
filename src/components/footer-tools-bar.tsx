@@ -126,7 +126,7 @@ export function FooterToolsBar({
     </Button>
   );
 
-  const triptychLinkButton = canToggleTriptychLink ? (
+  const triptychLinkButton = (
     <Button
       type="button"
       variant={isTriptychLinked ? "default" : "secondary"}
@@ -154,7 +154,7 @@ export function FooterToolsBar({
         {t("uploader.triptychLinkButton")}
       </span>
     </Button>
-  ) : null;
+  );
 
   const resetButton = (
     <Button
@@ -236,7 +236,9 @@ export function FooterToolsBar({
             <span className="text-[9px] leading-none truncate w-full text-center">{t("uploader.settingsButtonLabel")}</span>
           </Button>
 
-          {shouldConfirmSplit ? (
+          {canToggleTriptychLink ? (
+            triptychLinkButton
+          ) : shouldConfirmSplit ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 {triptychButton}
@@ -271,8 +273,6 @@ export function FooterToolsBar({
             ) : (
               triptychButton
             )}
-
-          {triptychLinkButton}
 
           <AlertDialog>
             <AlertDialogTrigger asChild>{resetButton}</AlertDialogTrigger>
