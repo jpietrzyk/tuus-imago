@@ -9,7 +9,10 @@ import { tr } from "@/test/i18n-test";
 import type { LegalPageData } from "@/lib/content-loader";
 
 function checkoutButtonLabel(): RegExp {
-  const base = tr("checkout.openCheckout").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const base = tr("checkout.openCheckout").replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
   return new RegExp(`^${base}`);
 }
 
@@ -67,7 +70,9 @@ const { supabaseMock } = vi.hoisted(() => ({
   supabaseMock: {
     auth: {
       getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-      onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
     },
   },
 }));
@@ -128,23 +133,18 @@ describe("App Component Routing", () => {
     "/security",
     "/shipping",
     "/terms",
-  ])(
-    "should render legal route %s without runtime errors",
-    (route) => {
-      render(
-        <MemoryRouter initialEntries={[route]}>
-          <App />
-        </MemoryRouter>,
-      );
+  ])("should render legal route %s without runtime errors", (route) => {
+    render(
+      <MemoryRouter initialEntries={[route]}>
+        <App />
+      </MemoryRouter>,
+    );
 
-      expect(
-        screen.getByRole("button", { name: tr("common.backToHome") }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("heading", { level: 1 }),
-      ).toBeInTheDocument();
-    },
-  );
+    expect(
+      screen.getByRole("button", { name: tr("common.backToHome") }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+  });
 
   it("should render upload entry page when route is /", () => {
     render(
@@ -190,9 +190,7 @@ describe("App Component Routing", () => {
     expect(
       screen.getByRole("button", { name: tr("common.backToHome") }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 1 }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render legal page when route is /legal", () => {
@@ -205,9 +203,7 @@ describe("App Component Routing", () => {
     expect(
       screen.getByRole("button", { name: tr("common.backToHome") }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 1 }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
   });
 
   it("should render footer on all routes", () => {
@@ -218,9 +214,7 @@ describe("App Component Routing", () => {
     );
 
     // Footer should be on home page
-    expect(
-      screen.getByText(/TuusImago/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago/)).toBeInTheDocument();
 
     // Footer should also be on /about route
     rerender(
@@ -228,9 +222,7 @@ describe("App Component Routing", () => {
         <App />
       </MemoryRouter>,
     );
-    expect(
-      screen.getByText(/TuusImago/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago/)).toBeInTheDocument();
 
     // Footer should also be on /legal route
     rerender(
@@ -238,9 +230,7 @@ describe("App Component Routing", () => {
         <App />
       </MemoryRouter>,
     );
-    expect(
-      screen.getByText(/TuusImago/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago/)).toBeInTheDocument();
   });
 
   it("should render header with logo link on all routes", () => {
@@ -277,9 +267,7 @@ describe("App Component Routing", () => {
       screen.getByRole("button", { name: tr("common.legalMenu") }),
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByText(/TuusImago 2026/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago.com/)).toBeInTheDocument();
   });
 
   it("should render legal menu action in header", () => {
