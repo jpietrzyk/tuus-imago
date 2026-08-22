@@ -25,7 +25,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/TuusImago 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/TuusImago\.com/)).toBeInTheDocument();
   });
 
   it("should call onOpenContentPage with 'contact' when copyright is clicked", async () => {
@@ -38,7 +38,7 @@ describe("Footer Component", () => {
       </MemoryRouter>,
     );
 
-    await user.click(screen.getByText(/TuusImago 2026/));
+    await user.click(screen.getByText(/TuusImago\.com/));
 
     expect(onOpenContentPage).toHaveBeenCalledWith("contact");
   });
