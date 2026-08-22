@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
+import IconRemove from "@/components/icons/icon-remove.svg?react";
 import {
   computeSidePanelCrop,
   loadCachedImageElement,
@@ -27,6 +28,8 @@ interface TriptychSidePanelProps {
   previewFrameAspectRatio: number;
   onSelectSlot: (index: number) => void;
   isLinked: boolean;
+  isTrashVisible: boolean;
+  onOtherInteraction: () => void;
 }
 
 const SIDE_PANEL_MAX_DRAW_RETRIES = 10;
@@ -39,6 +42,8 @@ function TriptychSidePanel({
   previewFrameAspectRatio,
   onSelectSlot,
   isLinked,
+  isTrashVisible,
+  onOtherInteraction,
 }: TriptychSidePanelProps) {
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
@@ -207,6 +212,7 @@ function TriptychSidePanel({
     <button
       type="button"
       onClick={() => onSelectSlot(slotIndex)}
+      onTouchStart={() => onOtherInteraction()}
       data-testid={`triptych-side-panel-${slotIndex}`}
       aria-label={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
       className="group/side-panel relative flex h-full max-h-full shrink-0 items-center justify-center"
@@ -242,6 +248,20 @@ function TriptychSidePanel({
           isIndeterminate
           label={t("uploader.applyingEffect")}
         />
+        {isTrashVisible && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOtherInteraction();
+            }}
+            aria-label={t("uploader.clearSlot")}
+            data-testid={`triptych-side-panel-trash-${slotIndex}`}
+            className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full border border-border/70 bg-background/95 p-1.5 text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+          >
+            <IconRemove className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        )}
       </div>
     </button>
   );
@@ -314,6 +334,44 @@ export default function UploaderPreviewSlider({
   isDesktopTriptych = false,
   isTriptychLinked = true,
 }: UploaderPreviewSliderProps) {
+  const [touchedSlotIndex, setTouchedSlotIndex] = useState<number | null>(null);
+  const trashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearTrashTimeout = useCallback(() => {
+    if (trashTimeoutRef.current) {
+      clearTimeout(trashTimeoutRef.current);
+      trashTimeoutRef.current = null;
+    }
+  }, []);
+
+  const setTrashTimeout = useCallback(() => {
+    clearTrashTimeout();
+    trashTimeoutRef.current = setTimeout(() => {
+      setTouchedSlotIndex(null);
+    }, 3000);
+  }, [clearTrashTimeout]);
+
+  const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    onTouchStart(event);
+    setTouchedSlotIndex(activeImageIndex);
+    setTrashTimeout();
+  }, [activeImageIndex, onTouchStart, setTrashTimeout]);
+
+  const handleTouchEnd = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
+    onTouchEnd(event);
+    setTrashTimeout();
+  }, [onTouchEnd, setTrashTimeout]);
+
+  const handleOtherInteraction = useCallback(() => {
+    clearTrashTimeout();
+    setTouchedSlotIndex(null);
+  }, [clearTrashTimeout]);
+
+  useEffect(() => {
+    return () => {
+      clearTrashTimeout();
+    };
+  }, [clearTrashTimeout]);
   const previewSlot = (
     <PaintingPreviewSlot
       selectedImage={activeImage}
@@ -333,11 +391,13 @@ export default function UploaderPreviewSlider({
       isEditMode={isEditMode}
       previewCropAdjust={previewCropAdjust}
       onCropAdjustChange={onCropAdjustChange}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       onMetadataResolved={onMetadataResolved}
       onSelectEmptySlot={onSelectEmptySlot}
       onClearSlot={onClearSlot}
+      isTrashVisible={touchedSlotIndex === activeImageIndex}
+      onOtherInteraction={handleOtherInteraction}
     />
   );
 
@@ -436,6 +496,8 @@ export default function UploaderPreviewSlider({
               previewFrameAspectRatio={panelAspectRatio}
               onSelectSlot={onSelectSlot!}
               isLinked={isTriptychLinked}
+              isTrashVisible={touchedSlotIndex === index}
+              onOtherInteraction={handleOtherInteraction}
             />
           ) : null;
 

@@ -42,6 +42,8 @@ interface PaintingPreviewSlotProps {
   }) => void;
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
+  isTrashVisible?: boolean;
+  onOtherInteraction?: () => void;
 }
 
 export default function PaintingPreviewSlot({
@@ -67,6 +69,8 @@ export default function PaintingPreviewSlot({
   onMetadataResolved,
   onSelectEmptySlot,
   onClearSlot,
+  isTrashVisible = false,
+  onOtherInteraction,
 }: PaintingPreviewSlotProps) {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const effectivePreviewUrl = previewUrl ?? selectedImage?.previewUrl ?? null;
@@ -307,10 +311,15 @@ export default function PaintingPreviewSlot({
             onClick={(e) => {
               e.stopPropagation();
               onClearSlot();
+              onOtherInteraction?.();
             }}
             aria-label={t("uploader.clearSlot")}
             data-testid="uploader-remove-active-image"
-            className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full border border-border/70 bg-background/95 p-1.5 text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 opacity-0 group-hover/preview-slot:opacity-100 peer-active/preview-slot:opacity-100 max-[768px]:opacity-100"
+            className={`absolute top-2 right-2 z-10 flex items-center justify-center rounded-full border border-border/70 bg-background/95 p-1.5 text-foreground shadow-md backdrop-blur-sm transition-all duration-200 hover:border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 ${
+              isTrashVisible
+                ? 'opacity-100'
+                : 'opacity-0 group-hover/preview-slot:opacity-100 peer-active/preview-slot:opacity-100 max-[768px]:opacity-100'
+            }`}
           >
             <IconRemove className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

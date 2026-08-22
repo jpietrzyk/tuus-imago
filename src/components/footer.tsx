@@ -44,7 +44,7 @@ export function Footer({
       )}
       <footer
         className={`w-full shadow-lg rounded-t-2xl ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
-        style={{ backgroundColor: "#F3EBE8" }}
+        style={{ backgroundColor: "rgba(243, 235, 232, 0.6)" }}
       >
         {hasTools && <FooterToolsBar {...toolsBarProps} />}
       <div className={`w-full px-4 sm:px-6 lg:px-8 ${hasTools ? "py-1" : "h-full"}`}>
@@ -52,11 +52,11 @@ export function Footer({
           <div className="hidden lg:flex min-w-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
-              className="text-xs sm:text-sm text-gray-500 hover:text-blue-600 transition-colors cursor-pointer"
+              className="text-xs sm:text-sm text-gray-600 hover:text-blue-600 transition-colors cursor-pointer font-medium"
               onClick={() => onOpenContentPage?.("contact")}
               aria-label="Contact"
             >
-              © TuusImago 2026 - paint that
+              © TuusImago.com
             </button>
           </div>
 
