@@ -4,7 +4,7 @@ import { render, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { App } from "./App";
+import { App, DESKTOP_BACKGROUND_IMAGE_ASPECT, DESKTOP_BACKGROUND_MAX_SQUEEZE } from "./App";
 import type { LegalPageData } from "@/lib/content-loader";
 
 function fixturePage(overrides?: Partial<LegalPageData>): LegalPageData {
@@ -148,6 +148,24 @@ function installViewportStub(width: number, height: number) {
   };
 }
 
+function expectedDesktopBackgroundSize(width: number, height: number): string {
+  if (width / height >= DESKTOP_BACKGROUND_IMAGE_ASPECT) {
+    const coverHeight = width / DESKTOP_BACKGROUND_IMAGE_ASPECT;
+    const sizedHeight = Math.max(
+      height,
+      coverHeight / DESKTOP_BACKGROUND_MAX_SQUEEZE,
+    );
+    return `100% ${Math.round(sizedHeight)}px`;
+  }
+
+  const coverWidth = height * DESKTOP_BACKGROUND_IMAGE_ASPECT;
+  const sizedWidth = Math.max(
+    width,
+    coverWidth / DESKTOP_BACKGROUND_MAX_SQUEEZE,
+  );
+  return `${Math.round(sizedWidth)}px 100%`;
+}
+
 describe("StorefrontApp background image", () => {
   let originalMatchMedia: typeof window.matchMedia;
 
@@ -205,7 +223,9 @@ describe("StorefrontApp background image", () => {
     const bgStyle = wrapper.style.backgroundImage;
     expect(bgStyle).toContain("bg_desktop");
     expect(bgStyle).not.toContain("bg_mobile");
-    expect(wrapper.style.backgroundSize).toBe("100% 1164px");
+    expect(wrapper.style.backgroundSize).toBe(
+      expectedDesktopBackgroundSize(1920, 1080),
+    );
     expect(wrapper.style.backgroundAttachment).toBe("");
     restoreViewport();
   });
@@ -221,7 +241,9 @@ describe("StorefrontApp background image", () => {
     );
 
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.backgroundSize).toBe("100% 1000px");
+    expect(wrapper.style.backgroundSize).toBe(
+      expectedDesktopBackgroundSize(1500, 1000),
+    );
     restoreViewport();
   });
 
@@ -236,7 +258,9 @@ describe("StorefrontApp background image", () => {
     );
 
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper.style.backgroundSize).toBe("100% 1164px");
+    expect(wrapper.style.backgroundSize).toBe(
+      expectedDesktopBackgroundSize(1920, 1080),
+    );
 
     Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: 2560 });
     await act(async () => {
@@ -244,7 +268,9 @@ describe("StorefrontApp background image", () => {
     });
 
     await waitFor(() => {
-      expect(wrapper.style.backgroundSize).toBe("100% 1552px");
+      expect(wrapper.style.backgroundSize).toBe(
+        expectedDesktopBackgroundSize(2560, 1080),
+      );
     });
     restoreViewport();
   });
@@ -278,7 +304,9 @@ describe("StorefrontApp background image", () => {
 
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.style.backgroundImage).toContain("bg_desktop");
-    expect(wrapper.style.backgroundSize).toBe("100% 1164px");
+    expect(wrapper.style.backgroundSize).toBe(
+      expectedDesktopBackgroundSize(1920, 1080),
+    );
 
     (mql as unknown as { matches: boolean }).matches = false;
     await act(async () => {
