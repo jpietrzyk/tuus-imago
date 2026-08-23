@@ -165,6 +165,26 @@ export function App() {
   return <StorefrontApp />;
 }
 
+const DESKTOP_BACKGROUND_IMAGE_ASPECT = 1536 / 1024;
+const DESKTOP_BACKGROUND_MAX_SQUEEZE = 1.1;
+
+function desktopBackgroundSize(viewportWidth: number, viewportHeight: number): string {
+  if (viewportWidth <= 0 || viewportHeight <= 0) {
+    return "cover";
+  }
+
+  const viewportAspect = viewportWidth / viewportHeight;
+  if (viewportAspect >= DESKTOP_BACKGROUND_IMAGE_ASPECT) {
+    const coverHeight = viewportWidth / DESKTOP_BACKGROUND_IMAGE_ASPECT;
+    const height = Math.max(viewportHeight, coverHeight / DESKTOP_BACKGROUND_MAX_SQUEEZE);
+    return `100% ${Math.round(height)}px`;
+  }
+
+  const coverWidth = viewportHeight * DESKTOP_BACKGROUND_IMAGE_ASPECT;
+  const width = Math.max(viewportWidth, coverWidth / DESKTOP_BACKGROUND_MAX_SQUEEZE);
+  return `${Math.round(width)}px 100%`;
+}
+
 function StorefrontApp() {
   useReferralTracking();
 
@@ -403,12 +423,23 @@ function StorefrontApp() {
     () => typeof window !== "undefined" ? window.matchMedia("(min-width: 768px)").matches : true,
   )[0];
   const [isDesktopSize, setIsDesktopSize] = useState(isDesktop);
+  const [viewportSize, setViewportSize] = useState(() => ({
+    width: typeof window !== "undefined" ? window.innerWidth : 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
+  }));
 
   useEffect(() => {
     const mql = window.matchMedia("(min-width: 768px)");
     const handler = (e: MediaQueryListEvent) => setIsDesktopSize(e.matches);
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () =>
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
@@ -422,7 +453,9 @@ function StorefrontApp() {
         backgroundImage: `url(${isDesktopSize ? bgDesktop : bgMobile})`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundSize: "cover",
+        backgroundSize: isDesktopSize
+          ? desktopBackgroundSize(viewportSize.width, viewportSize.height)
+          : "cover",
       }}
     >
       <Header onOpenLegalMenu={openLegalSheet} promotionSlogan={activePromotion?.slogan} />

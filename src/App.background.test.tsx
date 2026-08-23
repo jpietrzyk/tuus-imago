@@ -121,6 +121,33 @@ function installMatchMediaMock(matches: boolean) {
   return { mql, listeners, original };
 }
 
+function installViewportStub(width: number, height: number) {
+  const originalWidth = window.innerWidth;
+  const originalHeight = window.innerHeight;
+  Object.defineProperty(window, "innerWidth", {
+    writable: true,
+    configurable: true,
+    value: width,
+  });
+  Object.defineProperty(window, "innerHeight", {
+    writable: true,
+    configurable: true,
+    value: height,
+  });
+  return () => {
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: originalWidth,
+    });
+    Object.defineProperty(window, "innerHeight", {
+      writable: true,
+      configurable: true,
+      value: originalHeight,
+    });
+  };
+}
+
 describe("StorefrontApp background image", () => {
   let originalMatchMedia: typeof window.matchMedia;
 
@@ -133,7 +160,8 @@ describe("StorefrontApp background image", () => {
     vi.restoreAllMocks();
   });
 
-  it("uses mobile background when viewport is below 768px", () => {
+  it("uses mobile background with cover sizing when viewport is below 768px", () => {
+    const restoreViewport = installViewportStub(390, 844);
     const { mql } = installMatchMediaMock(false);
 
     const { container } = render(
@@ -154,9 +182,11 @@ describe("StorefrontApp background image", () => {
     expect(bgStyle).not.toContain("bg_desktop");
     expect(wrapper.style.backgroundSize).toBe("cover");
     expect(wrapper.style.backgroundAttachment).toBe("");
+    restoreViewport();
   });
 
-  it("uses desktop background when viewport is 768px or above", () => {
+  it("uses desktop background zoomed out to reveal more image on wide viewports", () => {
+    const restoreViewport = installViewportStub(1920, 1080);
     const { mql } = installMatchMediaMock(true);
 
     const { container } = render(
@@ -175,8 +205,48 @@ describe("StorefrontApp background image", () => {
     const bgStyle = wrapper.style.backgroundImage;
     expect(bgStyle).toContain("bg_desktop");
     expect(bgStyle).not.toContain("bg_mobile");
-    expect(wrapper.style.backgroundSize).toBe("cover");
+    expect(wrapper.style.backgroundSize).toBe("100% 1164px");
     expect(wrapper.style.backgroundAttachment).toBe("");
+    restoreViewport();
+  });
+
+  it("keeps desktop background at cover sizing when the viewport already matches the image aspect", () => {
+    const restoreViewport = installViewportStub(1500, 1000);
+    installMatchMediaMock(true);
+
+    const { container } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.backgroundSize).toBe("100% 1000px");
+    restoreViewport();
+  });
+
+  it("updates desktop background size when the window is resized", async () => {
+    const restoreViewport = installViewportStub(1920, 1080);
+    installMatchMediaMock(true);
+
+    const { container } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.backgroundSize).toBe("100% 1164px");
+
+    Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: 2560 });
+    await act(async () => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    await waitFor(() => {
+      expect(wrapper.style.backgroundSize).toBe("100% 1552px");
+    });
+    restoreViewport();
   });
 
   it("removes matchMedia listener on unmount", () => {
@@ -197,6 +267,7 @@ describe("StorefrontApp background image", () => {
   });
 
   it("updates background when viewport crosses breakpoint", async () => {
+    const restoreViewport = installViewportStub(1920, 1080);
     const { mql, listeners } = installMatchMediaMock(true);
 
     const { container } = render(
@@ -207,6 +278,7 @@ describe("StorefrontApp background image", () => {
 
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.style.backgroundImage).toContain("bg_desktop");
+    expect(wrapper.style.backgroundSize).toBe("100% 1164px");
 
     (mql as unknown as { matches: boolean }).matches = false;
     await act(async () => {
@@ -222,5 +294,7 @@ describe("StorefrontApp background image", () => {
       expect(wrapper.style.backgroundImage).toContain("bg_mobile");
     });
     expect(wrapper.style.backgroundImage).not.toContain("bg_desktop");
+    expect(wrapper.style.backgroundSize).toBe("cover");
+    restoreViewport();
   });
 });
