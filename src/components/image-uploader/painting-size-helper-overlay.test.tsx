@@ -7,7 +7,7 @@ const installResizeObserverStub = () => {
     "ResizeObserver",
     class {
       constructor(callback: ResizeObserverCallback) {
-        queueMicrotask(callback);
+        queueMicrotask(() => callback([], {} as ResizeObserver));
       }
       observe() {}
       unobserve() {}
@@ -16,10 +16,15 @@ const installResizeObserverStub = () => {
   );
 };
 
+type OverlayProps = Omit<
+  React.ComponentProps<typeof PaintingSizeHelperOverlay>,
+  "children"
+>;
+
 function renderOverlayWithSize(
   width: number,
   height: number,
-  props: React.ComponentProps<typeof PaintingSizeHelperOverlay>,
+  props: OverlayProps,
 ) {
   const { container } = render(
     <PaintingSizeHelperOverlay {...props}>
