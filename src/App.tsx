@@ -1,5 +1,13 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useState, useCallback, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  lazy,
+  Suspense,
+} from "react";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import bgDesktop from "./assets/bg_desktop.webp";
 import bgMobile from "./assets/bg_mobile.webp";
@@ -7,7 +15,10 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
 import { type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
-import { ImageDebugPanel, type ImageDebugData } from "@/components/image-debug-panel";
+import {
+  ImageDebugPanel,
+  type ImageDebugData,
+} from "@/components/image-debug-panel";
 import {
   LegalNavigationSheet,
   type LegalMenuSection,
@@ -72,7 +83,10 @@ import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
 import { setReferralCookie } from "@/lib/referral-cookie";
 import { useReferralTracking } from "@/lib/use-referral-tracking";
-import { getActivePromotion, type ActivePromotionResponse } from "@/lib/orders-api";
+import {
+  getActivePromotion,
+  type ActivePromotionResponse,
+} from "@/lib/orders-api";
 import { getDpiSettings } from "@/lib/orders-api";
 import { applyDpiRulesOverride } from "@/components/image-uploader/image-dpi-rules";
 import { Authenticated } from "@refinedev/core";
@@ -80,36 +94,124 @@ import { AdminApp } from "./admin/AdminApp";
 import { AdminLayout } from "./admin/layout";
 import { AdminLoginPage } from "./admin/login";
 
-const DashboardPage = lazy(() => import("./admin/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
-const OrderListPage = lazy(() => import("./admin/pages/order-list").then((m) => ({ default: m.OrderListPage })));
-const OrderShowPage = lazy(() => import("./admin/pages/order-show").then((m) => ({ default: m.OrderShowPage })));
-const CouponListPage = lazy(() => import("./admin/pages/coupon-list").then((m) => ({ default: m.CouponListPage })));
-const CouponCreatePage = lazy(() => import("./admin/pages/coupon-create").then((m) => ({ default: m.CouponCreatePage })));
-const CouponEditPage = lazy(() => import("./admin/pages/coupon-edit").then((m) => ({ default: m.CouponEditPage })));
-const CouponShowPage = lazy(() => import("./admin/pages/coupon-show").then((m) => ({ default: m.CouponShowPage })));
-const CustomerListPage = lazy(() => import("./admin/pages/customer-list").then((m) => ({ default: m.CustomerListPage })));
-const CustomerShowPage = lazy(() => import("./admin/pages/customer-show").then((m) => ({ default: m.CustomerShowPage })));
-const AdminUsersPage = lazy(() => import("./admin/pages/admin-users-list").then((m) => ({ default: m.AdminUsersPage })));
-const AdminUserShowPage = lazy(() => import("./admin/pages/admin-user-show").then((m) => ({ default: m.AdminUserShowPage })));
-const PartnerListPage = lazy(() => import("./admin/pages/partner-list").then((m) => ({ default: m.PartnerListPage })));
-const PartnerShowPage = lazy(() => import("./admin/pages/partner-show").then((m) => ({ default: m.PartnerShowPage })));
-const PartnerCreatePage = lazy(() => import("./admin/pages/partner-create").then((m) => ({ default: m.PartnerCreatePage })));
-const PartnerEditPage = lazy(() => import("./admin/pages/partner-edit").then((m) => ({ default: m.PartnerEditPage })));
-const RefListPage = lazy(() => import("./admin/pages/ref-list").then((m) => ({ default: m.RefListPage })));
-const RefShowPage = lazy(() => import("./admin/pages/ref-show").then((m) => ({ default: m.RefShowPage })));
-const RefEditPage = lazy(() => import("./admin/pages/ref-edit").then((m) => ({ default: m.RefEditPage })));
-const PromotionListPage = lazy(() => import("./admin/pages/promotion-list").then((m) => ({ default: m.PromotionListPage })));
-const PromotionCreatePage = lazy(() => import("./admin/pages/promotion-create").then((m) => ({ default: m.PromotionCreatePage })));
-const PromotionShowPage = lazy(() => import("./admin/pages/promotion-show").then((m) => ({ default: m.PromotionShowPage })));
-const PromotionEditPage = lazy(() => import("./admin/pages/promotion-edit").then((m) => ({ default: m.PromotionEditPage })));
-const SettingsPage = lazy(() => import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })));
-const ContentListPage = lazy(() => import("./admin/pages/content-list").then((m) => ({ default: m.ContentListPage })));
-const ContentEditPage = lazy(() => import("./admin/pages/content-edit").then((m) => ({ default: m.ContentEditPage })));
+const DashboardPage = lazy(() =>
+  import("./admin/pages/dashboard").then((m) => ({ default: m.DashboardPage })),
+);
+const OrderListPage = lazy(() =>
+  import("./admin/pages/order-list").then((m) => ({
+    default: m.OrderListPage,
+  })),
+);
+const OrderShowPage = lazy(() =>
+  import("./admin/pages/order-show").then((m) => ({
+    default: m.OrderShowPage,
+  })),
+);
+const CouponListPage = lazy(() =>
+  import("./admin/pages/coupon-list").then((m) => ({
+    default: m.CouponListPage,
+  })),
+);
+const CouponCreatePage = lazy(() =>
+  import("./admin/pages/coupon-create").then((m) => ({
+    default: m.CouponCreatePage,
+  })),
+);
+const CouponEditPage = lazy(() =>
+  import("./admin/pages/coupon-edit").then((m) => ({
+    default: m.CouponEditPage,
+  })),
+);
+const CouponShowPage = lazy(() =>
+  import("./admin/pages/coupon-show").then((m) => ({
+    default: m.CouponShowPage,
+  })),
+);
+const CustomerListPage = lazy(() =>
+  import("./admin/pages/customer-list").then((m) => ({
+    default: m.CustomerListPage,
+  })),
+);
+const CustomerShowPage = lazy(() =>
+  import("./admin/pages/customer-show").then((m) => ({
+    default: m.CustomerShowPage,
+  })),
+);
+const AdminUsersPage = lazy(() =>
+  import("./admin/pages/admin-users-list").then((m) => ({
+    default: m.AdminUsersPage,
+  })),
+);
+const AdminUserShowPage = lazy(() =>
+  import("./admin/pages/admin-user-show").then((m) => ({
+    default: m.AdminUserShowPage,
+  })),
+);
+const PartnerListPage = lazy(() =>
+  import("./admin/pages/partner-list").then((m) => ({
+    default: m.PartnerListPage,
+  })),
+);
+const PartnerShowPage = lazy(() =>
+  import("./admin/pages/partner-show").then((m) => ({
+    default: m.PartnerShowPage,
+  })),
+);
+const PartnerCreatePage = lazy(() =>
+  import("./admin/pages/partner-create").then((m) => ({
+    default: m.PartnerCreatePage,
+  })),
+);
+const PartnerEditPage = lazy(() =>
+  import("./admin/pages/partner-edit").then((m) => ({
+    default: m.PartnerEditPage,
+  })),
+);
+const RefListPage = lazy(() =>
+  import("./admin/pages/ref-list").then((m) => ({ default: m.RefListPage })),
+);
+const RefShowPage = lazy(() =>
+  import("./admin/pages/ref-show").then((m) => ({ default: m.RefShowPage })),
+);
+const RefEditPage = lazy(() =>
+  import("./admin/pages/ref-edit").then((m) => ({ default: m.RefEditPage })),
+);
+const PromotionListPage = lazy(() =>
+  import("./admin/pages/promotion-list").then((m) => ({
+    default: m.PromotionListPage,
+  })),
+);
+const PromotionCreatePage = lazy(() =>
+  import("./admin/pages/promotion-create").then((m) => ({
+    default: m.PromotionCreatePage,
+  })),
+);
+const PromotionShowPage = lazy(() =>
+  import("./admin/pages/promotion-show").then((m) => ({
+    default: m.PromotionShowPage,
+  })),
+);
+const PromotionEditPage = lazy(() =>
+  import("./admin/pages/promotion-edit").then((m) => ({
+    default: m.PromotionEditPage,
+  })),
+);
+const SettingsPage = lazy(() =>
+  import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })),
+);
+const ContentListPage = lazy(() =>
+  import("./admin/pages/content-list").then((m) => ({
+    default: m.ContentListPage,
+  })),
+);
+const ContentEditPage = lazy(() =>
+  import("./admin/pages/content-edit").then((m) => ({
+    default: m.ContentEditPage,
+  })),
+);
 
 function AdminPageLoader() {
-  return (
-    <LoadingSpinner fullPage />
-  );
+  return <LoadingSpinner fullPage />;
 }
 
 // Main App Component with Routes
@@ -129,33 +231,222 @@ export function App() {
               </Authenticated>
             }
           >
-            <Route index element={<Suspense fallback={<AdminPageLoader />}><DashboardPage /></Suspense>} />
-            <Route path="orders" element={<Suspense fallback={<AdminPageLoader />}><OrderListPage /></Suspense>} />
-            <Route path="orders/:id" element={<Suspense fallback={<AdminPageLoader />}><OrderShowPage /></Suspense>} />
-            <Route path="coupons" element={<Suspense fallback={<AdminPageLoader />}><CouponListPage /></Suspense>} />
-            <Route path="coupons/new" element={<Suspense fallback={<AdminPageLoader />}><CouponCreatePage /></Suspense>} />
-            <Route path="coupons/:id" element={<Suspense fallback={<AdminPageLoader />}><CouponShowPage /></Suspense>} />
-            <Route path="coupons/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><CouponEditPage /></Suspense>} />
-            <Route path="refs" element={<Suspense fallback={<AdminPageLoader />}><RefListPage /></Suspense>} />
-            <Route path="refs/:id" element={<Suspense fallback={<AdminPageLoader />}><RefShowPage /></Suspense>} />
-            <Route path="refs/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><RefEditPage /></Suspense>} />
-            <Route path="partners" element={<Suspense fallback={<AdminPageLoader />}><PartnerListPage /></Suspense>} />
-            <Route path="partners/new" element={<Suspense fallback={<AdminPageLoader />}><PartnerCreatePage /></Suspense>} />
-            <Route path="partners/:id" element={<Suspense fallback={<AdminPageLoader />}><PartnerShowPage /></Suspense>} />
-            <Route path="partners/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PartnerEditPage /></Suspense>} />
-            <Route path="customers" element={<Suspense fallback={<AdminPageLoader />}><CustomerListPage /></Suspense>} />
-            <Route path="customers/:email" element={<Suspense fallback={<AdminPageLoader />}><CustomerShowPage /></Suspense>} />
-            <Route path="users" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={false} /></Suspense>} />
-            <Route path="users/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
-            <Route path="admins" element={<Suspense fallback={<AdminPageLoader />}><AdminUsersPage isAdminFilter={true} /></Suspense>} />
-            <Route path="admins/:id" element={<Suspense fallback={<AdminPageLoader />}><AdminUserShowPage /></Suspense>} />
-            <Route path="promotions" element={<Suspense fallback={<AdminPageLoader />}><PromotionListPage /></Suspense>} />
-            <Route path="promotions/new" element={<Suspense fallback={<AdminPageLoader />}><PromotionCreatePage /></Suspense>} />
-            <Route path="promotions/:id" element={<Suspense fallback={<AdminPageLoader />}><PromotionShowPage /></Suspense>} />
-            <Route path="promotions/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><PromotionEditPage /></Suspense>} />
-            <Route path="settings" element={<Suspense fallback={<AdminPageLoader />}><SettingsPage /></Suspense>} />
-            <Route path="content" element={<Suspense fallback={<AdminPageLoader />}><ContentListPage /></Suspense>} />
-            <Route path="content/:id/edit" element={<Suspense fallback={<AdminPageLoader />}><ContentEditPage /></Suspense>} />
+            <Route
+              index
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <DashboardPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <OrderListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="orders/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <OrderShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="coupons"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CouponListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="coupons/new"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CouponCreatePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="coupons/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CouponShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="coupons/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CouponEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="refs"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <RefListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="refs/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <RefShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="refs/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <RefEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="partners"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PartnerListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="partners/new"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PartnerCreatePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="partners/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PartnerShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="partners/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PartnerEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="customers"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CustomerListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="customers/:email"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CustomerShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <AdminUsersPage isAdminFilter={false} />
+                </Suspense>
+              }
+            />
+            <Route
+              path="users/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <AdminUserShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="admins"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <AdminUsersPage isAdminFilter={true} />
+                </Suspense>
+              }
+            />
+            <Route
+              path="admins/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <AdminUserShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="promotions"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PromotionListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="promotions/new"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PromotionCreatePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="promotions/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PromotionShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="promotions/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <PromotionEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <SettingsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="content"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ContentListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="content/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ContentEditPage />
+                </Suspense>
+              }
+            />
           </Route>
         </Routes>
       </AdminApp>
@@ -166,9 +457,12 @@ export function App() {
 }
 
 const DESKTOP_BACKGROUND_IMAGE_ASPECT = 1536 / 1024;
-const DESKTOP_BACKGROUND_MAX_SQUEEZE = 1.1;
+const DESKTOP_BACKGROUND_MAX_SQUEEZE = 1.4;
 
-function desktopBackgroundSize(viewportWidth: number, viewportHeight: number): string {
+function desktopBackgroundSize(
+  viewportWidth: number,
+  viewportHeight: number,
+): string {
   if (viewportWidth <= 0 || viewportHeight <= 0) {
     return "cover";
   }
@@ -176,19 +470,26 @@ function desktopBackgroundSize(viewportWidth: number, viewportHeight: number): s
   const viewportAspect = viewportWidth / viewportHeight;
   if (viewportAspect >= DESKTOP_BACKGROUND_IMAGE_ASPECT) {
     const coverHeight = viewportWidth / DESKTOP_BACKGROUND_IMAGE_ASPECT;
-    const height = Math.max(viewportHeight, coverHeight / DESKTOP_BACKGROUND_MAX_SQUEEZE);
+    const height = Math.max(
+      viewportHeight,
+      coverHeight / DESKTOP_BACKGROUND_MAX_SQUEEZE,
+    );
     return `100% ${Math.round(height)}px`;
   }
 
   const coverWidth = viewportHeight * DESKTOP_BACKGROUND_IMAGE_ASPECT;
-  const width = Math.max(viewportWidth, coverWidth / DESKTOP_BACKGROUND_MAX_SQUEEZE);
+  const width = Math.max(
+    viewportWidth,
+    coverWidth / DESKTOP_BACKGROUND_MAX_SQUEEZE,
+  );
   return `${Math.round(width)}px 100%`;
 }
 
 function StorefrontApp() {
   useReferralTracking();
 
-  const [activePromotion, setActivePromotion] = useState<ActivePromotionResponse | null>(null);
+  const [activePromotion, setActivePromotion] =
+    useState<ActivePromotionResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -199,7 +500,9 @@ function StorefrontApp() {
         }
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const applyDpiSettings = useCallback(() => {
@@ -229,7 +532,8 @@ function StorefrontApp() {
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
   }, [applyDpiSettings]);
 
   useEffect(() => {
@@ -256,8 +560,9 @@ function StorefrontApp() {
 
     if (changed) {
       const qs = params.toString();
-      const newPath = window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
-       window.history.replaceState(null, "", newPath);
+      const newPath =
+        window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash;
+      window.history.replaceState(null, "", newPath);
     }
   }, []);
 
@@ -313,18 +618,19 @@ function StorefrontApp() {
   );
   const [footerSlotSwitcherProps, setFooterSlotSwitcherProps] =
     useState<SlotSwitcherBarProps | null>(null);
-  const [imageDebugData, setImageDebugData] =
-    useState<ImageDebugData | null>(null);
+  const [imageDebugData, setImageDebugData] = useState<ImageDebugData | null>(
+    null,
+  );
   const location = useLocation();
   const navigate = useNavigate();
-  const uploadPageKey = location.pathname === "/upload" ? location.key : "off-upload";
+  const uploadPageKey =
+    location.pathname === "/upload" ? location.key : "off-upload";
 
-  const uploadInitialSlots: UploadedSlotResult[] =
-    (location.state as { restoredSlots?: UploadedSlotResult[] } | null)
-      ?.restoredSlots?.length
-      ? (location.state as { restoredSlots: UploadedSlotResult[] })
-          .restoredSlots
-      : restoreUploadSlots();
+  const uploadInitialSlots: UploadedSlotResult[] = (
+    location.state as { restoredSlots?: UploadedSlotResult[] } | null
+  )?.restoredSlots?.length
+    ? (location.state as { restoredSlots: UploadedSlotResult[] }).restoredSlots
+    : restoreUploadSlots();
 
   const openLegalSheet = (section: LegalMenuSection) => {
     setActiveLegalSection(section);
@@ -419,8 +725,10 @@ function StorefrontApp() {
     });
   }, []);
 
-  const isDesktop = useState(
-    () => typeof window !== "undefined" ? window.matchMedia("(min-width: 768px)").matches : true,
+  const isDesktop = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(min-width: 768px)").matches
+      : true,
   )[0];
   const [isDesktopSize, setIsDesktopSize] = useState(isDesktop);
   const [viewportSize, setViewportSize] = useState(() => ({
@@ -458,7 +766,10 @@ function StorefrontApp() {
           : "cover",
       }}
     >
-      <Header onOpenLegalMenu={openLegalSheet} promotionSlogan={activePromotion?.slogan} />
+      <Header
+        onOpenLegalMenu={openLegalSheet}
+        promotionSlogan={activePromotion?.slogan}
+      />
       <main className="flex-1 overflow-auto relative">
         <Routes>
           <Route path="/" element={<HomeUploadEntryPage />} />
@@ -497,7 +808,10 @@ function StorefrontApp() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+          <Route
+            path="/auth/update-password"
+            element={<UpdatePasswordPage />}
+          />
           <Route
             path="/account/*"
             element={
