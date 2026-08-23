@@ -15,10 +15,24 @@ import type {
 } from "./image-uploader";
 import type { ImageDisplayProportion } from "./image-proportion-calculator";
 import { getTargetAspectRatio } from "./image-proportion-calculator";
-import { getPaintingSizeScale, getPaintingSizeIndices, ALL_PAINTING_SIZE_INDICES, type PaintingShape, type PaintingSizeIndex } from "./painting-size";
+import {
+  getPaintingSizeScale,
+  getPaintingSizeIndices,
+  ALL_PAINTING_SIZE_INDICES,
+  type PaintingShape,
+  type PaintingSizeIndex,
+} from "./painting-size";
 import type { CropAdjust } from "./use-crop-adjust";
 
-const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1]);
+const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(
+  ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1],
+);
+
+// Vertical position of the painting preview contents: the slider caps its
+// content height by reserving this much space at the bottom (so background
+// image elements there stay visible) and top-aligns the contents, which
+// scales the previews down slightly at the largest painting size.
+export const PREVIEW_SLIDER_BOTTOM_RESERVE_PX = 0;
 
 interface TriptychSidePanelProps {
   slotIndex: number;
@@ -119,12 +133,18 @@ function TriptychSidePanel({
     if (painted === false) {
       const retry = retryStateRef.current;
       retry.failures += 1;
-      if (retry.failures === 1 || retry.failures > SIDE_PANEL_MAX_DRAW_RETRIES) {
+      if (
+        retry.failures === 1 ||
+        retry.failures > SIDE_PANEL_MAX_DRAW_RETRIES
+      ) {
         console.error(
           `[triptych-side-panel ${slotIndex}] draw failed (attempt ${retry.failures}): buffer ${canvas.width}x${canvas.height}, crop ${Math.round(crop.cropX)},${Math.round(crop.cropY)} ${Math.round(crop.cropWidth)}x${Math.round(crop.cropHeight)}`,
         );
       }
-      if (retry.failures <= SIDE_PANEL_MAX_DRAW_RETRIES && retry.frame === null) {
+      if (
+        retry.failures <= SIDE_PANEL_MAX_DRAW_RETRIES &&
+        retry.frame === null
+      ) {
         retry.frame = window.requestAnimationFrame(() => {
           retry.frame = null;
           drawSidePanel();
@@ -214,7 +234,9 @@ function TriptychSidePanel({
       onClick={() => onSelectSlot(slotIndex)}
       onTouchStart={() => onOtherInteraction()}
       data-testid={`triptych-side-panel-${slotIndex}`}
-      aria-label={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
+      aria-label={t("uploader.selectImageSlot", {
+        index: String(slotIndex + 1),
+      })}
       className="group/side-panel relative flex h-full max-h-full shrink-0 items-center justify-center"
       data-triptych-linked={isLinked ? "true" : undefined}
     >
@@ -225,7 +247,9 @@ function TriptychSidePanel({
         {useCloudPreview ? (
           <img
             src={effectivePreviewUrl}
-            alt={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
+            alt={t("uploader.selectImageSlot", {
+              index: String(slotIndex + 1),
+            })}
             className="absolute object-cover will-change-transform transition-transform duration-100 ease-out motion-reduce:transition-none"
             style={{ width: "100%", height: "100%", top: "0%", left: "0%" }}
             draggable={false}
@@ -237,7 +261,9 @@ function TriptychSidePanel({
         ) : (
           <canvas
             ref={canvasRef}
-            aria-label={t("uploader.selectImageSlot", { index: String(slotIndex + 1) })}
+            aria-label={t("uploader.selectImageSlot", {
+              index: String(slotIndex + 1),
+            })}
             data-testid={`triptych-side-panel-canvas-${slotIndex}`}
             className="absolute inset-0 h-full w-full"
           />
@@ -351,16 +377,22 @@ export default function UploaderPreviewSlider({
     }, 3000);
   }, [clearTrashTimeout]);
 
-  const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
-    onTouchStart(event);
-    setTouchedSlotIndex(activeImageIndex);
-    setTrashTimeout();
-  }, [activeImageIndex, onTouchStart, setTrashTimeout]);
+  const handleTouchStart = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      onTouchStart(event);
+      setTouchedSlotIndex(activeImageIndex);
+      setTrashTimeout();
+    },
+    [activeImageIndex, onTouchStart, setTrashTimeout],
+  );
 
-  const handleTouchEnd = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
-    onTouchEnd(event);
-    setTrashTimeout();
-  }, [onTouchEnd, setTrashTimeout]);
+  const handleTouchEnd = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      onTouchEnd(event);
+      setTrashTimeout();
+    },
+    [onTouchEnd, setTrashTimeout],
+  );
 
   const handleOtherInteraction = useCallback(() => {
     clearTrashTimeout();
@@ -428,7 +460,10 @@ export default function UploaderPreviewSlider({
   const panelAspectsSignature = panelAspects.join(",");
 
   const triptychContainerRef = useRef<HTMLDivElement>(null);
-  const [triptychFit, setTriptychFit] = useState<{ widths: number[]; height: number }>({
+  const [triptychFit, setTriptychFit] = useState<{
+    widths: number[];
+    height: number;
+  }>({
     widths: [],
     height: 0,
   });
@@ -445,9 +480,13 @@ export default function UploaderPreviewSlider({
       if (aspects.length === 0) return;
       // The reference box represents the LARGEST painting size. The panels
       // side-by-side (each at its own aspect) must fit the container in both
-      // dimensions; at the largest size they touch each other exactly.
+      // dimensions; at the largest size they touch each other exactly. The
+      // bottom reserve caps the row height so the previews scale down and
+      // keep the bottom part of the background image visible.
+      const availableHeight = height - PREVIEW_SLIDER_BOTTOM_RESERVE_PX;
+      if (availableHeight <= 0) return;
       const totalAspect = aspects.reduce((sum, aspect) => sum + aspect, 0);
-      const referenceHeight = Math.min(height, width / totalAspect);
+      const referenceHeight = Math.min(availableHeight, width / totalAspect);
       setTriptychFit({
         widths: aspects.map((aspect) => referenceHeight * aspect),
         height: referenceHeight,
@@ -471,8 +510,12 @@ export default function UploaderPreviewSlider({
     return (
       <div
         ref={triptychContainerRef}
-        className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
-        style={{ "--painting-size-scale": MAX_PAINTING_SIZE_SCALE } as React.CSSProperties}
+        className="painting-preview-slider flex w-full min-w-0 flex-1 items-start justify-center bg-transparent overflow-hidden"
+        style={
+          {
+            "--painting-size-scale": MAX_PAINTING_SIZE_SCALE,
+          } as React.CSSProperties
+        }
         data-testid="uploader-preview-slider"
         data-triptych-layout="desktop"
       >
@@ -489,9 +532,7 @@ export default function UploaderPreviewSlider({
             <TriptychSidePanel
               slotIndex={index}
               image={slot}
-              previewUrl={
-                getSlotPreviewUrl ? getSlotPreviewUrl(slot) : null
-              }
+              previewUrl={getSlotPreviewUrl ? getSlotPreviewUrl(slot) : null}
               useCloudPreview={!!slot.uploadedAsset}
               previewFrameAspectRatio={panelAspectRatio}
               onSelectSlot={onSelectSlot!}
@@ -553,13 +594,18 @@ export default function UploaderPreviewSlider({
   return (
     <div
       className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
-      style={{ "--painting-size-scale": MAX_PAINTING_SIZE_SCALE } as React.CSSProperties}
+      style={
+        {
+          "--painting-size-scale": MAX_PAINTING_SIZE_SCALE,
+        } as React.CSSProperties
+      }
       data-testid="uploader-preview-slider"
     >
       <PaintingSizeHelperOverlay
         selectedSize={selectedPaintingSize}
         paintingAspectRatio={paintingAspectRatio}
         shape={paintingShape}
+        bottomReservePx={PREVIEW_SLIDER_BOTTOM_RESERVE_PX}
         showBorders
       >
         {previewSlot}

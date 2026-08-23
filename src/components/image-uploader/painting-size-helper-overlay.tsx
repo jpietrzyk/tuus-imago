@@ -11,6 +11,7 @@ interface PaintingSizeHelperOverlayProps {
   paintingAspectRatio: number;
   shape?: PaintingShape;
   showBorders?: boolean;
+  bottomReservePx?: number;
   children: ReactNode;
 }
 
@@ -21,6 +22,7 @@ export default function PaintingSizeHelperOverlay({
   paintingAspectRatio,
   shape = "square",
   showBorders = false,
+  bottomReservePx = 0,
   children,
 }: PaintingSizeHelperOverlayProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -33,8 +35,11 @@ export default function PaintingSizeHelperOverlay({
 
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
-      if (width === 0 || height === 0) return;
-      const squareSide = Math.min(width, height);
+      // The reference box height is capped by the bottom reserve so the
+      // largest painting scales down and the reserved space stays empty.
+      const availableHeight = height - bottomReservePx;
+      if (width === 0 || availableHeight <= 0) return;
+      const squareSide = Math.min(width, availableHeight);
       const fitWidth = Math.min(squareSide, squareSide * paintingAspectRatio);
       const fitHeight = fitWidth / paintingAspectRatio;
       setFitSize({ width: fitWidth, height: fitHeight });
@@ -45,11 +50,12 @@ export default function PaintingSizeHelperOverlay({
     const observer = new ResizeObserver(update);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [paintingAspectRatio]);
+  }, [paintingAspectRatio, bottomReservePx]);
 
   return (
     <div ref={wrapperRef} className="relative flex h-full flex-1 justify-center items-start min-w-0">
       <div
+        data-testid="overlay-fit-box"
         className="relative"
         style={fitSize.width > 0 ? { width: fitSize.width, height: fitSize.height } : undefined}
       >
