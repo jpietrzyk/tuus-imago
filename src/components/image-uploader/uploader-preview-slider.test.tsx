@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import UploaderPreviewSlider from "./uploader-preview-slider";
+import UploaderPreviewSlider, {
+  PREVIEW_SLIDER_BOTTOM_RESERVE_PX,
+} from "./uploader-preview-slider";
 import { computeSidePanelCrop } from "./side-panel-crop";
 import type {
   SelectedImageItem,
@@ -48,8 +50,21 @@ vi.mock("./painting-preview-slot", () => ({
 }));
 
 vi.mock("./painting-size-helper-overlay", () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="mock-painting-size-overlay">{children}</div>
+  default: ({
+    children,
+    bottomReservePx,
+  }: {
+    children: React.ReactNode;
+    bottomReservePx?: number;
+  }) => (
+    <div
+      data-testid="mock-painting-size-overlay"
+      data-bottom-reserve={
+        bottomReservePx !== undefined ? String(bottomReservePx) : undefined
+      }
+    >
+      {children}
+    </div>
   ),
 }));
 
@@ -479,6 +494,40 @@ describe("UploaderPreviewSlider", () => {
         }),
       );
     });
+  });
+
+  it("caps the slider max height and top-aligns the desktop triptych row", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+      />,
+    );
+
+    expect(screen.getByTestId("uploader-preview-slider")).toHaveClass(
+      "items-start",
+    );
+  });
+
+  it("passes the bottom reserve to the single-slot painting size overlay", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} />);
+
+    expect(screen.getByTestId("mock-painting-size-overlay")).toHaveAttribute(
+      "data-bottom-reserve",
+      String(PREVIEW_SLIDER_BOTTOM_RESERVE_PX),
+    );
   });
 
   it("marks side panels with the linked state", () => {
