@@ -13,6 +13,7 @@ import {
   invertDisplayProportion,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
+import { isQuarterTurnRotation } from "./rotated-image-properties";
 import type { SelectedImageMetadata } from "./image-uploader";
 import type { CropAdjust } from "./use-crop-adjust";
 
@@ -160,16 +161,11 @@ export const usePreviewCanvasRender = ({
       } else {
         // For 90°/270° rotations the image orientation swaps, so the crop that
         // fills the frame after rotation must be selected against the inverse
-        // frame aspect (horizontal ↔ vertical).  Metadata and the proportion
-        // decision stay on the original dimensions so the user's chosen frame
-        // proportion is not yanked around by rotating.
-        const normalizedRotation =
-          previewTransform != null
-            ? ((previewTransform.rotation % 360) + 360) % 360
-            : 0;
-        const isQuarterTurn =
-          normalizedRotation === 90 || normalizedRotation === 270;
-        const baseCrop = isQuarterTurn
+        // frame aspect (horizontal ↔ vertical). The stored metadata keeps the
+        // original dimensions; rotation-aware derived properties (shape, DPI
+        // guard, debug data) are recomputed separately in the uploader via
+        // rotated-image-properties.
+        const baseCrop = isQuarterTurnRotation(previewTransform?.rotation)
           ? calculateMaxCenteredCrop({
               sourceWidth,
               sourceHeight,
