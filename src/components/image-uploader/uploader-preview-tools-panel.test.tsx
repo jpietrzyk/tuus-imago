@@ -154,32 +154,36 @@ describe("UploaderPreviewToolsPanel", () => {
     expect(onUpdateEffect).not.toHaveBeenCalledWith("brightness", expect.anything());
   });
 
-  it("shows zoom controls in edit mode when isZoomAvailable is true", () => {
+  it("shows crop reset button without zoom slider in edit mode when crop is adjusted", () => {
     const props = createProps();
     render(
       <UploaderPreviewToolsPanel
         {...props}
-        isZoomAvailable={true}
         onUpdateCropAdjust={vi.fn()}
+        activeImageCropAdjust={{ zoom: 2, panX: 0, panY: 0 }}
         externalEditMode={true}
       />,
     );
 
-    expect(screen.getByText(t("uploader.zoom"))).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t("uploader.cropReset") }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
   });
 
-  it("hides zoom controls in edit mode when isZoomAvailable is false", () => {
+  it("hides crop group in edit mode when crop is not adjusted", () => {
     const props = createProps();
     render(
       <UploaderPreviewToolsPanel
         {...props}
-        isZoomAvailable={false}
         onUpdateCropAdjust={vi.fn()}
         externalEditMode={true}
       />,
     );
 
-    expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(t("uploader.cropGroupTitle")),
+    ).not.toBeInTheDocument();
   });
 
   it("shows AI Effects title when effectsMode is ai", () => {

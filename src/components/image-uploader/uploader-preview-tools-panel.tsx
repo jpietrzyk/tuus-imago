@@ -54,7 +54,6 @@ interface UploaderPreviewToolsPanelProps {
   onEditModeChange?: (isEditMode: boolean) => void;
   activeImageCropAdjust?: CropAdjust;
   onUpdateCropAdjust?: (adjust: CropAdjust | undefined) => void;
-  isZoomAvailable?: boolean;
   externalEditMode?: boolean;
   effectsMode?: EffectsMode;
 }
@@ -78,7 +77,6 @@ export function UploaderPreviewToolsPanel({
   onEditModeChange,
   activeImageCropAdjust,
   onUpdateCropAdjust,
-  isZoomAvailable = false,
   externalEditMode,
   effectsMode,
 }: UploaderPreviewToolsPanelProps) {
@@ -238,20 +236,6 @@ export function UploaderPreviewToolsPanel({
               isEnhanceBusy={isEnhanceBusy}
               isUpscaleBusy={isUpscaleBusy}
               isRestoreBusy={isRestoreBusy}
-              zoom={activeImageCropAdjust?.zoom ?? 1}
-              minZoom={1}
-              maxZoom={3}
-              isZoomAvailable={isZoomAvailable}
-              onZoomChange={
-                onUpdateCropAdjust
-                  ? (z) =>
-                      onUpdateCropAdjust({
-                        zoom: z,
-                        panX: activeImageCropAdjust?.panX ?? 0,
-                        panY: activeImageCropAdjust?.panY ?? 0,
-                      })
-                   : undefined
-               }
               onResetCropAdjust={
                 onUpdateCropAdjust &&
                 activeImageCropAdjust &&
