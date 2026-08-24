@@ -1744,7 +1744,6 @@ export const ImageUploader = forwardRef<
     onImageMetadataChange,
     onUploadError,
     revokePreviewUrls,
-    selectedImageMetadata,
     selectedPaintingSize,
   ]);
 
