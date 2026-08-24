@@ -252,23 +252,16 @@ describe("UploaderEffectsPanelContent", () => {
   });
 
   it("does not render crop reset button when handler is absent", () => {
-    renderContent({
-      zoom: 2,
-      isZoomAvailable: true,
-      onZoomChange: vi.fn(),
-    });
+    renderContent();
 
     expect(
       screen.queryByText(t("uploader.cropReset")),
     ).not.toBeInTheDocument();
   });
 
-  it("renders crop reset button when handler is provided and zoom > 1", () => {
+  it("renders crop reset button when handler is provided and crop is adjusted", () => {
     const onResetCropAdjust = vi.fn();
     renderContent({
-      zoom: 2,
-      isZoomAvailable: true,
-      onZoomChange: vi.fn(),
       onResetCropAdjust,
     });
 
@@ -280,9 +273,6 @@ describe("UploaderEffectsPanelContent", () => {
   it("calls onResetCropAdjust when reset button is clicked", () => {
     const onResetCropAdjust = vi.fn();
     renderContent({
-      zoom: 2,
-      isZoomAvailable: true,
-      onZoomChange: vi.fn(),
       onResetCropAdjust,
     });
 
@@ -294,10 +284,15 @@ describe("UploaderEffectsPanelContent", () => {
   });
 
   describe("collapsible default states", () => {
-    it("has zoom (Crop) group open by default when zoom is available", () => {
-      renderContent({ isZoomAvailable: true, onZoomChange: vi.fn() });
+    it("has Crop group open by default when reset handler is provided", () => {
+      renderContent({ onResetCropAdjust: vi.fn() });
 
-      expect(screen.getByText(t("uploader.zoom"))).toBeInTheDocument();
+      expect(
+        screen.getByText(t("uploader.cropGroupTitle")),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: t("uploader.cropReset") }),
+      ).toBeInTheDocument();
     });
 
     it("has Adjustments group collapsed by default", () => {
@@ -670,44 +665,22 @@ describe("UploaderEffectsPanelContent", () => {
     });
   });
 
-  describe("zoom controls", () => {
-    it("does not render zoom slider when isZoomAvailable is false", () => {
-      renderContent({ isZoomAvailable: false });
+  describe("crop group", () => {
+    it("does not render zoom slider (zoom happens via scroll/pinch on the canvas)", () => {
+      renderContent({ onResetCropAdjust: vi.fn() });
 
       expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: t("uploader.cropReset") }),
+      ).toBeInTheDocument();
     });
 
-    it("renders zoom slider in Crop group when isZoomAvailable is true and onZoomChange is provided", () => {
-      renderContent({ isZoomAvailable: true, onZoomChange: vi.fn() });
+    it("does not render crop group when reset handler is not provided", () => {
+      renderContent();
 
-      expect(screen.getByText(t("uploader.zoom"))).toBeInTheDocument();
-      expect(screen.getByText(t("uploader.cropGroupTitle"))).toBeInTheDocument();
-    });
-
-    it("displays current zoom value", () => {
-      renderContent({ zoom: 2, isZoomAvailable: true, onZoomChange: vi.fn() });
-
-      expect(screen.getByText("2.0x")).toBeInTheDocument();
-    });
-
-    it("does not render zoom slider when onZoomChange is not provided", () => {
-      renderContent({ isZoomAvailable: true });
-
-      expect(screen.queryByText(t("uploader.zoom"))).not.toBeInTheDocument();
-    });
-
-    it("calls onZoomChange when zoom slider value changes", () => {
-      const onZoomChange = vi.fn();
-      renderContent({ zoom: 1.5, isZoomAvailable: true, onZoomChange });
-
-      const zoomLabel = screen.getByText(t("uploader.zoom"));
-      const sliderContainer = zoomLabel.closest(".space-y-2")!;
-      const rangeInput = sliderContainer.querySelector(
-        'input[type="range"]',
-      ) as HTMLInputElement;
-      expect(rangeInput).toBeInTheDocument();
-      fireEvent.change(rangeInput, { target: { value: "2" } });
-      expect(onZoomChange).toHaveBeenCalledWith(2);
+      expect(
+        screen.queryByText(t("uploader.cropGroupTitle")),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -729,8 +702,8 @@ describe("UploaderEffectsPanelContent", () => {
         expect(screen.queryByText(t("uploader.transformGroupTitle"))).not.toBeInTheDocument();
       });
 
-      it("does not show Crop group even when zoom is available", () => {
-        renderContent({ effectsMode: "ai", isZoomAvailable: true, onZoomChange: vi.fn() });
+      it("does not show Crop group even when a crop reset is available", () => {
+        renderContent({ effectsMode: "ai", onResetCropAdjust: vi.fn() });
 
         expect(screen.queryByText(t("uploader.cropGroupTitle"))).not.toBeInTheDocument();
       });
@@ -758,13 +731,13 @@ describe("UploaderEffectsPanelContent", () => {
         expect(screen.queryByText(t("uploader.aiEffectsGroupTitle"))).not.toBeInTheDocument();
       });
 
-      it("shows Crop group when zoom is available", () => {
-        renderContent({ effectsMode: "settings", isZoomAvailable: true, onZoomChange: vi.fn() });
+      it("shows Crop group when crop reset is available", () => {
+        renderContent({ effectsMode: "settings", onResetCropAdjust: vi.fn() });
 
         expect(screen.getByText(t("uploader.cropGroupTitle"))).toBeInTheDocument();
       });
 
-      it("hides Crop group when zoom is unavailable", () => {
+      it("hides Crop group when no crop reset handler is provided", () => {
         renderContent({ effectsMode: "settings" });
 
         expect(screen.queryByText(t("uploader.cropGroupTitle"))).not.toBeInTheDocument();

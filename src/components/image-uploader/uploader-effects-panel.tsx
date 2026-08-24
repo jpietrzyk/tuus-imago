@@ -84,11 +84,6 @@ export interface UploaderEffectsPanelContentProps {
   isEnhanceBusy?: boolean;
   isUpscaleBusy?: boolean;
   isRestoreBusy?: boolean;
-  zoom?: number;
-  minZoom?: number;
-  maxZoom?: number;
-  isZoomAvailable?: boolean;
-  onZoomChange?: (zoom: number) => void;
   /** When provided, a "reset crop" button is shown in the crop group. */
   onResetCropAdjust?: () => void;
   effectsMode?: EffectsMode;
@@ -119,11 +114,6 @@ export function UploaderEffectsPanelContent({
   isEnhanceBusy = false,
   isUpscaleBusy = false,
   isRestoreBusy = false,
-  zoom = 1,
-  minZoom = 1,
-  maxZoom = 3,
-  isZoomAvailable = false,
-  onZoomChange,
   onResetCropAdjust,
   effectsMode,
 }: UploaderEffectsPanelContentProps) {
@@ -153,39 +143,23 @@ export function UploaderEffectsPanelContent({
 
   return (
     <div className="flex flex-col gap-2">
-      {showCropGroup && isZoomAvailable && onZoomChange && (
+      {showCropGroup && onResetCropAdjust && (
         <Collapsible defaultOpen>
           <GroupTrigger title={t("uploader.cropGroupTitle")} />
           <CollapsibleContent>
             <div className="space-y-2 pt-2 pb-1">
-              <Label className="flex items-center justify-between">
-                <span>{t("uploader.zoom")}</span>
-                <span className="text-sm text-muted-foreground font-mono">
-                  {zoom.toFixed(1)}x
-                </span>
-              </Label>
-              <Slider
-                min={minZoom}
-                max={maxZoom}
-                step={0.01}
-                value={zoom}
-                onChange={onZoomChange}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onResetCropAdjust}
                 disabled={disabled}
-              />
-              {onResetCropAdjust && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onResetCropAdjust}
-                  disabled={disabled}
-                  aria-label={t("uploader.cropReset")}
-                  className="h-8 w-full gap-1.5"
-                >
-                  <Crosshair className="h-3.5 w-3.5" />
-                  {t("uploader.cropReset")}
-                </Button>
-              )}
+                aria-label={t("uploader.cropReset")}
+                className="h-8 w-full gap-1.5"
+              >
+                <Crosshair className="h-3.5 w-3.5" />
+                {t("uploader.cropReset")}
+              </Button>
             </div>
           </CollapsibleContent>
         </Collapsible>

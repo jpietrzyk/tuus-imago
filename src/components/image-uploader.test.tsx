@@ -1961,7 +1961,7 @@ describe("ImageUploader", () => {
     });
   });
 
-  it("shows zoom controls in edit mode for non-perfect-coverage images", async () => {
+  it("does not render a zoom slider in the settings drawer", async () => {
     render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
@@ -1979,8 +1979,11 @@ describe("ImageUploader", () => {
     fireEvent.click(effectsButton);
 
     await waitFor(() => {
-      expect(screen.getByText(tr("uploader.zoom"))).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: tr("uploader.effectsCancel") }),
+      ).toBeInTheDocument();
     });
+    expect(screen.queryByText(tr("uploader.zoom"))).not.toBeInTheDocument();
   });
 
   it("resets zoom when proportion is changed", async () => {
@@ -1993,7 +1996,7 @@ describe("ImageUploader", () => {
     if (!input) return;
 
     fireEvent.change(input, { target: { files: [file] } });
-    await screen.findByRole("img", { name: "Preview" });
+    const canvas = await screen.findByRole("img", { name: "Preview" });
 
     const effectsButton = screen.getByRole("button", {
       name: tr("uploader.settingsButton"),
@@ -2001,18 +2004,19 @@ describe("ImageUploader", () => {
     fireEvent.click(effectsButton);
 
     await waitFor(() => {
-      expect(screen.getByText(tr("uploader.zoom"))).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: tr("uploader.effectsCancel") }),
+      ).toBeInTheDocument();
     });
 
-    const zoomLabel = screen.getByText(tr("uploader.zoom"));
-    const sliderContainer = zoomLabel.closest(".space-y-2")!;
-    const rangeInput = sliderContainer.querySelector(
-      'input[type="range"]',
-    ) as HTMLInputElement;
-    fireEvent.change(rangeInput, { target: { value: "2" } });
+    // Zoom via mouse wheel on the preview canvas (no zoom slider anymore).
+    fireEvent.wheel(canvas, { deltaY: -100 });
 
+    // The crop reset button only appears once a non-identity crop is active.
     await waitFor(() => {
-      expect(screen.getByText("2.0x")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: tr("uploader.cropReset") }),
+      ).toBeInTheDocument();
     });
 
     const closeButton = screen.getByRole("button", {
@@ -2037,7 +2041,9 @@ describe("ImageUploader", () => {
     }));
 
     await waitFor(() => {
-      expect(screen.getByText("1.0x")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: tr("uploader.cropReset") }),
+      ).not.toBeInTheDocument();
     });
   });
 
