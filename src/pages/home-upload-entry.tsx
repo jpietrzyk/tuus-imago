@@ -4,7 +4,7 @@ import { t } from "@/locales/i18n";
 
 export function HomeUploadEntryPage() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-8 px-4 py-6">
+    <div className="flex h-full flex-col items-center justify-start gap-8 px-4 pt-10 md:pt-16">
       <Link
         to="/upload"
         className="group flex w-full max-w-sm flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 text-center text-muted-foreground transition-colors hover:border-muted-foreground/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

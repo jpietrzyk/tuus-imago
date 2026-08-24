@@ -29,10 +29,11 @@ const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(
 );
 
 // Vertical position of the painting preview contents: the slider caps its
-// content height by reserving this much space at the bottom (so background
-// image elements there stay visible) and top-aligns the contents, which
-// scales the previews down slightly at the largest painting size.
-export const PREVIEW_SLIDER_BOTTOM_RESERVE_PX = 0;
+// content height by reserving this much space at the bottom (so the preview
+// bottom edge stays clear of the footer and background image elements there
+// stay visible) and top-aligns the contents, which scales the previews down
+// slightly at the largest painting size.
+export const PREVIEW_SLIDER_BOTTOM_RESERVE_PX = 96;
 
 interface TriptychSidePanelProps {
   slotIndex: number;
