@@ -380,13 +380,16 @@ describe("ImageUploader", () => {
         }),
       );
 
-      // Splitting a 2:1 source into portrait parts blocks the pre-split
-      // (landscape) size, so a printability confirmation is required.
-      fireEvent.click(
-        screen.getByRole("button", {
+      // The DPI guard measures the printed pixels (the resting vertical crop
+      // of this 2:1 source), so the oversized pre-split size has already
+      // been auto-downgraded to one that stays printable after the split —
+      // no printability confirmation is required and the split runs
+      // immediately.
+      expect(
+        screen.queryByRole("button", {
           name: tr("uploader.splitSlotsConfirmAction"),
         }),
-      );
+      ).not.toBeInTheDocument();
 
       await waitFor(() => {
         expect(slotDotHasImage(0)).toBe(true);
@@ -1651,6 +1654,85 @@ describe("ImageUploader", () => {
       expect(effectsButton).not.toBeDisabled();
       expect(effectsButton).toBeInTheDocument();
     }
+  });
+
+  it("recalculates image properties when the image is rotated 90 degrees in settings", async () => {
+    // Default mock image is 1200x800 (landscape, "3:2").
+    const onDebugDataChange = vi.fn();
+    render(<TestWrapper onDebugDataChange={onDebugDataChange} />);
+
+    const file = new File(["test"], "landscape.jpg", {
+      type: "image/jpeg",
+    });
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+
+    if (!input) {
+      return;
+    }
+
+    fireEvent.change(input, { target: { files: [file] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const lastDebugData = () => onDebugDataChange.mock.calls.at(-1)?.[0];
+
+    // Baseline: unrotated landscape image.
+    await waitFor(() => {
+      expect(lastDebugData()?.metadata).toEqual({
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      });
+      expect(lastDebugData()?.suggestedProportion).toBe("horizontal");
+    });
+
+    // Rotate 90° through the settings drawer.
+    fireEvent.click(
+      screen.getByRole("button", { name: tr("uploader.settingsButton") }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: tr("uploader.transformGroupTitle"),
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: tr("uploader.rotatePlus90") }),
+    );
+
+    // The rotated image must be treated as portrait: swapped dimensions and
+    // aspect ratio, portrait suggested shape, and coverage percentages
+    // recomputed against the rotated proportions (the full image now fills
+    // a vertical frame).
+    await waitFor(() => {
+      expect(lastDebugData()?.metadata).toEqual({
+        width: 800,
+        height: 1200,
+        aspectRatio: "2:3",
+      });
+      expect(lastDebugData()?.suggestedProportion).toBe("vertical");
+      expect(lastDebugData()?.coveragePercent.vertical).toBe(100);
+      expect(lastDebugData()?.coveragePercent.horizontal).toBeCloseTo(
+        44.44,
+        1,
+      );
+    });
+
+    // Rotating back to the original orientation restores the source shape.
+    fireEvent.click(
+      screen.getByRole("button", { name: tr("uploader.rotateMinus90") }),
+    );
+
+    await waitFor(() => {
+      expect(lastDebugData()?.metadata).toEqual({
+        width: 1200,
+        height: 800,
+        aspectRatio: "3:2",
+      });
+      expect(lastDebugData()?.suggestedProportion).toBe("horizontal");
+    });
   });
 
   it("forces fresh uploads after split by invalidating previous uploaded cache", async () => {

@@ -39,8 +39,14 @@ import {
   formatAspectRatio,
   getOptimalDisplayProportion,
   getTargetAspectRatio,
+  invertDisplayProportion,
   type ImageDisplayProportion,
 } from "./image-proportion-calculator";
+import {
+  getRestingDisplayCropDimensions,
+  getRotatedImageMetadata,
+  isQuarterTurnRotation,
+} from "./rotated-image-properties";
 import {
   type PaintingSizeIndex,
   type PaintingShape,
@@ -248,10 +254,22 @@ function getUploadTransformations(
     });
     result.custom_coordinates = `${Math.round(windowCrop.cropX)},${Math.round(windowCrop.cropY)},${Math.round(windowCrop.cropWidth)},${Math.round(windowCrop.cropHeight)}`;
   } else if (image.previewCropAdjust && image.metadata) {
+    // The client-side preview selects the crop against the inverse frame
+    // aspect for 90°/270° rotations (the rotation swaps it back to the
+    // frame orientation at draw time), so the uploaded coordinates must be
+    // selected the same way — Cloudinary applies the crop before a_<rotation>.
+    // Cloud-preview slots skip this: their rotation is already baked into
+    // the preview URL and metadata.
+    const appliesClientRotation = !previewsBakedCloudTransform(image);
+    const cropProportion =
+      appliesClientRotation &&
+      isQuarterTurnRotation(image.previewTransform?.rotation)
+        ? invertDisplayProportion(image.displayImageProportion)
+        : image.displayImageProportion;
     const baseCrop = calculateMaxCenteredCrop({
       sourceWidth: image.metadata.width,
       sourceHeight: image.metadata.height,
-      proportion: image.displayImageProportion,
+      proportion: cropProportion,
     });
     const effective = adjustCropForZoomPan(
       baseCrop,
@@ -318,6 +336,29 @@ function getReusableUploadedAsset(image: SelectedImageItem) {
     ? image.uploadedAsset
     : null;
 }
+
+/**
+ * True when the rendered preview is a Cloudinary URL with the whole
+ * transform already baked in (a reusable uploaded asset). The loaded
+ * metadata then already reports the rotated shape, so rotation-aware
+ * derived properties must not swap the axes a second time.
+ */
+const previewsBakedCloudTransform = (
+  image: SelectedImageItem | null,
+): boolean => !!image && !!getReusableUploadedAsset(image);
+
+/**
+ * Transform that must still be composed onto the slot's local source when
+ * splitting. Only restored slots preview a Cloudinary URL (with the whole
+ * transform already baked in) while carrying a placeholder file; every
+ * other slot previews its local, untransformed file.
+ */
+const getSplitSourceTransform = (
+  image: SelectedImageItem | null,
+): SelectedImageItem["previewTransform"] =>
+  image?.uploadedAsset?.sourceFingerprint === ""
+    ? undefined
+    : image?.previewTransform;
 
 function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
   const reusableUploadedAsset = getReusableUploadedAsset(image);
@@ -504,6 +545,27 @@ export const ImageUploader = forwardRef<
   const displayImageProportion =
     activeImage?.displayImageProportion ?? "horizontal";
   const triptychWindowIndexOfActiveSlot = activeImage?.triptychWindowIndex;
+  // Rotation the client still applies to the rendered preview. When the
+  // preview comes from Cloudinary the rotation is already baked into the
+  // URL and the loaded metadata already reflects the rotated shape, so the
+  // axes must not be swapped a second time.
+  const activeImageClientRotation = previewsBakedCloudTransform(activeImage)
+    ? 0
+    : activeImage?.previewTransform?.rotation;
+  // Metadata as the image must be treated after rotation: 90°/270° flip the
+  // proportions (landscape ⇄ portrait), so every derived property —
+  // coverage, suggested frame shape, DPI guard, split printability and the
+  // debug panel — is computed against it instead of the original state.
+  const effectiveImageMetadata = useMemo(
+    () =>
+      selectedImageMetadata
+        ? getRotatedImageMetadata(
+            selectedImageMetadata,
+            activeImageClientRotation,
+          )
+        : null,
+    [selectedImageMetadata, activeImageClientRotation],
+  );
 
   useEffect(() => {
     isTriptychSplitRef.current = isTriptychSplit;
@@ -1511,16 +1573,30 @@ export const ImageUploader = forwardRef<
       return;
     }
 
+    // Local-source dimensions and the transform that must still be composed
+    // onto them. Restored slots preview a Cloudinary URL that already bakes
+    // the whole transform (and their metadata already reports the rotated
+    // shape), so nothing may be composed again. 90°/270° swap the axes: the
+    // split projects printability and cuts windows in the rotated shape —
+    // the same effective dimensions the splitPrintability memo (and the
+    // confirm dialog built from it) uses.
+    const sourceWidth = activeImage.metadata?.width ?? 0;
+    const sourceHeight = activeImage.metadata?.height ?? 0;
+    const preTransform = getSplitSourceTransform(activeImage);
+    const isQuarterTurn = isQuarterTurnRotation(preTransform?.rotation);
+    const effectiveWidth = isQuarterTurn ? sourceHeight : sourceWidth;
+    const effectiveHeight = isQuarterTurn ? sourceWidth : sourceHeight;
+
     let targetSize = selectedPaintingSize;
-    if (selectedImageMetadata) {
+    if (effectiveWidth > 0 && effectiveHeight > 0) {
       // Project printability at the seamless window width (portrait window of
       // the panorama) so the auto-selected triptych size matches what each
       // printed canvas can actually support — wide panoramas yield narrower
       // windows and thus a smaller recommended size, without losing the masked
       // left/right edges the user can still drag to reveal.
       const projection = projectTriptychPrintability(
-        selectedImageMetadata.width,
-        selectedImageMetadata.height,
+        effectiveWidth,
+        effectiveHeight,
         selectedPaintingSize,
         TRIPTYCH_PROJECTED_SHAPE,
         getTargetAspectRatio("vertical"),
@@ -1548,33 +1624,27 @@ export const ImageUploader = forwardRef<
       // until the 3-window band tiles the source width exactly (visually the
       // same centered crop the legacy per-third split produced at rest), while
       // zoom/pan stays shared and the panels stay glued edge-to-edge.
-      const sourceWidth =
-        activeImage.metadata?.width ?? selectedImageMetadata?.width ?? 0;
-      const sourceHeight =
-        activeImage.metadata?.height ?? selectedImageMetadata?.height ?? 0;
-      const preTransform = activeImage.previewTransform;
-      const preRotation =
-        (((preTransform?.rotation ?? 0) % 360) + 360) % 360;
-      const isQuarterTurn = preRotation === 90 || preRotation === 270;
-      // Effective dimensions after rotation — 90°/270° swap the axes.
-      const effectiveWidth = isQuarterTurn ? sourceHeight : sourceWidth;
-      const effectiveHeight = isQuarterTurn ? sourceWidth : sourceHeight;
       // Windows need known dimensions to compute contiguous crops; without
       // metadata fall back to the legacy per-third split of the raw image.
       const useSeamlessWindows = effectiveWidth > 0 && effectiveHeight > 0;
 
       if (useSeamlessWindows) {
         const hasPreTransform =
-          preRotation !== 0 ||
+          (preTransform?.rotation ?? 0) !== 0 ||
           !!preTransform?.flipHorizontal ||
           !!preTransform?.flipVertical;
+        // Restored slots carry a placeholder file, so even without a local
+        // transform the Cloudinary preview URL must be composed into a real
+        // File the three windows can share and decode.
+        const mustComposeSource =
+          hasPreTransform || activeImage.file === RESTORED_DUMMY_FILE;
 
         // Source shared by all three windows. When a transform is present it
         // is baked once into a single upright buffer; the window crop math
         // then runs in display space with an identity transform.
         let sharedFile = activeImage.file;
         let sharedMetadata = activeImage.metadata ?? null;
-        if (hasPreTransform) {
+        if (mustComposeSource) {
           const composed = await composeFullTransformedImage({
             previewUrl: activeImage.previewUrl,
             sourceFile: activeImage.file,
@@ -1863,13 +1933,13 @@ export const ImageUploader = forwardRef<
   });
 
   const coveragePercent = useMemo(() => {
-    if (!selectedImageMetadata) {
+    if (!effectiveImageMetadata) {
       return undefined;
     }
 
     const proportions = calculateAllProportions(
-      selectedImageMetadata.width,
-      selectedImageMetadata.height,
+      effectiveImageMetadata.width,
+      effectiveImageMetadata.height,
     );
 
     return {
@@ -1877,18 +1947,18 @@ export const ImageUploader = forwardRef<
       vertical: proportions.vertical.coveragePercent,
       rectangle: proportions.square.coveragePercent,
     };
-  }, [selectedImageMetadata]);
+  }, [effectiveImageMetadata]);
 
   const bestDisplayImageProportion = useMemo(() => {
-    if (!selectedImageMetadata) {
+    if (!effectiveImageMetadata) {
       return null;
     }
 
     return getOptimalDisplayProportion(
-      selectedImageMetadata.width,
-      selectedImageMetadata.height,
+      effectiveImageMetadata.width,
+      effectiveImageMetadata.height,
     );
-  }, [selectedImageMetadata]);
+  }, [effectiveImageMetadata]);
 
   const paintingShape = useMemo<PaintingShape>(
     () => (displayImageProportion === "square" ? "square" : "rectangular"),
@@ -1919,9 +1989,21 @@ export const ImageUploader = forwardRef<
       );
     }
 
+    // DPI guard measures the pixels that will actually be printed: the
+    // resting centered crop that fills the current frame, mapped to display
+    // space. 90°/270° rotations flip the proportions (landscape ⇄ portrait),
+    // so the crop — and with it the printable size availability — is
+    // recalculated from the rotated shape instead of the original one.
+    const restingCrop = getRestingDisplayCropDimensions({
+      sourceWidth: selectedImageMetadata.width,
+      sourceHeight: selectedImageMetadata.height,
+      proportion: displayImageProportion,
+      rotation: activeImageClientRotation,
+    });
+
     return computeSizesDpiAvailability(
-      selectedImageMetadata.width,
-      selectedImageMetadata.height,
+      restingCrop.width,
+      restingCrop.height,
       paintingShape,
     );
   }, [
@@ -1929,19 +2011,20 @@ export const ImageUploader = forwardRef<
     paintingShape,
     triptychWindowIndexOfActiveSlot,
     displayImageProportion,
+    activeImageClientRotation,
   ]);
 
   const splitPrintability = useMemo(() => {
-    if (!selectedImageMetadata) {
+    if (!effectiveImageMetadata) {
       return null;
     }
 
     return projectTriptychPrintability(
-      selectedImageMetadata.width,
-      selectedImageMetadata.height,
+      effectiveImageMetadata.width,
+      effectiveImageMetadata.height,
       selectedPaintingSize,
     );
-  }, [selectedImageMetadata, selectedPaintingSize]);
+  }, [effectiveImageMetadata, selectedPaintingSize]);
 
   useEffect(() => {
     if (!sizesDpiInfo) return;
@@ -1969,7 +2052,7 @@ export const ImageUploader = forwardRef<
   }, [sizesDpiInfo, selectedPaintingSize]);
 
   const computedDebugData = useMemo((): ImageDebugData | null => {
-    if (!selectedImageMetadata) {
+    if (!effectiveImageMetadata) {
       return null;
     }
 
@@ -1989,7 +2072,9 @@ export const ImageUploader = forwardRef<
       : null;
 
     return {
-      metadata: selectedImageMetadata,
+      // Report the shape the image is treated with (after rotation), not
+      // the original orientation.
+      metadata: effectiveImageMetadata,
       displayProportion: displayImageProportion,
       suggestedProportion: bestDisplayImageProportion,
       coveragePercent: coveragePercent ?? {},
@@ -1997,7 +2082,7 @@ export const ImageUploader = forwardRef<
       dpiQuality,
       printSizeLabel: printDims ? `${printDims.widthCm}×${printDims.heightCm} cm` : "",
     };
-  }, [selectedImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize, sizesDpiInfo]);
+  }, [effectiveImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize, sizesDpiInfo]);
 
   const prevDebugDataRef = useRef<ImageDebugData | null>(null);
   useEffect(() => {
