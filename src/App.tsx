@@ -457,7 +457,7 @@ export function App() {
 }
 
 export const DESKTOP_BACKGROUND_IMAGE_ASPECT = 1536 / 1024;
-export const DESKTOP_BACKGROUND_MAX_SQUEEZE = 1.4;
+export const DESKTOP_BACKGROUND_MAX_SQUEEZE = 1.2;
 
 function desktopBackgroundSize(
   viewportWidth: number,
