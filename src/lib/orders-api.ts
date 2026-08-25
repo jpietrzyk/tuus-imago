@@ -18,9 +18,13 @@ export type UploadedCheckoutSlot = UploadedSlotResult & {
   transformedUrl: string;
 };
 
+export type FrameSelectedCheckoutSlot = UploadedCheckoutSlot & {
+  frameId?: string | null;
+};
+
 export interface CreateOrderRequest {
   customer: CheckoutCustomerInput;
-  uploadedSlots: UploadedCheckoutSlot[];
+  uploadedSlots: FrameSelectedCheckoutSlot[];
   idempotencyKey: string;
   couponCode?: string;
   refCode?: string;
@@ -131,6 +135,24 @@ export interface ActivePromotionResponse {
 export async function getActivePromotion(): Promise<ActivePromotionResponse> {
   const response = await fetch("/.netlify/functions/active-promotion");
   return parseJsonResponse<ActivePromotionResponse>(response);
+}
+
+export interface PictureFrame {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  imageUrl: string | null;
+  color: string | null;
+  material: string | null;
+  isDefault: boolean;
+}
+
+export async function getAvailableFrames(): Promise<PictureFrame[]> {
+  const response = await fetch("/.netlify/functions/available-frames");
+  const data = await parseJsonResponse<{ frames: PictureFrame[] }>(response);
+  return Array.isArray(data.frames) ? data.frames : [];
 }
 
 export interface DpiSettingsResponse {

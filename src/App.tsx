@@ -196,6 +196,30 @@ const PromotionEditPage = lazy(() =>
     default: m.PromotionEditPage,
   })),
 );
+
+const FrameListPage = lazy(() =>
+  import("./admin/pages/frame-list").then((m) => ({
+    default: m.FrameListPage,
+  })),
+);
+
+const FrameCreatePage = lazy(() =>
+  import("./admin/pages/frame-create").then((m) => ({
+    default: m.FrameCreatePage,
+  })),
+);
+
+const FrameShowPage = lazy(() =>
+  import("./admin/pages/frame-show").then((m) => ({
+    default: m.FrameShowPage,
+  })),
+);
+
+const FrameEditPage = lazy(() =>
+  import("./admin/pages/frame-edit").then((m) => ({
+    default: m.FrameEditPage,
+  })),
+);
 const SettingsPage = lazy(() =>
   import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
@@ -420,6 +444,38 @@ export function App() {
               element={
                 <Suspense fallback={<AdminPageLoader />}>
                   <PromotionEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="frames"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <FrameListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="frames/new"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <FrameCreatePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="frames/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <FrameShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="frames/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <FrameEditPage />
                 </Suspense>
               }
             />

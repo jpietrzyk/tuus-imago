@@ -2250,4 +2250,175 @@ describe("admin-api handler", () => {
       expect(readBody(response).error).toContain("Auth request failed");
     });
   });
+
+  describe("picture_frames", () => {
+    function makeProfileAuth() {
+      const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+      const eq = vi.fn().mockReturnValue({ single });
+      const select = vi.fn().mockReturnValue({ eq });
+      return { select, eq, single };
+    }
+
+    it("returns 400 for unknown resource", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeProfileAuth() });
+
+      const response = await handler({
+        httpMethod: "GET",
+        headers: { authorization: "Bearer valid-token" },
+        queryStringParameters: { resource: "picture_framez" },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid resource");
+    });
+
+    it("clears the default flag on other frames when setting a new default", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const unsetNeq = vi.fn().mockResolvedValue({ error: null });
+      const unsetEq = vi.fn().mockReturnValue({ neq: unsetNeq });
+      const unsetUpdate = vi.fn().mockReturnValue({ eq: unsetEq });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "frame-2", name: "Black Metal", is_default: true },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+
+      const { client } = setupClient({ profiles: makeProfileAuth() });
+      let framesCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        if (table === "picture_frames") {
+          framesCallCount++;
+          if (framesCallCount === 1) {
+            return { update: unsetUpdate } as never;
+          }
+          return { update } as never;
+        }
+        if (table === "profiles") {
+          return makeProfileAuth() as never;
+        }
+        throw new Error(`Unexpected table: ${table}`);
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "picture_frames",
+          id: "frame-2",
+          data: { is_default: true },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(unsetUpdate).toHaveBeenCalledWith({ is_default: false });
+      expect(unsetEq).toHaveBeenCalledWith("is_default", true);
+      expect(unsetNeq).toHaveBeenCalledWith("id", "frame-2");
+      expect(update).toHaveBeenCalledWith({ is_default: true });
+    });
+
+    it("clears is_default when deactivating a frame", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "frame-1", name: "Oak Classic", is_active: false, is_default: false },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+
+      setupClient({ profiles: makeProfileAuth(), picture_frames: { update } });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "picture_frames",
+          id: "frame-1",
+          data: { is_active: false },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(update).toHaveBeenCalledWith({ is_active: false, is_default: false });
+    });
+
+    it("creates a frame and clears existing defaults when created as default", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const unsetEq = vi.fn().mockResolvedValue({ error: null });
+      const unsetUpdate = vi.fn().mockReturnValue({ eq: unsetEq });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "frame-new", name: "Walnut", is_default: true },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const insert = vi.fn().mockReturnValue({ select });
+
+      const { client } = setupClient({ profiles: makeProfileAuth() });
+      let framesCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        if (table === "picture_frames") {
+          framesCallCount++;
+          if (framesCallCount === 1) {
+            return { update: unsetUpdate } as never;
+          }
+          return { insert } as never;
+        }
+        if (table === "profiles") {
+          return makeProfileAuth() as never;
+        }
+        throw new Error(`Unexpected table: ${table}`);
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "picture_frames",
+          data: { name: "Walnut", price: 59, is_active: true, is_default: true },
+        }),
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(unsetUpdate).toHaveBeenCalledWith({ is_default: false });
+      expect(unsetEq).toHaveBeenCalledWith("is_default", true);
+      expect(insert).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Walnut", is_default: true }),
+      );
+    });
+
+    it("forces is_default false when creating an inactive frame", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "frame-new", name: "Draft", is_active: false, is_default: false },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const insert = vi.fn().mockReturnValue({ select });
+
+      setupClient({ profiles: makeProfileAuth(), picture_frames: { insert } });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "picture_frames",
+          data: { name: "Draft", price: 10, is_active: false, is_default: true },
+        }),
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(insert).toHaveBeenCalledWith(
+        expect.objectContaining({ is_active: false, is_default: false }),
+      );
+    });
+  });
 });

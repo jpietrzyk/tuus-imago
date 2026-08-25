@@ -14,6 +14,7 @@ import {
   Megaphone,
   Settings,
   FileText,
+  Frame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.promotions"),
     icon: <Megaphone className="h-5 w-5" />,
     path: "/admin/promotions",
+  },
+  {
+    label: t("admin.navigation.frames"),
+    icon: <Frame className="h-5 w-5" />,
+    path: "/admin/frames",
   },
   {
     label: t("admin.navigation.referralCodes"),

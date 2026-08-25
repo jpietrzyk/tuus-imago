@@ -26,6 +26,7 @@ type UploadedSlotInput = {
   transformedUrl: string;
   publicId?: string;
   secureUrl?: string;
+  frameId?: string | null;
   transformations: {
     rotation: number;
     flipHorizontal: boolean;
@@ -201,7 +202,57 @@ export const handler = async (event: NetlifyEvent) => {
   });
 
   const itemCount = slots.length > 0 ? slots.length : 1;
-  const subtotal = itemCount * CANVAS_PRINT_UNIT_PRICE;
+
+  let framesTotal = 0;
+  const frameById = new Map<string, { id: string; name: string; price: number }>();
+
+  const requestedFrameIds = [
+    ...new Set(
+      slots
+        .map((slot) => slot.frameId?.trim())
+        .filter((frameId): frameId is string => !!frameId),
+    ),
+  ];
+
+  if (requestedFrameIds.length > 0) {
+    const { data: frames, error: framesError } = await supabase
+      .from("picture_frames")
+      .select("id, name, price")
+      .in("id", requestedFrameIds)
+      .eq("is_active", true);
+
+    if (framesError) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Could not validate selected frames." }),
+      };
+    }
+
+    for (const frame of frames ?? []) {
+      frameById.set(frame.id, {
+        id: frame.id,
+        name: frame.name,
+        price: Number(frame.price) || 0,
+      });
+    }
+
+    const missingFrame = requestedFrameIds.find((frameId) => !frameById.has(frameId));
+    if (missingFrame) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Selected frame is not available." }),
+      };
+    }
+  }
+
+  for (const slot of slots) {
+    const frameId = slot.frameId?.trim();
+    if (frameId) {
+      framesTotal += frameById.get(frameId)?.price ?? 0;
+    }
+  }
+
+  const subtotal = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal;
 
   let couponId: string | null = null;
   let couponCode: string | null = null;
@@ -340,16 +391,25 @@ export const handler = async (event: NetlifyEvent) => {
 
   if (slots.length > 0) {
     const { error: itemsInsertError } = await supabase.from("order_items").insert(
-      slots.map((slot) => ({
-        order_id: order.id,
-        slot_index: slot.slotIndex,
-        slot_key: slot.slotKey,
-        transformed_url: slot.transformedUrl,
-        public_id: slot.publicId ?? null,
-        secure_url: slot.secureUrl ?? null,
-        transformations: slot.transformations,
-        ai_adjustments: slot.aiAdjustments ?? null,
-      })),
+      slots.map((slot) => {
+        const frame = slot.frameId?.trim()
+          ? frameById.get(slot.frameId.trim())
+          : undefined;
+
+        return {
+          order_id: order.id,
+          slot_index: slot.slotIndex,
+          slot_key: slot.slotKey,
+          transformed_url: slot.transformedUrl,
+          public_id: slot.publicId ?? null,
+          secure_url: slot.secureUrl ?? null,
+          frame_id: frame?.id ?? null,
+          frame_name: frame?.name ?? null,
+          frame_price: frame?.price ?? 0,
+          transformations: slot.transformations,
+          ai_adjustments: slot.aiAdjustments ?? null,
+        };
+      }),
     );
 
     if (itemsInsertError) {

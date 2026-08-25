@@ -46,6 +46,14 @@ export function AdminApp({ children }: { children: ReactNode }) {
           meta: { label: "Partners" },
         },
         {
+          name: "picture_frames",
+          list: "/admin/frames",
+          create: "/admin/frames/new",
+          edit: "/admin/frames/:id/edit",
+          show: "/admin/frames/:id",
+          meta: { label: "Frames" },
+        },
+        {
           name: "customers",
           list: "/admin/customers",
           show: "/admin/customers/:email",

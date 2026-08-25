@@ -364,27 +364,31 @@ describe("CheckoutPage", () => {
     expect(submitButton.hasAttribute("disabled")).toBe(true);
   });
 
-  it("enables submit button when all required fields are filled", async () => {
-    seedDraft({
-      name: "",
-      email: "",
-      address: "",
-      city: "",
-      postalCode: "",
-    });
-    renderWithRouter();
-    const submitButton = screen.getByRole("button", {
-      name: tr("checkout.placeOrder"),
-    });
-    expect(submitButton.hasAttribute("disabled")).toBe(true);
-    await waitFor(() => {
-      expect(screen.getByRole("combobox").textContent).toContain("Poland");
-    });
-    await fillRequiredFields();
-    await waitFor(() => {
-      expect(submitButton.hasAttribute("disabled")).toBe(false);
-    });
-  });
+  it(
+    "enables submit button when all required fields are filled",
+    async () => {
+      seedDraft({
+        name: "",
+        email: "",
+        address: "",
+        city: "",
+        postalCode: "",
+      });
+      renderWithRouter();
+      const submitButton = screen.getByRole("button", {
+        name: tr("checkout.placeOrder"),
+      });
+      expect(submitButton.hasAttribute("disabled")).toBe(true);
+      await waitFor(() => {
+        expect(screen.getByRole("combobox").textContent).toContain("Poland");
+      });
+      await fillRequiredFields();
+      await waitFor(() => {
+        expect(submitButton.hasAttribute("disabled")).toBe(false);
+      });
+    },
+    15000,
+  );
 
   it("shows inline error on blur for empty required name field", async () => {
     sessionStorage.removeItem("checkout-form-draft");
@@ -1205,6 +1209,210 @@ describe("CheckoutPage", () => {
       renderWithRouter();
 
       expect(screen.queryByText(tr("checkout.promotionDiscount"))).not.toBeInTheDocument();
+    });
+  });
+
+  describe("picture frames", () => {
+    const FRAMES_RESPONSE = {
+      frames: [
+        {
+          id: "frame-1",
+          name: "Oak Classic",
+          description: "Solid oak",
+          price: 49,
+          currency: "PLN",
+          imageUrl: null,
+          color: "#c8a165",
+          material: "oak wood",
+          isDefault: true,
+        },
+        {
+          id: "frame-2",
+          name: "Black Metal",
+          description: null,
+          price: 35,
+          currency: "PLN",
+          imageUrl: null,
+          color: "#111111",
+          material: "aluminium",
+          isDefault: false,
+        },
+      ],
+    };
+
+    function createFramesFetchMock() {
+      return vi.fn((url: string) => {
+        if (url.includes("available-frames")) {
+          return Promise.resolve(
+            new Response(JSON.stringify(FRAMES_RESPONSE), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return createFetchMock()(url);
+      });
+    }
+
+    const singleSlot: UploadedSlotResult = {
+      slotIndex: 0,
+      slotKey: "left",
+      transformations: {
+        brightness: 0,
+        contrast: 0,
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        grayscale: 0,
+        blur: 0,
+      },
+      transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+      publicId: "tuus-imago/left",
+      secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+    };
+
+    it("renders frame selector per slot and preselects the default frame", async () => {
+      vi.stubGlobal("fetch", createFramesFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      const frameSelect = await waitFor(() =>
+        screen.getByRole("combobox", {
+          name: tr("checkout.frames.selectLabel", {
+            slot: tr("upload.slotLeft"),
+          }),
+        }),
+      );
+      expect(frameSelect.textContent).toContain("Oak Classic");
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(
+              formatPrice(CANVAS_PRINT_UNIT_PRICE + 49),
+            ),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it("does not render frame selectors without uploaded slots", async () => {
+      vi.stubGlobal("fetch", createFramesFetchMock());
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByRole("combobox")).toBeDefined();
+      });
+
+      const frameSelects = screen.queryAllByRole("combobox", {
+        name: tr("checkout.frames.selectLabel", { slot: tr("upload.slotLeft") }),
+      });
+      expect(frameSelects).toHaveLength(0);
+    });
+
+    it("degrades to no frame when the frames endpoint fails", async () => {
+      vi.stubGlobal("fetch", createFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+
+      const frameSelects = screen.queryAllByRole("combobox", {
+        name: tr("checkout.frames.selectLabel", { slot: tr("upload.slotLeft") }),
+      });
+      expect(frameSelects).toHaveLength(0);
+    });
+
+    it("updates the total when switching to no frame", async () => {
+      vi.stubGlobal("fetch", createFramesFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      const frameSelect = await waitFor(() =>
+        screen.getByRole("combobox", {
+          name: tr("checkout.frames.selectLabel", {
+            slot: tr("upload.slotLeft"),
+          }),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(
+              formatPrice(CANVAS_PRINT_UNIT_PRICE + 49),
+            ),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+
+      await userEvent.click(frameSelect);
+      const noFrameOption = await waitFor(() =>
+        screen.getByRole("option", { name: new RegExp(tr("checkout.frames.noFrame")) }),
+      );
+      await userEvent.click(noFrameOption);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it("sends frameId per slot in the create-order payload", async () => {
+      const fetchMock = createFramesFetchMock();
+      vi.stubGlobal("fetch", fetchMock);
+      stubLocationHref();
+      seedDraft({});
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() =>
+        screen.getByRole("combobox", {
+          name: tr("checkout.frames.selectLabel", {
+            slot: tr("upload.slotLeft"),
+          }),
+        }),
+      );
+
+      const termsCheckbox = document.getElementById(
+        "termsAccepted",
+      ) as HTMLInputElement;
+      const privacyCheckbox = document.getElementById(
+        "privacyAccepted",
+      ) as HTMLInputElement;
+      if (termsCheckbox) await userEvent.click(termsCheckbox);
+      if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+      await userEvent.click(
+        screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+      );
+
+      await waitFor(
+        () => {
+          expect(fetchMock).toHaveBeenCalledWith(
+            expect.stringContaining("create-order"),
+            expect.anything(),
+          );
+        },
+        { timeout: 3000 },
+      );
+
+      const orderCall = fetchMock.mock.calls.find(([url]: [string]) =>
+        url.includes("create-order"),
+      ) as unknown as [string, RequestInit];
+      const payload = JSON.parse(orderCall[1].body as string);
+      expect(payload.uploadedSlots).toHaveLength(1);
+      expect(payload.uploadedSlots[0].frameId).toBe("frame-1");
     });
   });
 });

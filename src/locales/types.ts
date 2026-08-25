@@ -389,6 +389,11 @@ export interface Translations {
       subtotal: string;
       discount: string;
     };
+    frames: {
+      selectLabel: string;
+      noFrame: string;
+      summaryLabel: string;
+    };
   };
   complaint: {
     title: string;
@@ -507,6 +512,7 @@ export interface Translations {
       customers: string;
       users: string;
       admins: string;
+      frames: string;
       signOut: string;
       adminPanel: string;
       settings: string;
@@ -729,6 +735,27 @@ export interface Translations {
       userCancel: string;
       userConfirmRevokeAdmin: string;
       userConfirmGrantAdmin: string;
+      frames: string;
+      newFrame: string;
+      createFrame: string;
+      editFrame: string;
+      frameName: string;
+      frameDescription: string;
+      framePrice: string;
+      frameImageUrl: string;
+      frameColor: string;
+      frameMaterial: string;
+      frameSortOrder: string;
+      frameDefault: string;
+      frameDefaultHint: string;
+      frameSearchName: string;
+      frameNotFound: string;
+      frameBackToFrames: string;
+      frameDetails: string;
+      frameLook: string;
+      frameUpdated: string;
+      frameNone: string;
+      orderItemFrame: string;
       settingsTitle: string;
       dpiGuard: string;
       dpiGuardHint: string;

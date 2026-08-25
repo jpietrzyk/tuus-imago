@@ -1,0 +1,119 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+
+const mockUseTable = vi.fn();
+
+vi.mock("@refinedev/react-table", () => ({
+  useTable: (...args: unknown[]) => mockUseTable(...args),
+}));
+
+vi.mock("@refinedev/core", () => ({
+  useList: vi.fn(),
+}));
+
+vi.mock("@/components/refine-ui/data-table", () => ({
+  DataTable: ({ table, onRowClick }: { table: { refineCore: { tableQuery: { data: { data: Array<Record<string, unknown>> } } } }; onRowClick?: (row: Record<string, unknown>) => void }) => {
+    const rows = table.refineCore.tableQuery.data?.data ?? [];
+    return (
+      <table>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} data-testid="table-row" onClick={() => onRowClick?.(row)}>
+              <td>{row.name as string}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  },
+}));
+
+vi.mock("@/admin/lib/get-auth-headers", () => ({
+  getAuthHeaders: vi.fn().mockResolvedValue({ Authorization: "Bearer test" }),
+}));
+
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
+
+import { FrameListPage } from "./frame-list";
+
+const FRAMES = [
+  {
+    id: "frame-1",
+    name: "Oak Classic",
+    description: "Solid oak",
+    price: 49,
+    currency: "PLN",
+    image_url: null,
+    color: "#c8a165",
+    material: "oak wood",
+    is_active: true,
+    is_default: true,
+    sort_order: 0,
+    created_at: "2026-01-01T00:00:00Z",
+  },
+];
+
+function setupMocks() {
+  mockUseTable.mockReturnValue({
+    refineCore: {
+      tableQuery: { data: { data: FRAMES, total: 1 } },
+      currentPage: 1,
+      setCurrentPage: vi.fn(),
+      pageCount: 1,
+      pageSize: 25,
+      setPageSize: vi.fn(),
+    },
+  });
+}
+
+function renderFrameList() {
+  return render(
+    <MemoryRouter initialEntries={["/admin/frames"]}>
+      <Routes>
+        <Route path="/admin/frames" element={<FrameListPage />} />
+        <Route path="/admin/frames/:id" element={<div>Frame Show</div>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe("FrameListPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders frame list with data", () => {
+    setupMocks();
+    renderFrameList();
+
+    expect(screen.getByText("Oak Classic")).toBeInTheDocument();
+  });
+
+  it("renders new frame button", () => {
+    setupMocks();
+    renderFrameList();
+
+    expect(screen.getByText("Nowa ramka")).toBeInTheDocument();
+  });
+
+  it("renders search control", () => {
+    setupMocks();
+    renderFrameList();
+
+    expect(screen.getByPlaceholderText("Szukaj nazwy...")).toBeInTheDocument();
+  });
+
+  it("navigates to frame show on row click", async () => {
+    setupMocks();
+    renderFrameList();
+
+    await userEvent.click(screen.getByTestId("table-row"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Frame Show")).toBeInTheDocument();
+    });
+  });
+});

@@ -669,4 +669,227 @@ describe("create-order handler", () => {
       );
     });
   });
+
+  describe("picture frames", () => {
+    function buildSlot(
+      slotKey: "left" | "center" | "right",
+      slotIndex: number,
+      frameId?: string | null,
+    ) {
+      return {
+        slotIndex,
+        slotKey,
+        transformedUrl: `https://example.com/${slotKey}.jpg`,
+        publicId: `public-${slotKey}`,
+        secureUrl: `https://example.com/secure-${slotKey}.jpg`,
+        ...(frameId !== undefined ? { frameId } : {}),
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+        aiAdjustments: null,
+      };
+    }
+
+    function setupFramesMocks(
+      frameRows: Array<{ id: string; name: string; price: number | string }>,
+    ) {
+      const { insert: orderInsert } = createInsertSelectSingle({
+        data: {
+          id: "order-frames-1",
+          order_number: "TI-2026-000200",
+          status: "pending_payment",
+        },
+        error: null,
+      });
+      const orderItemsInsert = vi.fn().mockResolvedValue({ error: null });
+      const historyInsert = vi.fn().mockResolvedValue({ error: null });
+
+      const framesEq = vi.fn().mockResolvedValue({ data: frameRows, error: null });
+      const framesIn = vi.fn().mockReturnValue({ eq: framesEq });
+      const framesSelect = vi.fn().mockReturnValue({ in: framesIn });
+
+      mockSupabaseClient(createClientMock, {
+        orders: {
+          insert: orderInsert,
+          select: vi.fn(),
+          delete: vi.fn(),
+        },
+        order_items: {
+          insert: orderItemsInsert,
+        },
+        order_status_history: {
+          insert: historyInsert,
+        },
+        promotions: createPromotionsNoActiveMock(),
+        picture_frames: {
+          select: framesSelect,
+        },
+      });
+
+      return { orderInsert, orderItemsInsert, historyInsert };
+    }
+
+    it("adds frame surcharge and snapshots frame data on order items", async () => {
+      const mocks = setupFramesMocks([
+        { id: "frame-1", name: "Oak Classic", price: "49.00" },
+      ]);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "frames-test-1",
+          uploadedSlots: [buildSlot("left", 0, "frame-1")],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          total_price: 249,
+        }),
+      );
+      expect(mocks.orderItemsInsert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          frame_id: "frame-1",
+          frame_name: "Oak Classic",
+          frame_price: 49,
+        }),
+      ]);
+    });
+
+    it("supports mixed framed and unframed slots", async () => {
+      const mocks = setupFramesMocks([
+        { id: "frame-1", name: "Oak Classic", price: 49 },
+        { id: "frame-2", name: "Black Metal", price: 35 },
+      ]);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "frames-test-2",
+          uploadedSlots: [
+            buildSlot("left", 0, "frame-1"),
+            buildSlot("center", 1, "frame-2"),
+            buildSlot("right", 2, null),
+          ],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items_count: 3,
+          total_price: 684,
+        }),
+      );
+      expect(mocks.orderItemsInsert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          slot_key: "left",
+          frame_id: "frame-1",
+          frame_price: 49,
+        }),
+        expect.objectContaining({
+          slot_key: "center",
+          frame_id: "frame-2",
+          frame_price: 35,
+        }),
+        expect.objectContaining({
+          slot_key: "right",
+          frame_id: null,
+          frame_name: null,
+          frame_price: 0,
+        }),
+      ]);
+    });
+
+    it("rejects unavailable frame ids with 400", async () => {
+      setupFramesMocks([]);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "frames-test-3",
+          uploadedSlots: [buildSlot("left", 0, "frame-missing")],
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response)).toEqual({
+        error: "Selected frame is not available.",
+      });
+    });
+
+    it("includes frames in the coupon min order amount base", async () => {
+      const mocks = setupFramesMocks([
+        { id: "frame-1", name: "Oak Classic", price: 50 },
+      ]);
+
+      const couponMaybeSingle = vi.fn().mockResolvedValue({
+        data: {
+          id: "coupon-frames",
+          code: "FRAME50",
+          discount_type: "fixed_amount",
+          discount_value: 20,
+          min_order_amount: 240,
+          max_uses: null,
+          used_count: 0,
+          valid_from: null,
+          valid_until: null,
+          is_active: true,
+        },
+        error: null,
+      });
+      const couponEq2 = vi.fn().mockReturnValue({ maybeSingle: couponMaybeSingle });
+      const couponEq = vi.fn().mockReturnValue({ eq: couponEq2 });
+      const couponSelect = vi.fn().mockReturnValue({ eq: couponEq });
+
+      const supabaseMock = {
+        from: vi.fn((table: string) => {
+          const tables: Record<string, unknown> = {
+            orders: { insert: mocks.orderInsert, select: vi.fn(), delete: vi.fn() },
+            order_items: { insert: mocks.orderItemsInsert },
+            order_status_history: { insert: mocks.historyInsert },
+            promotions: createPromotionsNoActiveMock(),
+            picture_frames: { select: vi.fn().mockReturnValue({ in: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ data: [{ id: "frame-1", name: "Oak Classic", price: 50 }], error: null }) }) }) },
+            coupons: { select: couponSelect },
+            coupon_usages: { insert: vi.fn().mockResolvedValue({ error: null }) },
+          };
+          if (!(table in tables)) {
+            throw new Error(`Unexpected table: ${table}`);
+          }
+          return tables[table] as never;
+        }),
+        rpc: vi.fn().mockResolvedValue({ error: null }),
+      };
+
+      createClientMock.mockReturnValue(supabaseMock as never);
+
+      await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "frames-test-4",
+          uploadedSlots: [buildSlot("left", 0, "frame-1")],
+          couponCode: "FRAME50",
+        }),
+      });
+
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          coupon_id: "coupon-frames",
+          discount_amount: 20,
+          total_price: 230,
+        }),
+      );
+    });
+  });
 });
