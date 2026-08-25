@@ -48,6 +48,7 @@ const ALLOWED_RESOURCES = new Set([
   "partners",
   "partner_refs",
   "promotions",
+  "picture_frames",
   "app_settings",
   "content_pages",
 ]);
@@ -273,7 +274,8 @@ export const handler = async (event: NetlifyEvent) => {
     }
   }
 
-  const { resource, id, data, meta } = requestPayload;
+  const { resource, id, meta } = requestPayload;
+  let data = requestPayload.data;
 
   if (!resource || !ALLOWED_RESOURCES.has(resource)) {
     return jsonResponse(400, {
@@ -371,6 +373,19 @@ export const handler = async (event: NetlifyEvent) => {
           return jsonResponse(400, { error: "Missing data payload." });
         }
 
+        if (resource === "picture_frames") {
+          if (data.is_default === true && data.is_active !== false) {
+            await adminClient
+              .from("picture_frames")
+              .update({ is_default: false })
+              .eq("is_default", true);
+          }
+
+          if (data.is_active === false) {
+            data = { ...data, is_default: false };
+          }
+        }
+
         const { data: created, error } = await adminClient
           .from(resource)
           .insert(data)
@@ -416,6 +431,22 @@ export const handler = async (event: NetlifyEvent) => {
             .update({ is_active: false })
             .neq("id", id)
             .eq("is_active", true);
+        }
+
+        if (resource === "picture_frames") {
+          if (data.is_default === true) {
+            await adminClient
+              .from("picture_frames")
+              .update({ is_default: false })
+              .eq("is_default", true)
+              .neq("id", id);
+          }
+
+          if (data.is_active === false) {
+            // Deactivating a frame makes it unavailable in checkout, so it
+            // can no longer be the checkout default.
+            data = { ...data, is_default: false };
+          }
         }
 
         const { data: updated, error } = await adminClient

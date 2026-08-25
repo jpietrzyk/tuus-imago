@@ -34,6 +34,7 @@ import {
   AlertTriangle,
   LogIn,
   Tag,
+  Frame as FrameIcon,
 } from "lucide-react";
 import { t, getCurrentLanguage } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
@@ -47,9 +48,11 @@ import {
   getCustomerAddresses,
   getOrderStatus,
   getActivePromotion,
+  getAvailableFrames,
   type ValidateCouponResponse,
   type CustomerAddress,
   type ActivePromotionResponse,
+  type PictureFrame,
 } from "@/lib/orders-api";
 import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import {
@@ -80,6 +83,10 @@ const PENDING_ORDER_ID_STORAGE = "checkout-pending-order-id";
 const CHECKOUT_SLOTS_STORAGE = "checkout-uploaded-slots";
 const CHECKOUT_COUPON_CODE_STORAGE = "checkout-coupon-code";
 const CHECKOUT_COUPON_RESULT_STORAGE = "checkout-coupon-result";
+const CHECKOUT_FRAME_SELECTIONS_STORAGE = "checkout-frame-selections";
+
+const NO_FRAME_VALUE = "__none__";
+const SLOT_KEYS: UploadedSlotResult["slotKey"][] = ["left", "center", "right"];
 
 function generateOrderSubmissionKey(): string {
   if (
@@ -98,12 +105,22 @@ function generateOrderSubmissionKey(): string {
 function OrderSummary({
   uploadedSlots,
   totalPrice,
+  framesTotal,
   slotLabel,
+  availableFrames,
+  selectedFrameBySlot,
+  onFrameChange,
 }: {
   uploadedSlots: UploadedCheckoutSlot[];
   totalPrice: number;
+  framesTotal: number;
   slotLabel: (slotKey: UploadedSlotResult["slotKey"]) => string;
+  availableFrames: PictureFrame[];
+  selectedFrameBySlot: Record<string, string | null>;
+  onFrameChange: (slotKey: UploadedSlotResult["slotKey"], frameId: string | null) => void;
 }): React.ReactNode {
+  const showFrameSelectors = uploadedSlots.length > 0 && availableFrames.length > 0;
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -116,29 +133,83 @@ function OrderSummary({
             <p className="text-sm font-medium text-gray-700 mb-2">
               {t("checkout.uploadedImages")}
             </p>
-            {uploadedSlots.map((slot) => (
-              <div key={slot.slotKey} className="flex items-center gap-3 py-1">
-                <img
-                  src={getCloudinaryThumbnailUrl(slot.transformedUrl, 48, 48)}
-                  alt={slotLabel(slot.slotKey)}
-                  className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800">
-                    {slotLabel(slot.slotKey)}
-                  </p>
+            {uploadedSlots.map((slot) => {
+              const selectedFrameId = selectedFrameBySlot[slot.slotKey] ?? null;
+
+              return (
+                <div key={slot.slotKey} className="py-1">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={getCloudinaryThumbnailUrl(slot.transformedUrl, 48, 48)}
+                      alt={slotLabel(slot.slotKey)}
+                      className="h-12 w-12 rounded object-cover border border-gray-200 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800">
+                        {slotLabel(slot.slotKey)}
+                      </p>
+                    </div>
+                    <a
+                      href={slot.transformedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-blue-600 hover:text-blue-800"
+                      aria-label={t("upload.openUploadedImage")}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </div>
+                  {showFrameSelectors && (
+                    <div className="flex items-center gap-2 pl-14 pt-1">
+                      <FrameIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                      <Select
+                        value={selectedFrameId ?? NO_FRAME_VALUE}
+                        onValueChange={(value) =>
+                          onFrameChange(
+                            slot.slotKey,
+                            value === NO_FRAME_VALUE ? null : value,
+                          )
+                        }
+                      >
+                        <SelectTrigger
+                          className="h-8 w-full text-xs"
+                          aria-label={t("checkout.frames.selectLabel", {
+                            slot: slotLabel(slot.slotKey),
+                          })}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_FRAME_VALUE} className="text-xs">
+                            {t("checkout.frames.noFrame")}
+                          </SelectItem>
+                          {availableFrames.map((frame) => (
+                            <SelectItem
+                              key={frame.id}
+                              value={frame.id}
+                              className="text-xs"
+                            >
+                              <span className="inline-flex items-center gap-2">
+                                {frame.color && (
+                                  <span
+                                    aria-hidden="true"
+                                    className="inline-block h-3 w-3 rounded-sm border border-gray-300 shrink-0"
+                                    style={{ backgroundColor: frame.color }}
+                                  />
+                                )}
+                                <span>
+                                  {frame.name} (+{formatPrice(frame.price)})
+                                </span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-                <a
-                  href={slot.transformedUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 text-blue-600 hover:text-blue-800"
-                  aria-label={t("upload.openUploadedImage")}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </div>
-            ))}
+              );
+            })}
           </>
         ) : (
           <>
@@ -153,6 +224,14 @@ function OrderSummary({
               <span className="font-semibold text-gray-900">1x</span>
             </div>
           </>
+        )}
+        {framesTotal > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-700">{t("checkout.frames.summaryLabel")}</span>
+            <span className="font-medium text-gray-900">
+              {formatPrice(framesTotal)}
+            </span>
+          </div>
         )}
         <div className="flex justify-between text-lg font-bold border-t pt-2">
           <span className="text-gray-900">{t("checkout.total")}</span>
@@ -243,7 +322,74 @@ export function CheckoutPage() {
     }
   }, [rawUploadedSlots]);
   const itemCount = uploadedSlots.length > 0 ? uploadedSlots.length : 1;
-  const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE;
+
+  const [availableFrames, setAvailableFrames] = useState<PictureFrame[]>([]);
+  const [selectedFrameBySlot, setSelectedFrameBySlot] = useState<
+    Record<string, string | null>
+  >(() => {
+    try {
+      const saved = sessionStorage.getItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
+      if (saved) return JSON.parse(saved) as Record<string, string | null>;
+    } catch {
+      // ignore malformed data
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    getAvailableFrames()
+      .then((frames) => {
+        if (cancelled) return;
+        setAvailableFrames(frames);
+        const defaultFrameId = frames.find((f) => f.isDefault)?.id ?? null;
+        setSelectedFrameBySlot((prev) => {
+          const next: Record<string, string | null> = {};
+          for (const slotKey of SLOT_KEYS) {
+            const saved = prev[slotKey];
+            next[slotKey] =
+              saved && frames.some((f) => f.id === saved)
+                ? saved
+                : defaultFrameId;
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        // Frames feature degrades to "no frame" when unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        CHECKOUT_FRAME_SELECTIONS_STORAGE,
+        JSON.stringify(selectedFrameBySlot),
+      );
+    } catch {
+      // sessionStorage may be unavailable
+    }
+  }, [selectedFrameBySlot]);
+
+  const handleFrameChange = (
+    slotKey: UploadedSlotResult["slotKey"],
+    frameId: string | null,
+  ) => {
+    setSelectedFrameBySlot((prev) => ({ ...prev, [slotKey]: frameId }));
+  };
+
+  const framesTotal = uploadedSlots.reduce((sum, slot) => {
+    const frameId = selectedFrameBySlot[slot.slotKey];
+    const frame = frameId
+      ? availableFrames.find((f) => f.id === frameId)
+      : undefined;
+    return sum + (frame?.price ?? 0);
+  }, 0);
+
+  const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal;
 
   const slotLabel = (slotKey: UploadedSlotResult["slotKey"]): string => {
     if (slotKey === "left") return t("upload.slotLeft");
@@ -347,6 +493,33 @@ export function CheckoutPage() {
       sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
     }
   }, [couponResult]);
+
+  // Re-validate an applied coupon whenever the subtotal changes (e.g. when
+  // the customer picks a different picture frame). The server recomputes the
+  // discount authoritatively on order creation.
+  useEffect(() => {
+    if (!couponResult?.valid || !couponResult.code) return;
+    let cancelled = false;
+    setCouponLoading(true);
+    validateCoupon(couponResult.code, totalPrice)
+      .then((result) => {
+        if (cancelled) return;
+        setCouponResult(result);
+        if (!result.valid) {
+          setCouponError(result.reason ?? "Invalid coupon.");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCouponError("Could not validate coupon.");
+      })
+      .finally(() => {
+        if (!cancelled) setCouponLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalPrice]);
 
   useEffect(() => {
     if (couponCode.trim() || couponResult?.valid) return;
@@ -546,7 +719,10 @@ export function CheckoutPage() {
     try {
       const orderResponse = await createOrder({
         customer: formData,
-        uploadedSlots,
+        uploadedSlots: uploadedSlots.map((slot) => ({
+          ...slot,
+          frameId: selectedFrameBySlot[slot.slotKey] ?? null,
+        })),
         idempotencyKey: submissionKey,
         couponCode: couponResult?.valid ? couponResult.code : undefined,
         refCode: getReferralCookie() ?? undefined,
@@ -574,6 +750,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
         removeReferralCookie();
         setSubmissionKey(generateOrderSubmissionKey());
 
@@ -608,15 +785,16 @@ export function CheckoutPage() {
         orderId: pendingOrderId,
         language: getCurrentLanguage(),
       });
-      sessionStorage.removeItem("checkout-form-draft");
-      sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
-      sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
-      sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
-      sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
-      sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
-      sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
-      removeReferralCookie();
-      window.location.href = p24Response.redirectUrl;
+        sessionStorage.removeItem("checkout-form-draft");
+        sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
+        sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
+        sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+        sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
+        removeReferralCookie();
+        window.location.href = p24Response.redirectUrl;
     } catch (p24Err) {
       setIsRedirecting(false);
       setP24Error(
@@ -709,7 +887,11 @@ export function CheckoutPage() {
           <OrderSummary
             uploadedSlots={uploadedSlots}
             totalPrice={totalPrice}
+            framesTotal={framesTotal}
             slotLabel={slotLabel}
+            availableFrames={availableFrames}
+            selectedFrameBySlot={selectedFrameBySlot}
+            onFrameChange={handleFrameChange}
           />
 
           {/* Coupon Code */}

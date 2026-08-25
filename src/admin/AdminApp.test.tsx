@@ -34,12 +34,13 @@ describe("AdminApp", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId("resource-count")).toHaveTextContent("10");
+    expect(screen.getByTestId("resource-count")).toHaveTextContent("11");
     expect(screen.getByTestId("resource-dashboard")).toBeInTheDocument();
     expect(screen.getByTestId("resource-orders")).toBeInTheDocument();
     expect(screen.getByTestId("resource-coupons")).toBeInTheDocument();
     expect(screen.getByTestId("resource-partner_refs")).toBeInTheDocument();
     expect(screen.getByTestId("resource-partners")).toBeInTheDocument();
+    expect(screen.getByTestId("resource-picture_frames")).toBeInTheDocument();
     expect(screen.getByTestId("resource-customers")).toBeInTheDocument();
     expect(screen.getByTestId("resource-users")).toBeInTheDocument();
     expect(screen.getByTestId("resource-admins")).toBeInTheDocument();

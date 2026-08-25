@@ -72,6 +72,9 @@ type OrderItem = {
   transformed_url: string;
   public_id: string | null;
   secure_url: string | null;
+  frame_id: string | null;
+  frame_name: string | null;
+  frame_price: number;
   transformations: Record<string, unknown>;
   ai_adjustments: Record<string, unknown> | null;
 };
@@ -176,7 +179,7 @@ export function OrderShowPage() {
     filters: [{ field: "order_id", operator: "eq", value: id }],
     meta: {
       select:
-        "id,slot_key,slot_index,transformed_url,public_id,secure_url,transformations,ai_adjustments",
+        "id,slot_key,slot_index,transformed_url,public_id,secure_url,frame_id,frame_name,frame_price,transformations,ai_adjustments",
     },
   });
 
@@ -340,6 +343,17 @@ export function OrderShowPage() {
                             <span className="text-sm font-medium">
                               {formatPrice(order.unit_price)}
                             </span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>
+                              {t("admin.labels.orderItemFrame")}:{" "}
+                              {item.frame_name ?? t("admin.labels.frameNone")}
+                            </span>
+                            {item.frame_name && (
+                              <span>
+                                +{formatPrice(Number(item.frame_price) || 0)}
+                              </span>
+                            )}
                           </div>
                           {aiLabels.length > 0 && (
                             <div className="flex flex-wrap gap-1">
