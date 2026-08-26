@@ -54,6 +54,14 @@ export function AdminApp({ children }: { children: ReactNode }) {
           meta: { label: "Frames" },
         },
         {
+          name: "picture_canvases",
+          list: "/admin/canvases",
+          create: "/admin/canvases/new",
+          edit: "/admin/canvases/:id/edit",
+          show: "/admin/canvases/:id",
+          meta: { label: "Canvases" },
+        },
+        {
           name: "customers",
           list: "/admin/customers",
           show: "/admin/customers/:email",

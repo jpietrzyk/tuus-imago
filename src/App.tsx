@@ -220,6 +220,30 @@ const FrameEditPage = lazy(() =>
     default: m.FrameEditPage,
   })),
 );
+
+const CanvasListPage = lazy(() =>
+  import("./admin/pages/canvas-list").then((m) => ({
+    default: m.CanvasListPage,
+  })),
+);
+
+const CanvasCreatePage = lazy(() =>
+  import("./admin/pages/canvas-create").then((m) => ({
+    default: m.CanvasCreatePage,
+  })),
+);
+
+const CanvasShowPage = lazy(() =>
+  import("./admin/pages/canvas-show").then((m) => ({
+    default: m.CanvasShowPage,
+  })),
+);
+
+const CanvasEditPage = lazy(() =>
+  import("./admin/pages/canvas-edit").then((m) => ({
+    default: m.CanvasEditPage,
+  })),
+);
 const SettingsPage = lazy(() =>
   import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
@@ -476,6 +500,38 @@ export function App() {
               element={
                 <Suspense fallback={<AdminPageLoader />}>
                   <FrameEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="canvases"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CanvasListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="canvases/new"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CanvasCreatePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="canvases/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CanvasShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="canvases/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <CanvasEditPage />
                 </Suspense>
               }
             />

@@ -1415,5 +1415,209 @@ describe("CheckoutPage", () => {
       expect(payload.uploadedSlots[0].frameId).toBe("frame-1");
     });
   });
+
+  describe("picture canvases", () => {
+    const CANVASES_RESPONSE = {
+      canvases: [
+        {
+          id: "canvas-1",
+          name: "Classic Matte",
+          description: "Matte cotton canvas",
+          price: 39,
+          currency: "PLN",
+          imageUrl: null,
+          color: "#f5f0e6",
+          material: "cotton",
+          isDefault: true,
+        },
+        {
+          id: "canvas-2",
+          name: "Glossy Premium",
+          description: null,
+          price: 55,
+          currency: "PLN",
+          imageUrl: null,
+          color: "#ffffff",
+          material: "polyester",
+          isDefault: false,
+        },
+      ],
+    };
+
+    function createCanvasesFetchMock() {
+      return vi.fn((url: string) => {
+        if (url.includes("available-canvases")) {
+          return Promise.resolve(
+            new Response(JSON.stringify(CANVASES_RESPONSE), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return createFetchMock()(url);
+      });
+    }
+
+    const singleSlot: UploadedSlotResult = {
+      slotIndex: 0,
+      slotKey: "left",
+      transformations: {
+        brightness: 0,
+        contrast: 0,
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        grayscale: 0,
+        blur: 0,
+      },
+      transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+      publicId: "tuus-imago/left",
+      secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+    };
+
+    it("renders canvas selector per slot and preselects the default canvas", async () => {
+      vi.stubGlobal("fetch", createCanvasesFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      const canvasSelect = await waitFor(() =>
+        screen.getByRole("combobox", {
+          name: tr("checkout.canvases.selectLabel", {
+            slot: tr("upload.slotLeft"),
+          }),
+        }),
+      );
+      expect(canvasSelect.textContent).toContain("Classic Matte");
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(
+              formatPrice(CANVAS_PRINT_UNIT_PRICE + 39),
+            ),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it("does not render canvas selectors without uploaded slots", async () => {
+      vi.stubGlobal("fetch", createCanvasesFetchMock());
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByRole("combobox")).toBeDefined();
+      });
+
+      const canvasSelects = screen.queryAllByRole("combobox", {
+        name: tr("checkout.canvases.selectLabel", { slot: tr("upload.slotLeft") }),
+      });
+      expect(canvasSelects).toHaveLength(0);
+    });
+
+    it("degrades to no canvas when the canvases endpoint fails", async () => {
+      vi.stubGlobal("fetch", createFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+
+      const canvasSelects = screen.queryAllByRole("combobox", {
+        name: tr("checkout.canvases.selectLabel", { slot: tr("upload.slotLeft") }),
+      });
+      expect(canvasSelects).toHaveLength(0);
+    });
+
+    it("updates the total when switching to no canvas", async () => {
+      vi.stubGlobal("fetch", createCanvasesFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      const canvasSelect = await waitFor(() =>
+        screen.getByRole("combobox", {
+          name: tr("checkout.canvases.selectLabel", {
+            slot: tr("upload.slotLeft"),
+          }),
+        }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(
+              formatPrice(CANVAS_PRINT_UNIT_PRICE + 39),
+            ),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+
+      await userEvent.click(canvasSelect);
+      const noCanvasOption = await waitFor(() =>
+        screen.getByRole("option", { name: new RegExp(tr("checkout.canvases.noCanvas")) }),
+      );
+      await userEvent.click(noCanvasOption);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it("sends canvasId per slot in the create-order payload", async () => {
+      const fetchMock = createCanvasesFetchMock();
+      vi.stubGlobal("fetch", fetchMock);
+      stubLocationHref();
+      seedDraft({});
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() =>
+        screen.getByRole("combobox", {
+          name: tr("checkout.canvases.selectLabel", {
+            slot: tr("upload.slotLeft"),
+          }),
+        }),
+      );
+
+      const termsCheckbox = document.getElementById(
+        "termsAccepted",
+      ) as HTMLInputElement;
+      const privacyCheckbox = document.getElementById(
+        "privacyAccepted",
+      ) as HTMLInputElement;
+      if (termsCheckbox) await userEvent.click(termsCheckbox);
+      if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+      await userEvent.click(
+        screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+      );
+
+      await waitFor(
+        () => {
+          expect(fetchMock).toHaveBeenCalledWith(
+            expect.stringContaining("create-order"),
+            expect.anything(),
+          );
+        },
+        { timeout: 3000 },
+      );
+
+      const orderCall = fetchMock.mock.calls.find(([url]: [string]) =>
+        url.includes("create-order"),
+      ) as unknown as [string, RequestInit];
+      const payload = JSON.parse(orderCall[1].body as string);
+      expect(payload.uploadedSlots).toHaveLength(1);
+      expect(payload.uploadedSlots[0].canvasId).toBe("canvas-1");
+    });
+  });
 });
 

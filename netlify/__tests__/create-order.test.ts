@@ -892,4 +892,200 @@ describe("create-order handler", () => {
       );
     });
   });
+
+  describe("picture canvases", () => {
+    function buildSlot(
+      slotKey: "left" | "center" | "right",
+      slotIndex: number,
+      canvasId?: string | null,
+    ) {
+      return {
+        slotIndex,
+        slotKey,
+        transformedUrl: `https://example.com/${slotKey}.jpg`,
+        publicId: `public-${slotKey}`,
+        secureUrl: `https://example.com/secure-${slotKey}.jpg`,
+        ...(canvasId !== undefined ? { canvasId } : {}),
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+        aiAdjustments: null,
+      };
+    }
+
+    function setupCanvasesMocks(
+      canvasRows: Array<{ id: string; name: string; price: number | string }>,
+    ) {
+      const { insert: orderInsert } = createInsertSelectSingle({
+        data: {
+          id: "order-canvases-1",
+          order_number: "TI-2026-000300",
+          status: "pending_payment",
+        },
+        error: null,
+      });
+      const orderItemsInsert = vi.fn().mockResolvedValue({ error: null });
+      const historyInsert = vi.fn().mockResolvedValue({ error: null });
+
+      const canvasesEq = vi.fn().mockResolvedValue({ data: canvasRows, error: null });
+      const canvasesIn = vi.fn().mockReturnValue({ eq: canvasesEq });
+      const canvasesSelect = vi.fn().mockReturnValue({ in: canvasesIn });
+
+      mockSupabaseClient(createClientMock, {
+        orders: {
+          insert: orderInsert,
+          select: vi.fn(),
+          delete: vi.fn(),
+        },
+        order_items: {
+          insert: orderItemsInsert,
+        },
+        order_status_history: {
+          insert: historyInsert,
+        },
+        promotions: createPromotionsNoActiveMock(),
+        picture_canvases: {
+          select: canvasesSelect,
+        },
+      });
+
+      return { orderInsert, orderItemsInsert, historyInsert };
+    }
+
+    it("adds canvas surcharge and snapshots canvas data on order items", async () => {
+      const mocks = setupCanvasesMocks([
+        { id: "canvas-1", name: "Classic Matte", price: "39.00" },
+      ]);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "canvases-test-1",
+          uploadedSlots: [buildSlot("left", 0, "canvas-1")],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          total_price: 239,
+        }),
+      );
+      expect(mocks.orderItemsInsert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          canvas_id: "canvas-1",
+          canvas_name: "Classic Matte",
+          canvas_price: 39,
+        }),
+      ]);
+    });
+
+    it("supports mixed canvas and plain slots alongside frames", async () => {
+      const { insert: orderInsert } = createInsertSelectSingle({
+        data: {
+          id: "order-canvases-2",
+          order_number: "TI-2026-000301",
+          status: "pending_payment",
+        },
+        error: null,
+      });
+      const orderItemsInsert = vi.fn().mockResolvedValue({ error: null });
+      const historyInsert = vi.fn().mockResolvedValue({ error: null });
+
+      const framesEq = vi
+        .fn()
+        .mockResolvedValue({ data: [{ id: "frame-1", name: "Oak Classic", price: 49 }], error: null });
+      const framesIn = vi.fn().mockReturnValue({ eq: framesEq });
+      const framesSelect = vi.fn().mockReturnValue({ in: framesIn });
+
+      const canvasesEq = vi
+        .fn()
+        .mockResolvedValue({ data: [{ id: "canvas-1", name: "Classic Matte", price: 39 }], error: null });
+      const canvasesIn = vi.fn().mockReturnValue({ eq: canvasesEq });
+      const canvasesSelect = vi.fn().mockReturnValue({ in: canvasesIn });
+
+      mockSupabaseClient(createClientMock, {
+        orders: {
+          insert: orderInsert,
+          select: vi.fn(),
+          delete: vi.fn(),
+        },
+        order_items: {
+          insert: orderItemsInsert,
+        },
+        order_status_history: {
+          insert: historyInsert,
+        },
+        promotions: createPromotionsNoActiveMock(),
+        picture_frames: {
+          select: framesSelect,
+        },
+        picture_canvases: {
+          select: canvasesSelect,
+        },
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "canvases-test-2",
+          uploadedSlots: [
+            { ...buildSlot("left", 0, "canvas-1"), frameId: "frame-1" },
+            buildSlot("right", 2, null),
+          ],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items_count: 2,
+          total_price: 488,
+        }),
+      );
+      expect(orderItemsInsert).toHaveBeenCalledWith([
+        expect.objectContaining({
+          slot_key: "left",
+          frame_id: "frame-1",
+          frame_price: 49,
+          canvas_id: "canvas-1",
+          canvas_price: 39,
+        }),
+        expect.objectContaining({
+          slot_key: "right",
+          frame_id: null,
+          frame_price: 0,
+          canvas_id: null,
+          canvas_name: null,
+          canvas_price: 0,
+        }),
+      ]);
+    });
+
+    it("rejects unavailable canvas ids with 400", async () => {
+      setupCanvasesMocks([]);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "canvases-test-3",
+          uploadedSlots: [buildSlot("left", 0, "canvas-missing")],
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response)).toEqual({
+        error: "Selected canvas is not available.",
+      });
+    });
+  });
 });

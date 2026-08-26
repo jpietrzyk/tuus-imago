@@ -49,6 +49,7 @@ const ALLOWED_RESOURCES = new Set([
   "partner_refs",
   "promotions",
   "picture_frames",
+  "picture_canvases",
   "app_settings",
   "content_pages",
 ]);
@@ -373,10 +374,10 @@ export const handler = async (event: NetlifyEvent) => {
           return jsonResponse(400, { error: "Missing data payload." });
         }
 
-        if (resource === "picture_frames") {
+        if (resource === "picture_frames" || resource === "picture_canvases") {
           if (data.is_default === true && data.is_active !== false) {
             await adminClient
-              .from("picture_frames")
+              .from(resource)
               .update({ is_default: false })
               .eq("is_default", true);
           }
@@ -433,18 +434,18 @@ export const handler = async (event: NetlifyEvent) => {
             .eq("is_active", true);
         }
 
-        if (resource === "picture_frames") {
+        if (resource === "picture_frames" || resource === "picture_canvases") {
           if (data.is_default === true) {
             await adminClient
-              .from("picture_frames")
+              .from(resource)
               .update({ is_default: false })
               .eq("is_default", true)
               .neq("id", id);
           }
 
           if (data.is_active === false) {
-            // Deactivating a frame makes it unavailable in checkout, so it
-            // can no longer be the checkout default.
+            // Deactivating a frame/canvas makes it unavailable in checkout, so
+            // it can no longer be the checkout default.
             data = { ...data, is_default: false };
           }
         }
