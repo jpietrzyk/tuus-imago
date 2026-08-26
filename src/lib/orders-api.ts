@@ -22,9 +22,13 @@ export type FrameSelectedCheckoutSlot = UploadedCheckoutSlot & {
   frameId?: string | null;
 };
 
+export type CanvasSelectedCheckoutSlot = FrameSelectedCheckoutSlot & {
+  canvasId?: string | null;
+};
+
 export interface CreateOrderRequest {
   customer: CheckoutCustomerInput;
-  uploadedSlots: FrameSelectedCheckoutSlot[];
+  uploadedSlots: CanvasSelectedCheckoutSlot[];
   idempotencyKey: string;
   couponCode?: string;
   refCode?: string;
@@ -153,6 +157,24 @@ export async function getAvailableFrames(): Promise<PictureFrame[]> {
   const response = await fetch("/.netlify/functions/available-frames");
   const data = await parseJsonResponse<{ frames: PictureFrame[] }>(response);
   return Array.isArray(data.frames) ? data.frames : [];
+}
+
+export interface PictureCanvas {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  imageUrl: string | null;
+  color: string | null;
+  material: string | null;
+  isDefault: boolean;
+}
+
+export async function getAvailableCanvases(): Promise<PictureCanvas[]> {
+  const response = await fetch("/.netlify/functions/available-canvases");
+  const data = await parseJsonResponse<{ canvases: PictureCanvas[] }>(response);
+  return Array.isArray(data.canvases) ? data.canvases : [];
 }
 
 export interface DpiSettingsResponse {

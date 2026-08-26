@@ -15,6 +15,7 @@ import {
   Settings,
   FileText,
   Frame,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.frames"),
     icon: <Frame className="h-5 w-5" />,
     path: "/admin/frames",
+  },
+  {
+    label: t("admin.navigation.canvases"),
+    icon: <ImageIcon className="h-5 w-5" />,
+    path: "/admin/canvases",
   },
   {
     label: t("admin.navigation.referralCodes"),

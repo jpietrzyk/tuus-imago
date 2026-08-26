@@ -35,6 +35,7 @@ import {
   LogIn,
   Tag,
   Frame as FrameIcon,
+  Image as ImageIcon,
 } from "lucide-react";
 import { t, getCurrentLanguage } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
@@ -49,10 +50,12 @@ import {
   getOrderStatus,
   getActivePromotion,
   getAvailableFrames,
+  getAvailableCanvases,
   type ValidateCouponResponse,
   type CustomerAddress,
   type ActivePromotionResponse,
   type PictureFrame,
+  type PictureCanvas,
 } from "@/lib/orders-api";
 import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
 import {
@@ -84,8 +87,10 @@ const CHECKOUT_SLOTS_STORAGE = "checkout-uploaded-slots";
 const CHECKOUT_COUPON_CODE_STORAGE = "checkout-coupon-code";
 const CHECKOUT_COUPON_RESULT_STORAGE = "checkout-coupon-result";
 const CHECKOUT_FRAME_SELECTIONS_STORAGE = "checkout-frame-selections";
+const CHECKOUT_CANVAS_SELECTIONS_STORAGE = "checkout-canvas-selections";
 
 const NO_FRAME_VALUE = "__none__";
+const NO_CANVAS_VALUE = "__none__";
 const SLOT_KEYS: UploadedSlotResult["slotKey"][] = ["left", "center", "right"];
 
 function generateOrderSubmissionKey(): string {
@@ -106,20 +111,29 @@ function OrderSummary({
   uploadedSlots,
   totalPrice,
   framesTotal,
+  canvasesTotal,
   slotLabel,
   availableFrames,
   selectedFrameBySlot,
   onFrameChange,
+  availableCanvases,
+  selectedCanvasBySlot,
+  onCanvasChange,
 }: {
   uploadedSlots: UploadedCheckoutSlot[];
   totalPrice: number;
   framesTotal: number;
+  canvasesTotal: number;
   slotLabel: (slotKey: UploadedSlotResult["slotKey"]) => string;
   availableFrames: PictureFrame[];
   selectedFrameBySlot: Record<string, string | null>;
   onFrameChange: (slotKey: UploadedSlotResult["slotKey"], frameId: string | null) => void;
+  availableCanvases: PictureCanvas[];
+  selectedCanvasBySlot: Record<string, string | null>;
+  onCanvasChange: (slotKey: UploadedSlotResult["slotKey"], canvasId: string | null) => void;
 }): React.ReactNode {
   const showFrameSelectors = uploadedSlots.length > 0 && availableFrames.length > 0;
+  const showCanvasSelectors = uploadedSlots.length > 0 && availableCanvases.length > 0;
 
   return (
     <div className="space-y-4">
@@ -135,6 +149,7 @@ function OrderSummary({
             </p>
             {uploadedSlots.map((slot) => {
               const selectedFrameId = selectedFrameBySlot[slot.slotKey] ?? null;
+              const selectedCanvasId = selectedCanvasBySlot[slot.slotKey] ?? null;
 
               return (
                 <div key={slot.slotKey} className="py-1">
@@ -207,6 +222,54 @@ function OrderSummary({
                       </Select>
                     </div>
                   )}
+                  {showCanvasSelectors && (
+                    <div className="flex items-center gap-2 pl-14 pt-1">
+                      <ImageIcon className="h-4 w-4 text-gray-400 shrink-0" />
+                      <Select
+                        value={selectedCanvasId ?? NO_CANVAS_VALUE}
+                        onValueChange={(value) =>
+                          onCanvasChange(
+                            slot.slotKey,
+                            value === NO_CANVAS_VALUE ? null : value,
+                          )
+                        }
+                      >
+                        <SelectTrigger
+                          className="h-8 w-full text-xs"
+                          aria-label={t("checkout.canvases.selectLabel", {
+                            slot: slotLabel(slot.slotKey),
+                          })}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_CANVAS_VALUE} className="text-xs">
+                            {t("checkout.canvases.noCanvas")}
+                          </SelectItem>
+                          {availableCanvases.map((canvas) => (
+                            <SelectItem
+                              key={canvas.id}
+                              value={canvas.id}
+                              className="text-xs"
+                            >
+                              <span className="inline-flex items-center gap-2">
+                                {canvas.color && (
+                                  <span
+                                    aria-hidden="true"
+                                    className="inline-block h-3 w-3 rounded-sm border border-gray-300 shrink-0"
+                                    style={{ backgroundColor: canvas.color }}
+                                  />
+                                )}
+                                <span>
+                                  {canvas.name} (+{formatPrice(canvas.price)})
+                                </span>
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -230,6 +293,14 @@ function OrderSummary({
             <span className="text-gray-700">{t("checkout.frames.summaryLabel")}</span>
             <span className="font-medium text-gray-900">
               {formatPrice(framesTotal)}
+            </span>
+          </div>
+        )}
+        {canvasesTotal > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-700">{t("checkout.canvases.summaryLabel")}</span>
+            <span className="font-medium text-gray-900">
+              {formatPrice(canvasesTotal)}
             </span>
           </div>
         )}
@@ -389,7 +460,73 @@ export function CheckoutPage() {
     return sum + (frame?.price ?? 0);
   }, 0);
 
-  const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal;
+  const [availableCanvases, setAvailableCanvases] = useState<PictureCanvas[]>([]);
+  const [selectedCanvasBySlot, setSelectedCanvasBySlot] = useState<
+    Record<string, string | null>
+  >(() => {
+    try {
+      const saved = sessionStorage.getItem(CHECKOUT_CANVAS_SELECTIONS_STORAGE);
+      if (saved) return JSON.parse(saved) as Record<string, string | null>;
+    } catch {
+      // ignore malformed data
+    }
+    return {};
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    getAvailableCanvases()
+      .then((canvases) => {
+        if (cancelled) return;
+        setAvailableCanvases(canvases);
+        const defaultCanvasId = canvases.find((c) => c.isDefault)?.id ?? null;
+        setSelectedCanvasBySlot((prev) => {
+          const next: Record<string, string | null> = {};
+          for (const slotKey of SLOT_KEYS) {
+            const saved = prev[slotKey];
+            next[slotKey] =
+              saved && canvases.some((c) => c.id === saved)
+                ? saved
+                : defaultCanvasId;
+          }
+          return next;
+        });
+      })
+      .catch(() => {
+        // Canvases feature degrades to "no canvas" when unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        CHECKOUT_CANVAS_SELECTIONS_STORAGE,
+        JSON.stringify(selectedCanvasBySlot),
+      );
+    } catch {
+      // sessionStorage may be unavailable
+    }
+  }, [selectedCanvasBySlot]);
+
+  const handleCanvasChange = (
+    slotKey: UploadedSlotResult["slotKey"],
+    canvasId: string | null,
+  ) => {
+    setSelectedCanvasBySlot((prev) => ({ ...prev, [slotKey]: canvasId }));
+  };
+
+  const canvasesTotal = uploadedSlots.reduce((sum, slot) => {
+    const canvasId = selectedCanvasBySlot[slot.slotKey];
+    const canvas = canvasId
+      ? availableCanvases.find((c) => c.id === canvasId)
+      : undefined;
+    return sum + (canvas?.price ?? 0);
+  }, 0);
+
+  const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal + canvasesTotal;
 
   const slotLabel = (slotKey: UploadedSlotResult["slotKey"]): string => {
     if (slotKey === "left") return t("upload.slotLeft");
@@ -495,8 +632,8 @@ export function CheckoutPage() {
   }, [couponResult]);
 
   // Re-validate an applied coupon whenever the subtotal changes (e.g. when
-  // the customer picks a different picture frame). The server recomputes the
-  // discount authoritatively on order creation.
+  // the customer picks a different picture frame or canvas). The server
+  // recomputes the discount authoritatively on order creation.
   useEffect(() => {
     if (!couponResult?.valid || !couponResult.code) return;
     let cancelled = false;
@@ -722,6 +859,7 @@ export function CheckoutPage() {
         uploadedSlots: uploadedSlots.map((slot) => ({
           ...slot,
           frameId: selectedFrameBySlot[slot.slotKey] ?? null,
+          canvasId: selectedCanvasBySlot[slot.slotKey] ?? null,
         })),
         idempotencyKey: submissionKey,
         couponCode: couponResult?.valid ? couponResult.code : undefined,
@@ -751,6 +889,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_CANVAS_SELECTIONS_STORAGE);
         removeReferralCookie();
         setSubmissionKey(generateOrderSubmissionKey());
 
@@ -793,6 +932,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_CANVAS_SELECTIONS_STORAGE);
         removeReferralCookie();
         window.location.href = p24Response.redirectUrl;
     } catch (p24Err) {
@@ -888,10 +1028,14 @@ export function CheckoutPage() {
             uploadedSlots={uploadedSlots}
             totalPrice={totalPrice}
             framesTotal={framesTotal}
+            canvasesTotal={canvasesTotal}
             slotLabel={slotLabel}
             availableFrames={availableFrames}
             selectedFrameBySlot={selectedFrameBySlot}
             onFrameChange={handleFrameChange}
+            availableCanvases={availableCanvases}
+            selectedCanvasBySlot={selectedCanvasBySlot}
+            onCanvasChange={handleCanvasChange}
           />
 
           {/* Coupon Code */}

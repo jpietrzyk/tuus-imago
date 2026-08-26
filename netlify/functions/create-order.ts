@@ -27,6 +27,7 @@ type UploadedSlotInput = {
   publicId?: string;
   secureUrl?: string;
   frameId?: string | null;
+  canvasId?: string | null;
   transformations: {
     rotation: number;
     flipHorizontal: boolean;
@@ -252,7 +253,56 @@ export const handler = async (event: NetlifyEvent) => {
     }
   }
 
-  const subtotal = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal;
+  let canvasesTotal = 0;
+  const canvasById = new Map<string, { id: string; name: string; price: number }>();
+
+  const requestedCanvasIds = [
+    ...new Set(
+      slots
+        .map((slot) => slot.canvasId?.trim())
+        .filter((canvasId): canvasId is string => !!canvasId),
+    ),
+  ];
+
+  if (requestedCanvasIds.length > 0) {
+    const { data: canvases, error: canvasesError } = await supabase
+      .from("picture_canvases")
+      .select("id, name, price")
+      .in("id", requestedCanvasIds)
+      .eq("is_active", true);
+
+    if (canvasesError) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Could not validate selected canvases." }),
+      };
+    }
+
+    for (const canvas of canvases ?? []) {
+      canvasById.set(canvas.id, {
+        id: canvas.id,
+        name: canvas.name,
+        price: Number(canvas.price) || 0,
+      });
+    }
+
+    const missingCanvas = requestedCanvasIds.find((canvasId) => !canvasById.has(canvasId));
+    if (missingCanvas) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Selected canvas is not available." }),
+      };
+    }
+  }
+
+  for (const slot of slots) {
+    const canvasId = slot.canvasId?.trim();
+    if (canvasId) {
+      canvasesTotal += canvasById.get(canvasId)?.price ?? 0;
+    }
+  }
+
+  const subtotal = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal + canvasesTotal;
 
   let couponId: string | null = null;
   let couponCode: string | null = null;
@@ -395,6 +445,9 @@ export const handler = async (event: NetlifyEvent) => {
         const frame = slot.frameId?.trim()
           ? frameById.get(slot.frameId.trim())
           : undefined;
+        const canvas = slot.canvasId?.trim()
+          ? canvasById.get(slot.canvasId.trim())
+          : undefined;
 
         return {
           order_id: order.id,
@@ -406,6 +459,9 @@ export const handler = async (event: NetlifyEvent) => {
           frame_id: frame?.id ?? null,
           frame_name: frame?.name ?? null,
           frame_price: frame?.price ?? 0,
+          canvas_id: canvas?.id ?? null,
+          canvas_name: canvas?.name ?? null,
+          canvas_price: canvas?.price ?? 0,
           transformations: slot.transformations,
           ai_adjustments: slot.aiAdjustments ?? null,
         };

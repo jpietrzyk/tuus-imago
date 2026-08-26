@@ -75,6 +75,9 @@ type OrderItem = {
   frame_id: string | null;
   frame_name: string | null;
   frame_price: number;
+  canvas_id: string | null;
+  canvas_name: string | null;
+  canvas_price: number;
   transformations: Record<string, unknown>;
   ai_adjustments: Record<string, unknown> | null;
 };
@@ -179,7 +182,7 @@ export function OrderShowPage() {
     filters: [{ field: "order_id", operator: "eq", value: id }],
     meta: {
       select:
-        "id,slot_key,slot_index,transformed_url,public_id,secure_url,frame_id,frame_name,frame_price,transformations,ai_adjustments",
+        "id,slot_key,slot_index,transformed_url,public_id,secure_url,frame_id,frame_name,frame_price,canvas_id,canvas_name,canvas_price,transformations,ai_adjustments",
     },
   });
 
@@ -352,6 +355,17 @@ export function OrderShowPage() {
                             {item.frame_name && (
                               <span>
                                 +{formatPrice(Number(item.frame_price) || 0)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>
+                              {t("admin.labels.orderItemCanvas")}:{" "}
+                              {item.canvas_name ?? t("admin.labels.canvasNone")}
+                            </span>
+                            {item.canvas_name && (
+                              <span>
+                                +{formatPrice(Number(item.canvas_price) || 0)}
                               </span>
                             )}
                           </div>

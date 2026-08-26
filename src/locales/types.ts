@@ -394,6 +394,11 @@ export interface Translations {
       noFrame: string;
       summaryLabel: string;
     };
+    canvases: {
+      selectLabel: string;
+      noCanvas: string;
+      summaryLabel: string;
+    };
   };
   complaint: {
     title: string;
@@ -513,6 +518,7 @@ export interface Translations {
       users: string;
       admins: string;
       frames: string;
+      canvases: string;
       signOut: string;
       adminPanel: string;
       settings: string;
@@ -756,6 +762,27 @@ export interface Translations {
       frameUpdated: string;
       frameNone: string;
       orderItemFrame: string;
+      canvases: string;
+      newCanvas: string;
+      createCanvas: string;
+      editCanvas: string;
+      canvasName: string;
+      canvasDescription: string;
+      canvasPrice: string;
+      canvasImageUrl: string;
+      canvasColor: string;
+      canvasMaterial: string;
+      canvasSortOrder: string;
+      canvasDefault: string;
+      canvasDefaultHint: string;
+      canvasSearchName: string;
+      canvasNotFound: string;
+      canvasBackToCanvases: string;
+      canvasDetails: string;
+      canvasLook: string;
+      canvasUpdated: string;
+      canvasNone: string;
+      orderItemCanvas: string;
       settingsTitle: string;
       dpiGuard: string;
       dpiGuardHint: string;
