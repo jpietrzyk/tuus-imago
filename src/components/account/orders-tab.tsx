@@ -145,15 +145,39 @@ export function OrdersTab() {
                   <img
                     src={getCloudinaryThumbnailUrl(item.transformed_url, 48, 48)}
                     alt={`${item.slot_key} painting`}
-                    className="h-12 w-12 rounded object-cover border"
+                    className="h-12 w-12 rounded object-cover border shrink-0"
                   />
-                  <span className="text-sm capitalize">{item.slot_key}</span>
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <p className="text-sm capitalize">{item.slot_key}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{t("account.print")}</span>
+                      <span>{formatPrice(selectedOrder.unit_price)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        {t("account.orderItemFrame")}:{" "}
+                        {item.frame_name ?? t("account.frameNone")}
+                      </span>
+                      {item.frame_name && (
+                        <span>+{formatPrice(Number(item.frame_price) || 0)}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>
+                        {t("account.orderItemCanvas")}:{" "}
+                        {item.canvas_name ?? t("account.canvasNone")}
+                      </span>
+                      {item.canvas_name && (
+                        <span>+{formatPrice(Number(item.canvas_price) || 0)}</span>
+                      )}
+                    </div>
+                  </div>
                   <a
                     href={item.transformed_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={t("account.openInNewTab")}
-                    className="ml-auto text-blue-600 hover:text-blue-800"
+                    className="ml-auto text-blue-600 hover:text-blue-800 shrink-0"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>

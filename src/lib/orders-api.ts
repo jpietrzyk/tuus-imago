@@ -99,6 +99,12 @@ export interface CustomerOrderItem {
   slot_key: string;
   slot_index: number;
   transformed_url: string;
+  frame_id: string | null;
+  frame_name: string | null;
+  frame_price: number;
+  canvas_id: string | null;
+  canvas_name: string | null;
+  canvas_price: number;
   transformations: Record<string, unknown>;
   ai_adjustments: Record<string, unknown> | null;
 }

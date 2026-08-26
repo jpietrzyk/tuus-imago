@@ -65,6 +65,11 @@ export interface Translations {
     trackingNumber: string;
     items: string;
     item: string;
+    print: string;
+    orderItemFrame: string;
+    frameNone: string;
+    orderItemCanvas: string;
+    canvasNone: string;
     shippingAddress: string;
     orderNumber: string;
     noAddresses: string;

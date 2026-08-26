@@ -37,6 +37,12 @@ type OrderItemRow = {
   slot_key: string;
   slot_index: number;
   transformed_url: string;
+  frame_id: string | null;
+  frame_name: string | null;
+  frame_price: number;
+  canvas_id: string | null;
+  canvas_name: string | null;
+  canvas_price: number;
   transformations: Record<string, unknown>;
   ai_adjustments: Record<string, unknown> | null;
 };
@@ -78,7 +84,7 @@ export const handler = async (event: NetlifyEvent) => {
 
     const { data: items } = await supabase
       .from("order_items")
-      .select("id, slot_key, slot_index, transformed_url, transformations, ai_adjustments")
+      .select("id, slot_key, slot_index, transformed_url, frame_id, frame_name, frame_price, canvas_id, canvas_name, canvas_price, transformations, ai_adjustments")
       .eq("order_id", orderId);
 
     return {
@@ -111,7 +117,7 @@ export const handler = async (event: NetlifyEvent) => {
 
   const { data: allItems } = await supabase
     .from("order_items")
-    .select("id, order_id, slot_key, slot_index, transformed_url, transformations, ai_adjustments")
+    .select("id, order_id, slot_key, slot_index, transformed_url, frame_id, frame_name, frame_price, canvas_id, canvas_name, canvas_price, transformations, ai_adjustments")
     .in("order_id", orderIds);
 
   const itemsByOrder = new Map<string, OrderItemRow[]>();

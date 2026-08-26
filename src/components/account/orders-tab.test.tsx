@@ -72,6 +72,12 @@ const makeOrder = (overrides: Partial<CustomerOrder> = {}): CustomerOrder => ({
       slot_key: "front",
       slot_index: 0,
       transformed_url: "https://cdn.example.com/img1.jpg",
+      frame_id: "frame-1",
+      frame_name: "Oak Classic",
+      frame_price: 49,
+      canvas_id: "canvas-1",
+      canvas_name: "Classic Matte",
+      canvas_price: 39,
       transformations: {},
       ai_adjustments: null,
     },
@@ -80,6 +86,12 @@ const makeOrder = (overrides: Partial<CustomerOrder> = {}): CustomerOrder => ({
       slot_key: "back",
       slot_index: 1,
       transformed_url: "https://cdn.example.com/img2.jpg",
+      frame_id: null,
+      frame_name: null,
+      frame_price: 0,
+      canvas_id: null,
+      canvas_name: null,
+      canvas_price: 0,
       transformations: {},
       ai_adjustments: null,
     },
@@ -207,6 +219,29 @@ describe("OrdersTab", () => {
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
     expect(screen.getByText(/Warsaw/)).toBeInTheDocument();
     expect(screen.getByText("Poland")).toBeInTheDocument();
+  });
+
+  it("shows frame and canvas info per item in order detail", async () => {
+    const order = makeOrder();
+    mockGetCustomerOrders.mockResolvedValue({ orders: [order] });
+    mockUseParams.mockReturnValue({ orderId: "order-1" });
+
+    renderWithRouter("/account/orders/order-1");
+
+    await waitFor(() => {
+      expect(screen.getByText("123 Main St")).toBeInTheDocument();
+    });
+
+    const framed = screen.getByAltText("front painting").closest("div.bg-gray-50");
+    expect(framed).toHaveTextContent("account.print");
+    expect(framed).toHaveTextContent(/account\.orderItemFrame:\s*Oak Classic/);
+    expect(framed).toHaveTextContent("PRICE:49");
+    expect(framed).toHaveTextContent(/account\.orderItemCanvas:\s*Classic Matte/);
+    expect(framed).toHaveTextContent("PRICE:39");
+
+    const plain = screen.getByAltText("back painting").closest("div.bg-gray-50");
+    expect(plain).toHaveTextContent(/account\.orderItemFrame:\s*account\.frameNone/);
+    expect(plain).toHaveTextContent(/account\.orderItemCanvas:\s*account\.canvasNone/);
   });
 
   it("back button in detail view navigates back", async () => {
