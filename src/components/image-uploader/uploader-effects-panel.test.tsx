@@ -233,6 +233,34 @@ describe("UploaderEffectsPanelContent", () => {
     ).toBeInTheDocument();
   });
 
+  it("does not render transform group when hideTransformGroup is true", () => {
+    renderContent({ hideTransformGroup: true });
+
+    expect(
+      screen.queryByText(t("uploader.transformGroupTitle")),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: t("uploader.rotateMinus90") }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: t("uploader.rotatePlus90") }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: t("uploader.flipHorizontal") }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: t("uploader.flipVertical") }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders transform group when hideTransformGroup is false", () => {
+    renderContent({ hideTransformGroup: false });
+
+    expect(
+      screen.getByText(t("uploader.transformGroupTitle")),
+    ).toBeInTheDocument();
+  });
+
   it("does not render close button", () => {
     renderContent();
 

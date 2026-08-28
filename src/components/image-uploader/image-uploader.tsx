@@ -2486,6 +2486,7 @@ export const ImageUploader = forwardRef<
           onUpdateCropAdjust={updateActiveImageCropAdjust}
           externalEditMode={isEffectsEditMode}
           effectsMode={effectsEditMode}
+          hideTransformGroup={triptychWindowIndexOfActiveSlot !== undefined}
         />
         </div>
       </CardContent>

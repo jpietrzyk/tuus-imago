@@ -86,6 +86,12 @@ export interface UploaderEffectsPanelContentProps {
   isRestoreBusy?: boolean;
   /** When provided, a "reset crop" button is shown in the crop group. */
   onResetCropAdjust?: () => void;
+  /**
+   * Hides the rotation/flip group. Triptych window slots are contiguous
+   * slices of one shared panorama, so per-panel rotation or flips would
+   * break the edge-to-edge composition.
+   */
+  hideTransformGroup?: boolean;
   effectsMode?: EffectsMode;
 }
 
@@ -115,6 +121,7 @@ export function UploaderEffectsPanelContent({
   isUpscaleBusy = false,
   isRestoreBusy = false,
   onResetCropAdjust,
+  hideTransformGroup,
   effectsMode,
 }: UploaderEffectsPanelContentProps) {
   const effectValues = effects ?? {
@@ -139,7 +146,8 @@ export function UploaderEffectsPanelContent({
   const showCropGroup = !effectsMode || effectsMode === "settings";
   const showAdjustGroup = !effectsMode || effectsMode === "settings";
   const showAiGroup = !effectsMode || effectsMode === "ai";
-  const showTransformGroup = !effectsMode || effectsMode === "settings";
+  const showTransformGroup =
+    (!effectsMode || effectsMode === "settings") && !hideTransformGroup;
 
   return (
     <div className="flex flex-col gap-2">
