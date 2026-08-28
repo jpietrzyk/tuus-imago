@@ -164,8 +164,18 @@ export function UploaderPreviewToolsPanel({
   };
 
   const handleReset = () => {
-    if (snapshot) {
-      restoreSnapshot(snapshot);
+    onUpdateEffect("brightness", 0);
+    onUpdateEffect("contrast", 0);
+    onUpdateEffect("grayscale", 0);
+    onToggleRemoveBackground(false);
+    onToggleEnhance(false);
+    onToggleUpscale(false);
+    onToggleRestore(false);
+    onUpdateRotation(0);
+    onToggleFlipHorizontal(false);
+    onToggleFlipVertical(false);
+    if (onUpdateCropAdjust) {
+      onUpdateCropAdjust(undefined);
     }
   };
 

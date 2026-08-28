@@ -54,6 +54,19 @@ vi.mock("./image-uploader/uploader-preview-tools-panel", () => ({
         >
           apply brightness
         </button>
+        <button
+          type="button"
+          data-testid="simulate-effects-reset"
+          onClick={() => {
+            // Mirrors the settings drawer's reset: every slider is zeroed in
+            // one event. Regression guard: these must compose, not clobber.
+            props.onUpdateEffect("brightness", 0);
+            props.onUpdateEffect("contrast", 0);
+            props.onUpdateEffect("grayscale", 0);
+          }}
+        >
+          reset effects
+        </button>
       </div>
     );
   },
@@ -164,6 +177,46 @@ describe("ImageUploader split effects regression", () => {
         enhance: false,
         upscale: false,
         restore: false,
+      });
+    });
+  });
+
+  it("zeroes every adjustment when the settings drawer reset fires all effect updates in one event", async () => {
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+    });
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    expect(input).toBeTruthy();
+    if (!input) return;
+
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effects = latestEffectsProps!;
+    effects.onUpdateEffect("brightness", 60);
+    effects.onUpdateEffect("contrast", -30);
+    effects.onUpdateEffect("grayscale", 80);
+
+    await waitFor(() => {
+      expect(latestEffectsProps?.activeImageEffects).toMatchObject({
+        brightness: 60,
+        contrast: -30,
+        grayscale: 80,
+      });
+    });
+
+    fireEvent.click(screen.getByTestId("simulate-effects-reset"));
+
+    await waitFor(() => {
+      expect(latestEffectsProps?.activeImageEffects).toMatchObject({
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
       });
     });
   });

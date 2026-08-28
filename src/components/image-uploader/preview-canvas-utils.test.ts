@@ -299,6 +299,83 @@ describe("preview-canvas-utils", () => {
     );
   });
 
+  describe("effects filters", () => {
+    const createEffectsContext = () => ({
+      filter: "none",
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+    });
+
+    const mountEffectsCanvas = (
+      context: ReturnType<typeof createEffectsContext>,
+    ) => {
+      const canvas = document.createElement("canvas");
+      vi.spyOn(canvas, "getContext").mockReturnValue(
+        context as unknown as CanvasRenderingContext2D,
+      );
+      vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+        width: 600,
+        height: 400,
+        x: 0,
+        y: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        toJSON: () => ({}),
+      });
+      return canvas;
+    };
+
+    it("applies grayscale filter from grayscale effect", () => {
+      const context = createEffectsContext();
+      const canvas = mountEffectsCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        effects: { brightness: 0, contrast: 0, grayscale: 50 },
+      });
+
+      expect(context.filter).toBe("grayscale(0.5)");
+    });
+
+    it("combines brightness, contrast and grayscale filters", () => {
+      const context = createEffectsContext();
+      const canvas = mountEffectsCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        effects: { brightness: 20, contrast: -30, grayscale: 100 },
+      });
+
+      expect(context.filter).toBe("brightness(1.2) contrast(0.7) grayscale(1)");
+    });
+
+    it("keeps filter none when all effects are neutral", () => {
+      const context = createEffectsContext();
+      const canvas = mountEffectsCanvas(context);
+      const image = document.createElement("img");
+      const crop = createCrop();
+
+      drawCroppedImageToCanvas({
+        canvas,
+        image,
+        crop,
+        effects: { brightness: 0, contrast: 0, grayscale: 0 },
+      });
+
+      expect(context.filter).toBe("none");
+    });
+  });
+
   describe("transform (rotation / flip)", () => {
     const createTransformContext = () => ({
       filter: "none",

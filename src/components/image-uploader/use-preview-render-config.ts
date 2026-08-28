@@ -8,7 +8,11 @@ interface PreviewRenderConfig {
   selectedImageMetadata: SelectedImageMetadata | null;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
-  previewEffects: { brightness: number; contrast: number } | null;
+  previewEffects: {
+    brightness: number;
+    contrast: number;
+    grayscale?: number;
+  } | null;
   previewTransform: PreviewTransform | null;
   previewCropAdjust?: CropAdjust;
   /** When set, the slot is a seamless wide-panorama triptych window. */

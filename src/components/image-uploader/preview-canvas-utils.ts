@@ -67,7 +67,9 @@ export const drawCroppedImageToCanvas = ({
   canvas: HTMLCanvasElement;
   image: HTMLImageElement;
   crop: CropCalculationResult;
-  effects?: { brightness: number; contrast: number } | null;
+  effects?:
+    | ({ brightness: number; contrast: number; grayscale?: number })
+    | null;
   /**
    * Optional geometric transform (rotation in degrees and/or flips).
    * Rotation is normalized to the [0, 360) range; only 90/180/270 produce
@@ -160,16 +162,39 @@ export const drawCroppedImageToCanvas = ({
   let filter = "none";
 
   // Apply preview effects via canvas filter if present
-  if (effects && (effects.brightness !== 0 || effects.contrast !== 0)) {
-    // Convert slider values (-100 to 100) to filter values (0 to 2)
-    const brightnessFactor = 1 + effects.brightness / 100;
-    const contrastFactor = 1 + effects.contrast / 100;
+  if (
+    effects &&
+    (effects.brightness !== 0 ||
+      effects.contrast !== 0 ||
+      (effects.grayscale ?? 0) !== 0)
+  ) {
+    const filterParts: string[] = [];
 
-    // Clamp values to reasonable ranges
-    const clampedBrightness = Math.max(0, Math.min(2, brightnessFactor));
-    const clampedContrast = Math.max(0, Math.min(2, contrastFactor));
+    if (effects.brightness !== 0) {
+      // Convert slider value (-100 to 100) to filter value (0 to 2)
+      const brightnessFactor = 1 + effects.brightness / 100;
+      // Clamp value to a reasonable range
+      filterParts.push(
+        `brightness(${Math.max(0, Math.min(2, brightnessFactor))})`,
+      );
+    }
 
-    filter = `brightness(${clampedBrightness}) contrast(${clampedContrast})`;
+    if (effects.contrast !== 0) {
+      const contrastFactor = 1 + effects.contrast / 100;
+      filterParts.push(
+        `contrast(${Math.max(0, Math.min(2, contrastFactor))})`,
+      );
+    }
+
+    if ((effects.grayscale ?? 0) !== 0) {
+      // Convert slider value (0 to 100) to filter value (0 to 1)
+      const grayscaleFactor = (effects.grayscale ?? 0) / 100;
+      filterParts.push(
+        `grayscale(${Math.max(0, Math.min(1, grayscaleFactor))})`,
+      );
+    }
+
+    filter = filterParts.join(" ");
   }
 
   context.clearRect(0, 0, dstW, dstH);
