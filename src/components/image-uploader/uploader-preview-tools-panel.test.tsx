@@ -110,14 +110,14 @@ describe("UploaderPreviewToolsPanel", () => {
     expect(onToggleEnhance).toHaveBeenCalledWith(false);
   });
 
-  it("restores effects snapshot on reset but keeps drawer open", () => {
+  it("resets effects to neutral values on reset but keeps drawer open", () => {
     const onUpdateEffect = vi.fn();
     const props = createProps();
     render(
       <UploaderPreviewToolsPanel
         {...props}
         onUpdateEffect={onUpdateEffect}
-        activeImageEffects={{ brightness: 50, contrast: 0, grayscale: 0 }}
+        activeImageEffects={{ brightness: 50, contrast: -20, grayscale: 70 }}
         externalEditMode={true}
       />,
     );
@@ -127,11 +127,42 @@ describe("UploaderPreviewToolsPanel", () => {
     });
     fireEvent.click(resetButton);
 
-    expect(onUpdateEffect).toHaveBeenCalledWith("brightness", 50);
+    expect(onUpdateEffect).toHaveBeenCalledWith("brightness", 0);
     expect(onUpdateEffect).toHaveBeenCalledWith("contrast", 0);
+    expect(onUpdateEffect).toHaveBeenCalledWith("grayscale", 0);
     expect(
       screen.getByRole("button", { name: t("uploader.effectsCancel") }),
     ).toBeInTheDocument();
+  });
+
+  it("resets transform and AI effects to neutral values on reset", () => {
+    const onUpdateRotation = vi.fn();
+    const onToggleFlipHorizontal = vi.fn();
+    const onToggleRemoveBackground = vi.fn();
+    const onUpdateCropAdjust = vi.fn();
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        onUpdateRotation={onUpdateRotation}
+        onToggleFlipHorizontal={onToggleFlipHorizontal}
+        onToggleRemoveBackground={onToggleRemoveBackground}
+        onUpdateCropAdjust={onUpdateCropAdjust}
+        activeImageEffects={{ brightness: 0, contrast: 0, grayscale: 0, removeBackground: true }}
+        activeImageTransform={{ rotation: 90, flipHorizontal: true, flipVertical: false }}
+        activeImageCropAdjust={{ zoom: 2, panX: 10, panY: -5 }}
+        externalEditMode={true}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: t("uploader.effectsReset") }),
+    );
+
+    expect(onUpdateRotation).toHaveBeenCalledWith(0);
+    expect(onToggleFlipHorizontal).toHaveBeenCalledWith(false);
+    expect(onToggleRemoveBackground).toHaveBeenCalledWith(false);
+    expect(onUpdateCropAdjust).toHaveBeenCalledWith(undefined);
   });
 
   it("does not restore effects snapshot on approve", () => {

@@ -126,6 +126,7 @@ function TriptychSidePanel({
       effects: {
         brightness: image.previewEffects.brightness,
         contrast: image.previewEffects.contrast,
+        grayscale: image.previewEffects.grayscale ?? 0,
       },
       transform: image.previewTransform ?? null,
       cachedDimensions: cachedDimsRef.current ?? undefined,

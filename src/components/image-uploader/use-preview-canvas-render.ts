@@ -23,14 +23,22 @@ interface UsePreviewCanvasRenderArgs {
   allowAutoSelectOptimalProportion?: boolean;
   bestProportion: ImageDisplayProportion | null;
   userSelectedProportion: ImageDisplayProportion;
-  previewEffects: { brightness: number; contrast: number } | null;
+  previewEffects: {
+    brightness: number;
+    contrast: number;
+    grayscale?: number;
+  } | null;
   previewTransform: PreviewTransform | null;
   previewCropAdjust?: CropAdjust;
   latestRenderConfigRef: React.MutableRefObject<{
     selectedImageMetadata: SelectedImageMetadata | null;
     bestProportion: ImageDisplayProportion | null;
     userSelectedProportion: ImageDisplayProportion;
-    previewEffects: { brightness: number; contrast: number } | null;
+    previewEffects: {
+      brightness: number;
+      contrast: number;
+      grayscale?: number;
+    } | null;
     previewTransform: PreviewTransform | null;
     previewCropAdjust?: CropAdjust;
     triptychWindowIndex?: number;

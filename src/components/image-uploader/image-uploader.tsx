@@ -791,7 +791,12 @@ export const ImageUploader = forwardRef<
   // all three slots on every input tick. The active slot is always updated
   // synchronously for immediate feedback, matching the canvas's RAF throttle.
   const pendingSiblingMutationRef = useRef<{
-    effects?: { value: SelectedImageItem["previewEffects"] };
+    effects?: {
+      patches: Array<{
+        name: "brightness" | "contrast" | "grayscale";
+        value: number;
+      }>;
+    };
     transform?: { value: SelectedImageItem["previewTransform"] };
     crop?: {
       value: { zoom: number; panX: number; panY: number } | undefined;
@@ -838,7 +843,14 @@ export const ImageUploader = forwardRef<
 
         let next = image;
         if (pending.effects) {
-          next = { ...next, previewEffects: { ...pending.effects.value } };
+          // Patches compose (rather than overwrite) so a burst of updates —
+          // e.g. Reset restoring brightness, contrast AND grayscale in one
+          // click — all survive instead of the last write clobbering the rest.
+          let effects = { ...next.previewEffects };
+          for (const patch of pending.effects.patches) {
+            effects = { ...effects, [patch.name]: patch.value };
+          }
+          next = { ...next, previewEffects: effects };
         }
         if (pending.transform) {
           next = {
@@ -876,16 +888,26 @@ export const ImageUploader = forwardRef<
     }
   }, [flushSiblingMutations, resolveBoundSlotIndices]);
 
-  const applyEffectsToGroup = useCallback(
-    (effects: SelectedImageItem["previewEffects"]) => {
+  const applyEffectToGroup = useCallback(
+    (effectName: "brightness" | "contrast" | "grayscale", value: number) => {
       if (resolveBoundSlotIndices().length === 0) {
         return;
       }
+      // The patch is applied against the freshest committed state inside the
+      // updater. Building the full effects object from the `activeImage`
+      // closure here would make sequential calls in one event (Reset/Cancel
+      // restoring several sliders) clobber each other — last write wins and
+      // the earlier slider values silently revert.
       updateActiveSlot((image) => ({
         ...image,
-        previewEffects: { ...effects },
+        previewEffects: { ...image.previewEffects, [effectName]: value },
       }));
-      pendingSiblingMutationRef.current.effects = { value: effects };
+      pendingSiblingMutationRef.current.effects = {
+        patches: [
+          ...(pendingSiblingMutationRef.current.effects?.patches ?? []),
+          { name: effectName, value },
+        ],
+      };
       scheduleSiblingFlush();
     },
     [resolveBoundSlotIndices, scheduleSiblingFlush, updateActiveSlot],
@@ -1031,12 +1053,9 @@ export const ImageUploader = forwardRef<
         return;
       }
 
-      applyEffectsToGroup({
-        ...activeImage.previewEffects,
-        [effectName]: value,
-      });
+      applyEffectToGroup(effectName, value);
     },
-    [activeImage, applyEffectsToGroup],
+    [activeImage, applyEffectToGroup],
   );
 
   const setSlotRemoveBackground = useCallback(
