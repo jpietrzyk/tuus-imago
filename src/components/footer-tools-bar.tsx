@@ -49,6 +49,12 @@ export interface FooterToolsBarProps {
 
   isTriptychLinked?: boolean;
   canToggleTriptychLink?: boolean;
+  /**
+   * Renders the link toggle in its selected (linked) state but disabled —
+   * triptych panels are always chained; only the global reset leaves the
+   * triptych mode.
+   */
+  isTriptychLinkLocked?: boolean;
   onToggleTriptychLink?: () => void;
 
   onReset: () => void;
@@ -99,6 +105,7 @@ export function FooterToolsBar({
   triptychDisabledReason,
   isTriptychLinked = true,
   canToggleTriptychLink = false,
+  isTriptychLinkLocked = false,
   onToggleTriptychLink,
   onReset,
   canReset,
@@ -130,7 +137,8 @@ export function FooterToolsBar({
     <Button
       type="button"
       variant={isTriptychLinked ? "default" : "secondary"}
-      onClick={onToggleTriptychLink}
+      disabled={isTriptychLinkLocked}
+      onClick={isTriptychLinkLocked ? undefined : onToggleTriptychLink}
       aria-label={
         isTriptychLinked
           ? t("uploader.triptychLinkedTooltip")

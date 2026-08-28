@@ -217,6 +217,25 @@ describe("UploaderPreviewToolsPanel", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("hides transform group content when hideTransformGroup is true", () => {
+    const props = createProps();
+    render(
+      <UploaderPreviewToolsPanel
+        {...props}
+        externalEditMode={true}
+        effectsMode="settings"
+        hideTransformGroup={true}
+      />,
+    );
+
+    expect(
+      screen.getByText(t("uploader.adjustGroupTitle")),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(t("uploader.transformGroupTitle")),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows AI Effects title when effectsMode is ai", () => {
     const props = createProps();
     render(

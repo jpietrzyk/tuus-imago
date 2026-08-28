@@ -467,4 +467,27 @@ describe("FooterToolsBar", () => {
 
     expect(onToggleTriptychLink).toHaveBeenCalledOnce();
   });
+
+  it("renders the link toggle selected but disabled when isTriptychLinkLocked is true", () => {
+    const onToggleTriptychLink = vi.fn();
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        canToggleTriptychLink={true}
+        isTriptychLinkLocked={true}
+        isTriptychLinked={true}
+        onToggleTriptychLink={onToggleTriptychLink}
+      />,
+    );
+
+    const linkToggle = screen.getByTestId("triptych-link-toggle");
+    expect(linkToggle).toBeInTheDocument();
+    expect(linkToggle).toHaveAttribute("data-linked", "true");
+    expect(linkToggle).toBeDisabled();
+
+    fireEvent.click(linkToggle);
+
+    expect(onToggleTriptychLink).not.toHaveBeenCalled();
+  });
 });

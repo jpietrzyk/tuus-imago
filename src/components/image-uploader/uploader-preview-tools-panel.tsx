@@ -56,6 +56,8 @@ interface UploaderPreviewToolsPanelProps {
   onUpdateCropAdjust?: (adjust: CropAdjust | undefined) => void;
   externalEditMode?: boolean;
   effectsMode?: EffectsMode;
+  /** Hides the rotation/flip group (e.g. for triptych window slots). */
+  hideTransformGroup?: boolean;
 }
 
 export function UploaderPreviewToolsPanel({
@@ -79,6 +81,7 @@ export function UploaderPreviewToolsPanel({
   onUpdateCropAdjust,
   externalEditMode,
   effectsMode,
+  hideTransformGroup,
 }: UploaderPreviewToolsPanelProps) {
   const [internalEditMode, setInternalEditMode] = useState(false);
   const [snapshot, setSnapshot] = useState<EffectsSnapshot | null>(null);
@@ -256,6 +259,7 @@ export function UploaderPreviewToolsPanel({
                   : undefined
               }
               effectsMode={effectsMode}
+              hideTransformGroup={hideTransformGroup}
             />
           </div>
         </div>
