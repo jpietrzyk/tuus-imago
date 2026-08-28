@@ -53,6 +53,7 @@ function TestWrapper({
               canUpdateAiEffects: props.canUpdateAiEffects,
               canToggleZoomPan: props.canToggleZoomPan,
               canToggleTriptychLink: props.canToggleTriptychLink,
+              isTriptychLinkLocked: props.isTriptychLinkLocked,
               isEditMode: props.isEditMode,
               isZoomPanMode: props.isZoomPanMode,
               isTriptychLinked: props.isTriptychLinked,
@@ -304,27 +305,20 @@ describe("ImageUploader", () => {
         expect(slotDotHasImage(2)).toBe(true);
       });
 
-      // After splitting the parts are linked by default.
+      // After splitting the parts are linked — and stay linked: the toggle
+      // is shown selected but disabled, so unlinking is impossible.
       const linkToggle = await screen.findByTestId("triptych-link-toggle");
       expect(linkToggle).toHaveAttribute("data-linked", "true");
+      expect(linkToggle).toBeDisabled();
 
-      // Unlinking flips the state.
       fireEvent.click(linkToggle);
-      await waitFor(() => {
-        expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
-          "data-linked",
-          "false",
-        );
-      });
-
-      // Re-linking restores the bound state.
-      fireEvent.click(screen.getByTestId("triptych-link-toggle"));
       await waitFor(() => {
         expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
           "data-linked",
           "true",
         );
       });
+      expect(screen.getByTestId("triptych-link-toggle")).toBeDisabled();
     }
   });
 
@@ -419,7 +413,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("applies a shape change to all linked triptych parts, but only to the active slot when unlinked", async () => {
+  it("applies a shape change to all triptych parts; the link toggle stays selected and disabled", async () => {
     mockImageWidth = 7800;
     mockImageHeight = 1800;
     const onOrderableSlotsChange = vi.fn();
@@ -532,16 +526,16 @@ describe("ImageUploader", () => {
         ]);
       });
 
-      // Unlink: a shape change now only affects the edited slot.
+      // The link toggle is selected but disabled — triptych panels are
+      // always chained and only the global reset leaves triptych mode.
       const linkToggle = screen.getByTestId("triptych-link-toggle");
-      fireEvent.click(linkToggle);
-      await waitFor(() => {
-        expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
-          "data-linked",
-          "false",
-        );
-      });
+      expect(linkToggle).toHaveAttribute("data-linked", "true");
+      expect(linkToggle).toBeDisabled();
 
+      // Attempting to unlink (even via a synthetic click on the disabled
+      // button) keeps the parts chained: a shape change on another slot
+      // still adjusts all three windows together.
+      fireEvent.click(linkToggle);
       fireEvent.click(screen.getByTestId("uploader-slot-dot-0"));
 
       fireEvent.pointerDown(
@@ -559,14 +553,18 @@ describe("ImageUploader", () => {
           }),
           expect.objectContaining({
             slotIndex: 1,
-            displayImageProportion: "square",
+            displayImageProportion: "horizontal",
           }),
           expect.objectContaining({
             slotIndex: 2,
-            displayImageProportion: "square",
+            displayImageProportion: "horizontal",
           }),
         ]);
       });
+      expect(screen.getByTestId("triptych-link-toggle")).toHaveAttribute(
+        "data-linked",
+        "true",
+      );
     }
   });
 

@@ -2192,6 +2192,9 @@ export const ImageUploader = forwardRef<
         isTriptychSplit &&
         selectedImages.length === MAX_SELECTED_IMAGES &&
         selectedImages.every(Boolean),
+      // Triptych panels are always chained: the toggle stays selected but
+      // disabled; only the global reset exits triptych mode.
+      isTriptychLinkLocked: isTriptychSplit,
       onToggleTriptychLink: toggleTriptychLink,
       onSelectProportion: handleSelectProportion,
       coveragePercent,
