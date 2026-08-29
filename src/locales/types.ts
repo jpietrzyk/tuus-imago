@@ -25,6 +25,10 @@ export interface Translations {
     footerContactLink: string;
     lastUpdated: string;
   };
+  offline: {
+    title: string;
+    message: string;
+  };
   auth: {
     signIn: string;
     signUp: string;

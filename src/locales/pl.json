@@ -26,6 +26,10 @@
     "footerContactLink": "Kontakt",
     "lastUpdated": "Ostatnia aktualizacja:"
   },
+  "offline": {
+    "title": "Brak połączenia",
+    "message": "Jesteś offline. Przesyłanie zdjęć i składanie zamówień wymagają połączenia z internetem."
+  },
   "legalMenu": {
     "title": "Zasady korzystania z serwisu",
     "subtitle": "Dostęp do prywatności, regulaminów i informacji o płatnościach przed zakupem.",

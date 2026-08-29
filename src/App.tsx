@@ -13,6 +13,7 @@ import bgDesktop from "./assets/bg_desktop.webp";
 import bgMobile from "./assets/bg_mobile.webp";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { OfflineBanner } from "@/components/offline-banner";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
 import { type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 import {
@@ -878,6 +879,7 @@ function StorefrontApp() {
           : "cover",
       }}
     >
+      <OfflineBanner />
       <Header
         onOpenLegalMenu={openLegalSheet}
         promotionSlogan={activePromotion?.slogan}
