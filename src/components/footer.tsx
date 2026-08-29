@@ -43,7 +43,7 @@ export function Footer({
         </div>
       )}
       <footer
-        className={`w-full shadow-lg rounded-t-2xl ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
+        className={`w-full shadow-lg rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
         style={{ backgroundColor: "rgba(243, 235, 232, 0.6)" }}
       >
         {hasTools && <FooterToolsBar {...toolsBarProps} />}

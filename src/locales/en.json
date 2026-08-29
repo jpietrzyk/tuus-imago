@@ -26,6 +26,10 @@
     "footerContactLink": "Contact",
     "lastUpdated": "Last updated:"
   },
+  "offline": {
+    "title": "You're offline",
+    "message": "You're offline. Uploading photos and placing orders require an internet connection."
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Create Account",

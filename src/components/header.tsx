@@ -35,7 +35,7 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
   const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
   return (
-    <header className="w-full h-(--app-shell-bar-height) bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
+    <header className="w-full h-(--app-shell-bar-height) pt-[env(safe-area-inset-top)] bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-lg">
       <div className="w-full h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button
