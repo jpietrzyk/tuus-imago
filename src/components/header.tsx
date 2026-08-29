@@ -14,7 +14,7 @@ import { t } from "@/locales/i18n";
 import { useAuth } from "@/lib/auth-context";
 import { CurrentPromotionBanner } from "@/components/current-promotion-banner";
 import IconMenu from "@/assets/icons/menu.svg?react";
-import IconLogo from "@/assets/icons/logo.svg?react";
+import IconLogo from "@/assets/logo.svg?react";
 
 interface HeaderProps {
   onOpenLegalMenu: (section: LegalMenuSection) => void;
@@ -53,7 +53,7 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
             aria-label="Tuus Imago – home"
             className="inline-flex items-center"
           >
-            <IconLogo className="h-8 w-8" />
+            <IconLogo className="h-10 w-10" />
           </Link>
         </div>
 
