@@ -1,4 +1,7 @@
-import { calculateOrientationMatchedDpi } from "./image-dpi-calculator";
+import {
+  calculateOrientationMatchedDpi,
+  getOrientationMatchedPrintDimensions,
+} from "./image-dpi-calculator";
 import { IMAGE_DPI_RULES } from "./image-dpi-rules";
 import {
   DEFAULT_PAINTING_SIZE_INDEX,
@@ -82,10 +85,28 @@ export async function validateImageFile(
     );
 
     if (dpi < IMAGE_DPI_RULES.minDpi) {
+      const matchedPrintSize = getOrientationMatchedPrintDimensions(
+        dimensions.width,
+        dimensions.height,
+        referencePrintSize.widthCm,
+        referencePrintSize.heightCm,
+      );
+
       violations.push({
         rule: "minDpi",
         messageKey: "upload.validation.minDpi",
-        params: { minDpi: IMAGE_DPI_RULES.minDpi, actualDpi: dpi },
+        params: {
+          minDpi: IMAGE_DPI_RULES.minDpi,
+          actualDpi: dpi,
+          width: dimensions.width,
+          height: dimensions.height,
+          minWidth: Math.ceil(
+            (IMAGE_DPI_RULES.minDpi * matchedPrintSize.widthCm) / 2.54,
+          ),
+          minHeight: Math.ceil(
+            (IMAGE_DPI_RULES.minDpi * matchedPrintSize.heightCm) / 2.54,
+          ),
+        },
       });
     }
   }

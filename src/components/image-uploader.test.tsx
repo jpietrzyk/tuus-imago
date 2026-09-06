@@ -8,6 +8,7 @@ import {
 } from "@testing-library/react";
 import { createRef, useState, useCallback } from "react";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
+import { validateImageFile } from "./image-uploader/image-file-validator";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { t as tr } from "../locales/i18n";
@@ -2180,6 +2181,22 @@ describe("ImageUploader", () => {
         'input[type="file"][accept*="image/jpeg"]',
       ) as HTMLInputElement;
 
+      vi.mocked(validateImageFile)
+        .mockResolvedValueOnce({
+          violations: [],
+          dimensions: { width: 3000, height: 2000 },
+        })
+        .mockResolvedValueOnce({
+          violations: [
+            {
+              rule: "invalidType",
+              messageKey: "upload.validation.invalidType",
+              params: {},
+            },
+          ],
+          dimensions: null,
+        });
+
       fireEvent.change(input, { target: { files: [imageFile, textFile] } });
 
       await waitFor(() => {
@@ -2191,6 +2208,13 @@ describe("ImageUploader", () => {
         expect(slotDotHasImage(1)).toBe(false);
         expect(slotDotHasImage(2)).toBe(false);
       });
+
+      expect(screen.getByTestId("uploader-selection-error")).toHaveTextContent(
+        tr("uploader.imagesRejectedSummary", {
+          rejectedCount: 1,
+          reason: tr("upload.validation.invalidType"),
+        }),
+      );
     });
 
     it("does not prompt to add another image after a drag-and-drop", async () => {
@@ -2275,6 +2299,172 @@ describe("ImageUploader", () => {
       });
 
       expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+    });
+  });
+
+  describe("selection validation errors", () => {
+    const minDpiViolationMessage = tr("upload.validation.minDpi", {
+      width: 600,
+      height: 450,
+      minWidth: 2552,
+      minHeight: 1701,
+      minDpi: 72,
+      actualDpi: 16,
+    });
+
+    function rejectWithMinDpiViolation() {
+      vi.mocked(validateImageFile).mockResolvedValueOnce({
+        violations: [
+          {
+            rule: "minDpi",
+            messageKey: "upload.validation.minDpi",
+            params: {
+              width: 600,
+              height: 450,
+              minWidth: 2552,
+              minHeight: 1701,
+              minDpi: 72,
+              actualDpi: 16,
+            },
+          },
+        ],
+        dimensions: { width: 600, height: 450 },
+      });
+    }
+
+    it("shows an inline error and keeps the drop area when a too-small photo is taken", async () => {
+      const onUploadError = vi.fn();
+      render(<TestWrapper onUploadError={onUploadError} />);
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+      expect(cameraInput).not.toBeNull();
+
+      rejectWithMinDpiViolation();
+      fireEvent.change(cameraInput, {
+        target: { files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })] },
+      });
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveAttribute("role", "alert");
+      expect(alert).toHaveTextContent(minDpiViolationMessage);
+      expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+      expect(onUploadError).not.toHaveBeenCalled();
+    });
+
+    it("hides the inline error after dismissing it", async () => {
+      render(<TestWrapper />);
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+
+      rejectWithMinDpiViolation();
+      fireEvent.change(cameraInput, {
+        target: { files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })] },
+      });
+
+      await screen.findByTestId("uploader-selection-error");
+
+      fireEvent.click(
+        screen.getByRole("button", { name: tr("uploader.dismissError") }),
+      );
+
+      expect(screen.queryByTestId("uploader-selection-error")).toBeNull();
+    });
+
+    it("clears the inline error when the next selection is valid", async () => {
+      render(<TestWrapper />);
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+
+      rejectWithMinDpiViolation();
+      fireEvent.change(cameraInput, {
+        target: { files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })] },
+      });
+      await screen.findByTestId("uploader-selection-error");
+
+      vi.mocked(validateImageFile).mockResolvedValueOnce({
+        violations: [],
+        dimensions: { width: 3000, height: 2000 },
+      });
+      fireEvent.change(cameraInput, {
+        target: { files: [new File(["big"], "photo.jpg", { type: "image/jpeg" })] },
+      });
+
+      await screen.findByRole("img", { name: "Preview" });
+      expect(screen.queryByTestId("uploader-selection-error")).toBeNull();
+    });
+
+    it("reports skipped images with the rejection reason when a multi-selection contains invalid files", async () => {
+      render(<TestWrapper />);
+
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+
+      vi.mocked(validateImageFile)
+        .mockResolvedValueOnce({
+          violations: [],
+          dimensions: { width: 3000, height: 2000 },
+        })
+        .mockResolvedValueOnce({
+          violations: [
+            {
+              rule: "minDpi",
+              messageKey: "upload.validation.minDpi",
+              params: {
+                width: 600,
+                height: 450,
+                minWidth: 2552,
+                minHeight: 1701,
+                minDpi: 72,
+                actualDpi: 16,
+              },
+            },
+          ],
+          dimensions: { width: 600, height: 450 },
+        });
+
+      fireEvent.change(input, {
+        target: {
+          files: [
+            new File(["big"], "big.jpg", { type: "image/jpeg" }),
+            new File(["small"], "small.jpg", { type: "image/jpeg" }),
+          ],
+        },
+      });
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveTextContent(
+        tr("uploader.imagesRejectedSummary", {
+          rejectedCount: 1,
+          reason: minDpiViolationMessage,
+        }),
+      );
+      await screen.findByRole("img", { name: "Preview" });
+    });
+
+    it("validates drag-and-dropped files and reports too-small images", async () => {
+      render(<TestWrapper />);
+
+      const dropArea = screen
+        .getByText(tr("upload.clickToUpload"))
+        .closest("div")!;
+
+      rejectWithMinDpiViolation();
+      fireEvent.drop(dropArea, {
+        dataTransfer: {
+          files: [new File(["small"], "small.jpg", { type: "image/jpeg" })],
+        },
+      });
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveTextContent(minDpiViolationMessage);
+      expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
     });
   });
 });

@@ -140,7 +140,7 @@
     "usedCloudinaryTools": "Użyte narzędzia AI",
     "noCloudinaryTools": "Nie wybrano narzędzi AI",
     "validation": {
-      "minDpi": "Rozdzielczość obrazu musi wynosić co najmniej {minDpi} DPI do druku (aktualnie: {actualDpi} DPI)",
+      "minDpi": "To zdjęcie jest za małe, aby wydrukować je w dobrej jakości ({width} × {height} px, ok. {actualDpi} DPI). Wgraj zdjęcie o wymiarach co najmniej {minWidth} × {minHeight} px — zrób nowe zdjęcie lub wybierz większy plik.",
       "maxFileSize": "Rozmiar pliku przekracza limit {maxSizeMB} MB",
       "invalidType": "Nieobsługiwany format pliku. Użyj JPG, PNG lub WebP",
       "invalidImage": "Nie udało się wczytać obrazu. Plik może być uszkodzony."
@@ -217,6 +217,8 @@
     "debugEffectiveDpi": "Efektywne DPI",
     "debugEffectiveDpiForSize": "Efektywne DPI ({size})",
     "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia",
+    "imagesRejectedSummary": "Pominięto zdjęć: {rejectedCount}. Powód: {reason}",
+    "dismissError": "Zamknij",
     "applyingEffect": "Stosowanie efektu...",
     "tabAdjust": "Korekty",
     "tabAiEffects": "Efekty AI",

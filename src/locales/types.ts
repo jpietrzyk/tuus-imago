@@ -275,6 +275,8 @@ export interface Translations {
     debugRectangleCoverage: string;
     debugUnknown: string;
     maxImagesError: string;
+    imagesRejectedSummary: string;
+    dismissError: string;
     applyingEffect: string;
     tabAdjust: string;
     tabAiEffects: string;

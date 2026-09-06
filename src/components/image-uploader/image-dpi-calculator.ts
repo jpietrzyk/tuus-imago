@@ -31,21 +31,46 @@ export function calculateEffectiveDpi(
   };
 }
 
+/**
+ * Print dimensions after matching the print orientation to the image
+ * orientation: a portrait image is printed on the portrait variant of the
+ * size (axes swapped for non-square sizes). DPI and required-pixel
+ * calculations must both use the same matched dimensions.
+ */
+export function getOrientationMatchedPrintDimensions(
+  pixelWidth: number,
+  pixelHeight: number,
+  printWidthCm: number,
+  printHeightCm: number,
+): { widthCm: number; heightCm: number } {
+  const imageIsPortrait = pixelHeight > pixelWidth;
+  const printIsPortrait = printHeightCm > printWidthCm;
+  const shouldSwap = imageIsPortrait !== printIsPortrait;
+
+  return {
+    widthCm: shouldSwap ? printHeightCm : printWidthCm,
+    heightCm: shouldSwap ? printWidthCm : printHeightCm,
+  };
+}
+
 export function calculateOrientationMatchedDpi(
   pixelWidth: number,
   pixelHeight: number,
   printWidthCm: number,
   printHeightCm: number,
 ): DpiCalculationResult {
-  const imageIsPortrait = pixelHeight > pixelWidth;
-  const printIsPortrait = printHeightCm > printWidthCm;
-  const shouldSwap = imageIsPortrait !== printIsPortrait;
+  const matched = getOrientationMatchedPrintDimensions(
+    pixelWidth,
+    pixelHeight,
+    printWidthCm,
+    printHeightCm,
+  );
 
   return calculateEffectiveDpi(
     pixelWidth,
     pixelHeight,
-    shouldSwap ? printHeightCm : printWidthCm,
-    shouldSwap ? printWidthCm : printHeightCm,
+    matched.widthCm,
+    matched.heightCm,
   );
 }
 

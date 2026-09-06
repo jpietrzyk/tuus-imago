@@ -203,7 +203,7 @@
     "usedCloudinaryTools": "Used AI tools",
     "noCloudinaryTools": "No AI tools selected",
     "validation": {
-      "minDpi": "Image resolution must be at least {minDpi} DPI for printing (current: {actualDpi} DPI)",
+      "minDpi": "This photo is too small to print in good quality ({width} × {height} px, about {actualDpi} DPI). Please use a photo of at least {minWidth} × {minHeight} px — take a new photo or choose a larger file.",
       "maxFileSize": "File size exceeds the {maxSizeMB} MB limit",
       "invalidType": "Unsupported file format. Use JPG, PNG, or WebP",
       "invalidImage": "Failed to load image. The file may be corrupted."
@@ -280,6 +280,8 @@
     "debugEffectiveDpi": "Effective DPI",
     "debugEffectiveDpiForSize": "Effective DPI ({size})",
     "maxImagesError": "You can select up to 3 images",
+    "imagesRejectedSummary": "Skipped {rejectedCount} image(s): {reason}",
+    "dismissError": "Dismiss",
     "applyingEffect": "Applying effect...",
     "tabAdjust": "Adjust",
     "tabAiEffects": "AI Effects",
