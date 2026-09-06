@@ -219,6 +219,8 @@
     "maxImagesError": "Możesz wybrać maksymalnie 3 zdjęcia",
     "imagesRejectedSummary": "Pominięto zdjęć: {rejectedCount}. Powód: {reason}",
     "dismissError": "Zamknij",
+    "cameraCaptureLost": "Nie odebraliśmy Twojego zdjęcia — aplikacja została ponownie wczytana podczas robienia zdjęcia. Zrób zdjęcie ponownie.",
+    "fileSelectionLost": "Nie odebraliśmy Twojego zdjęcia — aplikacja została ponownie wczytana podczas jego wybierania. Spróbuj ponownie.",
     "applyingEffect": "Stosowanie efektu...",
     "tabAdjust": "Korekty",
     "tabAiEffects": "Efekty AI",

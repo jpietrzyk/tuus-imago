@@ -68,6 +68,14 @@ import {
   validateImageFile,
   type ImageValidationViolation,
 } from "./image-file-validator";
+import {
+  clearCapturePending,
+  clearPersistedSelectionError,
+  consumeInterruptedCapture,
+  consumePersistedSelectionError,
+  markCaptureStarted,
+  persistSelectionError,
+} from "./camera-capture-session";
 import { adjustCropForZoomPan } from "./use-crop-adjust";
 import { useMediaQuery } from "@/lib/use-media-query";
 
@@ -515,8 +523,53 @@ export const ImageUploader = forwardRef<
   // Validation errors from file selection (camera capture, gallery, drag &
   // drop). Rendered inline in the uploader so they stay visible right where
   // the user picked the file — a page-level status strip is easy to miss on
-  // mobile where the uploader fills the whole viewport.
-  const [selectionError, setSelectionError] = useState<string | null>(null);
+  // mobile where the uploader fills the whole viewport. Persisted to
+  // sessionStorage so a validation error survives the page reload that mobile
+  // browsers perform after the OS kills the renderer while the native camera
+  // app is open.
+  const [selectionError, setSelectionError] = useState<string | null>(() =>
+    consumePersistedSelectionError(),
+  );
+
+  const applySelectionError = useCallback((message: string | null) => {
+    setSelectionError(message);
+
+    if (message === null) {
+      clearPersistedSelectionError();
+    } else {
+      persistSelectionError(message);
+    }
+  }, []);
+
+  // A camera/gallery session that never delivered a file means the page was
+  // reloaded while the picker was open (renderer killed by the OS). Tell the
+  // user instead of silently dropping them back on the upload buttons.
+  useEffect(() => {
+    const interruptedSource = consumeInterruptedCapture();
+    if (interruptedSource === "camera") {
+      applySelectionError(t("uploader.cameraCaptureLost"));
+    } else if (interruptedSource === "gallery") {
+      applySelectionError(t("uploader.fileSelectionLost"));
+    }
+  }, [applySelectionError]);
+
+  // When the page survives (no reload) the selection session always ends
+  // before the user leaves /upload again — clear the marker on return to
+  // visibility so a cancelled camera session is not mistaken for an
+  // interrupted one on a later remount.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        clearCapturePending();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
@@ -734,7 +787,7 @@ export const ImageUploader = forwardRef<
       );
 
       if (violations.length > 0) {
-        setSelectionError(formatViolationMessage(violations[0]));
+        applySelectionError(formatViolationMessage(violations[0]));
         return;
       }
 
@@ -742,14 +795,14 @@ export const ImageUploader = forwardRef<
         typeof preferredIndex !== "number" &&
         selectedImageCount >= IMAGE_VALIDATION_RULES.maxSelectedImages
       ) {
-        setSelectionError(t("uploader.maxImagesError"));
+        applySelectionError(t("uploader.maxImagesError"));
         return;
       }
 
-      setSelectionError(null);
+      applySelectionError(null);
       addOrReplaceSelection(file, preferredIndex, dimensions ?? undefined);
     },
-    [addOrReplaceSelection, selectedImageCount],
+    [addOrReplaceSelection, applySelectionError, selectedImageCount],
   );
 
   // Multi-file selection (gallery multi-pick, drag & drop). Every file goes
@@ -795,7 +848,7 @@ export const ImageUploader = forwardRef<
 
       if (rejectedViolations.length > 0) {
         const firstReason = formatViolationMessage(rejectedViolations[0]);
-        setSelectionError(
+        applySelectionError(
           rejectedViolations.length > 1 || acceptedFiles.length > 0
             ? t("uploader.imagesRejectedSummary", {
                 rejectedCount: rejectedViolations.length,
@@ -804,10 +857,15 @@ export const ImageUploader = forwardRef<
             : firstReason,
         );
       } else {
-        setSelectionError(null);
+        applySelectionError(null);
       }
     },
-    [addOrReplaceSelection, buildSelectedImageItem, selectedImageCount],
+    [
+      addOrReplaceSelection,
+      applySelectionError,
+      buildSelectedImageItem,
+      selectedImageCount,
+    ],
   );
 
   const updateActiveImage = useCallback(
@@ -1449,7 +1507,11 @@ export const ImageUploader = forwardRef<
 
       if (files && files.length > 0) {
         onUploadAttemptStart?.();
-        setSelectionError(null);
+        // A file was delivered, so any camera/gallery session ended with a
+        // result — prevent the "selection interrupted" notice from firing
+        // later.
+        clearCapturePending();
+        applySelectionError(null);
         if (files.length === 1) {
           void validateAndStoreFile(files[0], preferredIndex);
         } else {
@@ -1459,7 +1521,12 @@ export const ImageUploader = forwardRef<
 
       e.currentTarget.value = "";
     },
-    [validateAndStoreFile, validateAndStoreFiles, onUploadAttemptStart],
+    [
+      validateAndStoreFile,
+      validateAndStoreFiles,
+      applySelectionError,
+      onUploadAttemptStart,
+    ],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -1477,11 +1544,11 @@ export const ImageUploader = forwardRef<
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         onUploadAttemptStart?.();
-        setSelectionError(null);
+        applySelectionError(null);
         void validateAndStoreFiles(Array.from(files));
       }
     },
-    [validateAndStoreFiles, onUploadAttemptStart],
+    [validateAndStoreFiles, applySelectionError, onUploadAttemptStart],
   );
 
   const handlePreviewSlotSelect = useCallback(
@@ -1499,6 +1566,7 @@ export const ImageUploader = forwardRef<
       }
 
       pendingSelectionSlotRef.current = index;
+      markCaptureStarted("gallery");
       fileInputRef.current?.click();
     },
     [onImageMetadataChange, selectedImages],
@@ -1599,7 +1667,7 @@ export const ImageUploader = forwardRef<
 
   const handleCancel = useCallback(() => {
     setShowRemoveSlotDialog(false);
-    setSelectionError(null);
+    applySelectionError(null);
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
         revokePreviewUrls(prevImages);
@@ -1617,7 +1685,7 @@ export const ImageUploader = forwardRef<
     if (cameraInputRef.current) {
       cameraInputRef.current.value = "";
     }
-  }, [revokePreviewUrls, updateSelectedImageMetadata]);
+  }, [applySelectionError, revokePreviewUrls, updateSelectedImageMetadata]);
 
   const handleSplitActiveImage = useCallback(async () => {
     if (!activeImage) {
@@ -2417,7 +2485,8 @@ export const ImageUploader = forwardRef<
         onDrop={handleDrop}
         onShowIcons={() => setShowIcons(true)}
         error={selectionError}
-        onDismissError={() => setSelectionError(null)}
+        onDismissError={() => applySelectionError(null)}
+        onCaptureStart={markCaptureStarted}
         />
       </>
     );
@@ -2448,7 +2517,7 @@ export const ImageUploader = forwardRef<
         {selectionError && (
           <SelectionErrorBanner
             error={selectionError}
-            onDismiss={() => setSelectionError(null)}
+            onDismiss={() => applySelectionError(null)}
             className="mb-2 shrink-0"
           />
         )}
