@@ -596,6 +596,7 @@ export const ImageUploader = forwardRef<
   const shouldShowUploaderDebugData = SHOW_UPLOADER_DEBUG && showDebugData;
 
   const isLgScreen = useMediaQuery("(min-width: 1024px)");
+  const isPhoneScreen = useMediaQuery("(max-width: 767px)");
   const isDesktopTriptych =
     isLgScreen &&
     isTriptychSplit &&
@@ -2020,11 +2021,14 @@ export const ImageUploader = forwardRef<
     activeImageIndex,
   });
 
+  const [hasUsedSliderNav, setHasUsedSliderNav] = useState(false);
+
   const moveToPreviousImage = useCallback(() => {
     if (previousFilledSlotIndex === null) {
       return;
     }
 
+    setHasUsedSliderNav(true);
     setActiveImageIndex(previousFilledSlotIndex);
     onImageMetadataChange?.(
       selectedImages[previousFilledSlotIndex]?.metadata ?? null,
@@ -2036,6 +2040,7 @@ export const ImageUploader = forwardRef<
       return;
     }
 
+    setHasUsedSliderNav(true);
     setActiveImageIndex(nextFilledSlotIndex);
     onImageMetadataChange?.(
       selectedImages[nextFilledSlotIndex]?.metadata ?? null,
@@ -2049,6 +2054,42 @@ export const ImageUploader = forwardRef<
     onSwipeLeft: moveToNextImage,
     onSwipeRight: moveToPreviousImage,
   });
+
+  // Affordances for the single-preview slider on phone screens, where only
+  // one picture fits per line: side chevrons navigate between slots and the
+  // swipe pill tells the user the preview can be swiped. Hidden once the
+  // user has navigated (swipe or chevron tap), in edit modes with their own
+  // gestures, and whenever the desktop triptych shows all slots in a row.
+  const sliderSwipeNav = useMemo(() => {
+    if (!isPhoneScreen || isDesktopTriptych) {
+      return null;
+    }
+    if (selectedImageCount < 2) {
+      return null;
+    }
+    if (isEffectsEditMode || isZoomPanMode) {
+      return null;
+    }
+
+    return {
+      hasPrevious: previousFilledSlotIndex !== null,
+      hasNext: nextFilledSlotIndex !== null,
+      onPrevious: moveToPreviousImage,
+      onNext: moveToNextImage,
+      showHint: !hasUsedSliderNav,
+    };
+  }, [
+    isPhoneScreen,
+    isDesktopTriptych,
+    selectedImageCount,
+    isEffectsEditMode,
+    isZoomPanMode,
+    previousFilledSlotIndex,
+    nextFilledSlotIndex,
+    moveToPreviousImage,
+    moveToNextImage,
+    hasUsedSliderNav,
+  ]);
 
   const coveragePercent = useMemo(() => {
     if (!effectiveImageMetadata) {
@@ -2562,6 +2603,7 @@ export const ImageUploader = forwardRef<
           getSlotPreviewUrl={getTransformedImagePreviewUrl}
           isDesktopTriptych={isDesktopTriptych}
           isTriptychLinked={isTriptychLinked}
+          swipeNav={sliderSwipeNav}
         />
 
         <UploaderPreviewToolsPanel

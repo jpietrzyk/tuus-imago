@@ -3,6 +3,10 @@ import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
+import {
+  UploaderSwipeNavHint,
+  type SwipeNavHintProps,
+} from "./uploader-swipe-nav-hint";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
 import {
   computeSidePanelCrop,
@@ -329,6 +333,7 @@ interface UploaderPreviewSliderProps {
   getSlotPreviewUrl?: (image: SelectedImageItem) => string;
   isDesktopTriptych?: boolean;
   isTriptychLinked?: boolean;
+  swipeNav?: SwipeNavHintProps | null;
 }
 
 export default function UploaderPreviewSlider({
@@ -361,6 +366,7 @@ export default function UploaderPreviewSlider({
   getSlotPreviewUrl,
   isDesktopTriptych = false,
   isTriptychLinked = true,
+  swipeNav = null,
 }: UploaderPreviewSliderProps) {
   const [touchedSlotIndex, setTouchedSlotIndex] = useState<number | null>(null);
   const trashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -595,7 +601,7 @@ export default function UploaderPreviewSlider({
 
   return (
     <div
-      className="painting-preview-slider flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
+      className="painting-preview-slider relative flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
       style={
         {
           "--painting-size-scale": MAX_PAINTING_SIZE_SCALE,
@@ -612,6 +618,7 @@ export default function UploaderPreviewSlider({
       >
         {previewSlot}
       </PaintingSizeHelperOverlay>
+      {swipeNav && <UploaderSwipeNavHint {...swipeNav} />}
     </div>
   );
 }

@@ -143,6 +143,16 @@
   }
 }
 
+@keyframes swipe-nudge {
+  0%,
+  100% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
 .painting-preview-slider {
   --painting-size-scale: 1;
   max-height: clamp(10vh, calc(25vh * var(--painting-size-scale)), 65vh);

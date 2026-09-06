@@ -569,4 +569,51 @@ describe("UploaderPreviewSlider", () => {
       "data-triptych-linked",
     );
   });
+
+  it("renders the swipe nav hint only in the single-preview slider", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+    const swipeNav = {
+      hasPrevious: true,
+      hasNext: true,
+      onPrevious: vi.fn(),
+      onNext: vi.fn(),
+      showHint: true,
+    };
+
+    const { rerender } = render(
+      <UploaderPreviewSlider {...props} swipeNav={swipeNav} />,
+    );
+    expect(
+      screen.getByTestId("uploader-swipe-nav-hint"),
+    ).toBeInTheDocument();
+
+    rerender(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        isDesktopTriptych={true}
+        swipeNav={swipeNav}
+      />,
+    );
+    expect(
+      screen.queryByTestId("uploader-swipe-nav-hint"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders no swipe nav hint by default", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} />);
+
+    expect(
+      screen.queryByTestId("uploader-swipe-nav-hint"),
+    ).not.toBeInTheDocument();
+  });
 });
