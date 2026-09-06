@@ -247,6 +247,7 @@ export interface Translations {
     resetAllAdjustments: string;
     previousImage: string;
     nextImage: string;
+    swipeHint: string;
     previewSlotNavigation: string;
     selectImageSlot: string;
     addImageSlot: string;

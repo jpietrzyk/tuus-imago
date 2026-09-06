@@ -187,6 +187,7 @@
     "resetAllAdjustments": "Resetuj wszystkie korekty",
     "previousImage": "Poprzednie zdjęcie",
     "nextImage": "Następne zdjęcie",
+    "swipeHint": "Przesuń, aby zmienić zdjęcie",
     "previewSlotNavigation": "Nawigacja slotów podglądu",
     "selectImageSlot": "Wybierz zdjęcie {index}",
     "addImageSlot": "Dodaj zdjęcie do slotu {index}",

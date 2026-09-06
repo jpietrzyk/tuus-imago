@@ -250,6 +250,7 @@
     "resetAllAdjustments": "Reset All Adjustments",
     "previousImage": "Previous image",
     "nextImage": "Next image",
+    "swipeHint": "Swipe to change photo",
     "previewSlotNavigation": "Preview slot navigation",
     "selectImageSlot": "Select image {index}",
     "addImageSlot": "Add image to slot {index}",
