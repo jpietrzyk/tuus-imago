@@ -29,6 +29,10 @@ export interface Translations {
     title: string;
     message: string;
   };
+  rotateWarning: {
+    title: string;
+    message: string;
+  };
   auth: {
     signIn: string;
     signUp: string;

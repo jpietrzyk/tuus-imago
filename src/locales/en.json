@@ -30,6 +30,10 @@
     "title": "You're offline",
     "message": "You're offline. Uploading photos and placing orders require an internet connection."
   },
+  "rotateWarning": {
+    "title": "Rotate your phone",
+    "message": "The app works best in portrait mode. Please hold your phone vertically to continue."
+  },
   "auth": {
     "signIn": "Sign In",
     "signUp": "Create Account",
