@@ -14,6 +14,7 @@ import bgMobile from "./assets/bg_mobile.webp";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { OfflineBanner } from "@/components/offline-banner";
+import { RotateWarningOverlay } from "@/components/rotate-warning-overlay";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
 import { type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 import {
@@ -880,6 +881,7 @@ function StorefrontApp() {
       }}
     >
       <OfflineBanner />
+      <RotateWarningOverlay />
       <Header
         onOpenLegalMenu={openLegalSheet}
         promotionSlogan={activePromotion?.slogan}

@@ -30,6 +30,10 @@
     "title": "Brak połączenia",
     "message": "Jesteś offline. Przesyłanie zdjęć i składanie zamówień wymagają połączenia z internetem."
   },
+  "rotateWarning": {
+    "title": "Obróć telefon",
+    "message": "Aplikacja działa najlepiej w pionie. Obróć telefon do pozycji pionowej, aby kontynuować."
+  },
   "legalMenu": {
     "title": "Zasady korzystania z serwisu",
     "subtitle": "Dostęp do prywatności, regulaminów i informacji o płatnościach przed zakupem.",
