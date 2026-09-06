@@ -75,6 +75,11 @@ describe("validateImageFile", () => {
     expect(violations[0].messageKey).toBe("upload.validation.minDpi");
     expect(violations[0].params.minDpi).toBe(72);
     expect(violations[0].params.actualDpi).toBe(42);
+    expect(violations[0].params.width).toBe(1000);
+    expect(violations[0].params.height).toBe(1000);
+    // Square 60x60 cm reference at 72 DPI needs ~1701 px per side.
+    expect(violations[0].params.minWidth).toBe(1701);
+    expect(violations[0].params.minHeight).toBe(1701);
   });
 
   it("accepts a portrait image that meets the DPI in its optimal orientation", async () => {
@@ -103,6 +108,11 @@ describe("validateImageFile", () => {
     expect(violations[0].messageKey).toBe("upload.validation.minDpi");
     expect(violations[0].params.actualDpi).toBe(63);
     expect(violations[0].params.minDpi).toBe(72);
+    expect(violations[0].params.width).toBe(1500);
+    expect(violations[0].params.height).toBe(2250);
+    // Portrait image matches the 60x90 cm orientation: needs ~1701 x ~2552 px.
+    expect(violations[0].params.minWidth).toBe(1701);
+    expect(violations[0].params.minHeight).toBe(2552);
     expect(violations.some((v) => v.rule === "minWidth")).toBe(false);
   });
 

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { UploadPage } from "./upload";
 import type { ImageTransformations } from "@/lib/image-transformations";
@@ -92,17 +92,71 @@ describe("UploadPage Component", () => {
     expect(transformations.blur).toBe(0);
   });
 
-  it("should have proper structure for transformations display", () => {
-    // This test verifies that the component structure supports transformations display
-    // The actual display is conditional on transformations being set via handleUploadSuccess
-    const { container } = render(
-      <MemoryRouter>
-        <UploadPage />
-      </MemoryRouter>,
-    );
+    it("should have proper structure for transformations display", () => {
+      // This test verifies that the component structure supports transformations display
+      // The actual display is conditional on transformations being set via handleUploadSuccess
+      const { container } = render(
+        <MemoryRouter>
+          <UploadPage />
+        </MemoryRouter>,
+      );
 
-    // Verify the component renders without errors
-    expect(container).toBeInTheDocument();
+      // Verify that the component renders without errors
+      expect(container).toBeInTheDocument();
+    });
+
+    describe("too small photo taken with the camera", () => {
+    beforeEach(() => {
+      // Simulate a low-resolution photo returned by the device camera.
+      vi.stubGlobal(
+        "Image",
+        class {
+          onload: ((ev: Event) => void) | null = null;
+          onerror: ((ev: Event) => void) | null = null;
+          naturalWidth = 600;
+          naturalHeight = 450;
+          width = 600;
+          height = 450;
+
+          set src(_value: string) {
+            queueMicrotask(() => {
+              this.onload?.(new Event("load"));
+            });
+          }
+        },
+      );
+      vi.stubGlobal("fetch", vi.fn());
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("shows a visible inline warning instead of silently returning to the upload buttons", async () => {
+      render(
+        <MemoryRouter>
+          <UploadPage />
+        </MemoryRouter>,
+      );
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement | null;
+      expect(cameraInput).not.toBeNull();
+
+      fireEvent.change(cameraInput!, {
+        target: {
+          files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })],
+        },
+      });
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveAttribute("role", "alert");
+      expect(alert).toHaveTextContent(/600 × 450/);
+      expect(alert).toHaveTextContent(/2552 × 1701/);
+      // Upload entry buttons stay available for the next attempt.
+      expect(document.querySelector(".lucide-camera")).toBeInTheDocument();
+    });
   });
 
   // Integration-style tests for transformations feature

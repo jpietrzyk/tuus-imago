@@ -25,7 +25,7 @@ import {
   getTransformedPreviewUrl,
   type AiAdjustments,
 } from "@/lib/image-transformations";
-import UploaderDropArea from "./uploader-drop-area";
+import UploaderDropArea, { SelectionErrorBanner } from "./uploader-drop-area";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
 import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
@@ -64,7 +64,10 @@ import {
   TRIPTYCH_PROJECTED_SHAPE,
 } from "./split-printability-projection";
 import { IMAGE_VALIDATION_RULES } from "./image-validation-rules";
-import { validateImageFile } from "./image-file-validator";
+import {
+  validateImageFile,
+  type ImageValidationViolation,
+} from "./image-file-validator";
 import { adjustCropForZoomPan } from "./use-crop-adjust";
 import { useMediaQuery } from "@/lib/use-media-query";
 
@@ -393,6 +396,10 @@ const RESTORED_DUMMY_FILE = new File([], "restored.jpg", {
   type: "image/jpeg",
 });
 
+function formatViolationMessage(violation: ImageValidationViolation) {
+  return t(violation.messageKey, violation.params);
+}
+
 function buildRestoredSelectedImages(
   slots: UploadedSlotResult[],
 ): Array<SelectedImageItem | null> {
@@ -505,6 +512,11 @@ export const ImageUploader = forwardRef<
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const userSelectedPaintingSizeRef = useRef(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
+  // Validation errors from file selection (camera capture, gallery, drag &
+  // drop). Rendered inline in the uploader so they stay visible right where
+  // the user picked the file — a page-level status strip is easy to miss on
+  // mobile where the uploader fills the whole viewport.
+  const [selectionError, setSelectionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const pendingSelectionSlotRef = useRef<number | null>(null);
@@ -722,7 +734,7 @@ export const ImageUploader = forwardRef<
       );
 
       if (violations.length > 0) {
-        onUploadError?.(t(violations[0].messageKey, violations[0].params));
+        setSelectionError(formatViolationMessage(violations[0]));
         return;
       }
 
@@ -730,13 +742,72 @@ export const ImageUploader = forwardRef<
         typeof preferredIndex !== "number" &&
         selectedImageCount >= IMAGE_VALIDATION_RULES.maxSelectedImages
       ) {
-        onUploadError?.(t("uploader.maxImagesError"));
+        setSelectionError(t("uploader.maxImagesError"));
         return;
       }
 
+      setSelectionError(null);
       addOrReplaceSelection(file, preferredIndex, dimensions ?? undefined);
     },
-    [addOrReplaceSelection, onUploadError, selectedImageCount],
+    [addOrReplaceSelection, selectedImageCount],
+  );
+
+  // Multi-file selection (gallery multi-pick, drag & drop). Every file goes
+  // through the same validation as single selection — skipping DPI/size
+  // checks here previously let too-small images into the editor silently.
+  const validateAndStoreFiles = useCallback(
+    async (files: File[]) => {
+      const acceptedFiles: File[] = [];
+      const rejectedViolations: ImageValidationViolation[] = [];
+
+      for (const file of files) {
+        const { violations } = await validateImageFile(
+          file,
+          IMAGE_VALIDATION_RULES,
+        );
+
+        if (violations.length > 0) {
+          rejectedViolations.push(violations[0]);
+        } else {
+          acceptedFiles.push(file);
+        }
+      }
+
+      if (acceptedFiles.length > 0) {
+        const maxAllowed =
+          IMAGE_VALIDATION_RULES.maxSelectedImages - selectedImageCount;
+        const filesToProcess = acceptedFiles.slice(0, maxAllowed);
+
+        let currentImages = [...selectedImagesRef.current];
+        for (const file of filesToProcess) {
+          const insertionIndex = currentImages.findIndex(
+            (image) => image === null,
+          );
+          if (insertionIndex < 0) break;
+
+          addOrReplaceSelection(file, insertionIndex);
+          currentImages = [...currentImages];
+          currentImages[insertionIndex] = {
+            ...buildSelectedImageItem(file, true),
+          };
+        }
+      }
+
+      if (rejectedViolations.length > 0) {
+        const firstReason = formatViolationMessage(rejectedViolations[0]);
+        setSelectionError(
+          rejectedViolations.length > 1 || acceptedFiles.length > 0
+            ? t("uploader.imagesRejectedSummary", {
+                rejectedCount: rejectedViolations.length,
+                reason: firstReason,
+              })
+            : firstReason,
+        );
+      } else {
+        setSelectionError(null);
+      }
+    },
+    [addOrReplaceSelection, buildSelectedImageItem, selectedImageCount],
   );
 
   const updateActiveImage = useCallback(
@@ -1378,37 +1449,17 @@ export const ImageUploader = forwardRef<
 
       if (files && files.length > 0) {
         onUploadAttemptStart?.();
+        setSelectionError(null);
         if (files.length === 1) {
           void validateAndStoreFile(files[0], preferredIndex);
         } else {
-          const validFiles: File[] = [];
-          for (const file of Array.from(files)) {
-            if (IMAGE_VALIDATION_RULES.acceptedMimeTypes.includes(
-              file.type as typeof IMAGE_VALIDATION_RULES.acceptedMimeTypes[number],
-            )) {
-              validFiles.push(file);
-            }
-          }
-          const maxAllowed = IMAGE_VALIDATION_RULES.maxSelectedImages - selectedImageCount;
-          const filesToProcess = validFiles.slice(0, maxAllowed);
-
-          let currentImages = [...selectedImagesRef.current];
-          for (const file of filesToProcess) {
-            const insertionIndex = currentImages.findIndex((image) => image === null);
-            if (insertionIndex < 0) break;
-
-            addOrReplaceSelection(file, insertionIndex);
-            currentImages = [...currentImages];
-            currentImages[insertionIndex] = {
-              ...buildSelectedImageItem(file, true),
-            };
-          }
+          void validateAndStoreFiles(Array.from(files));
         }
       }
 
       e.currentTarget.value = "";
     },
-    [validateAndStoreFile, selectedImageCount, addOrReplaceSelection, buildSelectedImageItem, onUploadAttemptStart],
+    [validateAndStoreFile, validateAndStoreFiles, onUploadAttemptStart],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -1426,31 +1477,11 @@ export const ImageUploader = forwardRef<
       const files = e.dataTransfer.files;
       if (files && files.length > 0) {
         onUploadAttemptStart?.();
-        const validFiles: File[] = [];
-        for (const file of Array.from(files)) {
-          if (IMAGE_VALIDATION_RULES.acceptedMimeTypes.includes(
-            file.type as typeof IMAGE_VALIDATION_RULES.acceptedMimeTypes[number],
-          )) {
-            validFiles.push(file);
-          }
-        }
-        const maxAllowed = IMAGE_VALIDATION_RULES.maxSelectedImages - selectedImageCount;
-        const filesToProcess = validFiles.slice(0, maxAllowed);
-
-        let currentImages = [...selectedImagesRef.current];
-        for (const file of filesToProcess) {
-          const insertionIndex = currentImages.findIndex((image) => image === null);
-          if (insertionIndex < 0) break;
-
-          addOrReplaceSelection(file, insertionIndex);
-          currentImages = [...currentImages];
-          currentImages[insertionIndex] = {
-            ...buildSelectedImageItem(file, true),
-          };
-        }
+        setSelectionError(null);
+        void validateAndStoreFiles(Array.from(files));
       }
     },
-    [selectedImageCount, addOrReplaceSelection, buildSelectedImageItem, onUploadAttemptStart],
+    [validateAndStoreFiles, onUploadAttemptStart],
   );
 
   const handlePreviewSlotSelect = useCallback(
@@ -1568,6 +1599,7 @@ export const ImageUploader = forwardRef<
 
   const handleCancel = useCallback(() => {
     setShowRemoveSlotDialog(false);
+    setSelectionError(null);
     setSelectedImages((prevImages) => {
       if (prevImages.some(Boolean)) {
         revokePreviewUrls(prevImages);
@@ -2384,6 +2416,8 @@ export const ImageUploader = forwardRef<
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onShowIcons={() => setShowIcons(true)}
+        error={selectionError}
+        onDismissError={() => setSelectionError(null)}
         />
       </>
     );
@@ -2411,6 +2445,13 @@ export const ImageUploader = forwardRef<
       />
       <CardContent className="relative flex-1 flex flex-col overflow-hidden pb-2 lg:pb-1">
         <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
+        {selectionError && (
+          <SelectionErrorBanner
+            error={selectionError}
+            onDismiss={() => setSelectionError(null)}
+            className="mb-2 shrink-0"
+          />
+        )}
         <div className="flex-[0.05] md:hidden" />
         <div className="flex flex-1 flex-col gap-3 sm:gap-8 min-h-0">
         <UploaderPreviewSlider
