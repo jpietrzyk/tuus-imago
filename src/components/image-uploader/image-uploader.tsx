@@ -596,7 +596,7 @@ export const ImageUploader = forwardRef<
   const shouldShowUploaderDebugData = SHOW_UPLOADER_DEBUG && showDebugData;
 
   const isLgScreen = useMediaQuery("(min-width: 1024px)");
-  const isPhoneScreen = useMediaQuery("(max-width: 767px)");
+  const isTouchPrimary = useMediaQuery("(pointer: coarse)");
   const isDesktopTriptych =
     isLgScreen &&
     isTriptychSplit &&
@@ -2055,13 +2055,15 @@ export const ImageUploader = forwardRef<
     onSwipeRight: moveToPreviousImage,
   });
 
-  // Affordances for the single-preview slider on phone screens, where only
-  // one picture fits per line: side chevrons navigate between slots and the
-  // swipe pill tells the user the preview can be swiped. Hidden once the
-  // user has navigated (swipe or chevron tap), in edit modes with their own
-  // gestures, and whenever the desktop triptych shows all slots in a row.
+  // Affordances for the single-preview slider, shown in every mode that
+  // displays only one picture per row (phones, tablets, desktop without the
+  // triptych row): side chevrons navigate between slots and, on touch-primary
+  // devices, the swipe pill tells the user the preview can be swiped. The
+  // pill disappears after the first navigation (swipe or chevron tap);
+  // everything is hidden in edit modes with their own gestures and whenever
+  // the desktop triptych shows all slots in a row.
   const sliderSwipeNav = useMemo(() => {
-    if (!isPhoneScreen || isDesktopTriptych) {
+    if (isDesktopTriptych) {
       return null;
     }
     if (selectedImageCount < 2) {
@@ -2076,10 +2078,9 @@ export const ImageUploader = forwardRef<
       hasNext: nextFilledSlotIndex !== null,
       onPrevious: moveToPreviousImage,
       onNext: moveToNextImage,
-      showHint: !hasUsedSliderNav,
+      showHint: isTouchPrimary && !hasUsedSliderNav,
     };
   }, [
-    isPhoneScreen,
     isDesktopTriptych,
     selectedImageCount,
     isEffectsEditMode,
@@ -2088,6 +2089,7 @@ export const ImageUploader = forwardRef<
     nextFilledSlotIndex,
     moveToPreviousImage,
     moveToNextImage,
+    isTouchPrimary,
     hasUsedSliderNav,
   ]);
 

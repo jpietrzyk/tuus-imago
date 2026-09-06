@@ -1040,6 +1040,68 @@ describe("ImageUploader", () => {
     }
   });
 
+  it("shows slider chevrons whenever only one picture fits per row", async () => {
+    render(<TestWrapper />);
+
+    mockImageWidth = 1200;
+    mockImageHeight = 800;
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+    const initialInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(initialInput).toBeDefined();
+
+    if (initialInput) {
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      expect(
+        screen.queryByTestId("uploader-swipe-nav-hint"),
+      ).not.toBeInTheDocument();
+
+      mockImageWidth = 900;
+      mockImageHeight = 900;
+
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      expect(editorInput).toBeDefined();
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      expect(screen.getByTestId("uploader-swipe-nav-next")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("uploader-swipe-nav-previous"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("uploader-swipe-hint-pill"),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("uploader-swipe-nav-next"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("uploader-slot-dot-2")).toHaveAttribute(
+          "aria-pressed",
+          "true",
+        );
+      });
+    }
+  });
+
   it("auto-selects vertical proportion for vertical image added to side slot", async () => {
     render(<TestWrapper />);
 
