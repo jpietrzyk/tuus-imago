@@ -16,6 +16,7 @@ interface UploaderDropAreaProps {
   onShowIcons: () => void;
   error?: string | null;
   onDismissError?: () => void;
+  onCaptureStart?: (source: "camera" | "gallery") => void;
 }
 
 interface SelectionErrorBannerProps {
@@ -69,6 +70,7 @@ export function UploaderDropArea({
   onShowIcons,
   error,
   onDismissError,
+  onCaptureStart,
 }: UploaderDropAreaProps) {
   return (
     <div
@@ -106,8 +108,16 @@ export function UploaderDropArea({
       <div className="flex min-h-0 w-full flex-1 items-center justify-center">
         {showIcons ? (
           <UploaderActionButtons
-            onUploadClick={() => fileInputRef.current?.click()}
-            onCameraClick={() => cameraInputRef.current?.click()}
+            onUploadClick={() => {
+              // Persist the picker session before backgrounding the page —
+              // the renderer may be killed while the native picker is open.
+              onCaptureStart?.("gallery");
+              fileInputRef.current?.click();
+            }}
+            onCameraClick={() => {
+              onCaptureStart?.("camera");
+              cameraInputRef.current?.click();
+            }}
           />
         ) : (
           <button

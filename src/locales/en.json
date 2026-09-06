@@ -282,6 +282,8 @@
     "maxImagesError": "You can select up to 3 images",
     "imagesRejectedSummary": "Skipped {rejectedCount} image(s): {reason}",
     "dismissError": "Dismiss",
+    "cameraCaptureLost": "We didn't receive your photo — the app reloaded while the camera was open. Please take the photo again.",
+    "fileSelectionLost": "We didn't receive your photo — the app reloaded while you were choosing it. Please try again.",
     "applyingEffect": "Applying effect...",
     "tabAdjust": "Adjust",
     "tabAiEffects": "AI Effects",

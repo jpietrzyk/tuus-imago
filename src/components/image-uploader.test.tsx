@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   act,
   render,
@@ -9,6 +9,10 @@ import {
 import { createRef, useState, useCallback } from "react";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { validateImageFile } from "./image-uploader/image-file-validator";
+import {
+  markCaptureStarted,
+  consumeInterruptedCapture,
+} from "./image-uploader/camera-capture-session";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
 import { t as tr } from "../locales/i18n";
@@ -2303,6 +2307,10 @@ describe("ImageUploader", () => {
   });
 
   describe("selection validation errors", () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+
     const minDpiViolationMessage = tr("upload.validation.minDpi", {
       width: 600,
       height: 450,
@@ -2465,6 +2473,120 @@ describe("ImageUploader", () => {
       const alert = await screen.findByTestId("uploader-selection-error");
       expect(alert).toHaveTextContent(minDpiViolationMessage);
       expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+    });
+  });
+
+  describe("interrupted capture recovery", () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    it("informs the user when the page reloaded while the camera was open", async () => {
+      // Simulates the renderer being killed while the native camera app is
+      // in the foreground: the marker survives, no change event ever fires.
+      markCaptureStarted("camera");
+
+      render(<TestWrapper />);
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveTextContent(tr("uploader.cameraCaptureLost"));
+      expect(consumeInterruptedCapture()).toBeNull();
+    });
+
+    it("informs the user when the page reloaded while the gallery picker was open", async () => {
+      markCaptureStarted("gallery");
+
+      render(<TestWrapper />);
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveTextContent(tr("uploader.fileSelectionLost"));
+    });
+
+    it("restores a rejected-photo error after a page reload", async () => {
+      // First session: photo arrives, validation rejects it, banner shows.
+      vi.mocked(validateImageFile).mockResolvedValueOnce({
+        violations: [
+          {
+            rule: "minDpi",
+            messageKey: "upload.validation.minDpi",
+            params: {
+              width: 600,
+              height: 450,
+              minWidth: 2552,
+              minHeight: 1701,
+              minDpi: 72,
+              actualDpi: 16,
+            },
+          },
+        ],
+        dimensions: { width: 600, height: 450 },
+      });
+      const { unmount } = render(<TestWrapper />);
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+      fireEvent.change(cameraInput, {
+        target: {
+          files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })],
+        },
+      });
+      await screen.findByTestId("uploader-selection-error");
+
+      // Page "reloads": fresh mount must restore the persisted error.
+      unmount();
+      render(<TestWrapper />);
+
+      const alert = await screen.findByTestId("uploader-selection-error");
+      expect(alert).toHaveTextContent(
+        tr("upload.validation.minDpi", {
+          width: 600,
+          height: 450,
+          minWidth: 2552,
+          minHeight: 1701,
+          minDpi: 72,
+          actualDpi: 16,
+        }),
+      );
+    });
+
+    it("clears the capture marker when a photo is delivered", async () => {
+      markCaptureStarted("camera");
+
+      render(<TestWrapper />);
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+
+      fireEvent.change(cameraInput, {
+        target: {
+          files: [new File(["photo"], "photo.jpg", { type: "image/jpeg" })],
+        },
+      });
+
+      await screen.findByRole("img", { name: "Preview" });
+      expect(consumeInterruptedCapture()).toBeNull();
+      expect(screen.queryByTestId("uploader-selection-error")).toBeNull();
+    });
+
+    it("clears the capture marker when the page becomes visible again", async () => {
+      markCaptureStarted("camera");
+
+      render(<TestWrapper />);
+
+      act(() => {
+        Object.defineProperty(document, "hidden", {
+          configurable: true,
+          get: () => false,
+        });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+
+      expect(consumeInterruptedCapture()).toBeNull();
     });
   });
 });

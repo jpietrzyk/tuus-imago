@@ -277,6 +277,8 @@ export interface Translations {
     maxImagesError: string;
     imagesRejectedSummary: string;
     dismissError: string;
+    cameraCaptureLost: string;
+    fileSelectionLost: string;
     applyingEffect: string;
     tabAdjust: string;
     tabAiEffects: string;
