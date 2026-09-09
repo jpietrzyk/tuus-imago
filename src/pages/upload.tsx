@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { type UploadResult } from "@/components/cloudinary-upload-widget";
 import {
   ImageUploader,
@@ -61,6 +62,8 @@ export function UploadPage({
 }: UploadPageProps = {}) {
   const restoredSlots = initialRestoredSlots;
   const uploaderRef = useRef<ImageUploaderHandle | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [uploadedImage, setUploadedImage] = useState<UploadResult | null>(null);
   const [uploadedSlots, setUploadedSlots] =
     useState<UploadedSlotResult[]>(restoredSlots);
@@ -277,6 +280,27 @@ export function UploadPage({
   const isCheckoutAvailable = Boolean(
     uploadedImage || successfulUploadedSlots.length > 0 || hasUploaderSelection,
   );
+
+  // URL follows the internal flow state: /upload shows the selection screen,
+  // /prepare-painting the painting preview (editor). Replace-navigation keeps
+  // the history clean — browser back exits the flow instead of hopping
+  // between two states of the same screen. The component instance is shared
+  // by both routes (see App), so photos survive the switch.
+  const hasFlowSelection =
+    hasUploaderSelection ||
+    restoredSlots.length > 0 ||
+    uploadedSlots.length > 0;
+
+  useEffect(() => {
+    if (hasFlowSelection && location.pathname === "/upload") {
+      navigate("/prepare-painting", { replace: true });
+    } else if (
+      !hasFlowSelection &&
+      location.pathname === "/prepare-painting"
+    ) {
+      navigate("/upload", { replace: true });
+    }
+  }, [hasFlowSelection, location.pathname, navigate]);
 
   const handleBatchUpload = useCallback(async () => {
     if (!uploaderRef.current) {

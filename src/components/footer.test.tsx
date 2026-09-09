@@ -84,6 +84,7 @@ describe("Footer Component", () => {
               proportion: "3:2",
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
+              isPrintable: true,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -114,6 +115,7 @@ describe("Footer Component", () => {
               proportion: "3:2",
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
+              isPrintable: true,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -152,6 +154,7 @@ describe("Footer Component", () => {
               proportion: "3:2",
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
+              isPrintable: true,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -191,6 +194,7 @@ describe("Footer Component", () => {
               proportion: "3:2",
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
+              isPrintable: true,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -222,6 +226,7 @@ describe("Footer Component", () => {
               proportion: "3:2",
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
+              isPrintable: true,
             },
           ]}
           checkedOrderSlotKeys={new Set(["left"])}
@@ -257,6 +262,7 @@ describe("Footer Component", () => {
               proportion: "3:2",
               isUploaded: true,
               unitPrice: CANVAS_PRINT_UNIT_PRICE,
+              isPrintable: true,
             },
           ]}
           checkedOrderSlotKeys={new Set()}

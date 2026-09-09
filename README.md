@@ -132,6 +132,26 @@ scripts/              # Dev scripts (Supabase migration helper)
 docs/                 # Development notes
 ```
 
+## Photo Upload Flow
+
+The upload flow spans two synced routes rendered by the same page component
+(so in-progress photo state is never lost when the URL changes):
+
+- `/upload` — photo selection (camera / gallery / drag & drop). Any decodable
+  image of an accepted type and size is accepted here.
+- `/prepare-painting` — painting preview / editor on the wall background. The
+  URL follows the selection state via replace-navigation: it switches to
+  `/prepare-painting` once a photo is selected and back to `/upload` when all
+  slots are cleared.
+
+Printability (DPI) is evaluated in the preview, not at selection: per-size
+availability drives the size selector, and a photo that cannot be printed in
+any offered size gets an explanatory notice with retake / choose-from-gallery
+actions plus a "low resolution — preview only" badge on the preview. Such
+slots cannot be ordered (their checkbox in the checkout dropup is disabled);
+checkout is possible once at least one printable slot is selected. The DPI
+guard (thresholds, on/off) is remote-configurable in the admin panel.
+
 ## Database Migrations
 
 Migrations are stored in `supabase/migrations/` and managed via Supabase CLI.

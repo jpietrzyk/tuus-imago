@@ -15,6 +15,10 @@ import {
 } from "./image-uploader/camera-capture-session";
 import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import { uploadImageToCloudinary } from "@/lib/cloudinary-upload";
+import {
+  applyDpiRulesOverride,
+  resetDpiRules,
+} from "./image-uploader/image-dpi-rules";
 import { t as tr } from "../locales/i18n";
 import {
   FooterToolsBar,
@@ -43,10 +47,15 @@ vi.mock("./image-uploader/image-file-validator", () => ({
 function TestWrapper({
   uploaderRef,
   ...uploaderProps
-}: { uploaderRef?: React.RefObject<ImageUploaderHandle | null> } & Omit<React.ComponentProps<typeof ImageUploader>, "ref">) {
-  const [toolsBarProps, setToolsBarProps] = useState<FooterToolsBarProps | null>(null);
+}: { uploaderRef?: React.RefObject<ImageUploaderHandle | null> } & Omit<
+  React.ComponentProps<typeof ImageUploader>,
+  "ref"
+>) {
+  const [toolsBarProps, setToolsBarProps] =
+    useState<FooterToolsBarProps | null>(null);
   const toolsBarPropsJsonRef = useState(() => ({ current: "" }))[0];
-  const [slotSwitcherProps, setSlotSwitcherProps] = useState<SlotSwitcherBarProps | null>(null);
+  const [slotSwitcherProps, setSlotSwitcherProps] =
+    useState<SlotSwitcherBarProps | null>(null);
 
   const stableSetToolsBarProps = useCallback(
     (props: FooterToolsBarProps | null) => {
@@ -88,9 +97,7 @@ function TestWrapper({
       {/* The product UI hides the dots bar (hidden: true), but the harness
           renders it to drive/observe slot selection through the same props
           API the uploader exposes. */}
-      {slotSwitcherProps && (
-        <UploaderSlotSwitcher {...slotSwitcherProps} />
-      )}
+      {slotSwitcherProps && <UploaderSlotSwitcher {...slotSwitcherProps} />}
     </>
   );
 }
@@ -191,9 +198,11 @@ describe("ImageUploader", () => {
         uploaderRef.current?.removeActiveImage();
       });
 
-      fireEvent.click(screen.getByRole("button", {
-        name: tr("uploader.removeSlotConfirmAction"),
-      }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.removeSlotConfirmAction"),
+        }),
+      );
 
       await waitFor(() => {
         expect(slotDotHasImage(0)).toBe(true);
@@ -224,9 +233,7 @@ describe("ImageUploader", () => {
       splitPartFiles,
     );
 
-    render(
-      <TestWrapper onActiveImageSrcChange={onActiveImageSrcChange} />,
-    );
+    render(<TestWrapper onActiveImageSrcChange={onActiveImageSrcChange} />);
 
     const input = document.querySelector(
       'input[type="file"][accept*="image/jpeg"]',
@@ -244,9 +251,10 @@ describe("ImageUploader", () => {
           expect.stringContaining("blob:"),
         );
       });
-      const originalSrc = onActiveImageSrcChange.mock.calls[
-        onActiveImageSrcChange.mock.calls.length - 1
-      ][0];
+      const originalSrc =
+        onActiveImageSrcChange.mock.calls[
+          onActiveImageSrcChange.mock.calls.length - 1
+        ][0];
       const callsBeforeSplit = onActiveImageSrcChange.mock.calls.length;
 
       const splitButton = screen.getByRole("button", {
@@ -259,9 +267,8 @@ describe("ImageUploader", () => {
         expect(slotDotHasImage(2)).toBe(true);
       });
 
-      const callsAfterSplit = onActiveImageSrcChange.mock.calls.slice(
-        callsBeforeSplit,
-      );
+      const callsAfterSplit =
+        onActiveImageSrcChange.mock.calls.slice(callsBeforeSplit);
       expect(callsAfterSplit.length).toBeGreaterThanOrEqual(0);
       for (const call of callsAfterSplit) {
         expect(call[0]).toBe(originalSrc);
@@ -510,9 +517,7 @@ describe("ImageUploader", () => {
       fireEvent.pointerDown(
         screen.getByTestId("image-proportions-dropdown-trigger"),
       );
-      fireEvent.click(
-        screen.getByRole("menuitem", { name: /^Rectangle/ }),
-      );
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle/ }));
 
       await waitFor(() => {
         expect(lastSlots()).toEqual([
@@ -546,9 +551,7 @@ describe("ImageUploader", () => {
       fireEvent.pointerDown(
         screen.getByTestId("image-proportions-dropdown-trigger"),
       );
-      fireEvent.click(
-        screen.getByRole("menuitem", { name: /^Horizontal/ }),
-      );
+      fireEvent.click(screen.getByRole("menuitem", { name: /^Horizontal/ }));
 
       await waitFor(() => {
         expect(lastSlots()).toEqual([
@@ -817,7 +820,12 @@ describe("ImageUploader", () => {
   it("calls onImageMetadataChange with proportions and null after cancel", async () => {
     const onImageMetadataChange = vi.fn();
     const uploaderRef = createRef<ImageUploaderHandle>();
-    render(<TestWrapper uploaderRef={uploaderRef} onImageMetadataChange={onImageMetadataChange} />);
+    render(
+      <TestWrapper
+        uploaderRef={uploaderRef}
+        onImageMetadataChange={onImageMetadataChange}
+      />,
+    );
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
     const input = document.querySelector(
@@ -845,9 +853,11 @@ describe("ImageUploader", () => {
         uploaderRef.current?.removeActiveImage();
       });
 
-      fireEvent.click(screen.getByRole("button", {
-        name: tr("uploader.removeSlotConfirmAction"),
-      }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.removeSlotConfirmAction"),
+        }),
+      );
 
       await waitFor(() => {
         expect(onImageMetadataChange).toHaveBeenLastCalledWith(null);
@@ -1391,9 +1401,11 @@ describe("ImageUploader", () => {
         uploaderRef.current?.removeActiveImage();
       });
 
-      fireEvent.click(screen.getByRole("button", {
-        name: tr("uploader.removeSlotConfirmAction"),
-      }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.removeSlotConfirmAction"),
+        }),
+      );
 
       await waitFor(() => {
         expect(slotDotHasImage(2)).toBe(true);
@@ -1538,7 +1550,9 @@ describe("ImageUploader", () => {
       fireEvent.click(screen.getByTestId("uploader-slot-dot-1"));
 
       await waitFor(() => {
-        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
       });
 
       const previewFrame = screen.getByTestId("selected-image-preview-frame");
@@ -1779,10 +1793,7 @@ describe("ImageUploader", () => {
       });
       expect(lastDebugData()?.suggestedProportion).toBe("vertical");
       expect(lastDebugData()?.coveragePercent.vertical).toBe(100);
-      expect(lastDebugData()?.coveragePercent.horizontal).toBeCloseTo(
-        44.44,
-        1,
-      );
+      expect(lastDebugData()?.coveragePercent.horizontal).toBeCloseTo(44.44, 1);
     });
 
     // Rotating back to the original orientation restores the source shape.
@@ -2183,9 +2194,11 @@ describe("ImageUploader", () => {
     fireEvent.pointerDown(dropdownTrigger);
     fireEvent.click(screen.getByRole("menuitem", { name: /^Vertical/ }));
 
-    fireEvent.click(screen.getByRole("button", {
-      name: tr("uploader.settingsButton"),
-    }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: tr("uploader.settingsButton"),
+      }),
+    );
 
     await waitFor(() => {
       expect(
@@ -2212,11 +2225,16 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [file1, file2, file3] } });
 
       await waitFor(() => {
-        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
       });
 
       await waitFor(() => {
-        const lastCall = onOrderableSlotsChange.mock.calls[onOrderableSlotsChange.mock.calls.length - 1];
+        const lastCall =
+          onOrderableSlotsChange.mock.calls[
+            onOrderableSlotsChange.mock.calls.length - 1
+          ];
         expect(lastCall?.[0]).toHaveLength(3);
       });
     });
@@ -2232,7 +2250,9 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
       });
 
       expect(screen.queryByText(/add another image/i)).not.toBeInTheDocument();
@@ -2242,7 +2262,9 @@ describe("ImageUploader", () => {
       render(<TestWrapper />);
 
       const imageFile = new File(["img"], "img.jpg", { type: "image/jpeg" });
-      const textFile = new File(["text"], "doc.pdf", { type: "application/pdf" });
+      const textFile = new File(["text"], "doc.pdf", {
+        type: "application/pdf",
+      });
       const input = document.querySelector(
         'input[type="file"][accept*="image/jpeg"]',
       ) as HTMLInputElement;
@@ -2266,12 +2288,14 @@ describe("ImageUploader", () => {
       fireEvent.change(input, { target: { files: [imageFile, textFile] } });
 
       await waitFor(() => {
-        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
       });
 
       await waitFor(() => {
-        expect(slotDotHasImage(0)).toBe(true);
-        expect(slotDotHasImage(1)).toBe(false);
+        expect(slotDotHasImage(0)).toBe(false);
+        expect(slotDotHasImage(1)).toBe(true);
         expect(slotDotHasImage(2)).toBe(false);
       });
 
@@ -2287,12 +2311,16 @@ describe("ImageUploader", () => {
       render(<TestWrapper />);
 
       const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
-      const dropArea = screen.getByText(tr("upload.clickToUpload")).closest("div")!;
+      const dropArea = screen
+        .getByText(tr("upload.clickToUpload"))
+        .closest("div")!;
 
       fireEvent.drop(dropArea, { dataTransfer: { files: [file] } });
 
       await waitFor(() => {
-        expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+        expect(
+          screen.getByRole("img", { name: "Preview" }),
+        ).toBeInTheDocument();
       });
 
       expect(screen.queryByText(/add another image/i)).not.toBeInTheDocument();
@@ -2314,10 +2342,20 @@ describe("ImageUploader", () => {
       const clearButton = screen.getByTestId("uploader-remove-active-image");
       fireEvent.click(clearButton);
 
-      expect(screen.getByText(tr("uploader.removeSlotConfirmTitle"))).toBeInTheDocument();
-      expect(screen.getByText(tr("uploader.removeSlotConfirmDescription"))).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: tr("uploader.removeSlotConfirmAction") })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: tr("uploader.cancel") })).toBeInTheDocument();
+      expect(
+        screen.getByText(tr("uploader.removeSlotConfirmTitle")),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(tr("uploader.removeSlotConfirmDescription")),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: tr("uploader.removeSlotConfirmAction"),
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: tr("uploader.cancel") }),
+      ).toBeInTheDocument();
     });
 
     it("removes the image after confirming the dialog", async () => {
@@ -2334,14 +2372,18 @@ describe("ImageUploader", () => {
       const clearButton = screen.getByTestId("uploader-remove-active-image");
       fireEvent.click(clearButton);
 
-      fireEvent.click(screen.getByRole("button", {
-        name: tr("uploader.removeSlotConfirmAction"),
-      }));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.removeSlotConfirmAction"),
+        }),
+      );
 
       await waitFor(() => {
         expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
       });
-      expect(screen.queryByText(tr("uploader.removeSlotConfirmTitle"))).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(tr("uploader.removeSlotConfirmTitle")),
+      ).not.toBeInTheDocument();
     });
 
     it("does not remove the image when canceling the dialog", async () => {
@@ -2358,10 +2400,14 @@ describe("ImageUploader", () => {
       const clearButton = screen.getByTestId("uploader-remove-active-image");
       fireEvent.click(clearButton);
 
-      fireEvent.click(screen.getByRole("button", { name: tr("uploader.cancel") }));
+      fireEvent.click(
+        screen.getByRole("button", { name: tr("uploader.cancel") }),
+      );
 
       await waitFor(() => {
-        expect(screen.queryByText(tr("uploader.removeSlotConfirmTitle"))).not.toBeInTheDocument();
+        expect(
+          screen.queryByText(tr("uploader.removeSlotConfirmTitle")),
+        ).not.toBeInTheDocument();
       });
 
       expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
@@ -2373,36 +2419,24 @@ describe("ImageUploader", () => {
       sessionStorage.clear();
     });
 
-    const minDpiViolationMessage = tr("upload.validation.minDpi", {
-      width: 600,
-      height: 450,
-      minWidth: 2552,
-      minHeight: 1701,
-      minDpi: 72,
-      actualDpi: 16,
+    const fileSizeViolationMessage = tr("upload.validation.maxFileSize", {
+      maxSizeMB: 10,
     });
 
-    function rejectWithMinDpiViolation() {
+    function rejectWithFileSizeViolation() {
       vi.mocked(validateImageFile).mockResolvedValueOnce({
         violations: [
           {
-            rule: "minDpi",
-            messageKey: "upload.validation.minDpi",
-            params: {
-              width: 600,
-              height: 450,
-              minWidth: 2552,
-              minHeight: 1701,
-              minDpi: 72,
-              actualDpi: 16,
-            },
+            rule: "maxFileSize",
+            messageKey: "upload.validation.maxFileSize",
+            params: { maxSizeMB: 10 },
           },
         ],
-        dimensions: { width: 600, height: 450 },
+        dimensions: null,
       });
     }
 
-    it("shows an inline error and keeps the drop area when a too-small photo is taken", async () => {
+    it("shows an inline error and keeps the drop area when an invalid photo is taken", async () => {
       const onUploadError = vi.fn();
       render(<TestWrapper onUploadError={onUploadError} />);
 
@@ -2411,14 +2445,16 @@ describe("ImageUploader", () => {
       ) as HTMLInputElement;
       expect(cameraInput).not.toBeNull();
 
-      rejectWithMinDpiViolation();
+      rejectWithFileSizeViolation();
       fireEvent.change(cameraInput, {
-        target: { files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })] },
+        target: {
+          files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })],
+        },
       });
 
       const alert = await screen.findByTestId("uploader-selection-error");
       expect(alert).toHaveAttribute("role", "alert");
-      expect(alert).toHaveTextContent(minDpiViolationMessage);
+      expect(alert).toHaveTextContent(fileSizeViolationMessage);
       expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
       expect(onUploadError).not.toHaveBeenCalled();
     });
@@ -2430,9 +2466,11 @@ describe("ImageUploader", () => {
         'input[type="file"][capture="environment"]',
       ) as HTMLInputElement;
 
-      rejectWithMinDpiViolation();
+      rejectWithFileSizeViolation();
       fireEvent.change(cameraInput, {
-        target: { files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })] },
+        target: {
+          files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })],
+        },
       });
 
       await screen.findByTestId("uploader-selection-error");
@@ -2451,9 +2489,11 @@ describe("ImageUploader", () => {
         'input[type="file"][capture="environment"]',
       ) as HTMLInputElement;
 
-      rejectWithMinDpiViolation();
+      rejectWithFileSizeViolation();
       fireEvent.change(cameraInput, {
-        target: { files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })] },
+        target: {
+          files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })],
+        },
       });
       await screen.findByTestId("uploader-selection-error");
 
@@ -2462,7 +2502,9 @@ describe("ImageUploader", () => {
         dimensions: { width: 3000, height: 2000 },
       });
       fireEvent.change(cameraInput, {
-        target: { files: [new File(["big"], "photo.jpg", { type: "image/jpeg" })] },
+        target: {
+          files: [new File(["big"], "photo.jpg", { type: "image/jpeg" })],
+        },
       });
 
       await screen.findByRole("img", { name: "Preview" });
@@ -2484,19 +2526,12 @@ describe("ImageUploader", () => {
         .mockResolvedValueOnce({
           violations: [
             {
-              rule: "minDpi",
-              messageKey: "upload.validation.minDpi",
-              params: {
-                width: 600,
-                height: 450,
-                minWidth: 2552,
-                minHeight: 1701,
-                minDpi: 72,
-                actualDpi: 16,
-              },
+              rule: "maxFileSize",
+              messageKey: "upload.validation.maxFileSize",
+              params: { maxSizeMB: 10 },
             },
           ],
-          dimensions: { width: 600, height: 450 },
+          dimensions: null,
         });
 
       fireEvent.change(input, {
@@ -2512,20 +2547,20 @@ describe("ImageUploader", () => {
       expect(alert).toHaveTextContent(
         tr("uploader.imagesRejectedSummary", {
           rejectedCount: 1,
-          reason: minDpiViolationMessage,
+          reason: fileSizeViolationMessage,
         }),
       );
       await screen.findByRole("img", { name: "Preview" });
     });
 
-    it("validates drag-and-dropped files and reports too-small images", async () => {
+    it("validates drag-and-dropped files and reports invalid images", async () => {
       render(<TestWrapper />);
 
       const dropArea = screen
         .getByText(tr("upload.clickToUpload"))
         .closest("div")!;
 
-      rejectWithMinDpiViolation();
+      rejectWithFileSizeViolation();
       fireEvent.drop(dropArea, {
         dataTransfer: {
           files: [new File(["small"], "small.jpg", { type: "image/jpeg" })],
@@ -2533,8 +2568,140 @@ describe("ImageUploader", () => {
       });
 
       const alert = await screen.findByTestId("uploader-selection-error");
-      expect(alert).toHaveTextContent(minDpiViolationMessage);
+      expect(alert).toHaveTextContent(fileSizeViolationMessage);
       expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+    });
+
+    it("accepts a low-resolution photo into the editor (no DPI rejection at selection)", async () => {
+      render(<TestWrapper />);
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+
+      vi.mocked(validateImageFile).mockResolvedValueOnce({
+        violations: [],
+        dimensions: { width: 600, height: 450 },
+      });
+      fireEvent.change(cameraInput, {
+        target: {
+          files: [new File(["small"], "photo.jpg", { type: "image/jpeg" })],
+        },
+      });
+
+      await screen.findByRole("img", { name: "Preview" });
+      expect(screen.queryByTestId("uploader-selection-error")).toBeNull();
+    });
+  });
+
+  describe("unprintable photo notice", () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+    });
+
+    afterEach(() => {
+      resetDpiRules();
+    });
+
+    async function selectDefaultPhoto() {
+      const input = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+      vi.mocked(validateImageFile).mockResolvedValueOnce({
+        violations: [],
+        dimensions: null,
+      });
+      fireEvent.change(input, {
+        target: {
+          files: [new File(["photo"], "photo.jpg", { type: "image/jpeg" })],
+        },
+      });
+      await screen.findByRole("img", { name: "Preview" });
+    }
+
+    it("shows the notice with concrete numbers and the preview badge for an unprintable photo", async () => {
+      // Default mock image is 1200x800: ~50 DPI at the smallest 60x40 cm
+      // rectangular size — below the 72 DPI minimum.
+      render(<TestWrapper />);
+      await selectDefaultPhoto();
+
+      const notice = await screen.findByTestId("unprintable-photo-notice");
+      expect(notice).toHaveTextContent(
+        tr("uploader.unprintableReason", {
+          width: 1200,
+          height: 800,
+          dpi: 50,
+          sizeLabel: "60 x 40",
+          minWidth: 1701,
+          minHeight: 1134,
+        }),
+      );
+      expect(notice).toHaveTextContent(tr("uploader.unprintableTip1"));
+      expect(screen.getByTestId("low-resolution-badge")).toBeInTheDocument();
+    });
+
+    it("hides the notice and badge for a printable photo", async () => {
+      mockImageWidth = 3000;
+      mockImageHeight = 2000;
+
+      render(<TestWrapper />);
+      await selectDefaultPhoto();
+
+      // Give metadata resolution and the derived effects a tick.
+      await waitFor(() => {
+        expect(screen.queryByTestId("unprintable-photo-notice")).toBeNull();
+      });
+      expect(screen.queryByTestId("low-resolution-badge")).toBeNull();
+    });
+
+    it("hides the notice when the DPI guard is disabled", async () => {
+      applyDpiRulesOverride({ guardEnabled: false });
+
+      render(<TestWrapper />);
+      await selectDefaultPhoto();
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("unprintable-photo-notice")).toBeNull();
+      });
+      expect(screen.queryByTestId("low-resolution-badge")).toBeNull();
+    });
+
+    it("opens the camera picker targeted at the active slot from the retake CTA", async () => {
+      render(<TestWrapper />);
+      await selectDefaultPhoto();
+      await screen.findByTestId("unprintable-photo-notice");
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+      const cameraClickSpy = vi.spyOn(cameraInput, "click");
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.unprintableRetakeCta"),
+        }),
+      );
+
+      expect(cameraClickSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("opens the gallery picker from the choose-from-gallery CTA", async () => {
+      render(<TestWrapper />);
+      await selectDefaultPhoto();
+      await screen.findByTestId("unprintable-photo-notice");
+
+      const galleryInput = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement;
+      const galleryClickSpy = vi.spyOn(galleryInput, "click");
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: tr("uploader.unprintableChooseCta"),
+        }),
+      );
+
+      expect(galleryClickSpy).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -2573,19 +2740,12 @@ describe("ImageUploader", () => {
       vi.mocked(validateImageFile).mockResolvedValueOnce({
         violations: [
           {
-            rule: "minDpi",
-            messageKey: "upload.validation.minDpi",
-            params: {
-              width: 600,
-              height: 450,
-              minWidth: 2552,
-              minHeight: 1701,
-              minDpi: 72,
-              actualDpi: 16,
-            },
+            rule: "maxFileSize",
+            messageKey: "upload.validation.maxFileSize",
+            params: { maxSizeMB: 10 },
           },
         ],
-        dimensions: { width: 600, height: 450 },
+        dimensions: null,
       });
       const { unmount } = render(<TestWrapper />);
       const cameraInput = document.querySelector(
@@ -2604,14 +2764,7 @@ describe("ImageUploader", () => {
 
       const alert = await screen.findByTestId("uploader-selection-error");
       expect(alert).toHaveTextContent(
-        tr("upload.validation.minDpi", {
-          width: 600,
-          height: 450,
-          minWidth: 2552,
-          minHeight: 1701,
-          minDpi: 72,
-          actualDpi: 16,
-        }),
+        tr("upload.validation.maxFileSize", { maxSizeMB: 10 }),
       );
     });
 

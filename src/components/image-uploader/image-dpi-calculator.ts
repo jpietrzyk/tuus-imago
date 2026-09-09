@@ -86,6 +86,21 @@ export function calculateDpiFromCrop(
   );
 }
 
+/**
+ * Minimum source pixels needed to print the given (orientation-matched)
+ * print size at the current minimum DPI.
+ */
+export function getRequiredPixelsForPrintSize(
+  printWidthCm: number,
+  printHeightCm: number,
+  minDpi: number = IMAGE_DPI_RULES.minDpi,
+): { width: number; height: number } {
+  return {
+    width: Math.ceil((minDpi * printWidthCm) / CM_PER_INCH),
+    height: Math.ceil((minDpi * printHeightCm) / CM_PER_INCH),
+  };
+}
+
 export function getDpiQuality(dpi: number): DpiQuality {
   const { excellent, good, acceptable } = IMAGE_DPI_RULES.qualityThresholds;
   if (dpi >= excellent) return "excellent";

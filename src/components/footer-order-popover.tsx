@@ -1,4 +1,4 @@
-import { ChevronUp, ShoppingCart, ShoppingBag } from "lucide-react";
+import { ChevronUp, ShoppingCart, ShoppingBag, TriangleAlert } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +15,8 @@ export interface FooterOrderRow {
   proportion: string;
   isUploaded: boolean;
   unitPrice: number;
+  /** False when the slot's photo is too small to print in any size. */
+  isPrintable: boolean;
 }
 
 interface CheckoutOrderDropupProps {
@@ -115,12 +117,15 @@ export function CheckoutOrderDropup({
               return (
                 <label
                   key={row.slotKey}
-                  className="flex items-start gap-2 rounded-md border border-border/70 p-2"
+                  className={`flex items-start gap-2 rounded-md border border-border/70 p-2 ${
+                    row.isPrintable ? "" : "opacity-70"
+                  }`}
                 >
                   <input
                     type="checkbox"
                     className="mt-0.5 h-4 w-4 shrink-0"
                     checked={isChecked}
+                    disabled={!row.isPrintable}
                     onChange={() => onToggleSlot(row.slotKey)}
                     aria-label={t("checkout.orderSelectionCheckboxAria", {
                       slot: slotLabel(row.slotKey),
@@ -132,11 +137,13 @@ export function CheckoutOrderDropup({
                         {slotLabel(row.slotKey)}
                       </span>
                       <span className="text-xs font-semibold">
-                        {isChecked
-                          ? t("checkout.orderSelectionPrice", {
-                              price: formatPrice(row.unitPrice),
-                            })
-                          : "-"}
+                        {row.isPrintable
+                          ? isChecked
+                            ? t("checkout.orderSelectionPrice", {
+                                price: formatPrice(row.unitPrice),
+                              })
+                            : "-"
+                          : null}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
@@ -144,11 +151,21 @@ export function CheckoutOrderDropup({
                         {t("checkout.orderSelectionProportion")}:{" "}
                         {row.proportion}
                       </span>
-                      <span>
-                        {row.isUploaded
-                          ? t("checkout.orderSelectionUploaded")
-                          : t("checkout.orderSelectionPendingUpload")}
-                      </span>
+                      {row.isPrintable ? (
+                        <span>
+                          {row.isUploaded
+                            ? t("checkout.orderSelectionUploaded")
+                            : t("checkout.orderSelectionPendingUpload")}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-medium text-amber-600">
+                          <TriangleAlert
+                            className="h-3 w-3"
+                            aria-hidden="true"
+                          />
+                          {t("checkout.slotNotPrintable")}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </label>

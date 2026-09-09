@@ -2,8 +2,9 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { MemoryRouter, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { App } from "./App";
 import { tr } from "@/test/i18n-test";
 import type { LegalPageData } from "@/lib/content-loader";
@@ -565,5 +566,198 @@ describe("App Component Routing", () => {
     // App should be wrapped in a div with h-screen and flex flex-col
     const appWrapper = container.firstChild as HTMLElement;
     expect(appWrapper).toHaveClass("h-screen", "flex", "flex-col");
+  });
+});
+
+describe("upload flow routes (/upload ↔ /prepare-painting)", () => {
+  let currentPathname = "";
+
+  function LocationProbe() {
+    const location = useLocation();
+    useEffect(() => {
+      currentPathname = location.pathname;
+    }, [location.pathname]);
+    return null;
+  }
+
+  function renderAtRoute(route: string) {
+    const renderResult = render(
+      <MemoryRouter initialEntries={[route]}>
+        <LocationProbe />
+        <App />
+      </MemoryRouter>,
+    );
+    return renderResult;
+  }
+
+  function expectPathnameEventually(pathname: string) {
+    return waitFor(() => {
+      expect(currentPathname).toBe(pathname);
+    });
+  }
+
+  function selectPhoto() {
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+
+    fireEvent.change(input!, {
+      target: {
+        files: [new File(["photo"], "photo.jpg", { type: "image/jpeg" })],
+      },
+    });
+  }
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    currentPathname = "";
+    mockLoadImageDimensions.mockReset().mockResolvedValue({
+      width: 3000,
+      height: 2000,
+    });
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+    vi.unstubAllGlobals();
+  });
+
+  it("syncs the URL to /prepare-painting after selecting a photo and back to /upload after reset", async () => {
+    renderAtRoute("/upload");
+
+    selectPhoto();
+    await screen.findByRole("img", { name: "Preview" });
+
+    await expectPathnameEventually("/prepare-painting");
+
+    // The editor state survived the URL switch (same component instance).
+    expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
+
+    // Resetting clears the selection and returns to the selection step.
+    fireEvent.click(
+      screen.getByRole("button", { name: tr("uploader.resetSlots") }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: tr("uploader.resetSlotsConfirmAction"),
+      }),
+    );
+
+    await expectPathnameEventually("/upload");
+    await waitFor(() => {
+      expect(screen.queryByRole("img", { name: "Preview" })).toBeNull();
+    });
+  });
+
+  it("redirects /prepare-painting to /upload when opened without a selection", async () => {
+    renderAtRoute("/prepare-painting");
+
+    await expectPathnameEventually("/upload");
+
+    // The selection screen is showing.
+    expect(
+      screen.getByRole("button", { name: tr("upload.uploadFromDevice") }),
+    ).toBeInTheDocument();
+  });
+
+  it("blocks ordering an unprintable slot in the checkout dropup", async () => {
+    const user = userEvent.setup();
+
+    // 1200x800 photo: ~50 DPI at the smallest 60x40 cm size — no offered
+    // size passes the 72 DPI guard, so the slot must not be orderable.
+    mockLoadImageDimensions.mockResolvedValueOnce({
+      width: 1200,
+      height: 800,
+    });
+
+    renderAtRoute("/upload");
+
+    selectPhoto();
+    await screen.findByRole("img", { name: "Preview" });
+    await expectPathnameEventually("/prepare-painting");
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: tr("checkout.orderSelectionButton"),
+      }),
+    );
+
+    expect(
+      await screen.findByText(tr("checkout.slotNotPrintable")),
+    ).toBeInTheDocument();
+
+    const checkbox = screen.getByRole("checkbox", {
+      name: tr("checkout.orderSelectionCheckboxAria", {
+        slot: tr("upload.slotCenter"),
+      }),
+    });
+    expect(checkbox).toBeDisabled();
+    expect(checkbox).not.toBeChecked();
+
+    // No printable slot is checked — the checkout CTA stays disabled.
+    expect(
+      screen.getByRole("button", {
+        name: tr("checkout.proceedToCheckout"),
+      }),
+    ).toBeDisabled();
+  });
+
+  it("allows checkout with a printable slot while another slot is unprintable", async () => {
+    const user = userEvent.setup();
+
+    // Multi-pick: the first photo (center slot) is unprintable, the second
+    // (left slot) is printable. Ordering must stay possible for the
+    // printable one.
+    mockLoadImageDimensions
+      .mockResolvedValueOnce({ width: 1200, height: 800 })
+      .mockResolvedValueOnce({ width: 3000, height: 2000 });
+
+    renderAtRoute("/upload");
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement;
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["small"], "small.jpg", { type: "image/jpeg" }),
+          new File(["big"], "big.jpg", { type: "image/jpeg" }),
+        ],
+      },
+    });
+
+    await screen.findByRole("img", { name: "Preview" });
+    await expectPathnameEventually("/prepare-painting");
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: tr("checkout.orderSelectionButton"),
+      }),
+    );
+
+    const smallCheckbox = await screen.findByRole("checkbox", {
+      name: tr("checkout.orderSelectionCheckboxAria", {
+        slot: tr("upload.slotCenter"),
+      }),
+    });
+    await waitFor(() => {
+      expect(smallCheckbox).toBeDisabled();
+    });
+
+    const bigCheckbox = screen.getByRole("checkbox", {
+      name: tr("checkout.orderSelectionCheckboxAria", {
+        slot: tr("upload.slotLeft"),
+      }),
+    });
+    expect(bigCheckbox).toBeEnabled();
+    expect(bigCheckbox).toBeChecked();
+
+    // A printable slot is checked — the checkout CTA is active.
+    expect(
+      screen.getByRole("button", {
+        name: tr("checkout.proceedToCheckout"),
+      }),
+    ).toBeEnabled();
   });
 });

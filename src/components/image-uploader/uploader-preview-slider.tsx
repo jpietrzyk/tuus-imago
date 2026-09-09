@@ -39,6 +39,17 @@ const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(
 // slightly at the largest painting size.
 export const PREVIEW_SLIDER_BOTTOM_RESERVE_PX = 96;
 
+function LowResolutionBadge() {
+  return (
+    <span
+      data-testid="low-resolution-badge"
+      className="pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full border border-amber-300 bg-amber-50/95 px-2.5 py-1 text-[10px] font-semibold text-amber-800 shadow-sm"
+    >
+      {t("uploader.unprintableBadge")}
+    </span>
+  );
+}
+
 interface TriptychSidePanelProps {
   slotIndex: number;
   image: SelectedImageItem;
@@ -328,6 +339,7 @@ interface UploaderPreviewSliderProps {
   selectedPaintingSize?: PaintingSizeIndex;
   paintingAspectRatio?: number;
   paintingShape?: PaintingShape;
+  isPreviewUnprintable?: boolean;
   slots?: Array<SelectedImageItem | null>;
   onSelectSlot?: (index: number) => void;
   getSlotPreviewUrl?: (image: SelectedImageItem) => string;
@@ -361,6 +373,7 @@ export default function UploaderPreviewSlider({
   selectedPaintingSize = 2,
   paintingAspectRatio = 1.5,
   paintingShape = "square",
+  isPreviewUnprintable = false,
   slots,
   onSelectSlot,
   getSlotPreviewUrl,
@@ -563,6 +576,7 @@ export default function UploaderPreviewSlider({
                   : { aspectRatio: String(panelAspectRatio) }
               }
             >
+              {isActive && isPreviewUnprintable && <LowResolutionBadge />}
               {getPaintingSizeIndices(paintingShape).map((sizeIdx) => {
                 const scale = getPaintingSizeScale(sizeIdx);
                 const relativeScale = scale / MAX_PAINTING_SIZE_SCALE;
@@ -618,6 +632,7 @@ export default function UploaderPreviewSlider({
       >
         {previewSlot}
       </PaintingSizeHelperOverlay>
+      {isPreviewUnprintable && <LowResolutionBadge />}
       {swipeNav && <UploaderSwipeNavHint {...swipeNav} />}
     </div>
   );
