@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { ImageUploader } from "./image-uploader";
-import { splitImageIntoVerticalThirdFiles } from "./image-uploader/split-image-into-thirds";
 import type { SelectedImageItem } from "./image-uploader/image-uploader";
 import {
   FooterToolsBar,
@@ -120,15 +119,6 @@ describe("ImageUploader split effects regression", () => {
     const sourceFile = new File(["source"], "source.jpg", {
       type: "image/jpeg",
     });
-    const splitPartFiles: [File, File, File] = [
-      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
-      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
-      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
-    ];
-
-    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
-      splitPartFiles,
-    );
 
     render(<TestWrapper />);
 
@@ -148,15 +138,9 @@ describe("ImageUploader split effects regression", () => {
     fireEvent.click(screen.getByTestId("apply-brightness-effect"));
     fireEvent.click(screen.getByTestId("split-active-image"));
 
-    await waitFor(() => {
-      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
-        expect.objectContaining({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile,
-        }),
-      );
-    });
-
+    // Dimensions are known at insertion (from validation), so the split uses
+    // the seamless-window model: three window slots sharing one source,
+    // each inheriting the pre-split effects.
     await waitFor(() => {
       expect(latestSlotSwitcherProps?.slots).toHaveLength(3);
       expect(latestSlotSwitcherProps?.activeSlotIndex).toBe(1);
@@ -178,6 +162,7 @@ describe("ImageUploader split effects regression", () => {
         upscale: false,
         restore: false,
       });
+      expect(latestSlotSwitcherProps?.slots[1]?.triptychWindowIndex).toBe(1);
     });
   });
 
@@ -222,22 +207,16 @@ describe("ImageUploader split effects regression", () => {
   });
 
   it("caps the post-split size at the source size instead of upgrading to the largest printable size", async () => {
-    // High-resolution source: even one-third panels remain printable at every
-    // rectangular size, but the chosen (source) size must be preserved.
-    mockLoadImageDimensions.mockResolvedValue({ width: 16000, height: 10000 });
+    // 4400x2200 (2:1) source: the recommended pre-split size is 2 (90x60 —
+    // 120x80 needs more pixels than the resting crop provides). Each split
+    // window is ~1466x2200, which prints only up to 75x50 (index 1), so the
+    // post-split size must land at min(2, 1) = 1 — derived from the source
+    // size, never upgraded to the largest printable size.
+    mockLoadImageDimensions.mockResolvedValue({ width: 4400, height: 2200 });
 
     const sourceFile = new File(["source"], "source.jpg", {
       type: "image/jpeg",
     });
-    const splitPartFiles: [File, File, File] = [
-      new File(["left"], "source-part-1.jpg", { type: "image/jpeg" }),
-      new File(["center"], "source-part-2.jpg", { type: "image/jpeg" }),
-      new File(["right"], "source-part-3.jpg", { type: "image/jpeg" }),
-    ];
-
-    vi.mocked(splitImageIntoVerticalThirdFiles).mockResolvedValue(
-      splitPartFiles,
-    );
 
     render(<TestWrapper />);
 
@@ -250,24 +229,26 @@ describe("ImageUploader split effects regression", () => {
     fireEvent.change(input, { target: { files: [sourceFile] } });
     await screen.findByRole("img", { name: "Preview" });
 
-    // Source defaults to size index 2 (90x60).
-    expect(screen.getByTestId("selected-painting-size").textContent).toBe("2");
-
-    fireEvent.click(screen.getByTestId("split-active-image"));
-
+    // Dimensions are known at insertion, so the recommended size (2) is
+    // auto-selected without waiting for the preview to decode.
     await waitFor(() => {
-      expect(splitImageIntoVerticalThirdFiles).toHaveBeenCalledWith(
-        expect.objectContaining({
-          previewUrl: expect.stringContaining("blob:"),
-          sourceFile,
-        }),
+      expect(screen.getByTestId("selected-painting-size").textContent).toBe(
+        "2",
       );
     });
 
-    // After split the size stays at 2 (source height preserved), never upgraded
-    // to the largest printable size even though larger sizes remain printable.
+    fireEvent.click(screen.getByTestId("split-active-image"));
+
+    // The split resolves synchronously into three window slots; the size
+    // follows the window projection (capped at the source size).
     await waitFor(() => {
-      expect(screen.getByTestId("selected-painting-size").textContent).toBe("2");
+      expect(latestSlotSwitcherProps?.slots).toHaveLength(3);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-painting-size").textContent).toBe(
+        "1",
+      );
     });
   });
 });
