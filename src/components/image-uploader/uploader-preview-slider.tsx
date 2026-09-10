@@ -258,7 +258,7 @@ function TriptychSidePanel({
       data-triptych-linked={isLinked ? "true" : undefined}
     >
       <div
-        className="relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none opacity-95 hover:opacity-100"
+        className="painting-plate relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none opacity-95 hover:opacity-100"
         style={{ aspectRatio: String(previewFrameAspectRatio) }}
       >
         {useCloudPreview ? (

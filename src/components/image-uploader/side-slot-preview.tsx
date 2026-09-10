@@ -107,9 +107,9 @@ export default function SideSlotPreview({
           isLeft ? "items-start justify-end" : "items-center justify-start"
         } ${
           image
-            ? isNavigable
-              ? "opacity-95 md:opacity-92"
-              : "opacity-80 md:opacity-75"
+            ? `painting-plate ${
+                isNavigable ? "opacity-95 md:opacity-92" : "opacity-80 md:opacity-75"
+              }`
             : "border border-dashed border-primary/70 bg-primary/5 opacity-95"
         }`}
         style={{
