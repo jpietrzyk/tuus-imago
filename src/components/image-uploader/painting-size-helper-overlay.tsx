@@ -5,6 +5,7 @@ import {
   getPaintingSizeIndices,
   ALL_PAINTING_SIZE_INDICES,
 } from "./painting-size";
+import { useRecentlyChanged } from "./use-recently-changed";
 
 interface PaintingSizeHelperOverlayProps {
   selectedSize: PaintingSizeIndex;
@@ -28,6 +29,7 @@ export default function PaintingSizeHelperOverlay({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [fitSize, setFitSize] = useState({ width: 0, height: 0 });
   const selectedScale = getPaintingSizeScale(selectedSize);
+  const isSizeHintActive = useRecentlyChanged(selectedSize);
 
   useEffect(() => {
     const el = wrapperRef.current;
@@ -53,32 +55,39 @@ export default function PaintingSizeHelperOverlay({
   }, [paintingAspectRatio, bottomReservePx]);
 
   return (
-    <div ref={wrapperRef} className="relative flex h-full flex-1 justify-center items-start min-w-0">
+    <div ref={wrapperRef} className="group/guides relative flex h-full flex-1 justify-center items-start min-w-0">
       <div
         data-testid="overlay-fit-box"
         className="relative"
         style={fitSize.width > 0 ? { width: fitSize.width, height: fitSize.height } : undefined}
       >
-        {showBorders &&
-          getPaintingSizeIndices(shape).map((sizeIdx) => {
-            const scale = getPaintingSizeScale(sizeIdx);
-            const relativeScale = scale / MAX_SCALE;
-            const isSelected = sizeIdx === selectedSize;
+        {showBorders && (
+          <div
+            data-testid="painting-size-guides"
+            className="pointer-events-none absolute inset-0 opacity-20 transition-opacity duration-500 ease-out motion-reduce:transition-none hover-capable:group-hover/guides:opacity-70"
+            style={isSizeHintActive ? { opacity: 1 } : undefined}
+          >
+            {getPaintingSizeIndices(shape).map((sizeIdx) => {
+              const scale = getPaintingSizeScale(sizeIdx);
+              const relativeScale = scale / MAX_SCALE;
+              const isSelected = sizeIdx === selectedSize;
 
-            return (
-              <div
-                key={sizeIdx}
-                className="absolute inset-0 m-auto"
-                style={{
-                  width: `${relativeScale * 100}%`,
-                  height: `${relativeScale * 100}%`,
-                  border: isSelected
-                    ? "2px solid rgba(0, 0, 0, 0.5)"
-                    : "1.5px dashed rgba(0, 0, 0, 0.2)",
-                }}
-              />
-            );
-          })}
+              return (
+                <div
+                  key={sizeIdx}
+                  className="absolute inset-0 m-auto"
+                  style={{
+                    width: `${relativeScale * 100}%`,
+                    height: `${relativeScale * 100}%`,
+                    border: isSelected
+                      ? "2px solid rgba(0, 0, 0, 0.5)"
+                      : "1.5px dashed rgba(0, 0, 0, 0.2)",
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
 
         <div
           className={showBorders ? "absolute inset-0 m-auto flex items-center justify-center" : "relative flex h-full w-full items-center justify-center"}

@@ -13,6 +13,7 @@ import {
   loadCachedImageElement,
 } from "./side-panel-crop";
 import { drawCroppedImageToCanvas } from "./preview-canvas-utils";
+import { useRecentlyChanged } from "./use-recently-changed";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -524,6 +525,7 @@ export default function UploaderPreviewSlider({
   // never overflows its reference box (≤ 100%); the largest size fills it.
   const selectedScaleRelative =
     getPaintingSizeScale(selectedPaintingSize) / MAX_PAINTING_SIZE_SCALE;
+  const isSizeHintActive = useRecentlyChanged(selectedPaintingSize);
 
   if (showDesktopTriptych) {
     const hasFit =
@@ -566,7 +568,7 @@ export default function UploaderPreviewSlider({
           return (
             <div
               key={index}
-              className="relative h-full shrink-0"
+              className="group/panel relative h-full shrink-0"
               style={
                 hasFit
                   ? {
@@ -577,25 +579,31 @@ export default function UploaderPreviewSlider({
               }
             >
               {isActive && isPreviewUnprintable && <LowResolutionBadge />}
-              {getPaintingSizeIndices(paintingShape).map((sizeIdx) => {
-                const scale = getPaintingSizeScale(sizeIdx);
-                const relativeScale = scale / MAX_PAINTING_SIZE_SCALE;
-                const isSelected = sizeIdx === selectedPaintingSize;
+              <div
+                data-testid="painting-size-guides"
+                className="pointer-events-none absolute inset-0 opacity-20 transition-opacity duration-500 ease-out motion-reduce:transition-none hover-capable:group-hover/panel:opacity-70"
+                style={isSizeHintActive ? { opacity: 1 } : undefined}
+              >
+                {getPaintingSizeIndices(paintingShape).map((sizeIdx) => {
+                  const scale = getPaintingSizeScale(sizeIdx);
+                  const relativeScale = scale / MAX_PAINTING_SIZE_SCALE;
+                  const isSelected = sizeIdx === selectedPaintingSize;
 
-                return (
-                  <div
-                    key={sizeIdx}
-                    className="pointer-events-none absolute inset-0 m-auto"
-                    style={{
-                      width: `${relativeScale * 100}%`,
-                      height: `${relativeScale * 100}%`,
-                      border: isSelected
-                        ? "2px solid rgba(0, 0, 0, 0.5)"
-                        : "1.5px dashed rgba(0, 0, 0, 0.2)",
-                    }}
-                  />
-                );
-              })}
+                  return (
+                    <div
+                      key={sizeIdx}
+                      className="absolute inset-0 m-auto"
+                      style={{
+                        width: `${relativeScale * 100}%`,
+                        height: `${relativeScale * 100}%`,
+                        border: isSelected
+                          ? "2px solid rgba(0, 0, 0, 0.5)"
+                          : "1.5px dashed rgba(0, 0, 0, 0.2)",
+                      }}
+                    />
+                  );
+                })}
+              </div>
               <div
                 className="absolute inset-0 m-auto flex items-center justify-center"
                 data-testid="triptych-panel-content"

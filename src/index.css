@@ -6,6 +6,7 @@
 @import "./assets/fonts/style.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant hover-capable (@media (hover: hover));
 
 :root {
   --app-shell-bar-height: 4.5rem;
