@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import UploaderPreviewSlider, {
-  PREVIEW_SLIDER_BOTTOM_RESERVE_PX,
-} from "./uploader-preview-slider";
+import UploaderPreviewSlider from "./uploader-preview-slider";
+import { PREVIEW_SLIDER_BOTTOM_RESERVE_PX } from "./preview-slider-layout";
 import { computeSidePanelCrop } from "./side-panel-crop";
 import type {
   SelectedImageItem,

@@ -703,6 +703,40 @@ describe("upload flow routes (/upload ↔ /prepare-painting)", () => {
     ).toBeDisabled();
   });
 
+  it("keeps the upload flow when interacting with the preview area", async () => {
+    renderAtRoute("/upload");
+
+    selectPhoto();
+    await screen.findByRole("img", { name: "Preview" });
+    await expectPathnameEventually("/prepare-painting");
+
+    // Change the painting size (drives the size guides state), then hover
+    // and tap the preview — none of this may reset the selection state or
+    // navigate back to the selection screen.
+    fireEvent.click(document.getElementById("size-btn-0")!);
+
+    const frame = screen.getByTestId("selected-image-preview-frame");
+    const canvas = screen.getByTestId("selected-image-preview-canvas");
+
+    fireEvent.mouseOver(frame);
+    fireEvent.mouseMove(frame);
+    fireEvent.mouseOver(canvas);
+
+    fireEvent.touchStart(canvas, {
+      touches: [{ clientX: 100, clientY: 50 }],
+    });
+    fireEvent.touchEnd(canvas, {
+      changedTouches: [{ clientX: 100, clientY: 50 }],
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    expect(currentPathname).toBe("/prepare-painting");
+    expect(
+      screen.getByTestId("selected-image-preview-canvas"),
+    ).toBeInTheDocument();
+  });
+
   it("re-enables checkout when an unprintable slot becomes printable again", async () => {
     const user = userEvent.setup();
 

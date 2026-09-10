@@ -14,6 +14,7 @@ import {
 } from "./side-panel-crop";
 import { drawCroppedImageToCanvas } from "./preview-canvas-utils";
 import { useRecentlyChanged } from "./use-recently-changed";
+import { PREVIEW_SLIDER_BOTTOM_RESERVE_PX } from "./preview-slider-layout";
 import type {
   SelectedImageItem,
   SelectedImageMetadata,
@@ -32,13 +33,6 @@ import type { CropAdjust } from "./use-crop-adjust";
 const MAX_PAINTING_SIZE_SCALE = getPaintingSizeScale(
   ALL_PAINTING_SIZE_INDICES[ALL_PAINTING_SIZE_INDICES.length - 1],
 );
-
-// Vertical position of the painting preview contents: the slider caps its
-// content height by reserving this much space at the bottom (so the preview
-// bottom edge stays clear of the footer and background image elements there
-// stay visible) and top-aligns the contents, which scales the previews down
-// slightly at the largest painting size.
-export const PREVIEW_SLIDER_BOTTOM_RESERVE_PX = 96;
 
 function LowResolutionBadge() {
   return (
