@@ -1,31 +1,5 @@
-import {
-  calculateOrientationMatchedDpi,
-  getOrientationMatchedPrintDimensions,
-} from "./image-dpi-calculator";
-import { IMAGE_DPI_RULES } from "./image-dpi-rules";
-import {
-  DEFAULT_PAINTING_SIZE_INDEX,
-  getPaintingSizeOptions,
-  type PaintingShape,
-  type PaintingSizeOption,
-} from "./painting-size";
-import { getOptimalDisplayProportion } from "./image-proportion-calculator";
 import { type ImageValidationRules } from "./image-validation-rules";
 import { loadImageDimensions } from "./load-image-dimensions";
-
-function resolveReferencePrintSize(
-  width: number,
-  height: number,
-): PaintingSizeOption {
-  const optimalProportion = getOptimalDisplayProportion(width, height);
-  const shape: PaintingShape =
-    optimalProportion === "square" ? "square" : "rectangular";
-  const options = getPaintingSizeOptions(shape);
-  return (
-    options.find((option) => option.key === DEFAULT_PAINTING_SIZE_INDEX) ??
-    options[0]
-  );
-}
 
 export interface ImageValidationViolation {
   rule: string;
@@ -72,44 +46,9 @@ export async function validateImageFile(
     return { violations, dimensions: null };
   }
 
-  if (IMAGE_DPI_RULES.guardEnabled) {
-    const referencePrintSize = resolveReferencePrintSize(
-      dimensions.width,
-      dimensions.height,
-    );
-    const { dpi } = calculateOrientationMatchedDpi(
-      dimensions.width,
-      dimensions.height,
-      referencePrintSize.widthCm,
-      referencePrintSize.heightCm,
-    );
-
-    if (dpi < IMAGE_DPI_RULES.minDpi) {
-      const matchedPrintSize = getOrientationMatchedPrintDimensions(
-        dimensions.width,
-        dimensions.height,
-        referencePrintSize.widthCm,
-        referencePrintSize.heightCm,
-      );
-
-      violations.push({
-        rule: "minDpi",
-        messageKey: "upload.validation.minDpi",
-        params: {
-          minDpi: IMAGE_DPI_RULES.minDpi,
-          actualDpi: dpi,
-          width: dimensions.width,
-          height: dimensions.height,
-          minWidth: Math.ceil(
-            (IMAGE_DPI_RULES.minDpi * matchedPrintSize.widthCm) / 2.54,
-          ),
-          minHeight: Math.ceil(
-            (IMAGE_DPI_RULES.minDpi * matchedPrintSize.heightCm) / 2.54,
-          ),
-        },
-      });
-    }
-  }
+  // Printability (DPI) is intentionally NOT checked at selection time: any
+  // decodable image may enter the editor, where per-size availability and the
+  // unprintable-photo notice communicate what (if anything) can be printed.
 
   return { violations, dimensions };
 }

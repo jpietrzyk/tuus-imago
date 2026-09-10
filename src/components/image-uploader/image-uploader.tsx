@@ -55,9 +55,22 @@ import {
   getPaintingOrientation,
   getPaintingSizeOptions,
 } from "./painting-size";
-import { computeSizesDpiAvailability, resolveRecommendedPaintingSize, type SizeDpiInfo } from "./size-dpi-availability";
-import { splitImageIntoVerticalThirdFiles, composeFullTransformedImage } from "./split-image-into-thirds";
-import { resolveTriptychSlotCrop, computeTriptychWindowCrop } from "./triptych-window-crop";
+import {
+  computeSizesDpiAvailability,
+  getUnprintablePhotoInfo,
+  isSlotPrintable,
+  resolveRecommendedPaintingSize,
+  type SizeDpiInfo,
+} from "./size-dpi-availability";
+import UnprintablePhotoNotice from "./unprintable-photo-notice";
+import {
+  splitImageIntoVerticalThirdFiles,
+  composeFullTransformedImage,
+} from "./split-image-into-thirds";
+import {
+  resolveTriptychSlotCrop,
+  computeTriptychWindowCrop,
+} from "./triptych-window-crop";
 import {
   projectTriptychPrintability,
   resolveTriptychTargetSizeIndex,
@@ -141,7 +154,9 @@ interface ImageUploaderProps {
 }
 
 const MAX_SELECTED_IMAGES = IMAGE_VALIDATION_RULES.maxSelectedImages;
-const CENTER_SLOT_INDEX = Math.floor(IMAGE_VALIDATION_RULES.maxSelectedImages / 2);
+const CENTER_SLOT_INDEX = Math.floor(
+  IMAGE_VALIDATION_RULES.maxSelectedImages / 2,
+);
 const SHOW_UPLOADER_DEBUG = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
 
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
@@ -211,6 +226,12 @@ export interface OrderableSlotSummary {
   slotKey: UploadSlotKey;
   aspectRatio: string | null;
   displayImageProportion: ImageDisplayProportion;
+  /**
+   * Whether any painting size can be printed from this slot's resting crop.
+   * `null` while the slot's metadata has not resolved yet (unknown, not
+   * blocking). Unprintable slots cannot be ordered.
+   */
+  isPrintable: boolean | null;
 }
 
 export interface UploadedSlotResult {
@@ -421,19 +442,19 @@ function buildRestoredSelectedImages(
       metadata: null,
       displayImageProportion: "horizontal",
       previewEffects: {
-          brightness: slot.transformations?.brightness ?? 0,
-          contrast: slot.transformations?.contrast ?? 0,
-          grayscale: slot.transformations?.grayscale ?? 0,
-          removeBackground: slot.aiAdjustments?.removeBackground ?? false,
-          enhance: slot.aiAdjustments?.enhance ?? false,
-          upscale: slot.aiAdjustments?.upscale ?? false,
-          restore: slot.aiAdjustments?.restore ?? false,
-        },
-        previewTransform: {
-          rotation: slot.transformations?.rotation ?? 0,
-          flipHorizontal: slot.transformations?.flipHorizontal ?? false,
-          flipVertical: slot.transformations?.flipVertical ?? false,
-        },
+        brightness: slot.transformations?.brightness ?? 0,
+        contrast: slot.transformations?.contrast ?? 0,
+        grayscale: slot.transformations?.grayscale ?? 0,
+        removeBackground: slot.aiAdjustments?.removeBackground ?? false,
+        enhance: slot.aiAdjustments?.enhance ?? false,
+        upscale: slot.aiAdjustments?.upscale ?? false,
+        restore: slot.aiAdjustments?.restore ?? false,
+      },
+      previewTransform: {
+        rotation: slot.transformations?.rotation ?? 0,
+        flipHorizontal: slot.transformations?.flipHorizontal ?? false,
+        flipVertical: slot.transformations?.flipVertical ?? false,
+      },
       uploadedAsset: {
         publicId: slot.publicId ?? "",
         secureUrl: slot.secureUrl,
@@ -503,7 +524,9 @@ export const ImageUploader = forwardRef<
   >(() => new Set());
   const [showIcons, setShowIcons] = useState(defaultShowIcons);
   const [isEffectsEditMode, setIsEffectsEditMode] = useState(false);
-  const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">("settings");
+  const [effectsEditMode, setEffectsEditMode] = useState<"ai" | "settings">(
+    "settings",
+  );
   const [isZoomPanMode, setIsZoomPanMode] = useState(false);
   const [isTriptychSplit, setIsTriptychSplit] = useState(false);
   const [isTriptychLinked, setIsTriptychLinked] = useState(true);
@@ -699,7 +722,11 @@ export const ImageUploader = forwardRef<
   );
 
   const addOrReplaceSelection = useCallback(
-    (file: File, preferredIndex?: number, dimensions?: { width: number; height: number }) => {
+    (
+      file: File,
+      preferredIndex?: number,
+      dimensions?: { width: number; height: number },
+    ) => {
       const currentImages = selectedImagesRef.current;
       const hasExistingSelection = currentImages.some(Boolean);
       const clickedEmptySlot =
@@ -717,7 +744,10 @@ export const ImageUploader = forwardRef<
 
       // When dimensions are already known (e.g. from validation), compute the
       // optimal proportion up front and skip the separate async image decode
-      // that resolveOptimalProportionForFile would otherwise trigger.
+      // that resolveOptimalProportionForFile would otherwise trigger. The
+      // dimensions are also stored as the slot's metadata so printability
+      // (DPI) is known for every filled slot immediately — not only for the
+      // ones the user happens to preview.
       const precomputedProportion = dimensions
         ? getOptimalDisplayProportion(dimensions.width, dimensions.height)
         : null;
@@ -726,6 +756,14 @@ export const ImageUploader = forwardRef<
         ? {
             ...buildSelectedImageItem(file, false),
             displayImageProportion: precomputedProportion,
+            metadata: {
+              width: dimensions!.width,
+              height: dimensions!.height,
+              aspectRatio: formatAspectRatio(
+                dimensions!.width,
+                dimensions!.height,
+              ),
+            },
           }
         : buildSelectedImageItem(file, true);
 
@@ -756,26 +794,28 @@ export const ImageUploader = forwardRef<
         return;
       }
 
-      resolveOptimalProportionForFile(nextImage.previewUrl).then((optimalProportion) => {
-        setSelectedImages((prevImages) => {
-          const current = prevImages[insertionIndex];
-          if (
-            !current ||
-            current.file !== file ||
-            !current.autoSelectOptimalPending ||
-            current.displayImageProportion !== "horizontal"
-          ) {
-            return prevImages;
-          }
+      resolveOptimalProportionForFile(nextImage.previewUrl).then(
+        (optimalProportion) => {
+          setSelectedImages((prevImages) => {
+            const current = prevImages[insertionIndex];
+            if (
+              !current ||
+              current.file !== file ||
+              !current.autoSelectOptimalPending ||
+              current.displayImageProportion !== "horizontal"
+            ) {
+              return prevImages;
+            }
 
-          const nextImages = [...prevImages];
-          nextImages[insertionIndex] = {
-            ...current,
-            displayImageProportion: optimalProportion,
-          };
-          return nextImages;
-        });
-      });
+            const nextImages = [...prevImages];
+            nextImages[insertionIndex] = {
+              ...current,
+              displayImageProportion: optimalProportion,
+            };
+            return nextImages;
+          });
+        },
+      );
     },
     [buildSelectedImageItem, resolveOptimalProportionForFile],
   );
@@ -807,15 +847,18 @@ export const ImageUploader = forwardRef<
   );
 
   // Multi-file selection (gallery multi-pick, drag & drop). Every file goes
-  // through the same validation as single selection — skipping DPI/size
-  // checks here previously let too-small images into the editor silently.
+  // through the same validation as single selection so rejected files (bad
+  // type, too large, undecodable) never enter the editor silently.
   const validateAndStoreFiles = useCallback(
     async (files: File[]) => {
-      const acceptedFiles: File[] = [];
+      const acceptedFiles: Array<{
+        file: File;
+        dimensions: { width: number; height: number } | null;
+      }> = [];
       const rejectedViolations: ImageValidationViolation[] = [];
 
       for (const file of files) {
-        const { violations } = await validateImageFile(
+        const { violations, dimensions } = await validateImageFile(
           file,
           IMAGE_VALIDATION_RULES,
         );
@@ -823,7 +866,7 @@ export const ImageUploader = forwardRef<
         if (violations.length > 0) {
           rejectedViolations.push(violations[0]);
         } else {
-          acceptedFiles.push(file);
+          acceptedFiles.push({ file, dimensions });
         }
       }
 
@@ -833,16 +876,20 @@ export const ImageUploader = forwardRef<
         const filesToProcess = acceptedFiles.slice(0, maxAllowed);
 
         let currentImages = [...selectedImagesRef.current];
-        for (const file of filesToProcess) {
-          const insertionIndex = currentImages.findIndex(
-            (image) => image === null,
-          );
+        for (const entry of filesToProcess) {
+          const insertionIndex = currentImages.some(Boolean)
+            ? currentImages.findIndex((image) => image === null)
+            : CENTER_SLOT_INDEX;
           if (insertionIndex < 0) break;
 
-          addOrReplaceSelection(file, insertionIndex);
+          addOrReplaceSelection(
+            entry.file,
+            insertionIndex,
+            entry.dimensions ?? undefined,
+          );
           currentImages = [...currentImages];
           currentImages[insertionIndex] = {
-            ...buildSelectedImageItem(file, true),
+            ...buildSelectedImageItem(entry.file, true),
           };
         }
       }
@@ -1013,8 +1060,9 @@ export const ImageUploader = forwardRef<
     }
 
     if (siblingFlushRafRef.current === null) {
-      siblingFlushRafRef.current =
-        window.requestAnimationFrame(flushSiblingMutations);
+      siblingFlushRafRef.current = window.requestAnimationFrame(
+        flushSiblingMutations,
+      );
     }
   }, [flushSiblingMutations, resolveBoundSlotIndices]);
 
@@ -1075,9 +1123,10 @@ export const ImageUploader = forwardRef<
 
   const syncGroupFromActive = useCallback(() => {
     const activeIdx = activeImageIndexRef.current;
-    const source = typeof activeIdx === "number"
-      ? selectedImagesRef.current[activeIdx]
-      : null;
+    const source =
+      typeof activeIdx === "number"
+        ? selectedImagesRef.current[activeIdx]
+        : null;
     if (!source) {
       return;
     }
@@ -1306,7 +1355,12 @@ export const ImageUploader = forwardRef<
         });
       });
     },
-    [onUploadError, resolveBoundSlotIndices, setSlotRemoveBackground, uploadSlotIfNeeded],
+    [
+      onUploadError,
+      resolveBoundSlotIndices,
+      setSlotRemoveBackground,
+      uploadSlotIfNeeded,
+    ],
   );
 
   const setSlotEnhance = useCallback((slotIndex: number, enabled: boolean) => {
@@ -1353,7 +1407,12 @@ export const ImageUploader = forwardRef<
         });
       });
     },
-    [onUploadError, resolveBoundSlotIndices, setSlotEnhance, uploadSlotIfNeeded],
+    [
+      onUploadError,
+      resolveBoundSlotIndices,
+      setSlotEnhance,
+      uploadSlotIfNeeded,
+    ],
   );
 
   const setSlotUpscale = useCallback((slotIndex: number, enabled: boolean) => {
@@ -1400,7 +1459,12 @@ export const ImageUploader = forwardRef<
         });
       });
     },
-    [onUploadError, resolveBoundSlotIndices, setSlotUpscale, uploadSlotIfNeeded],
+    [
+      onUploadError,
+      resolveBoundSlotIndices,
+      setSlotUpscale,
+      uploadSlotIfNeeded,
+    ],
   );
 
   const setSlotRestore = useCallback((slotIndex: number, enabled: boolean) => {
@@ -1447,7 +1511,12 @@ export const ImageUploader = forwardRef<
         });
       });
     },
-    [onUploadError, resolveBoundSlotIndices, setSlotRestore, uploadSlotIfNeeded],
+    [
+      onUploadError,
+      resolveBoundSlotIndices,
+      setSlotRestore,
+      uploadSlotIfNeeded,
+    ],
   );
 
   const updateActiveImageRotation = useCallback(
@@ -2008,18 +2077,18 @@ export const ImageUploader = forwardRef<
     () => ({
       uploadFilledSlots,
       removeActiveImage: handleRemoveActiveImage,
-      hasActiveImage: () => !!activeImageIndexRef.current && typeof activeImageIndexRef.current === "number",
+      hasActiveImage: () =>
+        !!activeImageIndexRef.current &&
+        typeof activeImageIndexRef.current === "number",
     }),
     [uploadFilledSlots, handleRemoveActiveImage],
   );
 
-  const {
-    previousFilledSlotIndex,
-    nextFilledSlotIndex,
-  } = useImageSliderNavigation({
-    selectedImages,
-    activeImageIndex,
-  });
+  const { previousFilledSlotIndex, nextFilledSlotIndex } =
+    useImageSliderNavigation({
+      selectedImages,
+      activeImageIndex,
+    });
 
   const [hasUsedSliderNav, setHasUsedSliderNav] = useState(false);
 
@@ -2212,14 +2281,55 @@ export const ImageUploader = forwardRef<
     }
   }, [sizesDpiInfo, selectedPaintingSize]);
 
+  // The active slot is unprintable when NO offered size passes the DPI guard
+  // for its resting crop (guard disabled forces every size available, so this
+  // can never be true then).
+  const isUnprintableActiveSlot =
+    !!sizesDpiInfo && !sizesDpiInfo.some((info) => info.isAvailable);
+
+  const unprintablePhotoInfo = useMemo(() => {
+    if (!isUnprintableActiveSlot || !selectedImageMetadata) {
+      return null;
+    }
+
+    return getUnprintablePhotoInfo(
+      selectedImageMetadata.width,
+      selectedImageMetadata.height,
+      paintingShape,
+    );
+  }, [isUnprintableActiveSlot, selectedImageMetadata, paintingShape]);
+
+  // Replacement actions from the unprintable notice: the picked photo
+  // replaces the active slot (slot-targeted pick, same as empty-slot flow).
+  const handleRetakePhoto = useCallback(() => {
+    if (typeof activeImageIndex !== "number") {
+      return;
+    }
+    pendingSelectionSlotRef.current = activeImageIndex;
+    markCaptureStarted("camera");
+    cameraInputRef.current?.click();
+  }, [activeImageIndex]);
+
+  const handleChooseReplacementPhoto = useCallback(() => {
+    if (typeof activeImageIndex !== "number") {
+      return;
+    }
+    pendingSelectionSlotRef.current = activeImageIndex;
+    markCaptureStarted("gallery");
+    fileInputRef.current?.click();
+  }, [activeImageIndex]);
+
   const computedDebugData = useMemo((): ImageDebugData | null => {
     if (!effectiveImageMetadata) {
       return null;
     }
 
-    const shape: PaintingShape = displayImageProportion === "square" ? "square" : "rectangular";
+    const shape: PaintingShape =
+      displayImageProportion === "square" ? "square" : "rectangular";
     const sizeOptions = getPaintingSizeOptions(shape);
-    const currentSize = sizeOptions.find((opt) => opt.key === selectedPaintingSize);
+    const currentSize = sizeOptions.find(
+      (opt) => opt.key === selectedPaintingSize,
+    );
     const currentSizeInfo = sizesDpiInfo?.find(
       (i) => i.sizeIndex === selectedPaintingSize,
     );
@@ -2241,9 +2351,18 @@ export const ImageUploader = forwardRef<
       coveragePercent: coveragePercent ?? {},
       effectiveDpi: dpi,
       dpiQuality,
-      printSizeLabel: printDims ? `${printDims.widthCm}×${printDims.heightCm} cm` : "",
+      printSizeLabel: printDims
+        ? `${printDims.widthCm}×${printDims.heightCm} cm`
+        : "",
     };
-  }, [effectiveImageMetadata, displayImageProportion, bestDisplayImageProportion, coveragePercent, selectedPaintingSize, sizesDpiInfo]);
+  }, [
+    effectiveImageMetadata,
+    displayImageProportion,
+    bestDisplayImageProportion,
+    coveragePercent,
+    selectedPaintingSize,
+    sizesDpiInfo,
+  ]);
 
   const prevDebugDataRef = useRef<ImageDebugData | null>(null);
   useEffect(() => {
@@ -2281,13 +2400,10 @@ export const ImageUploader = forwardRef<
     [resolveBoundSlotIndices],
   );
 
-  const handleSelectPaintingSize = useCallback(
-    (index: PaintingSizeIndex) => {
-      userSelectedPaintingSizeRef.current = true;
-      setSelectedPaintingSize(index);
-    },
-    [],
-  );
+  const handleSelectPaintingSize = useCallback((index: PaintingSizeIndex) => {
+    userSelectedPaintingSizeRef.current = true;
+    setSelectedPaintingSize(index);
+  }, []);
 
   const paintingAspectRatio = useMemo(
     () => getTargetAspectRatio(displayImageProportion),
@@ -2407,7 +2523,12 @@ export const ImageUploader = forwardRef<
       // selection through the same API.
       hidden: true,
     };
-  }, [selectedImageCount, selectedImages, activeImageIndex, handlePreviewSlotSelect]);
+  }, [
+    selectedImageCount,
+    selectedImages,
+    activeImageIndex,
+    handlePreviewSlotSelect,
+  ]);
 
   useEffect(() => {
     if (!onSlotSwitcherPropsChange) return;
@@ -2458,6 +2579,14 @@ export const ImageUploader = forwardRef<
             slotKey: SLOT_KEYS[slotIndex] ?? "center",
             aspectRatio: image.metadata?.aspectRatio ?? null,
             displayImageProportion: image.displayImageProportion,
+            isPrintable: isSlotPrintable({
+              metadata: image.metadata,
+              displayImageProportion: image.displayImageProportion,
+              clientRotation: previewsBakedCloudTransform(image)
+                ? 0
+                : image.previewTransform?.rotation,
+              triptychWindowIndex: image.triptychWindowIndex,
+            }),
           },
         ];
       }),
@@ -2493,11 +2622,19 @@ export const ImageUploader = forwardRef<
   }, [externalResetTrigger, handleCancel]);
 
   const removeSlotDialog = (
-    <AlertDialog open={showRemoveSlotDialog} onOpenChange={(open) => { if (!open) handleCancelRemoveSlot(); }}>
+    <AlertDialog
+      open={showRemoveSlotDialog}
+      onOpenChange={(open) => {
+        if (!open) handleCancelRemoveSlot();
+      }}
+    >
       <AlertDialogContent size="sm">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <TriangleAlert className="h-4 w-4 text-destructive" aria-hidden="true" />
+            <TriangleAlert
+              className="h-4 w-4 text-destructive"
+              aria-hidden="true"
+            />
             {t("uploader.removeSlotConfirmTitle")}
           </AlertDialogTitle>
           <AlertDialogDescription>
@@ -2506,7 +2643,10 @@ export const ImageUploader = forwardRef<
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{t("uploader.cancel")}</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={handleConfirmRemoveSlot}>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={handleConfirmRemoveSlot}
+          >
             {t("uploader.removeSlotConfirmAction")}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -2518,18 +2658,18 @@ export const ImageUploader = forwardRef<
     return (
       <>
         <UploaderDropArea
-        showIcons={showIcons}
-        className={className}
-        fileInputRef={fileInputRef}
-        cameraInputRef={cameraInputRef}
-        onFileSelect={handleFileSelect}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onShowIcons={() => setShowIcons(true)}
-        error={selectionError}
-        onDismissError={() => applySelectionError(null)}
-        onCaptureStart={markCaptureStarted}
+          showIcons={showIcons}
+          className={className}
+          fileInputRef={fileInputRef}
+          cameraInputRef={cameraInputRef}
+          onFileSelect={handleFileSelect}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onShowIcons={() => setShowIcons(true)}
+          error={selectionError}
+          onDismissError={() => applySelectionError(null)}
+          onCaptureStart={markCaptureStarted}
         />
       </>
     );
@@ -2539,115 +2679,121 @@ export const ImageUploader = forwardRef<
     <>
       {removeSlotDialog}
       <Card className="mx-auto flex h-full w-full max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        multiple
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      <CardContent className="relative flex-1 flex flex-col overflow-hidden pb-2 lg:pb-1">
-        <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
-        {selectionError && (
-          <SelectionErrorBanner
-            error={selectionError}
-            onDismiss={() => applySelectionError(null)}
-            className="mb-2 shrink-0"
-          />
-        )}
-        <div className="flex-[0.05] md:hidden" />
-        <div className="flex flex-1 flex-col gap-3 sm:gap-8 min-h-0">
-        <UploaderPreviewSlider
-          activeImage={activeImage}
-          activeImagePreviewUrl={
-            activeImage ? getTransformedImagePreviewUrl(activeImage) : null
-          }
-          activeImageIndex={activeImageIndex}
-          selectedImageMetadata={selectedImageMetadata}
-          bestProportion={bestDisplayImageProportion}
-          userSelectedProportion={displayImageProportion}
-          previewFrameAspectRatio={previewFrameAspectRatio}
-          isUploadOverlayVisible={isUploadOverlayVisible}
-          uploadProgress={uploadProgress}
-          uploadProgressLabel={uploadProgressLabel}
-          uploadingSlotIndex={uploadingSlotIndex}
-          isEffectUploading={
-            typeof activeImageIndex === "number" &&
-            busyBackgroundUploadSlots.has(activeImageIndex)
-          }
-          swipeDisabled={isEffectsEditMode || isZoomPanMode}
-          isEditMode={isEffectsEditMode || isZoomPanMode}
-          previewCropAdjust={activeImage?.previewCropAdjust}
-          onCropAdjustChange={updateActiveImageCropAdjust}
-          onTouchStart={handleSliderTouchStart}
-          onTouchEnd={handleSliderTouchEnd}
-          onMetadataResolved={handleMetadataResolved}
-          onSelectEmptySlot={
-            typeof activeImageIndex === "number"
-              ? () => handlePreviewSlotSelect(activeImageIndex)
-              : undefined
-          }
-          onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
-          selectedPaintingSize={selectedPaintingSize}
-          paintingAspectRatio={paintingAspectRatio}
-          paintingShape={paintingShape}
-          slots={selectedImages}
-          onSelectSlot={handlePreviewSlotSelect}
-          getSlotPreviewUrl={getTransformedImagePreviewUrl}
-          isDesktopTriptych={isDesktopTriptych}
-          isTriptychLinked={isTriptychLinked}
-          swipeNav={sliderSwipeNav}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
         />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <CardContent className="relative flex-1 flex flex-col overflow-hidden pb-2 lg:pb-1">
+          <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
+          {selectionError && (
+            <SelectionErrorBanner
+              error={selectionError}
+              onDismiss={() => applySelectionError(null)}
+              className="mb-2 shrink-0"
+            />
+          )}
+          {isUnprintableActiveSlot && (
+            <UnprintablePhotoNotice
+              info={unprintablePhotoInfo}
+              onRetakePhoto={handleRetakePhoto}
+              onChooseFromGallery={handleChooseReplacementPhoto}
+            />
+          )}
+          <div className="flex-[0.05] md:hidden" />
+          <div className="flex flex-1 flex-col gap-3 sm:gap-8 min-h-0">
+            <UploaderPreviewSlider
+              activeImage={activeImage}
+              activeImagePreviewUrl={
+                activeImage ? getTransformedImagePreviewUrl(activeImage) : null
+              }
+              activeImageIndex={activeImageIndex}
+              selectedImageMetadata={selectedImageMetadata}
+              bestProportion={bestDisplayImageProportion}
+              userSelectedProportion={displayImageProportion}
+              previewFrameAspectRatio={previewFrameAspectRatio}
+              isUploadOverlayVisible={isUploadOverlayVisible}
+              uploadProgress={uploadProgress}
+              uploadProgressLabel={uploadProgressLabel}
+              uploadingSlotIndex={uploadingSlotIndex}
+              isEffectUploading={
+                typeof activeImageIndex === "number" &&
+                busyBackgroundUploadSlots.has(activeImageIndex)
+              }
+              swipeDisabled={isEffectsEditMode || isZoomPanMode}
+              isEditMode={isEffectsEditMode || isZoomPanMode}
+              previewCropAdjust={activeImage?.previewCropAdjust}
+              onCropAdjustChange={updateActiveImageCropAdjust}
+              onTouchStart={handleSliderTouchStart}
+              onTouchEnd={handleSliderTouchEnd}
+              onMetadataResolved={handleMetadataResolved}
+              onSelectEmptySlot={
+                typeof activeImageIndex === "number"
+                  ? () => handlePreviewSlotSelect(activeImageIndex)
+                  : undefined
+              }
+              onClearSlot={activeImage ? handleRemoveActiveImage : undefined}
+              selectedPaintingSize={selectedPaintingSize}
+              paintingAspectRatio={paintingAspectRatio}
+              paintingShape={paintingShape}
+              isPreviewUnprintable={isUnprintableActiveSlot}
+              slots={selectedImages}
+              onSelectSlot={handlePreviewSlotSelect}
+              getSlotPreviewUrl={getTransformedImagePreviewUrl}
+              isDesktopTriptych={isDesktopTriptych}
+              isTriptychLinked={isTriptychLinked}
+              swipeNav={sliderSwipeNav}
+            />
 
-        <UploaderPreviewToolsPanel
-          onUpdateEffect={updateActiveImageEffect}
-          onToggleRemoveBackground={toggleActiveImageRemoveBackground}
-          onToggleEnhance={toggleActiveImageEnhance}
-          onToggleUpscale={toggleActiveImageUpscale}
-          onToggleRestore={toggleActiveImageRestore}
-          onUpdateRotation={updateActiveImageRotation}
-          onToggleFlipHorizontal={toggleActiveImageFlipHorizontal}
-          onToggleFlipVertical={toggleActiveImageFlipVertical}
-          activeImageEffects={activeImage?.previewEffects ?? null}
-          activeImageTransform={
-            activeImage?.previewTransform ?? null
-          }
-          canUpdateEffects={!!activeImage}
-          isRemoveBackgroundBusy={
-            typeof activeImageIndex === "number" &&
-            busyBackgroundUploadSlots.has(activeImageIndex)
-          }
-          isEnhanceBusy={
-            typeof activeImageIndex === "number" &&
-            busyBackgroundUploadSlots.has(activeImageIndex)
-          }
-          isUpscaleBusy={
-            typeof activeImageIndex === "number" &&
-            busyBackgroundUploadSlots.has(activeImageIndex)
-          }
-          isRestoreBusy={
-            typeof activeImageIndex === "number" &&
-            busyBackgroundUploadSlots.has(activeImageIndex)
-          }
-          onEditModeChange={setIsEffectsEditMode}
-          activeImageCropAdjust={activeImage?.previewCropAdjust}
-          onUpdateCropAdjust={updateActiveImageCropAdjust}
-          externalEditMode={isEffectsEditMode}
-          effectsMode={effectsEditMode}
-          hideTransformGroup={triptychWindowIndexOfActiveSlot !== undefined}
-        />
-        </div>
-      </CardContent>
-    </Card>
+            <UploaderPreviewToolsPanel
+              onUpdateEffect={updateActiveImageEffect}
+              onToggleRemoveBackground={toggleActiveImageRemoveBackground}
+              onToggleEnhance={toggleActiveImageEnhance}
+              onToggleUpscale={toggleActiveImageUpscale}
+              onToggleRestore={toggleActiveImageRestore}
+              onUpdateRotation={updateActiveImageRotation}
+              onToggleFlipHorizontal={toggleActiveImageFlipHorizontal}
+              onToggleFlipVertical={toggleActiveImageFlipVertical}
+              activeImageEffects={activeImage?.previewEffects ?? null}
+              activeImageTransform={activeImage?.previewTransform ?? null}
+              canUpdateEffects={!!activeImage}
+              isRemoveBackgroundBusy={
+                typeof activeImageIndex === "number" &&
+                busyBackgroundUploadSlots.has(activeImageIndex)
+              }
+              isEnhanceBusy={
+                typeof activeImageIndex === "number" &&
+                busyBackgroundUploadSlots.has(activeImageIndex)
+              }
+              isUpscaleBusy={
+                typeof activeImageIndex === "number" &&
+                busyBackgroundUploadSlots.has(activeImageIndex)
+              }
+              isRestoreBusy={
+                typeof activeImageIndex === "number" &&
+                busyBackgroundUploadSlots.has(activeImageIndex)
+              }
+              onEditModeChange={setIsEffectsEditMode}
+              activeImageCropAdjust={activeImage?.previewCropAdjust}
+              onUpdateCropAdjust={updateActiveImageCropAdjust}
+              externalEditMode={isEffectsEditMode}
+              effectsMode={effectsEditMode}
+              hideTransformGroup={triptychWindowIndexOfActiveSlot !== undefined}
+            />
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 });

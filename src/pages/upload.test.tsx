@@ -43,9 +43,7 @@ describe("UploadPage Component", () => {
     );
 
     // Success message should not be visible initially
-    expect(
-      screen.queryByText(tr("upload.success")),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(tr("upload.success"))).not.toBeInTheDocument();
   });
 
   it("should not display uploaded image initially", () => {
@@ -92,20 +90,20 @@ describe("UploadPage Component", () => {
     expect(transformations.blur).toBe(0);
   });
 
-    it("should have proper structure for transformations display", () => {
-      // This test verifies that the component structure supports transformations display
-      // The actual display is conditional on transformations being set via handleUploadSuccess
-      const { container } = render(
-        <MemoryRouter>
-          <UploadPage />
-        </MemoryRouter>,
-      );
+  it("should have proper structure for transformations display", () => {
+    // This test verifies that the component structure supports transformations display
+    // The actual display is conditional on transformations being set via handleUploadSuccess
+    const { container } = render(
+      <MemoryRouter>
+        <UploadPage />
+      </MemoryRouter>,
+    );
 
-      // Verify that the component renders without errors
-      expect(container).toBeInTheDocument();
-    });
+    // Verify that the component renders without errors
+    expect(container).toBeInTheDocument();
+  });
 
-    describe("too small photo taken with the camera", () => {
+  describe("too small photo taken with the camera", () => {
     beforeEach(() => {
       // Simulate a low-resolution photo returned by the device camera.
       vi.stubGlobal(
@@ -150,11 +148,10 @@ describe("UploadPage Component", () => {
         },
       });
 
-      const alert = await screen.findByTestId("uploader-selection-error");
+      const alert = await screen.findByTestId("unprintable-photo-notice");
       expect(alert).toHaveAttribute("role", "alert");
       expect(alert).toHaveTextContent(/600 × 450/);
-      expect(alert).toHaveTextContent(/2552 × 1701/);
-      // Upload entry buttons stay available for the next attempt.
+      expect(alert).toHaveTextContent(/1701 × 1134/);
       expect(document.querySelector(".lucide-camera")).toBeInTheDocument();
     });
   });

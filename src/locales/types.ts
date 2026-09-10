@@ -202,7 +202,6 @@ export interface Translations {
     usedCloudinaryTools: string;
     noCloudinaryTools: string;
     validation: {
-      minDpi: string;
       maxFileSize: string;
       invalidType: string;
       invalidImage: string;
@@ -304,6 +303,15 @@ export interface Translations {
     removeSlotConfirmDescription: string;
     removeSlotConfirmAction: string;
     sizeUnavailable: string;
+    unprintableTitle: string;
+    unprintableReason: string;
+    unprintableReasonGeneric: string;
+    unprintableTip1: string;
+    unprintableTip2: string;
+    unprintableTip3: string;
+    unprintableRetakeCta: string;
+    unprintableChooseCta: string;
+    unprintableBadge: string;
     triptychButton: string;
     triptychLinkButton: string;
     triptychLinkedTooltip: string;
@@ -353,6 +361,7 @@ export interface Translations {
     orderSelectionTotal: string;
     orderSelectionUploaded: string;
     orderSelectionPendingUpload: string;
+    slotNotPrintable: string;
     placeOrder: string;
     requiredFields: string;
     errorName: string;

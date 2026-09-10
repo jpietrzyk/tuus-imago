@@ -737,8 +737,12 @@ function StorefrontApp() {
   );
   const location = useLocation();
   const navigate = useNavigate();
-  const uploadPageKey =
-    location.pathname === "/upload" ? location.key : "off-upload";
+  // Both flow routes render the same UploadPage instance with a constant
+  // key, so the /upload ↔ /prepare-painting replace-navigations never
+  // remount the page and local photo state (File objects, object URLs) is
+  // preserved. A fresh mount happens naturally whenever the user enters
+  // the flow from outside (the component was unmounted meanwhile).
+  const uploadPageKey = "upload-flow";
 
   const uploadInitialSlots: UploadedSlotResult[] = (
     location.state as { restoredSlots?: UploadedSlotResult[] } | null
@@ -775,8 +779,13 @@ function StorefrontApp() {
     [],
   );
 
-  const isUploadRoute = location.pathname === "/upload";
-  const showFooterCheckout = isUploadRoute && isFooterCheckoutAvailable;
+  // The upload flow spans two synced routes: /upload (photo selection) and
+  // /prepare-painting (painting preview / editor). The URL follows the
+  // internal selection state via replace-navigation (see UploadPage).
+  const isUploadFlowRoute =
+    location.pathname === "/upload" ||
+    location.pathname === "/prepare-painting";
+  const showFooterCheckout = isUploadFlowRoute && isFooterCheckoutAvailable;
 
   const footerOrderRows = useMemo(
     () =>
@@ -794,6 +803,8 @@ function StorefrontApp() {
             proportion: slot.aspectRatio ?? slot.displayImageProportion,
             isUploaded,
             unitPrice: CANVAS_PRINT_UNIT_PRICE,
+            // Unknown printability (metadata not yet resolved) does not block.
+            isPrintable: slot.isPrintable !== false,
           };
         }),
     [orderableSlots, successfulSlotsForCheckout],
@@ -820,7 +831,11 @@ function StorefrontApp() {
       setOrderSlotSelection((prev) => {
         const next: Partial<Record<UploadSlotKey, boolean>> = {};
         slots.forEach((slot) => {
-          next[slot.slotKey] = prev[slot.slotKey] ?? true;
+          // Unprintable slots can never be ordered: keep them unchecked.
+          next[slot.slotKey] =
+            slot.isPrintable === false
+              ? false
+              : (prev[slot.slotKey] ?? true);
         });
         return next;
       });
@@ -828,16 +843,28 @@ function StorefrontApp() {
     [],
   );
 
-  const toggleFooterOrderSlot = useCallback((slotKey: UploadSlotKey) => {
-    setOrderSlotSelection((previousSelection) => {
-      const currentValue = previousSelection[slotKey] ?? true;
+  const toggleFooterOrderSlot = useCallback(
+    (slotKey: UploadSlotKey) => {
+      // No-op for slots whose photo cannot be printed.
+      if (
+        orderableSlots.some(
+          (slot) => slot.slotKey === slotKey && slot.isPrintable === false,
+        )
+      ) {
+        return;
+      }
 
-      return {
-        ...previousSelection,
-        [slotKey]: !currentValue,
-      };
-    });
-  }, []);
+      setOrderSlotSelection((previousSelection) => {
+        const currentValue = previousSelection[slotKey] ?? true;
+
+        return {
+          ...previousSelection,
+          [slotKey]: !currentValue,
+        };
+      });
+    },
+    [orderableSlots],
+  );
 
   const isDesktop = useState(() =>
     typeof window !== "undefined"
@@ -867,6 +894,25 @@ function StorefrontApp() {
   const isDebug = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
   const [showUploaderDebugData, setShowUploaderDebugData] = useState(false);
 
+  // One shared element instance for both flow routes: /upload and
+  // /prepare-painting render the exact same component (same type, same
+  // key), so switching between them never remounts it and in-progress
+  // photo state survives.
+  const uploadPageElement = (
+    <UploadPage
+      key={uploadPageKey}
+      onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
+      onSuccessfulSlotsChange={handleSuccessfulSlotsChange}
+      onOrderableSlotsChange={handleOrderableSlotsChange}
+      onCheckoutWithUpload={handleCheckoutWithUpload}
+      imageDebugDataEnabled={showUploaderDebugData}
+      initialRestoredSlots={uploadInitialSlots}
+      onToolsPanelPropsChange={stableSetFooterToolsBarProps}
+      onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
+      onDebugDataChange={setImageDebugData}
+    />
+  );
+
   return (
     <div
       className="h-screen overflow-hidden flex flex-col bg-background"
@@ -890,23 +936,8 @@ function StorefrontApp() {
         <Routes>
           <Route path="/" element={<HomeUploadEntryPage />} />
           <Route path="/how-it-works" element={<LandingPage />} />
-          <Route
-            path="/upload"
-            element={
-              <UploadPage
-                key={uploadPageKey}
-                onCheckoutAvailabilityChange={setIsFooterCheckoutAvailable}
-                onSuccessfulSlotsChange={handleSuccessfulSlotsChange}
-                onOrderableSlotsChange={handleOrderableSlotsChange}
-                onCheckoutWithUpload={handleCheckoutWithUpload}
-                imageDebugDataEnabled={showUploaderDebugData}
-                initialRestoredSlots={uploadInitialSlots}
-                onToolsPanelPropsChange={stableSetFooterToolsBarProps}
-                onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
-                onDebugDataChange={setImageDebugData}
-              />
-            }
-          />
+          <Route path="/upload" element={uploadPageElement} />
+          <Route path="/prepare-painting" element={uploadPageElement} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/legal" element={<LegalPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
@@ -964,8 +995,8 @@ function StorefrontApp() {
         orderRows={footerOrderRows}
         checkedOrderSlotKeys={checkedOrderSlotKeys}
         onToggleOrderSlot={toggleFooterOrderSlot}
-        toolsBarProps={isUploadRoute ? footerToolsBarProps : null}
-        slotSwitcherProps={isUploadRoute ? footerSlotSwitcherProps : null}
+        toolsBarProps={isUploadFlowRoute ? footerToolsBarProps : null}
+        slotSwitcherProps={isUploadFlowRoute ? footerSlotSwitcherProps : null}
       />
       <LegalNavigationSheet
         open={isLegalSheetOpen}

@@ -36,6 +36,7 @@ const defaultRows: FooterOrderRow[] = [
     proportion: "3:2",
     isUploaded: true,
     unitPrice: 10,
+    isPrintable: true,
   },
   {
     slotKey: "right",
@@ -43,6 +44,7 @@ const defaultRows: FooterOrderRow[] = [
     proportion: "2:3",
     isUploaded: false,
     unitPrice: 20,
+    isPrintable: true,
   },
   {
     slotKey: "center",
@@ -50,6 +52,7 @@ const defaultRows: FooterOrderRow[] = [
     proportion: "1:1",
     isUploaded: true,
     unitPrice: 15,
+    isPrintable: true,
   },
 ];
 
@@ -262,6 +265,88 @@ describe("CheckoutOrderDropup", () => {
     expect(
       screen.getByRole("button", { name: /^checkout\.openCheckout/ }),
     ).toBeDisabled();
+  });
+
+  it("disables the checkbox of an unprintable slot and shows the hint", async () => {
+    const user = userEvent.setup();
+    const onToggleSlot = vi.fn();
+
+    render(
+      <CheckoutOrderDropup
+        rows={[
+          ...defaultRows.slice(0, 2),
+          {
+            slotKey: "center",
+            slotIndex: 1,
+            proportion: "1:1",
+            isUploaded: false,
+            unitPrice: 15,
+            isPrintable: false,
+          },
+        ]}
+        checkedSlotKeys={new Set(["left", "right"])}
+        onToggleSlot={onToggleSlot}
+        onCheckout={vi.fn()}
+        checkoutDisabled={false}
+      />,
+      { wrapper },
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
+    );
+
+    const unprintableCheckbox = screen
+      .getAllByRole("checkbox")
+      .find((checkbox) => checkbox.hasAttribute("disabled"));
+    expect(unprintableCheckbox).toBeDefined();
+    expect(unprintableCheckbox).not.toBeChecked();
+
+    expect(screen.getByText("checkout.slotNotPrintable")).toBeInTheDocument();
+
+    if (unprintableCheckbox) {
+      await user.click(unprintableCheckbox);
+    }
+    expect(onToggleSlot).not.toHaveBeenCalledWith("center");
+  });
+
+  it("hides the price of an unprintable slot", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <CheckoutOrderDropup
+        rows={[
+          {
+            slotKey: "left",
+            slotIndex: 0,
+            proportion: "3:2",
+            isUploaded: false,
+            unitPrice: 10,
+            isPrintable: false,
+          },
+          {
+            slotKey: "center",
+            slotIndex: 1,
+            proportion: "1:1",
+            isUploaded: false,
+            unitPrice: 15,
+            isPrintable: true,
+          },
+        ]}
+        checkedSlotKeys={new Set(["center"])}
+        onToggleSlot={vi.fn()}
+        onCheckout={vi.fn()}
+        checkoutDisabled={false}
+      />,
+      { wrapper },
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: "checkout.orderSelectionButton" }),
+    );
+
+    expect(screen.getAllByText("PRICE:15").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("PRICE:10")).not.toBeInTheDocument();
   });
 
   it("disables checkout button in popover when checkoutDisabled is true", async () => {
