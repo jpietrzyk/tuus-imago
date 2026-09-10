@@ -697,6 +697,7 @@ function StorefrontApp() {
   const [orderSlotSelection, setOrderSlotSelection] = useState<
     Partial<Record<UploadSlotKey, boolean>>
   >({});
+  const unprintableSlotKeysRef = useRef<Set<UploadSlotKey>>(new Set());
   const [onCheckoutWithUpload, setOnCheckoutWithUpload] = useState<
     (() => Promise<UploadedSlotResult[]>) | null
   >(null);
@@ -828,14 +829,27 @@ function StorefrontApp() {
   const handleOrderableSlotsChange = useCallback(
     (slots: OrderableSlotSummary[]) => {
       setOrderableSlots(slots);
+      // Remember which slots are forced unchecked by printability so a slot
+      // that becomes printable again (photo replaced, proportion changed)
+      // returns to the default checked state instead of staying stuck on
+      // the forced-off value. User-initiated unchecks are preserved.
+      const previouslyForcedSlotKeys = unprintableSlotKeysRef.current;
+      unprintableSlotKeysRef.current = new Set(
+        slots
+          .filter((slot) => slot.isPrintable === false)
+          .map((slot) => slot.slotKey),
+      );
       setOrderSlotSelection((prev) => {
         const next: Partial<Record<UploadSlotKey, boolean>> = {};
         slots.forEach((slot) => {
           // Unprintable slots can never be ordered: keep them unchecked.
-          next[slot.slotKey] =
-            slot.isPrintable === false
-              ? false
-              : (prev[slot.slotKey] ?? true);
+          if (slot.isPrintable === false) {
+            next[slot.slotKey] = false;
+            return;
+          }
+          next[slot.slotKey] = previouslyForcedSlotKeys.has(slot.slotKey)
+            ? true
+            : (prev[slot.slotKey] ?? true);
         });
         return next;
       });

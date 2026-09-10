@@ -703,6 +703,107 @@ describe("upload flow routes (/upload ↔ /prepare-painting)", () => {
     ).toBeDisabled();
   });
 
+  it("keeps the upload flow when interacting with the preview area", async () => {
+    renderAtRoute("/upload");
+
+    selectPhoto();
+    await screen.findByRole("img", { name: "Preview" });
+    await expectPathnameEventually("/prepare-painting");
+
+    // Change the painting size (drives the size guides state), then hover
+    // and tap the preview — none of this may reset the selection state or
+    // navigate back to the selection screen.
+    fireEvent.click(document.getElementById("size-btn-0")!);
+
+    const frame = screen.getByTestId("selected-image-preview-frame");
+    const canvas = screen.getByTestId("selected-image-preview-canvas");
+
+    fireEvent.mouseOver(frame);
+    fireEvent.mouseMove(frame);
+    fireEvent.mouseOver(canvas);
+
+    fireEvent.touchStart(canvas, {
+      touches: [{ clientX: 100, clientY: 50 }],
+    });
+    fireEvent.touchEnd(canvas, {
+      changedTouches: [{ clientX: 100, clientY: 50 }],
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    expect(currentPathname).toBe("/prepare-painting");
+    expect(
+      screen.getByTestId("selected-image-preview-canvas"),
+    ).toBeInTheDocument();
+  });
+
+  it("re-enables checkout when an unprintable slot becomes printable again", async () => {
+    const user = userEvent.setup();
+
+    // 1700x1300 auto-selects the horizontal 3:2 frame, whose 1700x1133
+    // resting crop is just below the 72 DPI bar at the smallest 60x40
+    // print — the slot starts unprintable. Switching to the square frame
+    // crops 1300x1300 (~82 DPI at 40x40), so the SAME slot becomes
+    // printable again without going through an empty-slot reset.
+    mockLoadImageDimensions.mockResolvedValueOnce({
+      width: 1700,
+      height: 1300,
+    });
+
+    renderAtRoute("/upload");
+
+    selectPhoto();
+    await screen.findByRole("img", { name: "Preview" });
+    await expectPathnameEventually("/prepare-painting");
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: tr("checkout.orderSelectionButton"),
+      }),
+    );
+
+    const unprintableCheckbox = screen.getByRole("checkbox", {
+      name: tr("checkout.orderSelectionCheckboxAria", {
+        slot: tr("upload.slotCenter"),
+      }),
+    });
+    await waitFor(() => {
+      expect(unprintableCheckbox).toBeDisabled();
+    });
+    expect(unprintableCheckbox).not.toBeChecked();
+    expect(
+      screen.getByRole("button", {
+        name: tr("checkout.proceedToCheckout"),
+      }),
+    ).toBeDisabled();
+
+    fireEvent.pointerDown(
+      screen.getByTestId("image-proportions-dropdown-trigger"),
+    );
+    fireEvent.click(screen.getByRole("menuitem", { name: /^Rectangle/ }));
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: tr("checkout.orderSelectionButton"),
+      }),
+    );
+
+    const recoveredCheckbox = await screen.findByRole("checkbox", {
+      name: tr("checkout.orderSelectionCheckboxAria", {
+        slot: tr("upload.slotCenter"),
+      }),
+    });
+    await waitFor(() => {
+      expect(recoveredCheckbox).toBeEnabled();
+    });
+    expect(recoveredCheckbox).toBeChecked();
+    expect(
+      screen.getByRole("button", {
+        name: tr("checkout.proceedToCheckout"),
+      }),
+    ).toBeEnabled();
+  });
+
   it("allows checkout with a printable slot while another slot is unprintable", async () => {
     const user = userEvent.setup();
 
