@@ -7,7 +7,11 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { createRef, useState, useCallback } from "react";
-import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
+import {
+  ImageUploader,
+  type ImageUploaderHandle,
+  type UploadedSlotResult,
+} from "./image-uploader";
 import { validateImageFile } from "./image-uploader/image-file-validator";
 import {
   markCaptureStarted,
@@ -2070,6 +2074,131 @@ describe("ImageUploader", () => {
 
     await waitFor(() => {
       expect(uploadImageToCloudinary).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("keeps original source metadata when a cloud-baked preview reports cropped dimensions", async () => {
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+      lastModified: 303,
+    });
+
+    // The baked cloud preview returns the transformed (cropped) image, so its
+    // natural size is smaller than the original source. Feed that back through
+    // the mocked Image to reproduce the shrink loop that used to make the crop
+    // collapse until Cloudinary rejected background removal.
+    vi.mocked(uploadImageToCloudinary).mockImplementation(async () => {
+      mockImageWidth = 300;
+      mockImageHeight = 200;
+
+      return {
+        asset: {
+          public_id: "baked-upload",
+          secure_url:
+            "https://res.cloudinary.com/test/image/upload/v1/source.jpg",
+          width: 300,
+          height: 200,
+          bytes: 1,
+          format: "jpg",
+          url: "https://res.cloudinary.com/test/image/upload/v1/source.jpg",
+        },
+        transformedUrl:
+          "https://res.cloudinary.com/test/image/upload/c_crop,x_0,y_0,w_300,h_200/e_background_removal/v1/source.jpg",
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+      };
+    });
+
+    const onImageMetadataChange = vi.fn();
+    render(<TestWrapper onImageMetadataChange={onImageMetadataChange} />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+    if (!input) {
+      return;
+    }
+
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
+    });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
+    fireEvent.click(effectsButton);
+
+    const removeBackgroundSwitch = await screen.findByRole("switch", {
+      name: tr("upload.aiRemoveBackground"),
+    });
+    fireEvent.click(removeBackgroundSwitch);
+
+    await waitFor(() => {
+      expect(uploadImageToCloudinary).toHaveBeenCalledTimes(1);
+    });
+
+    // The original source dimensions must have been reported at least once.
+    await waitFor(() => {
+      expect(onImageMetadataChange).toHaveBeenCalledWith(
+        expect.objectContaining({ width: 1200, height: 800 }),
+      );
+    });
+
+    // The transformed dimensions from the baked preview must never be
+    // reported upward, otherwise the crop recomputes against them and shrinks.
+    const reportedCroppedDimensions = onImageMetadataChange.mock.calls.some(
+      ([metadata]) =>
+        !!metadata && metadata.width === 300 && metadata.height === 200,
+    );
+    expect(reportedCroppedDimensions).toBe(false);
+  });
+
+  it("resolves metadata for restored cloud-baked slots instead of leaving it null", async () => {
+    mockImageWidth = 800;
+    mockImageHeight = 1200;
+
+    const onImageMetadataChange = vi.fn();
+    const restoredSlot: UploadedSlotResult = {
+      slotIndex: 1,
+      slotKey: "center",
+      transformations: {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
+        blur: 0,
+      },
+      transformedUrl:
+        "https://res.cloudinary.com/test/image/upload/e_background_removal/v1/restored.jpg",
+      publicId: "restored",
+      secureUrl:
+        "https://res.cloudinary.com/test/image/upload/v1/restored.jpg",
+    };
+
+    render(
+      <TestWrapper
+        initialSlots={[restoredSlot]}
+        onImageMetadataChange={onImageMetadataChange}
+      />,
+    );
+
+    // Restored slots start with `metadata: null` and preview a fixed baked
+    // URL, so the first resolved metadata from that preview must be applied.
+    await waitFor(() => {
+      expect(onImageMetadataChange).toHaveBeenCalledWith(
+        expect.objectContaining({ width: 800, height: 1200 }),
+      );
     });
   });
 
