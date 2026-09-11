@@ -319,7 +319,13 @@ function getUploadTransformations(
         Math.abs(effective.cropWidth - baseCrop.cropWidth) > 0.5 ||
         Math.abs(effective.cropHeight - baseCrop.cropHeight) > 0.5);
     if (hasCropShift) {
-      result.custom_coordinates = `${Math.round(effective.cropX)},${Math.round(effective.cropY)},${Math.round(effective.cropWidth)},${Math.round(effective.cropHeight)}`;
+      // Guard against degenerate zero-pixel crops: Cloudinary rejects a crop
+      // with a zero width/height. x/y of 0 are valid; only w/h need a floor.
+      const cropX = Math.round(effective.cropX);
+      const cropY = Math.round(effective.cropY);
+      const cropWidth = Math.max(1, Math.round(effective.cropWidth));
+      const cropHeight = Math.max(1, Math.round(effective.cropHeight));
+      result.custom_coordinates = `${cropX},${cropY},${cropWidth},${cropHeight}`;
     }
   }
 
@@ -1196,7 +1202,23 @@ export const ImageUploader = forwardRef<
       shouldAutoSelectOptimalProportion: boolean;
     }) => {
       updateActiveImage((selectedImage) => {
+        // A reusable cloud-backed preview already has the crop, rotation and
+        // effects baked into its delivery URL, so the dimensions it reports
+        // are the transformed output — not the source image the crop
+        // coordinates are applied against. Writing them back would shrink
+        // `metadata` on every render and compound the crop until Cloudinary
+        // rejects it (background removal fails below 64x64). Keep the source
+        // metadata established before the upload.
+        //
+        // Restored slots are the exception: they start with `metadata: null`
+        // and a fixed baked URL (no crop is recomputed for them), so the first
+        // resolved metadata is the intended value and must still be applied.
+        if (selectedImage.metadata && previewsBakedCloudTransform(selectedImage)) {
+          return selectedImage;
+        }
+
         const currentMetadata = selectedImage.metadata;
+
         const metadataUnchanged =
           !!currentMetadata &&
           currentMetadata.width === metadata.width &&
@@ -1221,7 +1243,20 @@ export const ImageUploader = forwardRef<
           autoSelectOptimalPending: false,
         };
       });
-      onImageMetadataChange?.(metadata);
+
+      // Don't report transformed dimensions upward for a source image whose
+      // metadata is already established. Restored slots (null metadata) still
+      // need the first resolved values reported.
+      const currentActiveImage =
+        typeof activeImageIndexRef.current === "number"
+          ? selectedImagesRef.current[activeImageIndexRef.current]
+          : null;
+      if (
+        !currentActiveImage?.metadata ||
+        !previewsBakedCloudTransform(currentActiveImage)
+      ) {
+        onImageMetadataChange?.(metadata);
+      }
     },
     [onImageMetadataChange, updateActiveImage],
   );
