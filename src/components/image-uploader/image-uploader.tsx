@@ -2084,11 +2084,15 @@ export const ImageUploader = forwardRef<
     [uploadFilledSlots, handleRemoveActiveImage],
   );
 
-  const { previousFilledSlotIndex, nextFilledSlotIndex } =
-    useImageSliderNavigation({
-      selectedImages,
-      activeImageIndex,
-    });
+  const {
+    previousFilledSlotIndex,
+    nextFilledSlotIndex,
+    canMovePrevious,
+    canMoveNext,
+  } = useImageSliderNavigation({
+    selectedImages,
+    activeImageIndex,
+  });
 
   const [hasUsedSliderNav, setHasUsedSliderNav] = useState(false);
 
@@ -2118,10 +2122,15 @@ export const ImageUploader = forwardRef<
 
   const {
     onTouchStart: handleSliderTouchStart,
+    onTouchMove: handleSliderTouchMove,
     onTouchEnd: handleSliderTouchEnd,
+    onTouchCancel: handleSliderTouchCancel,
+    frameRef: sliderSwipeFrameRef,
   } = useSliderSwipeNavigation({
     onSwipeLeft: moveToNextImage,
     onSwipeRight: moveToPreviousImage,
+    canSwipeLeft: canMoveNext,
+    canSwipeRight: canMovePrevious,
   });
 
   // Affordances for the single-preview slider, shown in every mode that
@@ -2143,8 +2152,8 @@ export const ImageUploader = forwardRef<
     }
 
     return {
-      hasPrevious: previousFilledSlotIndex !== null,
-      hasNext: nextFilledSlotIndex !== null,
+      hasPrevious: canMovePrevious,
+      hasNext: canMoveNext,
       onPrevious: moveToPreviousImage,
       onNext: moveToNextImage,
       showHint: isTouchPrimary && !hasUsedSliderNav,
@@ -2154,8 +2163,8 @@ export const ImageUploader = forwardRef<
     selectedImageCount,
     isEffectsEditMode,
     isZoomPanMode,
-    previousFilledSlotIndex,
-    nextFilledSlotIndex,
+    canMovePrevious,
+    canMoveNext,
     moveToPreviousImage,
     moveToNextImage,
     isTouchPrimary,
@@ -2735,8 +2744,11 @@ export const ImageUploader = forwardRef<
               isEditMode={isEffectsEditMode || isZoomPanMode}
               previewCropAdjust={activeImage?.previewCropAdjust}
               onCropAdjustChange={updateActiveImageCropAdjust}
+              swipeFrameRef={sliderSwipeFrameRef}
               onTouchStart={handleSliderTouchStart}
+              onTouchMove={handleSliderTouchMove}
               onTouchEnd={handleSliderTouchEnd}
+              onTouchCancel={handleSliderTouchCancel}
               onMetadataResolved={handleMetadataResolved}
               onSelectEmptySlot={
                 typeof activeImageIndex === "number"

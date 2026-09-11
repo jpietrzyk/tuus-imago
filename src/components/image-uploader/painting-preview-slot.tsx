@@ -33,8 +33,11 @@ interface PaintingPreviewSlotProps {
   isEditMode?: boolean;
   previewCropAdjust?: CropAdjust;
   onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
+  swipeFrameRef?: React.RefObject<HTMLDivElement | null>;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
+  onTouchMove?: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
+  onTouchCancel?: () => void;
   onMetadataResolved: (args: {
     metadata: SelectedImageMetadata;
     nextDisplayImageProportion: ImageDisplayProportion;
@@ -64,8 +67,11 @@ export default function PaintingPreviewSlot({
   isEditMode = false,
   previewCropAdjust,
   onCropAdjustChange,
+  swipeFrameRef,
   onTouchStart,
+  onTouchMove,
   onTouchEnd,
+  onTouchCancel,
   onMetadataResolved,
   onSelectEmptySlot,
   onClearSlot,
@@ -244,9 +250,12 @@ export default function PaintingPreviewSlot({
     requestDrawRef,
   });
 
+  const canSwipe = !!selectedImage && !swipeDisabled;
+
   return (
     <div className="relative mx-0 flex h-full max-h-full shrink-0 items-center justify-center">
       <div
+        ref={swipeFrameRef}
         className={`group/preview-slot relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 flex items-center justify-center will-change-transform transition-transform duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none ${frameAspectRatioClassName} ${
           selectedImage ? "painting-plate" : ""
         } ${
@@ -255,9 +264,14 @@ export default function PaintingPreviewSlot({
             : "scale-100 opacity-100"
         }`}
         data-testid="selected-image-preview-frame"
-        style={{ aspectRatio: String(previewFrameAspectRatio) }}
-        onTouchStart={swipeDisabled ? undefined : onTouchStart}
-        onTouchEnd={swipeDisabled ? undefined : onTouchEnd}
+        style={{
+          aspectRatio: String(previewFrameAspectRatio),
+          touchAction: canSwipe ? "pan-y" : undefined,
+        }}
+        onTouchStart={canSwipe ? onTouchStart : undefined}
+        onTouchMove={canSwipe ? onTouchMove : undefined}
+        onTouchEnd={canSwipe ? onTouchEnd : undefined}
+        onTouchCancel={canSwipe ? onTouchCancel : undefined}
       >
         {selectedImage ? (
           <canvas

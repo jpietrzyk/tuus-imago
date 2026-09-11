@@ -322,8 +322,11 @@ interface UploaderPreviewSliderProps {
   isEditMode?: boolean;
   previewCropAdjust?: CropAdjust;
   onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
+  swipeFrameRef?: React.RefObject<HTMLDivElement | null>;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
+  onTouchMove?: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
+  onTouchCancel?: () => void;
   onMetadataResolved: (args: {
     metadata: SelectedImageMetadata;
     nextDisplayImageProportion: ImageDisplayProportion;
@@ -360,8 +363,11 @@ export default function UploaderPreviewSlider({
   isEditMode = false,
   previewCropAdjust,
   onCropAdjustChange,
+  swipeFrameRef,
   onTouchStart,
+  onTouchMove,
   onTouchEnd,
+  onTouchCancel,
   onMetadataResolved,
   onSelectEmptySlot,
   onClearSlot,
@@ -420,6 +426,15 @@ export default function UploaderPreviewSlider({
       clearTrashTimeout();
     };
   }, [clearTrashTimeout]);
+  const effectiveSwipeDisabled = swipeDisabled || isDesktopTriptych;
+
+  const handleTouchMove = useCallback(
+    (event: React.TouchEvent<HTMLDivElement>) => {
+      onTouchMove?.(event);
+    },
+    [onTouchMove],
+  );
+
   const previewSlot = (
     <PaintingPreviewSlot
       selectedImage={activeImage}
@@ -435,12 +450,15 @@ export default function UploaderPreviewSlider({
       uploadProgressLabel={uploadProgressLabel}
       uploadingSlotIndex={uploadingSlotIndex}
       isEffectUploading={isEffectUploading}
-      swipeDisabled={swipeDisabled}
+      swipeDisabled={effectiveSwipeDisabled}
       isEditMode={isEditMode}
       previewCropAdjust={previewCropAdjust}
       onCropAdjustChange={onCropAdjustChange}
+      swipeFrameRef={swipeFrameRef}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={onTouchCancel}
       onMetadataResolved={onMetadataResolved}
       onSelectEmptySlot={onSelectEmptySlot}
       onClearSlot={onClearSlot}
