@@ -33,6 +33,7 @@ interface PaintingPreviewSlotProps {
   isEditMode?: boolean;
   previewCropAdjust?: CropAdjust;
   onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
+  cropMaxZoom?: number;
   swipeFrameRef?: React.RefObject<HTMLDivElement | null>;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchMove?: (event: React.TouchEvent<HTMLDivElement>) => void;
@@ -68,6 +69,7 @@ export default function PaintingPreviewSlot({
   isEditMode = false,
   previewCropAdjust,
   onCropAdjustChange,
+  cropMaxZoom,
   swipeFrameRef,
   onTouchStart,
   onTouchMove,
@@ -191,6 +193,7 @@ export default function PaintingPreviewSlot({
     requestDrawRef,
     canPanX,
     canPanY,
+    maxZoom: cropMaxZoom,
   });
 
   useEffect(() => {

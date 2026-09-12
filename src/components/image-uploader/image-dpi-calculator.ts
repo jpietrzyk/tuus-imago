@@ -108,3 +108,40 @@ export function getDpiQuality(dpi: number): DpiQuality {
   if (dpi >= acceptable) return "acceptable";
   return "low";
 }
+
+/**
+ * The largest crop zoom that still prints the given (orientation-matched)
+ * size at the minimum DPI. Zoom samples a smaller region of the source, so the
+ * pixels available to print scale down by 1/zoom; the cap is the DPI headroom
+ * of the crop at zoom 1. Returns 1 when the crop is already at/below the
+ * minimum (no room to zoom), and Infinity when the size needs no pixels.
+ */
+export function calculateMaxZoomForPrintSize(
+  cropWidth: number,
+  cropHeight: number,
+  printWidthCm: number,
+  printHeightCm: number,
+  minDpi: number = IMAGE_DPI_RULES.minDpi,
+): number {
+  if (cropWidth <= 0 || cropHeight <= 0) {
+    return 1;
+  }
+
+  const matched = getOrientationMatchedPrintDimensions(
+    cropWidth,
+    cropHeight,
+    printWidthCm,
+    printHeightCm,
+  );
+  const required = getRequiredPixelsForPrintSize(
+    matched.widthCm,
+    matched.heightCm,
+    minDpi,
+  );
+
+  const zoomX = required.width > 0 ? cropWidth / required.width : Infinity;
+  const zoomY = required.height > 0 ? cropHeight / required.height : Infinity;
+  const maxZoom = Math.min(zoomX, zoomY);
+
+  return Number.isFinite(maxZoom) ? Math.max(1, maxZoom) : Infinity;
+}

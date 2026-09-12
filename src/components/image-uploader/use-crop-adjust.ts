@@ -11,6 +11,12 @@ export interface CropAdjust {
 }
 
 /**
+ * Absolute maximum crop zoom, independent of DPI. The effective cap is
+ * additionally limited per photo/painting-size by the DPI headroom.
+ */
+export const MAX_CROP_ZOOM = 3;
+
+/**
  * Determine whether the source image overflows the centered base crop in each
  * axis. When there is overflow the user can pan (drag) to reveal the masked
  * edges even at zoom 1 — this is the case for triptych panels whose vertical

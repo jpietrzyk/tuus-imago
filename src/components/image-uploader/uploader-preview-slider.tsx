@@ -322,6 +322,7 @@ interface UploaderPreviewSliderProps {
   isEditMode?: boolean;
   previewCropAdjust?: CropAdjust;
   onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
+  cropMaxZoom?: number;
   swipeFrameRef?: React.RefObject<HTMLDivElement | null>;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchMove?: (event: React.TouchEvent<HTMLDivElement>) => void;
@@ -364,6 +365,7 @@ export default function UploaderPreviewSlider({
   isEditMode = false,
   previewCropAdjust,
   onCropAdjustChange,
+  cropMaxZoom,
   swipeFrameRef,
   onTouchStart,
   onTouchMove,
@@ -456,6 +458,7 @@ export default function UploaderPreviewSlider({
       isEditMode={isEditMode}
       previewCropAdjust={previewCropAdjust}
       onCropAdjustChange={onCropAdjustChange}
+      cropMaxZoom={cropMaxZoom}
       swipeFrameRef={swipeFrameRef}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
