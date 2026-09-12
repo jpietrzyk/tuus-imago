@@ -289,6 +289,7 @@
     "cameraCaptureLost": "We didn't receive your photo — the app reloaded while the camera was open. Please take the photo again.",
     "fileSelectionLost": "We didn't receive your photo — the app reloaded while you were choosing it. Please try again.",
     "applyingEffect": "Applying effect...",
+    "effectConnectionError": "We couldn't apply the effect because of a connection problem. Please try again in a couple of minutes.",
     "tabAdjust": "Adjust",
     "tabAiEffects": "AI Effects",
     "tabTransform": "Transform",

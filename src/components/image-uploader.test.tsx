@@ -112,6 +112,7 @@ function TestWrapper({
 
 let mockImageWidth = 1200;
 let mockImageHeight = 800;
+let mockImageFailPattern: RegExp | null = null;
 
 function slotDotHasImage(index: number): boolean {
   const dot = screen.getByTestId(`uploader-slot-dot-${index}`);
@@ -124,6 +125,7 @@ describe("ImageUploader", () => {
   beforeEach(() => {
     mockImageWidth = 1200;
     mockImageHeight = 800;
+    mockImageFailPattern = null;
 
     vi.stubGlobal(
       "Image",
@@ -134,12 +136,20 @@ describe("ImageUploader", () => {
         naturalHeight = mockImageHeight;
         width = mockImageWidth;
         height = mockImageHeight;
+        private currentSrc = "";
 
         decode() {
+          if (
+            mockImageFailPattern &&
+            mockImageFailPattern.test(this.currentSrc)
+          ) {
+            return Promise.reject(new Error("mock image load failure"));
+          }
           return Promise.resolve();
         }
 
-        set src(_value: string) {
+        set src(value: string) {
+          this.currentSrc = value;
           queueMicrotask(() => {
             this.onload?.(new Event("load"));
           });
@@ -2203,6 +2213,158 @@ describe("ImageUploader", () => {
       expect(onImageMetadataChange).toHaveBeenCalledWith(
         expect.objectContaining({ width: 800, height: 1200 }),
       );
+    });
+  });
+
+  it("stops the effect overlay and warns when the Cloudinary preview fails to load", async () => {
+    sessionStorage.clear();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+      lastModified: 404,
+    });
+
+    vi.mocked(uploadImageToCloudinary).mockResolvedValue({
+      asset: {
+        public_id: "failed-effect",
+        secure_url:
+          "https://res.cloudinary.com/test/image/upload/v1/source.jpg",
+        width: 1200,
+        height: 800,
+        bytes: 1,
+        format: "jpg",
+        url: "https://res.cloudinary.com/test/image/upload/v1/source.jpg",
+      },
+      transformedUrl:
+        "https://res.cloudinary.com/test/image/upload/e_background_removal/v1/source.jpg",
+      transformations: {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
+        blur: 0,
+      },
+    });
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+    if (!input) {
+      return;
+    }
+
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
+    });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
+    fireEvent.click(effectsButton);
+
+    const removeBackgroundSwitch = await screen.findByRole("switch", {
+      name: tr("upload.aiRemoveBackground"),
+    });
+
+    // Make the baked Cloudinary preview URL fail to decode, like a delivery
+    // 400/network error.
+    mockImageFailPattern = /e_background_removal/;
+    fireEvent.click(removeBackgroundSwitch);
+
+    await waitFor(() => {
+      expect(uploadImageToCloudinary).toHaveBeenCalledTimes(1);
+    });
+
+    const errorBanner = await screen.findByTestId("uploader-selection-error");
+    expect(errorBanner).toHaveTextContent(
+      tr("uploader.effectConnectionError"),
+    );
+
+    // The "applying effect" overlay must not be left spinning.
+    await waitFor(() => {
+      expect(
+        screen.queryByText(tr("uploader.applyingEffect")),
+      ).not.toBeInTheDocument();
+    });
+
+    // The transient effect error must not be persisted for a later reload.
+    expect(sessionStorage.getItem("uploader-selection-error")).toBeNull();
+  });
+
+  it("clears the effect connection error after a successful preview load", async () => {
+    sessionStorage.clear();
+    const sourceFile = new File(["source"], "source.jpg", {
+      type: "image/jpeg",
+      lastModified: 405,
+    });
+
+    vi.mocked(uploadImageToCloudinary).mockResolvedValue({
+      asset: {
+        public_id: "recovered-effect",
+        secure_url:
+          "https://res.cloudinary.com/test/image/upload/v1/source.jpg",
+        width: 1200,
+        height: 800,
+        bytes: 1,
+        format: "jpg",
+        url: "https://res.cloudinary.com/test/image/upload/v1/source.jpg",
+      },
+      transformedUrl:
+        "https://res.cloudinary.com/test/image/upload/e_background_removal/v1/source.jpg",
+      transformations: {
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
+        blur: 0,
+      },
+    });
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(input).toBeDefined();
+    if (!input) {
+      return;
+    }
+
+    fireEvent.change(input, { target: { files: [sourceFile] } });
+    await screen.findByRole("img", { name: "Preview" });
+
+    const effectsButton = await screen.findByRole("button", {
+      name: tr("uploader.aiEditorButton"),
+    });
+    await waitFor(() => expect(effectsButton).not.toBeDisabled());
+    fireEvent.click(effectsButton);
+
+    const removeBackgroundSwitch = await screen.findByRole("switch", {
+      name: tr("upload.aiRemoveBackground"),
+    });
+
+    mockImageFailPattern = /e_background_removal/;
+    fireEvent.click(removeBackgroundSwitch);
+
+    await screen.findByTestId("uploader-selection-error");
+
+    // Retry without the failure: toggling the effect off loads a different,
+    // successful preview URL and the error must clear.
+    mockImageFailPattern = null;
+    fireEvent.click(removeBackgroundSwitch);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId("uploader-selection-error"),
+      ).not.toBeInTheDocument();
     });
   });
 

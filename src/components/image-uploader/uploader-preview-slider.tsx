@@ -332,6 +332,7 @@ interface UploaderPreviewSliderProps {
     nextDisplayImageProportion: ImageDisplayProportion;
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
+  onPreviewLoadError?: (url: string) => void;
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
   selectedPaintingSize?: PaintingSizeIndex;
@@ -369,6 +370,7 @@ export default function UploaderPreviewSlider({
   onTouchEnd,
   onTouchCancel,
   onMetadataResolved,
+  onPreviewLoadError,
   onSelectEmptySlot,
   onClearSlot,
   selectedPaintingSize = 2,
@@ -460,6 +462,7 @@ export default function UploaderPreviewSlider({
       onTouchEnd={handleTouchEnd}
       onTouchCancel={onTouchCancel}
       onMetadataResolved={onMetadataResolved}
+      onPreviewLoadError={onPreviewLoadError}
       onSelectEmptySlot={onSelectEmptySlot}
       onClearSlot={onClearSlot}
       isTrashVisible={touchedSlotIndex === activeImageIndex}

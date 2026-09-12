@@ -54,6 +54,12 @@ interface UsePreviewCanvasRenderArgs {
     nextDisplayImageProportion: ImageDisplayProportion;
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
+  /**
+   * Called when the preview image fails to load (e.g. a Cloudinary delivery
+   * error). Lets the uploader stop the "applying effect" overlay and surface
+   * a retry message instead of spinning forever.
+   */
+  onPreviewLoadError?: (url: string) => void;
 }
 
 export const usePreviewCanvasRender = ({
@@ -67,6 +73,7 @@ export const usePreviewCanvasRender = ({
   previewCropAdjust,
   latestRenderConfigRef,
   onMetadataResolved,
+  onPreviewLoadError,
   requestDrawRef,
 }: UsePreviewCanvasRenderArgs) => {
   const imageCacheRef = useRef<{
@@ -302,7 +309,11 @@ export const usePreviewCanvasRender = ({
 
         drawPreview();
       } catch {
-        // Ignore image loading errors in preview; uploader handles validation earlier.
+        // Ignore image loading errors in preview; callers use the callback to
+        // stop the effect overlay and surface a retry message.
+        if (isActive) {
+          onPreviewLoadError?.(previewUrl);
+        }
       }
     };
 
@@ -337,6 +348,7 @@ export const usePreviewCanvasRender = ({
     canvasRef,
     latestRenderConfigRef,
     onMetadataResolved,
+    onPreviewLoadError,
     previewUrl,
     allowAutoSelectOptimalProportion,
     userSelectedProportion,

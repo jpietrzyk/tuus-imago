@@ -284,6 +284,7 @@ export interface Translations {
     cameraCaptureLost: string;
     fileSelectionLost: string;
     applyingEffect: string;
+    effectConnectionError: string;
     tabAdjust: string;
     tabAiEffects: string;
     tabTransform: string;
