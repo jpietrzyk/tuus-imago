@@ -54,6 +54,15 @@ function hasActiveAiAdjustments(aiAdjustments: AiAdjustments | null): boolean {
 }
 
 /**
+ * Cloudinary's background removal rejects inputs larger than 25 megapixels
+ * (e.g. "Maximum image size is 25 Megapixels. Requested 30.94 Megapixels") and
+ * does not downscale when both source sides are under its per-side limit.
+ * Capping each side at 4900 guarantees at most 24.01MP while `c_limit`
+ * preserves the aspect ratio and never upscales smaller inputs.
+ */
+const BACKGROUND_REMOVAL_SIZE_LIMIT = "c_limit,w_4900,h_4900";
+
+/**
  * Inserts Cloudinary transformation parts into a URL.
  * If the URL already contains transformations (between /upload/ and the
  * version/public_id), the new parts are appended AFTER the existing ones.
@@ -190,6 +199,11 @@ export function getTransformedPreviewUrl(
 
     AI_ADJUSTMENT_OPTIONS.forEach((option) => {
       if (aiAdjustments[option.key]) {
+        // Background removal has a 25MP ceiling; constrain the pixels it
+        // receives (after any crop) before applying the effect.
+        if (option.key === "removeBackground") {
+          transformationParts.push(BACKGROUND_REMOVAL_SIZE_LIMIT);
+        }
         transformationParts.push(option.transformation);
       }
     });

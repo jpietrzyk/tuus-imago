@@ -253,6 +253,54 @@ describe("image-transformations", () => {
       );
       expect(result).toBe(BASE_URL);
     });
+
+    it("caps the input size before background removal", () => {
+      const ai: AiAdjustments = {
+        enhance: false,
+        removeBackground: true,
+        upscale: false,
+        restore: false,
+      };
+      const result = getTransformedPreviewUrl(BASE_URL, null, undefined, ai);
+
+      const limitIndex = result.indexOf("c_limit,w_4900,h_4900");
+      const effectIndex = result.indexOf("e_background_removal");
+      expect(limitIndex).toBeGreaterThan(-1);
+      expect(effectIndex).toBeGreaterThan(limitIndex);
+    });
+
+    it("caps the size after a custom crop so the crop coordinates stay valid", () => {
+      const ai: AiAdjustments = {
+        enhance: false,
+        removeBackground: true,
+        upscale: false,
+        restore: false,
+      };
+      const result = getTransformedPreviewUrl(
+        BASE_URL,
+        null,
+        "10,20,300,400",
+        ai,
+      );
+
+      const cropIndex = result.indexOf("c_crop,x_10,y_20,w_300,h_400");
+      const limitIndex = result.indexOf("c_limit,w_4900,h_4900");
+      const effectIndex = result.indexOf("e_background_removal");
+      expect(cropIndex).toBeGreaterThan(-1);
+      expect(limitIndex).toBeGreaterThan(cropIndex);
+      expect(effectIndex).toBeGreaterThan(limitIndex);
+    });
+
+    it("does not cap the size when background removal is inactive", () => {
+      const ai: AiAdjustments = {
+        enhance: true,
+        removeBackground: false,
+        upscale: false,
+        restore: false,
+      };
+      const result = getTransformedPreviewUrl(BASE_URL, null, undefined, ai);
+      expect(result).not.toContain("c_limit");
+    });
   });
 
   describe("applyCloudinaryTransformations (via getCloudinaryThumbnailUrl)", () => {

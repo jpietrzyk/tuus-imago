@@ -234,7 +234,7 @@ describe("UploadPage Component", () => {
       );
 
       expect(transformedUrl).toBe(
-        "https://res.cloudinary.com/demo/image/upload/e_enhance/e_background_removal/e_upscale/v123/sample.jpg",
+        "https://res.cloudinary.com/demo/image/upload/e_enhance/c_limit,w_4900,h_4900/e_background_removal/e_upscale/v123/sample.jpg",
       );
     });
 
