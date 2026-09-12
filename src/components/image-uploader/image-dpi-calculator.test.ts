@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateEffectiveDpi,
   calculateDpiFromCrop,
+  calculateMaxZoomForPrintSize,
   calculateOrientationMatchedDpi,
   getDpiQuality,
 } from "./image-dpi-calculator";
@@ -124,5 +125,41 @@ describe("getDpiQuality", () => {
     expect(getDpiQuality(71)).toBe("low");
     expect(getDpiQuality(1)).toBe("low");
     expect(getDpiQuality(0)).toBe("low");
+  });
+});
+
+describe("calculateMaxZoomForPrintSize", () => {
+  it("returns the DPI headroom of the limiting axis", () => {
+    // 12000x8000 at 150x100cm needs 4252x2835 px at 72 DPI.
+    const maxZoom = calculateMaxZoomForPrintSize(12000, 8000, 150, 100);
+    expect(maxZoom).toBeCloseTo(8000 / 2835, 4);
+  });
+
+  it("returns 1 when the crop is already at or below the minimum DPI", () => {
+    expect(calculateMaxZoomForPrintSize(1200, 800, 150, 100)).toBe(1);
+  });
+
+  it("keeps the capped crop printable for a portrait source", () => {
+    const maxZoom = calculateMaxZoomForPrintSize(8000, 12000, 150, 100);
+    expect(maxZoom).toBeGreaterThan(1);
+
+    const dpi = calculateOrientationMatchedDpi(
+      8000 / maxZoom,
+      12000 / maxZoom,
+      150,
+      100,
+    );
+    expect(dpi.dpi).toBeGreaterThanOrEqual(72);
+  });
+
+  it("keeps the capped crop printable for a landscape source", () => {
+    const maxZoom = calculateMaxZoomForPrintSize(6000, 4000, 150, 100);
+    const dpi = calculateOrientationMatchedDpi(
+      6000 / maxZoom,
+      4000 / maxZoom,
+      150,
+      100,
+    );
+    expect(dpi.dpi).toBeGreaterThanOrEqual(72);
   });
 });

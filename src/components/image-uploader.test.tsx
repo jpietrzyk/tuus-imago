@@ -83,6 +83,7 @@ function TestWrapper({
               shouldConfirmSplit: props.shouldConfirmSplit,
               selectedPaintingSize: props.selectedPaintingSize,
               paintingShape: props.paintingShape,
+              sizesDpiInfo: props.sizesDpiInfo,
             }
           : null,
       );
@@ -2440,6 +2441,10 @@ describe("ImageUploader", () => {
   });
 
   it("resets zoom when proportion is changed", async () => {
+    // High-resolution source so the DPI guard leaves room to zoom.
+    mockImageWidth = 6000;
+    mockImageHeight = 4000;
+
     render(<TestWrapper />);
 
     const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
@@ -2499,6 +2504,58 @@ describe("ImageUploader", () => {
       expect(
         screen.queryByRole("button", { name: tr("uploader.cropReset") }),
       ).not.toBeInTheDocument();
+    });
+  });
+
+  it("caps crop zoom to the selected size's DPI headroom and degrades its marker", async () => {
+    // Large source so the auto-selected largest size starts with DPI headroom.
+    mockImageWidth = 12000;
+    mockImageHeight = 8000;
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    if (!input) return;
+
+    fireEvent.change(input, {
+      target: { files: [new File(["x"], "big.jpg", { type: "image/jpeg" })] },
+    });
+    await screen.findByRole("img", { name: "Preview" });
+
+    // At rest the largest rectangular size (index 4) is "good" (yellow dot).
+    await waitFor(() => {
+      const dot = document
+        .getElementById("size-btn-4")
+        ?.querySelector("span.rounded-full");
+      expect(dot?.className).toContain("bg-yellow-500");
+    });
+
+    const effectsButton = screen.getByRole("button", {
+      name: tr("uploader.settingsButton"),
+    });
+    fireEvent.click(effectsButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: tr("uploader.effectsCancel") }),
+      ).toBeInTheDocument();
+    });
+
+    const canvas = screen.getByRole("img", { name: "Preview" });
+    // Far beyond any physical max: the DPI headroom must clamp the zoom.
+    for (let i = 0; i < 120; i += 1) {
+      fireEvent.wheel(canvas, { deltaY: -100 });
+    }
+
+    // The selected size stays printable (not disabled) and its marker degrades
+    // from "good" to "acceptable" at the clamp.
+    await waitFor(() => {
+      const sizeButton = document.getElementById("size-btn-4");
+      expect(sizeButton).not.toBeDisabled();
+      const dot = sizeButton?.querySelector("span.rounded-full");
+      expect(dot?.className).toContain("bg-gray-400");
     });
   });
 

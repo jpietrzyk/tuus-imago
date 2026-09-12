@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
+import { MAX_CROP_ZOOM } from "./use-crop-adjust";
 
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.05;
 
 interface UseCanvasPanZoomParams {
@@ -17,6 +17,12 @@ interface UseCanvasPanZoomParams {
   /** Whether the source overflows the base crop on each axis, enabling drag-to-reveal at zoom 1. */
   canPanX?: boolean;
   canPanY?: boolean;
+  /**
+   * Upper zoom bound. Defaults to the absolute {@link MAX_CROP_ZOOM}; the
+   * uploader narrows it per photo/painting-size so the crop cannot be zoomed
+   * past the DPI guard.
+   */
+  maxZoom?: number;
 }
 
 export function useCanvasPanZoom({
@@ -30,6 +36,7 @@ export function useCanvasPanZoom({
   requestDrawRef,
   canPanX = false,
   canPanY = false,
+  maxZoom = MAX_CROP_ZOOM,
 }: UseCanvasPanZoomParams) {
   const isDraggingRef = useRef(false);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
@@ -45,6 +52,7 @@ export function useCanvasPanZoom({
   const onPanChangeRef = useRef(onPanChange);
   const canPanXRef = useRef(canPanX);
   const canPanYRef = useRef(canPanY);
+  const maxZoomRef = useRef(maxZoom);
 
   const clampPan = useCallback(
     (newPanX: number, newPanY: number, currentZoom: number, allowX: boolean, allowY: boolean): { panX: number; panY: number } => {
@@ -70,6 +78,7 @@ export function useCanvasPanZoom({
     onPanChangeRef.current = onPanChange;
     canPanXRef.current = canPanX;
     canPanYRef.current = canPanY;
+    maxZoomRef.current = maxZoom;
     clampPanRef.current = clampPan;
   });
 
@@ -157,7 +166,10 @@ export function useCanvasPanZoom({
       e.preventDefault();
       const currentZoom = zoomRef.current;
       const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
+      const newZoom = Math.max(
+        MIN_ZOOM,
+        Math.min(maxZoomRef.current, currentZoom + delta),
+      );
       if (newZoom !== currentZoom) {
         // Optimistically update the ref so consecutive wheel events in the
         // same frame accumulate correctly instead of reading a stale value.
@@ -219,7 +231,10 @@ export function useCanvasPanZoom({
         lastPinchDistRef.current = dist;
 
         const currentZoom = zoomRef.current;
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, currentZoom + delta));
+        const newZoom = Math.max(
+          MIN_ZOOM,
+          Math.min(maxZoomRef.current, currentZoom + delta),
+        );
         if (newZoom !== currentZoom) {
           zoomRef.current = newZoom;
 

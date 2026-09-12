@@ -60,8 +60,9 @@ import {
   getUnprintablePhotoInfo,
   isSlotPrintable,
   resolveRecommendedPaintingSize,
-  type SizeDpiInfo,
 } from "./size-dpi-availability";
+import { calculateMaxZoomForPrintSize } from "./image-dpi-calculator";
+import { IMAGE_DPI_RULES } from "./image-dpi-rules";
 import UnprintablePhotoNotice from "./unprintable-photo-notice";
 import {
   splitImageIntoVerticalThirdFiles,
@@ -89,7 +90,7 @@ import {
   markCaptureStarted,
   persistSelectionError,
 } from "./camera-capture-session";
-import { adjustCropForZoomPan } from "./use-crop-adjust";
+import { adjustCropForZoomPan, MAX_CROP_ZOOM } from "./use-crop-adjust";
 import { useMediaQuery } from "@/lib/use-media-query";
 
 export interface ImageTransformations {
@@ -2267,53 +2268,159 @@ export const ImageUploader = forwardRef<
     [displayImageProportion],
   );
 
-  const sizesDpiInfo = useMemo((): SizeDpiInfo[] | undefined => {
-    if (!selectedImageMetadata) {
-      return undefined;
-    }
+  const activeCropAdjust = activeImage?.previewCropAdjust;
 
-    // Window slots print a portrait window of the shared source, not the full
-    // source: project the DPI availability at the resting window size (no
-    // user zoom) so narrower sources — whose band-fit zoom shrinks windows
-    // below the full source height — do not overstate printable sizes.
-    if (triptychWindowIndexOfActiveSlot !== undefined) {
-      const windowCrop = computeTriptychWindowCrop({
+  // Effective printed crop for the active slot at a given zoom. Triptych
+  // windows derive their size from the shared band model; single images scale
+  // the resting centered crop down by the zoom factor.
+  const getActiveCropDimensions = useCallback(
+    (
+      zoom: number,
+      panX: number,
+      panY: number,
+    ): { width: number; height: number } | null => {
+      if (!selectedImageMetadata) {
+        return null;
+      }
+
+      if (triptychWindowIndexOfActiveSlot !== undefined) {
+        const windowCrop = computeTriptychWindowCrop({
+          sourceWidth: selectedImageMetadata.width,
+          sourceHeight: selectedImageMetadata.height,
+          frameAspectRatio: getTargetAspectRatio(displayImageProportion),
+          windowIndex: triptychWindowIndexOfActiveSlot,
+          panX,
+          panY,
+          zoom,
+        });
+        return { width: windowCrop.cropWidth, height: windowCrop.cropHeight };
+      }
+
+      // DPI guard measures the pixels that will actually be printed: the
+      // resting centered crop that fills the current frame, mapped to display
+      // space. 90°/270° rotations flip the proportions (landscape ⇄ portrait),
+      // so the crop is recalculated from the rotated shape.
+      const restingCrop = getRestingDisplayCropDimensions({
         sourceWidth: selectedImageMetadata.width,
         sourceHeight: selectedImageMetadata.height,
-        frameAspectRatio: getTargetAspectRatio(displayImageProportion),
-        windowIndex: triptychWindowIndexOfActiveSlot,
-        panX: 0,
+        proportion: displayImageProportion,
+        rotation: activeImageClientRotation,
       });
-      return computeSizesDpiAvailability(
-        windowCrop.cropWidth,
-        windowCrop.cropHeight,
-        paintingShape,
-      );
+      const safeZoom = Math.max(1, zoom);
+      return {
+        width: restingCrop.width / safeZoom,
+        height: restingCrop.height / safeZoom,
+      };
+    },
+    [
+      selectedImageMetadata,
+      triptychWindowIndexOfActiveSlot,
+      displayImageProportion,
+      activeImageClientRotation,
+    ],
+  );
+
+  const restingCropDimensions = useMemo(
+    () => getActiveCropDimensions(1, 0, 0),
+    [getActiveCropDimensions],
+  );
+
+  // Availability at the resting crop drives automatic size selection and the
+  // unprintable guard, so zooming never re-picks the size. Zoom is bounded by
+  // `maxCropZoom` instead.
+  const restingSizesDpiInfo = useMemo(
+    () =>
+      restingCropDimensions
+        ? computeSizesDpiAvailability(
+            restingCropDimensions.width,
+            restingCropDimensions.height,
+            paintingShape,
+          )
+        : undefined,
+    [restingCropDimensions, paintingShape],
+  );
+
+  const activeCropZoom = Math.max(1, activeCropAdjust?.zoom ?? 1);
+
+  // Largest zoom that still prints the currently selected size at the minimum
+  // DPI. Zooming samples a smaller source region, so the cap is the DPI
+  // headroom of the resting crop for that size. Floored to two decimals so the
+  // rounded DPI at the cap cannot dip below the integer minimum.
+  const maxCropZoom = useMemo(() => {
+    if (!restingCropDimensions || !IMAGE_DPI_RULES.guardEnabled) {
+      return MAX_CROP_ZOOM;
     }
 
-    // DPI guard measures the pixels that will actually be printed: the
-    // resting centered crop that fills the current frame, mapped to display
-    // space. 90°/270° rotations flip the proportions (landscape ⇄ portrait),
-    // so the crop — and with it the printable size availability — is
-    // recalculated from the rotated shape instead of the original one.
-    const restingCrop = getRestingDisplayCropDimensions({
-      sourceWidth: selectedImageMetadata.width,
-      sourceHeight: selectedImageMetadata.height,
-      proportion: displayImageProportion,
-      rotation: activeImageClientRotation,
-    });
-
-    return computeSizesDpiAvailability(
-      restingCrop.width,
-      restingCrop.height,
-      paintingShape,
+    const options = getPaintingSizeOptions(paintingShape);
+    const selectedOption =
+      options.find((option) => option.key === selectedPaintingSize) ??
+      options[0];
+    const headroom = calculateMaxZoomForPrintSize(
+      restingCropDimensions.width,
+      restingCropDimensions.height,
+      selectedOption.widthCm,
+      selectedOption.heightCm,
     );
+
+    return Math.max(
+      1,
+      Math.min(MAX_CROP_ZOOM, Math.floor(headroom * 100) / 100),
+    );
+  }, [restingCropDimensions, paintingShape, selectedPaintingSize]);
+
+  const clampedCropZoom = Math.min(activeCropZoom, maxCropZoom);
+
+  const zoomedCropDimensions = useMemo(
+    () =>
+      getActiveCropDimensions(
+        clampedCropZoom,
+        activeCropAdjust?.panX ?? 0,
+        activeCropAdjust?.panY ?? 0,
+      ),
+    [
+      getActiveCropDimensions,
+      clampedCropZoom,
+      activeCropAdjust?.panX,
+      activeCropAdjust?.panY,
+    ],
+  );
+
+  // DPI availability for the pixels as currently cropped/zoomed. Drives the
+  // size-button quality markers and the debug panel, so they react to zoom.
+  const sizesDpiInfo = useMemo(
+    () =>
+      zoomedCropDimensions
+        ? computeSizesDpiAvailability(
+            zoomedCropDimensions.width,
+            zoomedCropDimensions.height,
+            paintingShape,
+          )
+        : undefined,
+    [zoomedCropDimensions, paintingShape],
+  );
+
+  // Clamp the stored zoom when it exceeds the current size's DPI headroom
+  // (e.g. after switching to a larger painting size).
+  useEffect(() => {
+    if (typeof activeImageIndex !== "number") {
+      return;
+    }
+
+    const adjust = activeImage?.previewCropAdjust;
+    if (!adjust || adjust.zoom <= maxCropZoom + 0.001) {
+      return;
+    }
+
+    updateActiveImageCropAdjust({
+      zoom: maxCropZoom,
+      panX: adjust.panX,
+      panY: adjust.panY,
+    });
   }, [
-    selectedImageMetadata,
-    paintingShape,
-    triptychWindowIndexOfActiveSlot,
-    displayImageProportion,
-    activeImageClientRotation,
+    activeImageIndex,
+    activeImage?.previewCropAdjust,
+    maxCropZoom,
+    updateActiveImageCropAdjust,
   ]);
 
   const splitPrintability = useMemo(() => {
@@ -2329,29 +2436,33 @@ export const ImageUploader = forwardRef<
   }, [effectiveImageMetadata, selectedPaintingSize]);
 
   useEffect(() => {
-    if (!sizesDpiInfo) return;
+    if (!restingSizesDpiInfo) return;
 
     if (!userSelectedPaintingSizeRef.current) {
-      setSelectedPaintingSize(resolveRecommendedPaintingSize(sizesDpiInfo));
+      setSelectedPaintingSize(
+        resolveRecommendedPaintingSize(restingSizesDpiInfo),
+      );
       return;
     }
 
-    const currentInfo = sizesDpiInfo.find(
+    const currentInfo = restingSizesDpiInfo.find(
       (info) => info.sizeIndex === selectedPaintingSize,
     );
     if (!currentInfo) {
-      setSelectedPaintingSize(resolveRecommendedPaintingSize(sizesDpiInfo));
+      setSelectedPaintingSize(
+        resolveRecommendedPaintingSize(restingSizesDpiInfo),
+      );
       return;
     }
     if (!currentInfo.isAvailable) {
-      const largestAvailable = [...sizesDpiInfo]
+      const largestAvailable = [...restingSizesDpiInfo]
         .filter((info) => info.isAvailable)
         .sort((a, b) => b.sizeIndex - a.sizeIndex)[0];
       if (largestAvailable) {
         setSelectedPaintingSize(largestAvailable.sizeIndex);
       }
     }
-  }, [sizesDpiInfo, selectedPaintingSize]);
+  }, [restingSizesDpiInfo, selectedPaintingSize]);
 
   // The active slot is unprintable when NO offered size passes the DPI guard
   // for its resting crop (guard disabled forces every size available, so this
@@ -2812,6 +2923,7 @@ export const ImageUploader = forwardRef<
               isEditMode={isEffectsEditMode || isZoomPanMode}
               previewCropAdjust={activeImage?.previewCropAdjust}
               onCropAdjustChange={updateActiveImageCropAdjust}
+              cropMaxZoom={maxCropZoom}
               swipeFrameRef={sliderSwipeFrameRef}
               onTouchStart={handleSliderTouchStart}
               onTouchMove={handleSliderTouchMove}
