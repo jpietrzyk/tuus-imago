@@ -43,6 +43,7 @@ interface PaintingPreviewSlotProps {
     nextDisplayImageProportion: ImageDisplayProportion;
     shouldAutoSelectOptimalProportion: boolean;
   }) => void;
+  onPreviewLoadError?: (url: string) => void;
   onSelectEmptySlot?: () => void;
   onClearSlot?: () => void;
   isTrashVisible?: boolean;
@@ -73,6 +74,7 @@ export default function PaintingPreviewSlot({
   onTouchEnd,
   onTouchCancel,
   onMetadataResolved,
+  onPreviewLoadError,
   onSelectEmptySlot,
   onClearSlot,
   isTrashVisible = false,
@@ -230,6 +232,20 @@ export default function PaintingPreviewSlot({
     [onMetadataResolved, effectivePreviewUrl],
   );
 
+  const handlePreviewLoadError = useCallback(
+    (url: string) => {
+      // Mark the failed URL as "confirmed" so isEffectImageLoading turns off
+      // and the "applying effect" overlay does not spin forever. Then let the
+      // uploader surface a retry message (cloud previews only — a local blob
+      // failure is not a network problem).
+      setConfirmedCloudUrl((prev) => (prev === url ? prev : url));
+      if (useCloudPreview) {
+        onPreviewLoadError?.(url);
+      }
+    },
+    [onPreviewLoadError, useCloudPreview],
+  );
+
   const isEffectImageLoading =
     useCloudPreview &&
     effectivePreviewUrl !== null &&
@@ -247,6 +263,7 @@ export default function PaintingPreviewSlot({
     previewCropAdjust,
     latestRenderConfigRef,
     onMetadataResolved: handleMetadataResolved,
+    onPreviewLoadError: handlePreviewLoadError,
     requestDrawRef,
   });
 

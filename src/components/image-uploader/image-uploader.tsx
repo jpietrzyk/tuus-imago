@@ -576,6 +576,11 @@ export const ImageUploader = forwardRef<
     consumePersistedSelectionError(),
   );
 
+  // A transient failure to load a cloud-baked effect preview. Unlike
+  // `selectionError` this is NOT persisted: it is only meaningful while the
+  // current image is on screen and clears on the next successful preview load.
+  const [effectLoadError, setEffectLoadError] = useState<string | null>(null);
+
   const applySelectionError = useCallback((message: string | null) => {
     setSelectionError(message);
 
@@ -584,6 +589,10 @@ export const ImageUploader = forwardRef<
     } else {
       persistSelectionError(message);
     }
+  }, []);
+
+  const handlePreviewLoadError = useCallback(() => {
+    setEffectLoadError(t("uploader.effectConnectionError"));
   }, []);
 
   // A camera/gallery session that never delivered a file means the page was
@@ -1273,6 +1282,9 @@ export const ImageUploader = forwardRef<
       ) {
         onImageMetadataChange?.(metadata);
       }
+
+      // A successful preview load means the connection error no longer applies.
+      setEffectLoadError(null);
     },
     [onImageMetadataChange, updateActiveImage],
   );
@@ -2714,6 +2726,8 @@ export const ImageUploader = forwardRef<
     </AlertDialog>
   );
 
+  const displayedSelectionError = selectionError ?? effectLoadError;
+
   if (selectedImageCount === 0) {
     return (
       <>
@@ -2757,10 +2771,13 @@ export const ImageUploader = forwardRef<
         />
         <CardContent className="relative flex-1 flex flex-col overflow-hidden pb-2 lg:pb-1">
           <h2 className="sr-only">{t("uploader.adjustImage")}</h2>
-          {selectionError && (
+          {displayedSelectionError && (
             <SelectionErrorBanner
-              error={selectionError}
-              onDismiss={() => applySelectionError(null)}
+              error={displayedSelectionError}
+              onDismiss={() => {
+                applySelectionError(null);
+                setEffectLoadError(null);
+              }}
               className="mb-2 shrink-0"
             />
           )}
@@ -2801,6 +2818,7 @@ export const ImageUploader = forwardRef<
               onTouchEnd={handleSliderTouchEnd}
               onTouchCancel={handleSliderTouchCancel}
               onMetadataResolved={handleMetadataResolved}
+              onPreviewLoadError={handlePreviewLoadError}
               onSelectEmptySlot={
                 typeof activeImageIndex === "number"
                   ? () => handlePreviewSlotSelect(activeImageIndex)
