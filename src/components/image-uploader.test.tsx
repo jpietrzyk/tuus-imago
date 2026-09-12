@@ -12,6 +12,10 @@ import {
   type ImageUploaderHandle,
   type UploadedSlotResult,
 } from "./image-uploader";
+import {
+  getTransformedImagePreviewUrl,
+  type SelectedImageItem,
+} from "./image-uploader/image-uploader";
 import { validateImageFile } from "./image-uploader/image-file-validator";
 import {
   markCaptureStarted,
@@ -2932,5 +2936,62 @@ describe("ImageUploader", () => {
 
       expect(consumeInterruptedCapture()).toBeNull();
     });
+  });
+});
+
+describe("getTransformedImagePreviewUrl", () => {
+  const createUploadedItem = (
+    overrides: Partial<SelectedImageItem> = {},
+  ): SelectedImageItem => {
+    const file = new File(["source"], "photo.jpg", {
+      type: "image/jpeg",
+      lastModified: 123,
+    });
+
+    return {
+      file,
+      previewUrl: "blob:local-preview",
+      metadata: { width: 4000, height: 3000, aspectRatio: "4:3" },
+      displayImageProportion: "horizontal",
+      previewEffects: {
+        brightness: 0,
+        contrast: 0,
+        grayscale: 0,
+        removeBackground: true,
+      },
+      previewCropAdjust: { zoom: 2, panX: 0.2, panY: 0 },
+      uploadedAsset: {
+        publicId: "photo",
+        secureUrl:
+          "https://res.cloudinary.com/demo/image/upload/v1/photo.jpg",
+        sourceFingerprint: [
+          file.name,
+          String(file.size),
+          String(file.lastModified),
+          file.type,
+        ].join("::"),
+      },
+      ...overrides,
+    };
+  };
+
+  it("does not bake the crop into the preview URL so the effect runs on the whole image", () => {
+    const url = getTransformedImagePreviewUrl(createUploadedItem());
+
+    expect(url).toContain("e_background_removal");
+    expect(url).not.toContain("c_crop");
+  });
+
+  it("keeps the preview URL stable when zoom and pan change", () => {
+    const zoomed = getTransformedImagePreviewUrl(
+      createUploadedItem({ previewCropAdjust: { zoom: 2, panX: 0.2, panY: 0 } }),
+    );
+    const panned = getTransformedImagePreviewUrl(
+      createUploadedItem({
+        previewCropAdjust: { zoom: 1.2, panX: -0.4, panY: 0.3 },
+      }),
+    );
+
+    expect(panned).toBe(zoomed);
   });
 });

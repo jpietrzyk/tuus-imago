@@ -398,7 +398,23 @@ const getSplitSourceTransform = (
     ? undefined
     : image?.previewTransform;
 
-function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
+/**
+ * Builds the on-screen preview URL for a slot whose source is a reusable
+ * Cloudinary asset.
+ *
+ * The crop is intentionally NOT baked into this URL: the preview canvas
+ * applies `previewCropAdjust` (and the triptych window crop) client-side, so
+ * including `c_crop` here would crop twice and re-run the AI effect every time
+ * the user zoomed or panned. Keeping the URL to the whole-image transforms
+ * makes the effect apply once to the whole uploaded image and stay stable
+ * while the user changes size/crop. The crop is still included in the final
+ * deliverable URL produced at checkout.
+ */
+// Exported for regression tests; the uploader is the only runtime consumer.
+// eslint-disable-next-line react-refresh/only-export-components
+export function getTransformedImagePreviewUrl(
+  image: SelectedImageItem,
+): string {
   const reusableUploadedAsset = getReusableUploadedAsset(image);
 
   if (!reusableUploadedAsset) {
@@ -422,7 +438,7 @@ function getTransformedImagePreviewUrl(image: SelectedImageItem): string {
       grayscale: transformations.grayscale,
       blur: transformations.blur,
     },
-    transformations.custom_coordinates,
+    undefined,
     getAiAdjustments(image),
   );
 }
