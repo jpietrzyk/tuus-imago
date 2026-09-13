@@ -194,7 +194,7 @@ describe("StorefrontApp background image", () => {
     );
 
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass("h-screen");
+    expect(wrapper).toHaveClass("app-shell-height");
     const bgStyle = wrapper.style.backgroundImage;
     expect(bgStyle).toContain("bg_mobile");
     expect(bgStyle).not.toContain("bg_desktop");
@@ -219,7 +219,7 @@ describe("StorefrontApp background image", () => {
     );
 
     const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass("h-screen");
+    expect(wrapper).toHaveClass("app-shell-height");
     const bgStyle = wrapper.style.backgroundImage;
     expect(bgStyle).toContain("bg_desktop");
     expect(bgStyle).not.toContain("bg_mobile");

@@ -563,9 +563,9 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    // App should be wrapped in a div with h-screen and flex flex-col
+    // App should be wrapped in a div with the full-viewport shell class and flex flex-col
     const appWrapper = container.firstChild as HTMLElement;
-    expect(appWrapper).toHaveClass("h-screen", "flex", "flex-col");
+    expect(appWrapper).toHaveClass("app-shell-height", "flex", "flex-col");
   });
 });
 
