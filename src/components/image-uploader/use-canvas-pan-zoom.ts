@@ -19,8 +19,8 @@ interface UseCanvasPanZoomParams {
   canPanY?: boolean;
   /**
    * Upper zoom bound. Defaults to the absolute {@link MAX_CROP_ZOOM}; the
-   * uploader narrows it per photo/painting-size so the crop cannot be zoomed
-   * past the DPI guard.
+   * uploader narrows it per photo/shape to the DPI headroom of the shape's
+   * smallest offered painting size so the crop cannot be zoomed past the guard.
    */
   maxZoom?: number;
 }

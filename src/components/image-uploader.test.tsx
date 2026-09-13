@@ -2565,7 +2565,7 @@ describe("ImageUploader", () => {
     });
   });
 
-  it("caps crop zoom to the selected size's DPI headroom and degrades its marker", async () => {
+  it("caps crop zoom to the shape's smallest-size DPI guard and disables larger sizes", async () => {
     // Large source so the auto-selected largest size starts with DPI headroom.
     mockImageWidth = 12000;
     mockImageHeight = 8000;
@@ -2602,18 +2602,22 @@ describe("ImageUploader", () => {
     });
 
     const canvas = screen.getByRole("img", { name: "Preview" });
-    // Far beyond any physical max: the DPI headroom must clamp the zoom.
+    // Far beyond any physical max: the smallest-size DPI guard must clamp zoom.
     for (let i = 0; i < 120; i += 1) {
       fireEvent.wheel(canvas, { deltaY: -100 });
     }
 
-    // The selected size stays printable (not disabled) and its marker degrades
-    // from "good" to "acceptable" at the clamp.
+    // The cap is fixed by the shape's smallest size (60x40): at max zoom the
+    // smallest size is still "good" (yellow), while larger sizes fall below the
+    // minimum DPI and become unavailable.
     await waitFor(() => {
-      const sizeButton = document.getElementById("size-btn-4");
-      expect(sizeButton).not.toBeDisabled();
-      const dot = sizeButton?.querySelector("span.rounded-full");
-      expect(dot?.className).toContain("bg-gray-400");
+      const dot = document
+        .getElementById("size-btn-0")
+        ?.querySelector("span.rounded-full");
+      expect(dot?.className).toContain("bg-yellow-500");
+    });
+    await waitFor(() => {
+      expect(document.getElementById("size-btn-4")).toBeDisabled();
     });
   });
 
