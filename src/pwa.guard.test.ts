@@ -129,4 +129,20 @@ describe("PWA guard", () => {
     expect(config).toContain('registerType: "autoUpdate"');
     expect(config).toContain('navigateFallback: "/index.html"');
   });
+
+  it("public/_headers revalidates the shell and immutably caches hashed assets", () => {
+    const headers = readFileSync(resolve(ROOT, "public/_headers"), "utf8");
+
+    expect(headers).toContain("/index.html");
+    expect(headers).toContain("Cache-Control: no-cache");
+    expect(headers).toContain("/assets/*");
+    expect(headers).toContain("immutable");
+  });
+
+  it("main.tsx polls for service worker updates on resume", () => {
+    const main = readFileSync(resolve(ROOT, "src/main.tsx"), "utf8");
+
+    expect(main).toContain("setupServiceWorkerUpdates");
+    expect(main).toContain("onRegisteredSW");
+  });
 });
