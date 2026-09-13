@@ -7,6 +7,7 @@ import { type ImageDisplayProportion, getFrameAspectRatioClassName, getTargetAsp
 import { usePreviewCanvasRender } from "./use-preview-canvas-render";
 import { usePreviewRenderConfig } from "./use-preview-render-config";
 import { useCanvasPanZoom } from "./use-canvas-pan-zoom";
+import { useEstimatedProgress } from "./use-estimated-progress";
 import { resolvePanAvailability } from "./use-crop-adjust";
 import { computeTriptychWindowCrop } from "./triptych-window-crop";
 import type {
@@ -257,6 +258,9 @@ export default function PaintingPreviewSlot({
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
 
+  const isEffectBusy = isEffectUploading || isEffectImageLoading;
+  const effectProgress = useEstimatedProgress(isEffectBusy);
+
   usePreviewCanvasRender({
     previewUrl: effectivePreviewUrl,
     canvasRef: previewCanvasRef,
@@ -338,9 +342,8 @@ export default function PaintingPreviewSlot({
         />
 
         <UploadProgressOverlay
-          isVisible={isEffectUploading || isEffectImageLoading}
-          progress={0}
-          isIndeterminate
+          isVisible={isEffectBusy}
+          progress={effectProgress}
           label={t("uploader.applyingEffect")}
         />
 
