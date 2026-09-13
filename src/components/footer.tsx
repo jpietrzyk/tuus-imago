@@ -7,7 +7,6 @@ import {
   FooterToolsBar,
   type FooterToolsBarProps,
 } from "@/components/footer-tools-bar";
-import { UploaderSlotSwitcher, type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 
 interface FooterProps {
   onOpenContentPage?: (slug: string) => void;
@@ -18,7 +17,6 @@ interface FooterProps {
   checkedOrderSlotKeys?: Set<UploadSlotKey>;
   onToggleOrderSlot?: (slotKey: UploadSlotKey) => void;
   toolsBarProps?: FooterToolsBarProps | null;
-  slotSwitcherProps?: SlotSwitcherBarProps | null;
 }
 
 export function Footer({
@@ -30,18 +28,11 @@ export function Footer({
   checkedOrderSlotKeys = new Set<UploadSlotKey>(),
   onToggleOrderSlot,
   toolsBarProps,
-  slotSwitcherProps,
 }: FooterProps) {
   const hasTools = !!toolsBarProps;
-  const hasSlotSwitcher = !!slotSwitcherProps && !slotSwitcherProps.hidden;
 
   return (
     <>
-      {hasSlotSwitcher && (
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <UploaderSlotSwitcher {...slotSwitcherProps} />
-        </div>
-      )}
       <footer
         className={`w-full shadow-lg rounded-t-2xl pb-[env(safe-area-inset-bottom)] ${hasTools ? "min-h-(--app-shell-bar-height)" : "h-(--app-shell-bar-height)"}`}
         style={{ backgroundColor: "rgba(243, 235, 232, 0.6)" }}

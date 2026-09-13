@@ -16,7 +16,6 @@ import { Header } from "@/components/header";
 import { OfflineBanner } from "@/components/offline-banner";
 import { RotateWarningOverlay } from "@/components/rotate-warning-overlay";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
-import { type SlotSwitcherBarProps } from "@/components/image-uploader/uploader-slot-switcher";
 import {
   ImageDebugPanel,
   type ImageDebugData,
@@ -731,8 +730,6 @@ function StorefrontApp() {
     },
     [],
   );
-  const [footerSlotSwitcherProps, setFooterSlotSwitcherProps] =
-    useState<SlotSwitcherBarProps | null>(null);
   const [imageDebugData, setImageDebugData] = useState<ImageDebugData | null>(
     null,
   );
@@ -922,7 +919,6 @@ function StorefrontApp() {
       imageDebugDataEnabled={showUploaderDebugData}
       initialRestoredSlots={uploadInitialSlots}
       onToolsPanelPropsChange={stableSetFooterToolsBarProps}
-      onSlotSwitcherPropsChange={setFooterSlotSwitcherProps}
       onDebugDataChange={setImageDebugData}
     />
   );
@@ -1014,7 +1010,6 @@ function StorefrontApp() {
         checkedOrderSlotKeys={checkedOrderSlotKeys}
         onToggleOrderSlot={toggleFooterOrderSlot}
         toolsBarProps={isUploadFlowRoute ? footerToolsBarProps : null}
-        slotSwitcherProps={isUploadFlowRoute ? footerSlotSwitcherProps : null}
       />
       <LegalNavigationSheet
         open={isLegalSheetOpen}
