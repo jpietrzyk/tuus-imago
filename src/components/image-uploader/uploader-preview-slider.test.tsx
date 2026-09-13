@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import { PREVIEW_SLIDER_BOTTOM_RESERVE_PX } from "./preview-slider-layout";
 import { computeSidePanelCrop } from "./side-panel-crop";
@@ -614,5 +614,116 @@ describe("UploaderPreviewSlider", () => {
     expect(
       screen.queryByTestId("uploader-swipe-nav-hint"),
     ).not.toBeInTheDocument();
+  });
+
+  it("does not render the slot thumbnail strip by default", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId("uploader-slot-thumb-dots"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the slot thumbnail strip and selects a slot when showSlotThumbs is set", () => {
+    const props = createProps();
+    const onSelectSlot = vi.fn();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={onSelectSlot}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        showSlotThumbs={true}
+      />,
+    );
+
+    expect(screen.getByTestId("uploader-slot-thumb-dots")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("uploader-slot-thumb-dot-1"));
+
+    expect(onSelectSlot).toHaveBeenCalledWith(1);
+  });
+
+  it("renders neighbour edge peeks only for existing neighbours", () => {
+    const props = createProps();
+    const slots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      createItem("center"),
+      createItem("right"),
+    ];
+
+    const { rerender } = render(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        showSlotThumbs={true}
+        activeImageIndex={1}
+      />,
+    );
+
+    expect(screen.getByTestId("uploader-slot-peek-left")).toBeInTheDocument();
+    expect(screen.getByTestId("uploader-slot-peek-right")).toBeInTheDocument();
+
+    rerender(
+      <UploaderPreviewSlider
+        {...props}
+        slots={slots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        showSlotThumbs={true}
+        activeImageIndex={0}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId("uploader-slot-peek-left"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("uploader-slot-peek-right")).toBeInTheDocument();
+
+    const gapSlots: Array<SelectedImageItem | null> = [
+      createItem("left"),
+      null,
+      createItem("right"),
+    ];
+
+    rerender(
+      <UploaderPreviewSlider
+        {...props}
+        slots={gapSlots}
+        onSelectSlot={vi.fn()}
+        getSlotPreviewUrl={(image) => image.previewUrl}
+        showSlotThumbs={true}
+        activeImageIndex={0}
+      />,
+    );
+
+    // An empty slot between the active image and a filled one must not hide
+    // the peek, because swipe navigation still reaches that neighbour.
+    expect(
+      screen.queryByTestId("uploader-slot-peek-left"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("uploader-slot-peek-right")).toBeInTheDocument();
   });
 });

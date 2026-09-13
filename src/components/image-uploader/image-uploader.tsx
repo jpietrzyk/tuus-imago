@@ -658,6 +658,18 @@ export const ImageUploader = forwardRef<
     selectedImages.length === MAX_SELECTED_IMAGES &&
     selectedImages.every(Boolean);
 
+  // Small-screen multi-slot affordance: where the desktop triptych row cannot
+  // fit, the slots that do not fit are surfaced as a thumbnail strip under the
+  // single preview. Visible for triptych splits and whenever 2+ images are
+  // selected; a single-photo upload keeps the original UI, and desktop keeps
+  // the chevron swipe nav. Hidden while the edit gestures own the canvas.
+  const shouldShowSlotThumbs =
+    !isLgScreen &&
+    !isDesktopTriptych &&
+    !isEffectsEditMode &&
+    !isZoomPanMode &&
+    (isTriptychSplit || selectedImageCount >= 2);
+
   const activeImage =
     typeof activeImageIndex === "number"
       ? (selectedImages[activeImageIndex] ?? null)
@@ -2203,9 +2215,13 @@ export const ImageUploader = forwardRef<
   // devices, the swipe pill tells the user the preview can be swiped. The
   // pill disappears after the first navigation (swipe or chevron tap);
   // everything is hidden in edit modes with their own gestures and whenever
-  // the desktop triptych shows all slots in a row.
+  // the desktop triptych shows all slots in a row. When the small-screen
+  // thumbnail strip is shown it replaces the chevrons and the pill entirely.
   const sliderSwipeNav = useMemo(() => {
     if (isDesktopTriptych) {
+      return null;
+    }
+    if (shouldShowSlotThumbs) {
       return null;
     }
     if (selectedImageCount < 2) {
@@ -2224,6 +2240,7 @@ export const ImageUploader = forwardRef<
     };
   }, [
     isDesktopTriptych,
+    shouldShowSlotThumbs,
     selectedImageCount,
     isEffectsEditMode,
     isZoomPanMode,
@@ -2947,6 +2964,7 @@ export const ImageUploader = forwardRef<
               isDesktopTriptych={isDesktopTriptych}
               isTriptychLinked={isTriptychLinked}
               swipeNav={sliderSwipeNav}
+              showSlotThumbs={shouldShowSlotThumbs}
             />
 
             <UploaderPreviewToolsPanel

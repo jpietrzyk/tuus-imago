@@ -117,9 +117,7 @@ let mockImageFailPattern: RegExp | null = null;
 
 function slotDotHasImage(index: number): boolean {
   const dot = screen.getByTestId(`uploader-slot-dot-${index}`);
-  const innerSpan = dot.querySelector("span");
-  if (!innerSpan) return false;
-  return !innerSpan.className.includes("border-dashed");
+  return !!dot.querySelector("img");
 }
 
 describe("ImageUploader", () => {
@@ -1069,7 +1067,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("shows slider chevrons whenever only one picture fits per row", async () => {
+  it("replaces slider chevrons with the slot thumbnail strip once multiple pictures are filled", async () => {
     render(<TestWrapper />);
 
     mockImageWidth = 1200;
@@ -1112,7 +1110,14 @@ describe("ImageUploader", () => {
         expect(slotDotHasImage(2)).toBe(true);
       });
 
-      expect(screen.getByTestId("uploader-swipe-nav-next")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slot-thumb-dots"),
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByTestId("uploader-swipe-nav-next"),
+      ).not.toBeInTheDocument();
       expect(
         screen.queryByTestId("uploader-swipe-nav-previous"),
       ).not.toBeInTheDocument();
@@ -1120,14 +1125,67 @@ describe("ImageUploader", () => {
         screen.queryByTestId("uploader-swipe-hint-pill"),
       ).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByTestId("uploader-swipe-nav-next"));
+      fireEvent.click(screen.getByTestId("uploader-slot-thumb-dot-1"));
 
       await waitFor(() => {
-        expect(screen.getByTestId("uploader-slot-dot-2")).toHaveAttribute(
+        expect(screen.getByTestId("uploader-slot-dot-1")).toHaveAttribute(
           "aria-pressed",
           "true",
         );
       });
+    }
+  });
+
+  it("keeps a single selected image free of the slot thumbnail strip", async () => {
+    render(<TestWrapper />);
+
+    mockImageWidth = 1200;
+    mockImageHeight = 800;
+
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+    const initialInput = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+
+    expect(initialInput).toBeDefined();
+
+    if (initialInput) {
+      fireEvent.change(initialInput, { target: { files: [firstFile] } });
+
+      await screen.findByRole("img", { name: "Preview" });
+
+      // A single filled slot keeps the original UI: no thumbnail strip.
+      expect(
+        screen.queryByTestId("uploader-slot-thumb-dots"),
+      ).not.toBeInTheDocument();
+
+      mockImageWidth = 900;
+      mockImageHeight = 900;
+
+      fireEvent.click(screen.getByTestId("uploader-slot-dot-2"));
+      const editorInput = document.querySelector(
+        'input[type="file"][accept="image/jpeg,image/png,image/webp"]',
+      ) as HTMLInputElement | null;
+
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      await waitFor(() => {
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("uploader-slot-thumb-dots"),
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByTestId("uploader-swipe-nav-hint"),
+      ).not.toBeInTheDocument();
     }
   });
 

@@ -3,6 +3,7 @@ import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
+import UploaderSlotSwitcher from "./uploader-slot-switcher";
 import {
   UploaderSwipeNavHint,
   type SwipeNavHintProps,
@@ -346,6 +347,7 @@ interface UploaderPreviewSliderProps {
   isDesktopTriptych?: boolean;
   isTriptychLinked?: boolean;
   swipeNav?: SwipeNavHintProps | null;
+  showSlotThumbs?: boolean;
 }
 
 export default function UploaderPreviewSlider({
@@ -385,6 +387,7 @@ export default function UploaderPreviewSlider({
   isDesktopTriptych = false,
   isTriptychLinked = true,
   swipeNav = null,
+  showSlotThumbs = false,
 }: UploaderPreviewSliderProps) {
   const [touchedSlotIndex, setTouchedSlotIndex] = useState<number | null>(null);
   const trashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -639,6 +642,34 @@ export default function UploaderPreviewSlider({
     );
   }
 
+  // Peeks mirror the swipe navigation, which skips empty slots, so scan
+  // outward for the nearest filled neighbour instead of only the adjacent slot.
+  const leftPeekImage =
+    showSlotThumbs && typeof activeImageIndex === "number" && slots
+      ? (slots
+          .slice(0, activeImageIndex)
+          .reverse()
+          .find(
+            (slot): slot is SelectedImageItem => Boolean(slot),
+          ) ?? null)
+      : null;
+  const rightPeekImage =
+    showSlotThumbs && typeof activeImageIndex === "number" && slots
+      ? (slots
+          .slice(activeImageIndex + 1)
+          .find(
+            (slot): slot is SelectedImageItem => Boolean(slot),
+          ) ?? null)
+      : null;
+  const resolvePeekUrl = (image: SelectedImageItem) =>
+    getSlotPreviewUrl ? getSlotPreviewUrl(image) : image.previewUrl;
+
+  const showSlotThumbStrip =
+    showSlotThumbs &&
+    Array.isArray(slots) &&
+    slots.length > 0 &&
+    typeof onSelectSlot === "function";
+
   return (
     <div
       className="painting-preview-slider relative flex w-full min-w-0 flex-1 items-center justify-center bg-transparent overflow-hidden"
@@ -649,6 +680,34 @@ export default function UploaderPreviewSlider({
       }
       data-testid="uploader-preview-slider"
     >
+      {leftPeekImage && (
+        <div
+          aria-hidden="true"
+          data-testid="uploader-slot-peek-left"
+          className="pointer-events-none absolute inset-y-0 left-0 z-0 w-[8%] max-w-16 overflow-hidden"
+        >
+          <img
+            src={resolvePeekUrl(leftPeekImage)}
+            alt=""
+            className="h-full w-full object-cover object-right opacity-60 [mask-image:linear-gradient(to_right,black,transparent)]"
+            draggable={false}
+          />
+        </div>
+      )}
+      {rightPeekImage && (
+        <div
+          aria-hidden="true"
+          data-testid="uploader-slot-peek-right"
+          className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[8%] max-w-16 overflow-hidden"
+        >
+          <img
+            src={resolvePeekUrl(rightPeekImage)}
+            alt=""
+            className="h-full w-full object-cover object-left opacity-60 [mask-image:linear-gradient(to_left,black,transparent)]"
+            draggable={false}
+          />
+        </div>
+      )}
       <PaintingSizeHelperOverlay
         selectedSize={selectedPaintingSize}
         paintingAspectRatio={paintingAspectRatio}
@@ -660,6 +719,17 @@ export default function UploaderPreviewSlider({
       </PaintingSizeHelperOverlay>
       {isPreviewUnprintable && <LowResolutionBadge />}
       {swipeNav && <UploaderSwipeNavHint {...swipeNav} />}
+      {showSlotThumbStrip && (
+        <div className="absolute bottom-1 left-1/2 z-20 -translate-x-1/2">
+          <UploaderSlotSwitcher
+            testIdPrefix="uploader-slot-thumb"
+            slots={slots!}
+            activeSlotIndex={activeImageIndex}
+            onSelectSlot={onSelectSlot!}
+            getSlotPreviewUrl={getSlotPreviewUrl}
+          />
+        </div>
+      )}
     </div>
   );
 }

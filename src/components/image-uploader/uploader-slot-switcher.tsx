@@ -1,3 +1,4 @@
+import IconAdd from "@/components/icons/icon-add.svg?react";
 import { t } from "@/locales/i18n";
 import type { SelectedImageItem } from "./image-uploader";
 
@@ -13,6 +14,8 @@ interface UploaderSlotSwitcherProps {
   activeSlotIndex: number | null;
   onSelectSlot: (index: number) => void;
   hidden?: boolean;
+  getSlotPreviewUrl?: (image: SelectedImageItem) => string;
+  testIdPrefix?: string;
 }
 
 export function UploaderSlotSwitcher({
@@ -20,17 +23,22 @@ export function UploaderSlotSwitcher({
   activeSlotIndex,
   onSelectSlot,
   hidden = false,
+  getSlotPreviewUrl,
+  testIdPrefix = "uploader-slot",
 }: UploaderSlotSwitcherProps) {
   return (
     <div
       hidden={hidden}
-      className="mx-auto flex w-1/2 items-center justify-between rounded-full border border-border/70 bg-muted/30 px-3 py-1.5 shadow-sm backdrop-blur-sm"
+      className="mx-auto flex w-fit items-center justify-center gap-2 rounded-full border border-border/70 bg-muted/30 px-3 py-1.5 shadow-sm backdrop-blur-sm"
       role="group"
       aria-label={t("uploader.previewSlotNavigation")}
-      data-testid="uploader-slot-dots"
+      data-testid={`${testIdPrefix}-dots`}
     >
       {slots.map((slot, index) => {
         const isActive = activeSlotIndex === index;
+        const previewUrl = slot
+          ? (getSlotPreviewUrl?.(slot) ?? slot.previewUrl)
+          : null;
 
         return (
           <button
@@ -47,24 +55,26 @@ export function UploaderSlotSwitcher({
                     index: String(index + 1),
                   })
             }
-            data-testid={`uploader-slot-dot-${index}`}
-            className={`group inline-flex h-5 w-5 items-center justify-center rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+            data-testid={`${testIdPrefix}-dot-${index}`}
+            className={`group relative flex h-14 w-11 items-center justify-center overflow-hidden rounded-md border bg-background/60 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
               isActive
-                ? "scale-110"
-                : "scale-100 hover:scale-105 active:scale-95"
+                ? "border-primary ring-2 ring-primary"
+                : "border-border/70 hover:border-foreground/40"
             }`}
           >
-            <span
-              className={`block rounded-full transition-all duration-200 ${
-                slot
-                  ? isActive
-                    ? "h-3 w-3 bg-primary shadow-[0_0_0_5px_rgba(15,23,42,0.12)]"
-                    : "h-2.5 w-2.5 bg-foreground/65 group-hover:bg-foreground/80"
-                  : isActive
-                    ? "h-3 w-3 border border-dashed border-primary bg-primary/20"
-                    : "h-2.5 w-2.5 border border-dashed border-muted-foreground bg-background/20"
-              }`}
-            />
+            {slot && previewUrl ? (
+              <img
+                src={previewUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                draggable={false}
+              />
+            ) : (
+              <IconAdd
+                className="h-4 w-4 text-muted-foreground/60"
+                aria-hidden="true"
+              />
+            )}
           </button>
         );
       })}
