@@ -929,7 +929,7 @@ function StorefrontApp() {
 
   return (
     <div
-      className="h-screen overflow-hidden flex flex-col bg-background"
+      className="app-shell-height overflow-hidden flex flex-col bg-background"
       style={{
         backgroundColor: "var(--background)",
         backgroundImage: `url(${isDesktopSize ? bgDesktop : bgMobile})`,
@@ -946,7 +946,11 @@ function StorefrontApp() {
         onOpenLegalMenu={openLegalSheet}
         promotionSlogan={activePromotion?.slogan}
       />
-      <main className="flex-1 overflow-auto relative">
+      <main
+        className={`flex-1 relative ${
+          isUploadFlowRoute ? "overflow-hidden" : "overflow-auto"
+        }`}
+      >
         <Routes>
           <Route path="/" element={<HomeUploadEntryPage />} />
           <Route path="/how-it-works" element={<LandingPage />} />
