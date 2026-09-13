@@ -9,6 +9,7 @@ import {
   type SwipeNavHintProps,
 } from "./uploader-swipe-nav-hint";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
+import IconClose from "@/components/icons/icon-close.svg?react";
 import {
   computeSidePanelCrop,
   loadCachedImageElement,
@@ -348,6 +349,9 @@ interface UploaderPreviewSliderProps {
   isTriptychLinked?: boolean;
   swipeNav?: SwipeNavHintProps | null;
   showSlotThumbs?: boolean;
+  showMaxZoomHint?: boolean;
+  onDismissMaxZoomHint?: () => void;
+  onMaxZoomReached?: () => void;
 }
 
 export default function UploaderPreviewSlider({
@@ -388,6 +392,9 @@ export default function UploaderPreviewSlider({
   isTriptychLinked = true,
   swipeNav = null,
   showSlotThumbs = false,
+  showMaxZoomHint = false,
+  onDismissMaxZoomHint,
+  onMaxZoomReached,
 }: UploaderPreviewSliderProps) {
   const [touchedSlotIndex, setTouchedSlotIndex] = useState<number | null>(null);
   const trashTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -462,6 +469,7 @@ export default function UploaderPreviewSlider({
       previewCropAdjust={previewCropAdjust}
       onCropAdjustChange={onCropAdjustChange}
       cropMaxZoom={cropMaxZoom}
+      onMaxZoomReached={onMaxZoomReached}
       swipeFrameRef={swipeFrameRef}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -728,6 +736,25 @@ export default function UploaderPreviewSlider({
             onSelectSlot={onSelectSlot!}
             getSlotPreviewUrl={getSlotPreviewUrl}
           />
+        </div>
+      )}
+      {showMaxZoomHint && (
+        <div
+          aria-live="polite"
+          data-testid="max-zoom-hint"
+          className="absolute bottom-3 left-1/2 z-30 w-[calc(100%-1.5rem)] max-w-sm -translate-x-1/2"
+        >
+          <button
+            type="button"
+            onClick={onDismissMaxZoomHint}
+            className="flex w-full items-center gap-2 rounded-lg border border-primary/40 bg-background/95 px-3 py-2 text-left text-xs font-medium text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+          >
+            <span className="flex-1">{t("uploader.maxZoomHint")}</span>
+            <IconClose
+              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+          </button>
         </div>
       )}
     </div>

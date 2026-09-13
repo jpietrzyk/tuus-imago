@@ -726,4 +726,33 @@ describe("UploaderPreviewSlider", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("uploader-slot-peek-right")).toBeInTheDocument();
   });
+
+  it("renders no max-zoom hint by default", () => {
+    const props = createProps();
+
+    render(<UploaderPreviewSlider {...props} />);
+
+    expect(screen.queryByTestId("max-zoom-hint")).not.toBeInTheDocument();
+  });
+
+  it("dismisses the max-zoom hint when it is tapped", () => {
+    const props = createProps();
+    const onDismissMaxZoomHint = vi.fn();
+
+    render(
+      <UploaderPreviewSlider
+        {...props}
+        showMaxZoomHint={true}
+        onDismissMaxZoomHint={onDismissMaxZoomHint}
+      />,
+    );
+
+    const hint = screen.getByTestId("max-zoom-hint");
+    const dismissButton = hint.querySelector("button");
+    expect(dismissButton).not.toBeNull();
+
+    fireEvent.click(dismissButton!);
+
+    expect(onDismissMaxZoomHint).toHaveBeenCalledTimes(1);
+  });
 });

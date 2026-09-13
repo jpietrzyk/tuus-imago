@@ -247,6 +247,7 @@ export interface Translations {
     previousImage: string;
     nextImage: string;
     swipeHint: string;
+    maxZoomHint: string;
     previewSlotNavigation: string;
     selectImageSlot: string;
     addImageSlot: string;
