@@ -4,6 +4,7 @@ import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
 import UploaderSlotSwitcher from "./uploader-slot-switcher";
+import { useEstimatedProgress } from "./use-estimated-progress";
 import {
   UploaderSwipeNavHint,
   type SwipeNavHintProps,
@@ -91,6 +92,7 @@ function TriptychSidePanel({
     useCloudPreview &&
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
+  const effectProgress = useEstimatedProgress(isEffectImageLoading);
 
   // Local previews decode the source ONCE per URL (shared with the sibling
   // panels) and render through a canvas at frame resolution — the same path
@@ -283,9 +285,8 @@ function TriptychSidePanel({
           />
         )}
         <UploadProgressOverlay
-          isVisible={useCloudPreview && isEffectImageLoading}
-          progress={0}
-          isIndeterminate
+          isVisible={isEffectImageLoading}
+          progress={effectProgress}
           label={t("uploader.applyingEffect")}
         />
         {isTrashVisible && (
