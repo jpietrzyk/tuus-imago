@@ -124,12 +124,30 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    height: 100%;
+  }
   body {
     @apply font-sans text-foreground bg-background;
+    /* The app shell owns the viewport; never let the document scroll or
+       rubber-band behind it (mobile URL bar, pull-to-refresh). */
+    overflow: hidden;
+    overscroll-behavior: none;
   }
   html {
     @apply font-sans;
   }
+}
+
+/**
+ * Full-viewport app shell. `100dvh` tracks the visible viewport on mobile so
+ * the shell never extends behind the browser UI (which is what made the page
+ * scrollable); `100vh` is the fallback for browsers without dvh support.
+ */
+.app-shell-height {
+  height: 100vh;
+  height: 100dvh;
 }
 
 @keyframes indeterminate-slide {
