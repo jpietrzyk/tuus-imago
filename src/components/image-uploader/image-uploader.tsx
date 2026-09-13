@@ -63,6 +63,10 @@ import {
 } from "./size-dpi-availability";
 import { calculateMaxZoomForPrintSize } from "./image-dpi-calculator";
 import { IMAGE_DPI_RULES } from "./image-dpi-rules";
+import {
+  hasShownMaxZoomHint,
+  markMaxZoomHintShown,
+} from "./max-zoom-hint-storage";
 import UnprintablePhotoNotice from "./unprintable-photo-notice";
 import {
   splitImageIntoVerticalThirdFiles,
@@ -2359,33 +2363,62 @@ export const ImageUploader = forwardRef<
 
   const activeCropZoom = Math.max(1, activeCropAdjust?.zoom ?? 1);
 
-  // Largest zoom that still prints the shape's smallest offered size at the
-  // minimum DPI. Zooming samples a smaller source region, so the cap is the DPI
-  // headroom of the resting crop. The smallest size is the guard bar (the same
-  // one getUnprintablePhotoInfo measures against), so the cap stays fixed per
-  // shape instead of jumping around as the user changes the selected size.
-  // Floored to two decimals so the rounded DPI at the cap cannot dip below the
-  // integer minimum.
+  // Largest zoom that still prints the currently selected size at the minimum
+  // DPI. Zooming samples a smaller source region, so the cap is the DPI
+  // headroom of the resting crop for that size. The cap is dynamic with the
+  // selected size: picking a smaller painting size raises it, which is what the
+  // max-zoom hint tells the user. Floored to two decimals so the rounded DPI at
+  // the cap cannot dip below the integer minimum.
   const maxCropZoom = useMemo(() => {
     if (!restingCropDimensions || !IMAGE_DPI_RULES.guardEnabled) {
       return MAX_CROP_ZOOM;
     }
 
-    const smallestOption = getPaintingSizeOptions(paintingShape)[0];
+    const options = getPaintingSizeOptions(paintingShape);
+    const selectedOption =
+      options.find((option) => option.key === selectedPaintingSize) ??
+      options[0];
     const headroom = calculateMaxZoomForPrintSize(
       restingCropDimensions.width,
       restingCropDimensions.height,
-      smallestOption.widthCm,
-      smallestOption.heightCm,
+      selectedOption.widthCm,
+      selectedOption.heightCm,
     );
 
     return Math.max(
       1,
       Math.min(MAX_CROP_ZOOM, Math.floor(headroom * 100) / 100),
     );
-  }, [restingCropDimensions, paintingShape]);
+  }, [restingCropDimensions, paintingShape, selectedPaintingSize]);
 
   const clampedCropZoom = Math.min(activeCropZoom, maxCropZoom);
+
+  // One-time hint shown when the user first tries to zoom past the DPI cap:
+  // the cap is tied to the selected size, so a smaller size allows more zoom.
+  // Persisted so it only ever appears once, not once per session.
+  const [isMaxZoomHintVisible, setIsMaxZoomHintVisible] = useState(false);
+  const hasShownMaxZoomHintRef = useRef<boolean | null>(null);
+  if (hasShownMaxZoomHintRef.current === null) {
+    hasShownMaxZoomHintRef.current = hasShownMaxZoomHint();
+  }
+
+  const handleMaxZoomReached = useCallback(() => {
+    if (hasShownMaxZoomHintRef.current) {
+      return;
+    }
+    // Only the DPI-driven cap can be raised by a smaller size; at the absolute
+    // MAX_CROP_ZOOM there is nothing more to gain (and no guard, no message).
+    if (!IMAGE_DPI_RULES.guardEnabled || maxCropZoom >= MAX_CROP_ZOOM) {
+      return;
+    }
+    hasShownMaxZoomHintRef.current = true;
+    markMaxZoomHintShown();
+    setIsMaxZoomHintVisible(true);
+  }, [maxCropZoom]);
+
+  const handleDismissMaxZoomHint = useCallback(() => {
+    setIsMaxZoomHintVisible(false);
+  }, []);
 
   const zoomedCropDimensions = useMemo(
     () =>
@@ -2965,6 +2998,9 @@ export const ImageUploader = forwardRef<
               isTriptychLinked={isTriptychLinked}
               swipeNav={sliderSwipeNav}
               showSlotThumbs={shouldShowSlotThumbs}
+              showMaxZoomHint={isMaxZoomHintVisible}
+              onDismissMaxZoomHint={handleDismissMaxZoomHint}
+              onMaxZoomReached={handleMaxZoomReached}
             />
 
             <UploaderPreviewToolsPanel

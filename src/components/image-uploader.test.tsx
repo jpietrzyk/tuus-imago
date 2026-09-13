@@ -2565,7 +2565,9 @@ describe("ImageUploader", () => {
     });
   });
 
-  it("caps crop zoom to the shape's smallest-size DPI guard and disables larger sizes", async () => {
+  it("caps crop zoom to the selected size's DPI headroom and shows a one-time hint", async () => {
+    window.localStorage.clear();
+
     // Large source so the auto-selected largest size starts with DPI headroom.
     mockImageWidth = 12000;
     mockImageHeight = 8000;
@@ -2602,23 +2604,37 @@ describe("ImageUploader", () => {
     });
 
     const canvas = screen.getByRole("img", { name: "Preview" });
-    // Far beyond any physical max: the smallest-size DPI guard must clamp zoom.
+    // Far beyond any physical max: the selected size's DPI headroom must clamp.
     for (let i = 0; i < 120; i += 1) {
       fireEvent.wheel(canvas, { deltaY: -100 });
     }
 
-    // The cap is fixed by the shape's smallest size (60x40): at max zoom the
-    // smallest size is still "good" (yellow), while larger sizes fall below the
-    // minimum DPI and become unavailable.
+    // The selected size stays printable (not disabled) and its marker degrades
+    // from "good" to "acceptable" at the clamp.
     await waitFor(() => {
-      const dot = document
-        .getElementById("size-btn-0")
-        ?.querySelector("span.rounded-full");
-      expect(dot?.className).toContain("bg-yellow-500");
+      const sizeButton = document.getElementById("size-btn-4");
+      expect(sizeButton).not.toBeDisabled();
+      const dot = sizeButton?.querySelector("span.rounded-full");
+      expect(dot?.className).toContain("bg-gray-400");
     });
+
+    // Hitting the cap surfaces the one-time hint; it stays until tapped.
     await waitFor(() => {
-      expect(document.getElementById("size-btn-4")).toBeDisabled();
+      expect(screen.getByTestId("max-zoom-hint")).toBeInTheDocument();
     });
+    const dismissHint =
+      screen.getByTestId("max-zoom-hint").querySelector("button");
+    expect(dismissHint).not.toBeNull();
+    fireEvent.click(dismissHint!);
+    await waitFor(() => {
+      expect(screen.queryByTestId("max-zoom-hint")).not.toBeInTheDocument();
+    });
+
+    // One-time only: zooming again does not bring it back.
+    for (let i = 0; i < 5; i += 1) {
+      fireEvent.wheel(canvas, { deltaY: -100 });
+    }
+    expect(screen.queryByTestId("max-zoom-hint")).not.toBeInTheDocument();
   });
 
   describe("multi-image batch upload", () => {

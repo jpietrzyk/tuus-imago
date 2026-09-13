@@ -230,6 +230,65 @@ describe("useCanvasPanZoom", () => {
     expect(onZoomChange).not.toHaveBeenCalled();
   });
 
+  it("calls onMaxZoomReached when zooming in is clamped by maxZoom", () => {
+    const onZoomChange = vi.fn();
+    const onMaxZoomReached = vi.fn();
+    const Host = () => {
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      useCanvasPanZoom({
+        canvasRef,
+        isEditMode: true,
+        zoom: 2,
+        panX: 0,
+        panY: 0,
+        onZoomChange,
+        onPanChange: vi.fn(),
+        maxZoom: 2,
+        onMaxZoomReached,
+      });
+      return <canvas ref={canvasRef} data-testid="test-canvas" width={400} height={300} style={{ width: 400, height: 300 }} />;
+    };
+    render(<Host />);
+    const canvas = getCanvas();
+
+    act(() => {
+      canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true }));
+    });
+
+    expect(onMaxZoomReached).toHaveBeenCalledTimes(1);
+    expect(onZoomChange).not.toHaveBeenCalled();
+  });
+
+  it("does not call onMaxZoomReached when zooming out below the cap", async () => {
+    const onZoomChange = vi.fn();
+    const onMaxZoomReached = vi.fn();
+    const Host = () => {
+      const canvasRef = useRef<HTMLCanvasElement>(null);
+      useCanvasPanZoom({
+        canvasRef,
+        isEditMode: true,
+        zoom: 2,
+        panX: 0,
+        panY: 0,
+        onZoomChange,
+        onPanChange: vi.fn(),
+        maxZoom: 2,
+        onMaxZoomReached,
+      });
+      return <canvas ref={canvasRef} data-testid="test-canvas" width={400} height={300} style={{ width: 400, height: 300 }} />;
+    };
+    render(<Host />);
+    const canvas = getCanvas();
+
+    act(() => {
+      canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true }));
+    });
+    await act(() => flushAnimationFrames());
+
+    expect(onMaxZoomReached).not.toHaveBeenCalled();
+    expect(onZoomChange).toHaveBeenCalled();
+  });
+
   it("clamps zoom to min 1", () => {
     const onZoomChange = vi.fn();
     const Host = () => {

@@ -12,8 +12,8 @@ export interface CropAdjust {
 
 /**
  * Absolute maximum crop zoom, independent of DPI. The effective cap is
- * additionally limited per photo/shape by the DPI headroom of the shape's
- * smallest offered painting size.
+ * additionally limited per photo/painting-size by the DPI headroom; the
+ * max-zoom hint tells the user a smaller size allows more zoom.
  */
 export const MAX_CROP_ZOOM = 3;
 

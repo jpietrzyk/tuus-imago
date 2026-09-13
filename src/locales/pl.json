@@ -187,6 +187,7 @@
     "previousImage": "Poprzednie zdjęcie",
     "nextImage": "Następne zdjęcie",
     "swipeHint": "Przesuń, aby zmienić zdjęcie",
+    "maxZoomHint": "Maksymalne powiększenie dla tego rozmiaru. Wybierz mniejszy rozmiar obrazu, aby powiększyć bardziej.",
     "previewSlotNavigation": "Nawigacja slotów podglądu",
     "selectImageSlot": "Wybierz zdjęcie {index}",
     "addImageSlot": "Dodaj zdjęcie do slotu {index}",
