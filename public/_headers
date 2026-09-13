@@ -6,3 +6,7 @@
 # Vite content-hashes every emitted asset, so it is safe to cache forever.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# Build identity for the running client; must never be cached.
+/version.json
+  Cache-Control: no-cache

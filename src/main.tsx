@@ -4,6 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import { registerSW } from "virtual:pwa-register";
 
 import { AuthProvider } from "@/lib/auth-context";
+import {
+  APP_VERSION,
+  fetchDeployedVersion,
+  forceRefreshIfOutdated,
+} from "@/lib/app-version";
 import { setupServiceWorkerUpdates } from "@/lib/service-worker-updates";
 import "./index.css";
 import App from "./App.tsx";
@@ -18,7 +23,14 @@ registerSW({
   },
   onRegisteredSW(_swUrl, registration) {
     if (registration) {
-      setupServiceWorkerUpdates(registration);
+      setupServiceWorkerUpdates(registration, {
+        currentVersion: APP_VERSION,
+        getDeployedVersion: async () =>
+          (await fetchDeployedVersion())?.version ?? null,
+        onOutdated: (deployedVersion) => {
+          void forceRefreshIfOutdated(deployedVersion);
+        },
+      });
     }
   },
 });

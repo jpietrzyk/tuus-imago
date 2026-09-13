@@ -137,6 +137,15 @@ describe("PWA guard", () => {
     expect(headers).toContain("Cache-Control: no-cache");
     expect(headers).toContain("/assets/*");
     expect(headers).toContain("immutable");
+    expect(headers).toContain("/version.json");
+  });
+
+  it("vite config bakes and emits the build version", () => {
+    const config = readFileSync(resolve(ROOT, "vite.config.ts"), "utf8");
+
+    expect(config).toContain("__APP_VERSION__");
+    expect(config).toContain("__APP_BUILD_TIME__");
+    expect(config).toContain('fileName: "version.json"');
   });
 
   it("main.tsx polls for service worker updates on resume", () => {

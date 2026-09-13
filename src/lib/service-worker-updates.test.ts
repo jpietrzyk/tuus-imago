@@ -94,6 +94,43 @@ describe("setupServiceWorkerUpdates", () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
+  it("reports when the deployed version differs from the running build", async () => {
+    const onOutdated = vi.fn();
+    const cleanup = setupServiceWorkerUpdates(createRegistration(), {
+      serviceWorker: createServiceWorker(),
+      reload: vi.fn(),
+      currentVersion: "1.0.0+aaa",
+      getDeployedVersion: vi.fn().mockResolvedValue("1.0.0+bbb"),
+      onOutdated,
+    });
+
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onOutdated).toHaveBeenCalledWith("1.0.0+bbb", "1.0.0+aaa");
+    cleanup();
+  });
+
+  it("does not report when the deployed version matches", async () => {
+    const onOutdated = vi.fn();
+    const cleanup = setupServiceWorkerUpdates(createRegistration(), {
+      serviceWorker: createServiceWorker(),
+      reload: vi.fn(),
+      currentVersion: "1.0.0+aaa",
+      getDeployedVersion: vi.fn().mockResolvedValue("1.0.0+aaa"),
+      onOutdated,
+    });
+
+    document.dispatchEvent(new Event("visibilitychange"));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onOutdated).not.toHaveBeenCalled();
+    cleanup();
+  });
+
   it("stops checking and removes listeners after cleanup", () => {
     const registration = createRegistration();
     const serviceWorker = createServiceWorker();

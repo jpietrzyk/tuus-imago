@@ -14,6 +14,7 @@ import bgMobile from "./assets/bg_mobile.webp";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { OfflineBanner } from "@/components/offline-banner";
+import { BuildVersionBadge } from "@/components/build-version-badge";
 import { RotateWarningOverlay } from "@/components/rotate-warning-overlay";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
 import {
@@ -1030,6 +1031,7 @@ function StorefrontApp() {
           onToggleDebugData={() => setShowUploaderDebugData((value) => !value)}
         />
       )}
+      <BuildVersionBadge />
     </div>
   );
 }

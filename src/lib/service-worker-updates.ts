@@ -40,6 +40,9 @@ export interface ServiceWorkerUpdateOptions {
   serviceWorker?: ServiceWorkerLike;
   document?: DocumentLike;
   window?: WindowLike;
+  currentVersion?: string;
+  getDeployedVersion?: () => Promise<string | null>;
+  onOutdated?: (deployedVersion: string, currentVersion: string) => void;
 }
 
 export function setupServiceWorkerUpdates(
@@ -56,6 +59,7 @@ export function setupServiceWorkerUpdates(
   const win =
     options.window ?? (typeof window === "undefined" ? undefined : window);
   const reload = options.reload ?? (() => window.location.reload());
+  const { currentVersion, getDeployedVersion, onOutdated } = options;
 
   // Tracks whether a worker has already taken control of this page. Starts
   // false on a first install, where the initial controllerchange only means the
@@ -63,10 +67,31 @@ export function setupServiceWorkerUpdates(
   // is recorded without reloading. Later controllerchange events are updates.
   let controllerEstablished = Boolean(serviceWorker?.controller);
 
+  const checkDeployedVersion = () => {
+    if (!getDeployedVersion) {
+      return;
+    }
+
+    void getDeployedVersion()
+      .then((deployedVersion) => {
+        if (deployedVersion && currentVersion && deployedVersion !== currentVersion) {
+          if (onOutdated) {
+            onOutdated(deployedVersion, currentVersion);
+          } else {
+            reload();
+          }
+        }
+      })
+      .catch(() => {
+        // Version identity is best-effort; the service worker check still runs.
+      });
+  };
+
   const checkForUpdate = () => {
     void registration.update().catch(() => {
       // Offline or a transient failure; the next trigger retries.
     });
+    checkDeployedVersion();
   };
 
   const handleVisibilityChange = () => {
