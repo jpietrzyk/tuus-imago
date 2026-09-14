@@ -284,6 +284,12 @@ export interface Translations {
     dismissError: string;
     cameraCaptureLost: string;
     fileSelectionLost: string;
+    cameraTitle: string;
+    cameraDescription: string;
+    cameraStarting: string;
+    cameraCapture: string;
+    cameraUnavailable: string;
+    cameraUseDevicePicker: string;
     applyingEffect: string;
     effectConnectionError: string;
     tabAdjust: string;

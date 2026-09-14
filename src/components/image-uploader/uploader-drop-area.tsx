@@ -17,6 +17,12 @@ interface UploaderDropAreaProps {
   error?: string | null;
   onDismissError?: () => void;
   onCaptureStart?: (source: "camera" | "gallery") => void;
+  /**
+   * When provided, the camera button opens the in-app camera instead of the
+   * native `<input capture>` picker. The hidden input is kept for the fallback
+   * when `getUserMedia` is unavailable.
+   */
+  onCameraClick?: () => void;
 }
 
 interface SelectionErrorBannerProps {
@@ -71,6 +77,7 @@ export function UploaderDropArea({
   error,
   onDismissError,
   onCaptureStart,
+  onCameraClick,
 }: UploaderDropAreaProps) {
   return (
     <div
@@ -115,6 +122,10 @@ export function UploaderDropArea({
               fileInputRef.current?.click();
             }}
             onCameraClick={() => {
+              if (onCameraClick) {
+                onCameraClick();
+                return;
+              }
               onCaptureStart?.("camera");
               cameraInputRef.current?.click();
             }}

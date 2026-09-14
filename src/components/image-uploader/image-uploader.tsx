@@ -68,6 +68,7 @@ import {
   markMaxZoomHintShown,
 } from "./max-zoom-hint-storage";
 import UnprintablePhotoNotice from "./unprintable-photo-notice";
+import CameraCaptureDialog from "./camera-capture-dialog";
 import {
   splitImageIntoVerticalThirdFiles,
   composeFullTransformedImage,
@@ -570,6 +571,10 @@ export const ImageUploader = forwardRef<
     useState<PaintingSizeIndex>(DEFAULT_PAINTING_SIZE_INDEX);
   const userSelectedPaintingSizeRef = useRef(false);
   const [showRemoveSlotDialog, setShowRemoveSlotDialog] = useState(false);
+  // In-app camera capture. Using getUserMedia keeps the page in the
+  // foreground, unlike <input capture> which hands off to the OS camera app
+  // and lets mobile browsers reload/discard the tab (losing the photo).
+  const [isCameraDialogOpen, setIsCameraDialogOpen] = useState(false);
   // Validation errors from file selection (camera capture, gallery, drag &
   // drop). Rendered inline in the uploader so they stay visible right where
   // the user picked the file — a page-level status strip is easy to miss on
@@ -1648,31 +1653,47 @@ export const ImageUploader = forwardRef<
     [applyCropAdjustToGroup],
   );
 
+  // Single-file selection shared by the hidden file inputs and the in-app
+  // camera: consumes the pending slot, ends any capture session and validates.
+  const acceptSelectedFile = useCallback(
+    (file: File) => {
+      const preferredIndex = pendingSelectionSlotRef.current ?? undefined;
+      pendingSelectionSlotRef.current = null;
+      onUploadAttemptStart?.();
+      // A file was delivered, so any camera/gallery session ended with a
+      // result — prevent the "selection interrupted" notice from firing
+      // later.
+      clearCapturePending();
+      applySelectionError(null);
+      void validateAndStoreFile(file, preferredIndex);
+    },
+    [validateAndStoreFile, applySelectionError, onUploadAttemptStart],
+  );
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
-      const preferredIndex = pendingSelectionSlotRef.current ?? undefined;
-
-      pendingSelectionSlotRef.current = null;
 
       if (files && files.length > 0) {
-        onUploadAttemptStart?.();
-        // A file was delivered, so any camera/gallery session ended with a
-        // result — prevent the "selection interrupted" notice from firing
-        // later.
-        clearCapturePending();
-        applySelectionError(null);
         if (files.length === 1) {
-          void validateAndStoreFile(files[0], preferredIndex);
+          acceptSelectedFile(files[0]);
         } else {
+          pendingSelectionSlotRef.current = null;
+          onUploadAttemptStart?.();
+          clearCapturePending();
+          applySelectionError(null);
           void validateAndStoreFiles(Array.from(files));
         }
+      } else {
+        // Keep the original behaviour: a changed-but-empty input clears any
+        // pending slot target.
+        pendingSelectionSlotRef.current = null;
       }
 
       e.currentTarget.value = "";
     },
     [
-      validateAndStoreFile,
+      acceptSelectedFile,
       validateAndStoreFiles,
       applySelectionError,
       onUploadAttemptStart,
@@ -2539,8 +2560,7 @@ export const ImageUploader = forwardRef<
       return;
     }
     pendingSelectionSlotRef.current = activeImageIndex;
-    markCaptureStarted("camera");
-    cameraInputRef.current?.click();
+    setIsCameraDialogOpen(true);
   }, [activeImageIndex]);
 
   const handleChooseReplacementPhoto = useCallback(() => {
@@ -2551,6 +2571,24 @@ export const ImageUploader = forwardRef<
     markCaptureStarted("gallery");
     fileInputRef.current?.click();
   }, [activeImageIndex]);
+
+  // Photo produced by the in-app camera. The page never backgrounded, so the
+  // File is complete and no interrupted-capture marker is involved.
+  const handleCameraCapture = useCallback(
+    (file: File) => {
+      setIsCameraDialogOpen(false);
+      acceptSelectedFile(file);
+    },
+    [acceptSelectedFile],
+  );
+
+  // getUserMedia unavailable/denied: fall back to the device picker, which
+  // keeps the interrupted-capture recovery for that path.
+  const handleUseDevicePicker = useCallback(() => {
+    setIsCameraDialogOpen(false);
+    markCaptureStarted("camera");
+    cameraInputRef.current?.click();
+  }, []);
 
   const computedDebugData = useMemo((): ImageDebugData | null => {
     if (!effectiveImageMetadata) {
@@ -2889,6 +2927,15 @@ export const ImageUploader = forwardRef<
 
   const displayedSelectionError = selectionError ?? effectLoadError;
 
+  const cameraCaptureDialog = (
+    <CameraCaptureDialog
+      open={isCameraDialogOpen}
+      onOpenChange={setIsCameraDialogOpen}
+      onCapture={handleCameraCapture}
+      onUseDevicePicker={handleUseDevicePicker}
+    />
+  );
+
   if (selectedImageCount === 0) {
     return (
       <>
@@ -2905,7 +2952,9 @@ export const ImageUploader = forwardRef<
           error={selectionError}
           onDismissError={() => applySelectionError(null)}
           onCaptureStart={markCaptureStarted}
+          onCameraClick={() => setIsCameraDialogOpen(true)}
         />
+        {cameraCaptureDialog}
       </>
     );
   }
@@ -2913,6 +2962,7 @@ export const ImageUploader = forwardRef<
   return (
     <>
       {removeSlotDialog}
+      {cameraCaptureDialog}
       <Card className="mx-auto flex h-full w-full max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl flex-col border-0 bg-transparent! shadow-none! ring-0!">
         <input
           ref={fileInputRef}
