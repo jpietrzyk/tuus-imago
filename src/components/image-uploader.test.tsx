@@ -3096,7 +3096,7 @@ describe("ImageUploader", () => {
       expect(screen.queryByTestId("low-resolution-badge")).toBeNull();
     });
 
-    it("opens the camera picker targeted at the active slot from the retake CTA", async () => {
+    it("opens the in-app camera targeted at the active slot from the retake CTA", async () => {
       render(<TestWrapper />);
       await selectDefaultPhoto();
       await screen.findByTestId("unprintable-photo-notice");
@@ -3112,7 +3112,8 @@ describe("ImageUploader", () => {
         }),
       );
 
-      expect(cameraClickSpy).toHaveBeenCalledTimes(1);
+      expect(await screen.findByTestId("camera-capture-dialog")).toBeInTheDocument();
+      expect(cameraClickSpy).not.toHaveBeenCalled();
     });
 
     it("opens the gallery picker from the choose-from-gallery CTA", async () => {
@@ -3232,6 +3233,88 @@ describe("ImageUploader", () => {
       });
 
       expect(consumeInterruptedCapture()).toBeNull();
+    });
+  });
+
+  describe("in-app camera capture", () => {
+    const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+
+    beforeEach(() => {
+      vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+      HTMLCanvasElement.prototype.toBlob = function (
+        callback: BlobCallback,
+      ) {
+        callback(new Blob(["frame"], { type: "image/jpeg" }));
+      };
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      HTMLCanvasElement.prototype.toBlob = originalToBlob;
+      Reflect.deleteProperty(navigator, "mediaDevices");
+    });
+
+    function installCamera() {
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: vi.fn().mockResolvedValue({
+            getTracks: () => [{ stop: vi.fn() }],
+          }),
+        },
+      });
+    }
+
+    it("opens the dialog instead of the native capture input from the action buttons", async () => {
+      installCamera();
+      render(<TestWrapper />);
+
+      fireEvent.click(screen.getByText(tr("upload.clickToUpload")));
+
+      const cameraInput = document.querySelector(
+        'input[type="file"][capture="environment"]',
+      ) as HTMLInputElement;
+      const cameraClickSpy = vi.spyOn(cameraInput, "click");
+
+      fireEvent.click(
+        screen.getByRole("button", { name: tr("upload.openCamera") }),
+      );
+
+      expect(
+        await screen.findByTestId("camera-capture-dialog"),
+      ).toBeInTheDocument();
+      expect(cameraClickSpy).not.toHaveBeenCalled();
+    });
+
+    it("stores the captured photo into the selected slot", async () => {
+      installCamera();
+      render(<TestWrapper />);
+
+      fireEvent.click(screen.getByText(tr("upload.clickToUpload")));
+      fireEvent.click(
+        screen.getByRole("button", { name: tr("upload.openCamera") }),
+      );
+
+      const video = (await screen.findByTestId(
+        "camera-capture-video",
+      )) as HTMLVideoElement;
+      Object.defineProperty(video, "videoWidth", {
+        configurable: true,
+        value: 1280,
+      });
+      Object.defineProperty(video, "videoHeight", {
+        configurable: true,
+        value: 720,
+      });
+      fireEvent.loadedMetadata(video);
+
+      const shutter = await screen.findByTestId("camera-capture-shutter");
+      await waitFor(() => expect(shutter).toBeEnabled());
+      fireEvent.click(shutter);
+
+      expect(
+        await screen.findByRole("img", { name: "Preview" }),
+      ).toBeInTheDocument();
     });
   });
 });
