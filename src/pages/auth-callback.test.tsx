@@ -2,6 +2,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AuthCallbackPage } from "./auth-callback";
+import {
+  POST_AUTH_REDIRECT_KEY,
+  setPostAuthRedirect,
+} from "@/lib/post-auth-redirect";
 
 const mockNavigate = vi.fn();
 
@@ -24,10 +28,6 @@ vi.mock("@/lib/supabase-client", () => ({
       getSession: () => mockGetSession(),
     },
   },
-}));
-
-vi.mock("@/lib/auth-context", () => ({
-  POST_AUTH_REDIRECT_KEY: "post_auth_redirect",
 }));
 
 function renderWithRouter() {
@@ -102,24 +102,62 @@ it("redirects to / when session exists and no checkout redirect key", async () =
   });
 });
 
-it("redirects to /checkout when POST_AUTH_REDIRECT_KEY is in sessionStorage and clears it", async () => {
-  sessionStorage.setItem("post_auth_redirect", "/checkout");
+it("redirects to the stored path when POST_AUTH_REDIRECT_KEY is in sessionStorage and clears it", async () => {
+  setPostAuthRedirect("/checkout");
 
   renderWithRouter();
 
   await waitFor(() => {
     expect(mockNavigate).toHaveBeenCalledWith("/checkout", { replace: true });
   });
-  expect(sessionStorage.getItem("post_auth_redirect")).toBeNull();
+  expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
 });
 
-it("cleans up POST_AUTH_REDIRECT_KEY from sessionStorage", async () => {
-  sessionStorage.setItem("post_auth_redirect", "/checkout");
+it("redirects back to prepare-painting when the stored path is /prepare-painting", async () => {
+  setPostAuthRedirect("/prepare-painting");
 
   renderWithRouter();
 
   await waitFor(() => {
-    expect(mockNavigate).toHaveBeenCalled();
+    expect(mockNavigate).toHaveBeenCalledWith("/prepare-painting", {
+      replace: true,
+    });
   });
-  expect(sessionStorage.getItem("post_auth_redirect")).toBeNull();
+  expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
+});
+
+it("ignores a legacy boolean redirect value and falls back to /", async () => {
+  sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
+
+  renderWithRouter();
+
+  await waitFor(() => {
+    expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+  });
+  expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
+});
+
+it("rejects a protocol-relative redirect value and falls back to /", async () => {
+  sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "//evil.com");
+
+  renderWithRouter();
+
+  await waitFor(() => {
+    expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+  });
+  expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
+});
+
+it("clears the stored path when the callback fails", async () => {
+  mockGetSession.mockResolvedValue({ data: { session: null } });
+  setPostAuthRedirect("/prepare-painting");
+
+  renderWithRouter();
+
+  await waitFor(() => {
+    expect(mockNavigate).toHaveBeenCalledWith("/auth?error=callback_failed", {
+      replace: true,
+    });
+  });
+  expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
 });

@@ -1,10 +1,7 @@
 import { render, screen, act, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  AuthProvider,
-  useAuth,
-  POST_AUTH_REDIRECT_KEY,
-} from "./auth-context";
+import { AuthProvider, useAuth } from "./auth-context";
+import { POST_AUTH_REDIRECT_KEY } from "./post-auth-redirect";
 import type { Session, Subscription, User } from "@supabase/supabase-js";
 
 const mockUser = { id: "user-1", email: "test@example.com" } as User;
@@ -187,8 +184,9 @@ describe("auth-context", () => {
     );
   });
 
-  it("clears POST_AUTH_REDIRECT_KEY from sessionStorage on SIGNED_IN", async () => {
-    sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
+  it("does not consume or redirect on SIGNED_IN when a redirect key is present", async () => {
+    sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "/prepare-painting");
+    const originalHref = window.location.href;
 
     render(
       <AuthProvider>
@@ -204,7 +202,10 @@ describe("auth-context", () => {
       onAuthStateChangeCb("SIGNED_IN", mockSession);
     });
 
-    expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
+    expect(window.location.href).toBe(originalHref);
+    expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBe(
+      "/prepare-painting",
+    );
   });
 
   it("does not redirect on SIGNED_IN when no redirect key", async () => {

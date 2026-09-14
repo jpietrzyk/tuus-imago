@@ -24,12 +24,6 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/**
- * sessionStorage key used to signal that an OAuth login was initiated from
- * the checkout page so the user is redirected back to `/checkout` after auth.
- */
-export const POST_AUTH_REDIRECT_KEY = "checkout-oauth-redirect";
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -44,18 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, newSession) => {
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       setLoading(false);
-
-      if (event === "SIGNED_IN") {
-        const checkoutRedirect = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
-        if (checkoutRedirect) {
-          sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
-          window.location.href = "/checkout";
-        }
-      }
     });
 
     return () => {

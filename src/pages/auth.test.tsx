@@ -25,7 +25,14 @@ vi.mock("@/lib/auth-context", () => ({
     signInWithOAuth: mockSignInWithOAuth,
     signInWithOtp: mockSignInWithOtp,
   }),
-  POST_AUTH_REDIRECT_KEY: "checkout-oauth-redirect",
+}));
+
+vi.mock("@/lib/post-auth-redirect", () => ({
+  POST_AUTH_REDIRECT_KEY: "post-auth-redirect",
+  setPostAuthRedirect: (path: string) =>
+    sessionStorage.setItem("post-auth-redirect", path),
+  clearPostAuthRedirect: () =>
+    sessionStorage.removeItem("post-auth-redirect"),
 }));
 
 vi.mock("@/locales/i18n", () => ({
@@ -44,6 +51,7 @@ function renderWithRouter(initialPath = "/auth", state?: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sessionStorage.clear();
   mockSignIn.mockResolvedValue(undefined);
   mockSignUp.mockResolvedValue(undefined);
   mockSignInWithOAuth.mockResolvedValue(undefined);
@@ -199,7 +207,7 @@ describe("AuthPage", () => {
     });
   });
 
-  it("sets POST_AUTH_REDIRECT_KEY in sessionStorage when from is /checkout and Google OAuth is clicked", async () => {
+  it("stores the from path in sessionStorage when Google OAuth is clicked", async () => {
     const user = userEvent.setup();
     renderWithRouter("/auth", { from: { pathname: "/checkout" } });
 
@@ -207,31 +215,54 @@ describe("AuthPage", () => {
     await user.click(googleButton);
 
     expect(mockSignInWithOAuth).toHaveBeenCalledWith("google");
-    expect(sessionStorage.getItem("checkout-oauth-redirect")).toBe("true");
+    expect(sessionStorage.getItem("post-auth-redirect")).toBe("/checkout");
 
     sessionStorage.clear();
   });
 
-  it("sets POST_AUTH_REDIRECT_KEY in sessionStorage when from is /checkout and Facebook OAuth is clicked", async () => {
+  it("stores the prepare-painting path when Facebook OAuth is clicked", async () => {
     const user = userEvent.setup();
-    renderWithRouter("/auth", { from: { pathname: "/checkout" } });
+    renderWithRouter("/auth", { from: { pathname: "/prepare-painting" } });
 
     const facebookButton = screen.getByText("Facebook");
     await user.click(facebookButton);
 
     expect(mockSignInWithOAuth).toHaveBeenCalledWith("facebook");
-    expect(sessionStorage.getItem("checkout-oauth-redirect")).toBe("true");
+    expect(sessionStorage.getItem("post-auth-redirect")).toBe(
+      "/prepare-painting",
+    );
 
     sessionStorage.clear();
   });
 
-  it("does not set POST_AUTH_REDIRECT_KEY when from is not /checkout", async () => {
+  it("stores the from path for any non-auth page", async () => {
     const user = userEvent.setup();
     renderWithRouter("/auth", { from: { pathname: "/account" } });
 
     await user.click(screen.getByText("Google"));
 
     expect(mockSignInWithOAuth).toHaveBeenCalledWith("google");
-    expect(sessionStorage.getItem("checkout-oauth-redirect")).toBeNull();
+    expect(sessionStorage.getItem("post-auth-redirect")).toBe("/account");
+  });
+
+  it("does not store a redirect when there is no from path", async () => {
+    const user = userEvent.setup();
+    renderWithRouter();
+
+    await user.click(screen.getByText("Google"));
+
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith("google");
+    expect(sessionStorage.getItem("post-auth-redirect")).toBeNull();
+  });
+
+  it("clears a stale redirect when there is no from path", async () => {
+    sessionStorage.setItem("post-auth-redirect", "/prepare-painting");
+
+    const user = userEvent.setup();
+    renderWithRouter();
+
+    await user.click(screen.getByText("Google"));
+
+    expect(sessionStorage.getItem("post-auth-redirect")).toBeNull();
   });
 });
