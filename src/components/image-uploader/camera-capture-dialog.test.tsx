@@ -17,11 +17,11 @@ interface FakeStream {
   stop: ReturnType<typeof vi.fn>;
 }
 
-function createStream(): FakeStream {
+function createStream(capabilities: MediaTrackCapabilities = {}): FakeStream {
   const stop = vi.fn();
   const track = {
     stop,
-    getCapabilities: () => ({}),
+    getCapabilities: () => capabilities,
     getSettings: () => ({}),
     applyConstraints: vi.fn().mockResolvedValue(undefined),
   };
@@ -98,6 +98,7 @@ describe("CameraCaptureDialog", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     // getUserMedia is defined per-test; remove it so other suites see the
     // default jsdom environment.
     Reflect.deleteProperty(navigator, "mediaDevices");
@@ -257,6 +258,63 @@ describe("CameraCaptureDialog", () => {
     await waitFor(() =>
       expect(screen.queryByTestId("camera-switch")).toBeNull(),
     );
+  });
+
+  it("offers a switch when the track advertises both facing modes even if enumeration reports one camera", async () => {
+    const rear = createStream({ facingMode: ["environment", "user"] });
+    const front = createStream();
+    const getUserMedia = vi
+      .fn()
+      .mockResolvedValueOnce(rear.stream)
+      .mockResolvedValueOnce(front.stream);
+    installMediaDevices(getUserMedia, videoInputs(1));
+
+    renderDialog();
+
+    await screen.findByTestId("camera-capture-video");
+    const switchButton = await screen.findByTestId("camera-switch");
+
+    fireEvent.click(switchButton);
+
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    expect(getUserMedia).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        video: expect.objectContaining({ facingMode: { ideal: "user" } }),
+      }),
+    );
+  });
+
+  it("captures a full-resolution still via ImageCapture when supported", async () => {
+    const { stream, stop } = createStream();
+    installMediaDevices(vi.fn().mockResolvedValue(stream));
+
+    class FakeImageCapture {
+      takePhoto() {
+        return Promise.resolve(
+          new Blob(["full-res"], { type: "image/jpeg" }),
+        );
+      }
+    }
+    vi.stubGlobal("ImageCapture", FakeImageCapture);
+
+    const { onCapture } = renderDialog();
+
+    const video = (await screen.findByTestId(
+      "camera-capture-video",
+    )) as HTMLVideoElement;
+    setVideoDimensions(video, 1280, 720);
+    fireEvent.loadedMetadata(video);
+
+    const shutter = await screen.findByTestId("camera-capture-shutter");
+    await waitFor(() => expect(shutter).toBeEnabled());
+
+    fireEvent.click(shutter);
+
+    await waitFor(() => expect(onCapture).toHaveBeenCalledTimes(1));
+
+    const captured = onCapture.mock.calls[0][0] as File;
+    expect(captured.type).toBe("image/jpeg");
+    expect(stop).toHaveBeenCalled();
   });
 
   it("restores the rear camera when switching cameras fails", async () => {
