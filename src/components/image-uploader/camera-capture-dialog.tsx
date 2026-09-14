@@ -179,15 +179,33 @@ function CameraSession({
         }
         setStatus("ready");
 
+        // Front/back switching is gated on a reliable signal. `enumerateDevices`
+        // alone is unreliable on mobile (iOS Safari can report only the active
+        // camera), so we also accept the track's `facingMode` capability when it
+        // advertises both sensors.
+        let supportsBothFacingModes = false;
+        try {
+          const track = stream.getVideoTracks()[0];
+          const facingModes = track?.getCapabilities?.()?.facingMode;
+          supportsBothFacingModes =
+            Array.isArray(facingModes) &&
+            facingModes.includes("environment") &&
+            facingModes.includes("user");
+        } catch {
+          // Capability inspection is best-effort.
+        }
+
+        let enumeratesTwoCameras = false;
         try {
           const devices = await navigator.mediaDevices.enumerateDevices();
-          if (!cancelled) {
-            setHasMultipleCameras(
-              devices.filter((device) => device.kind === "videoinput").length > 1,
-            );
-          }
+          enumeratesTwoCameras =
+            devices.filter((device) => device.kind === "videoinput").length > 1;
         } catch {
-          // Enumeration is a nice-to-have for the switch button.
+          // Enumeration is a nice-to-have; capabilities may still answer.
+        }
+
+        if (!cancelled) {
+          setHasMultipleCameras(supportsBothFacingModes || enumeratesTwoCameras);
         }
       } catch {
         if (cancelled) {
@@ -227,6 +245,46 @@ function CameraSession({
     );
   }, []);
 
+  /**
+   * Captures the highest quality photo the camera can deliver. When the
+   * `ImageCapture` API is available (Chrome/Android) it requests a full
+   * resolution still via `takePhoto`, which is far sharper than a frame grabbed
+   * from the preview `<video>` — a video stream is capped well below the sensor
+   * resolution the native camera app uses. Browsers without `ImageCapture`
+   * (notably iOS Safari) fall back to drawing the current frame to a canvas at
+   * whatever resolution the stream negotiated.
+   */
+  const capturePhoto = useCallback(async (): Promise<Blob | null> => {
+    const video = videoRef.current;
+    if (!video) {
+      return null;
+    }
+
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (track && typeof ImageCapture === "function") {
+      try {
+        const photo = await new ImageCapture(track).takePhoto();
+        if (photo && photo.size > 0) {
+          return photo;
+        }
+      } catch {
+        // Not supported or the still failed; fall through to the video frame.
+      }
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return null;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvasToJpegBlob(canvas);
+  }, []);
+
   const handleCapture = useCallback(() => {
     if (capturingRef.current) {
       return;
@@ -237,21 +295,10 @@ function CameraSession({
       return;
     }
 
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
-
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
     capturingRef.current = true;
     setCapturing(true);
 
-    void canvasToJpegBlob(canvas).then((blob) => {
+    void capturePhoto().then((blob) => {
       // The dialog may have been closed/cancelled while encoding.
       if (cancelledRef.current) {
         return;
@@ -273,7 +320,7 @@ function CameraSession({
         }),
       );
     });
-  }, [onCapture, stopStream]);
+  }, [capturePhoto, onCapture, stopStream]);
 
   const handleUseDevicePicker = useCallback(() => {
     stopStream();
