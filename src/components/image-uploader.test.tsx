@@ -3255,12 +3255,20 @@ describe("ImageUploader", () => {
     });
 
     function installCamera() {
+      const track = {
+        stop: vi.fn(),
+        getCapabilities: () => ({}),
+        getSettings: () => ({}),
+        applyConstraints: vi.fn().mockResolvedValue(undefined),
+      };
       Object.defineProperty(navigator, "mediaDevices", {
         configurable: true,
         value: {
           getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [{ stop: vi.fn() }],
+            getTracks: () => [track],
+            getVideoTracks: () => [track],
           }),
+          enumerateDevices: vi.fn().mockResolvedValue([]),
         },
       });
     }

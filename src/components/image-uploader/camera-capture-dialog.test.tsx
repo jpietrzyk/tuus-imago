@@ -19,19 +19,37 @@ interface FakeStream {
 
 function createStream(): FakeStream {
   const stop = vi.fn();
+  const track = {
+    stop,
+    getCapabilities: () => ({}),
+    getSettings: () => ({}),
+    applyConstraints: vi.fn().mockResolvedValue(undefined),
+  };
   const stream = {
-    getTracks: () => [{ stop }],
+    getTracks: () => [track],
+    getVideoTracks: () => [track],
   } as unknown as MediaStream;
 
   return { stream, stop };
 }
 
+function videoInputs(count: number): MediaDeviceInfo[] {
+  return Array.from(
+    { length: count },
+    () => ({ kind: "videoinput" }) as MediaDeviceInfo,
+  );
+}
+
 function installMediaDevices(
   getUserMedia: (constraints: MediaStreamConstraints) => Promise<MediaStream>,
+  devices: MediaDeviceInfo[] = [],
 ) {
   Object.defineProperty(navigator, "mediaDevices", {
     configurable: true,
-    value: { getUserMedia: vi.fn(getUserMedia) },
+    value: {
+      getUserMedia: vi.fn(getUserMedia),
+      enumerateDevices: vi.fn().mockResolvedValue(devices),
+    },
   });
 }
 
@@ -96,7 +114,11 @@ describe("CameraCaptureDialog", () => {
       "camera-capture-video",
     )) as HTMLVideoElement;
     expect(getUserMedia).toHaveBeenCalledWith({
-      video: { facingMode: { ideal: "environment" } },
+      video: {
+        facingMode: { ideal: "environment" },
+        width: { ideal: 4096 },
+        height: { ideal: 4096 },
+      },
       audio: false,
     });
 
@@ -198,5 +220,68 @@ describe("CameraCaptureDialog", () => {
     );
 
     await waitFor(() => expect(stop).toHaveBeenCalled());
+  });
+
+  it("offers a switch to the front camera when more than one camera exists", async () => {
+    const rear = createStream();
+    const front = createStream();
+    const getUserMedia = vi
+      .fn()
+      .mockResolvedValueOnce(rear.stream)
+      .mockResolvedValueOnce(front.stream);
+    installMediaDevices(getUserMedia, videoInputs(2));
+
+    const { onCapture } = renderDialog();
+
+    await screen.findByTestId("camera-capture-video");
+    const switchButton = await screen.findByTestId("camera-switch");
+
+    fireEvent.click(switchButton);
+
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    expect(getUserMedia).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        video: expect.objectContaining({ facingMode: { ideal: "user" } }),
+      }),
+    );
+    expect(rear.stop).toHaveBeenCalled();
+    expect(onCapture).not.toHaveBeenCalled();
+  });
+
+  it("hides the camera switch when only one camera exists", async () => {
+    installMediaDevices(vi.fn().mockResolvedValue(createStream().stream), videoInputs(1));
+
+    renderDialog();
+
+    await screen.findByTestId("camera-capture-video");
+    await waitFor(() =>
+      expect(screen.queryByTestId("camera-switch")).toBeNull(),
+    );
+  });
+
+  it("restores the rear camera when switching cameras fails", async () => {
+    const rear = createStream();
+    const fallbackRear = createStream();
+    const getUserMedia = vi
+      .fn()
+      .mockResolvedValueOnce(rear.stream)
+      .mockRejectedValueOnce(new Error("no front camera"))
+      .mockResolvedValueOnce(fallbackRear.stream);
+    installMediaDevices(getUserMedia, videoInputs(2));
+
+    renderDialog();
+
+    await screen.findByTestId("camera-capture-video");
+    fireEvent.click(await screen.findByTestId("camera-switch"));
+
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(3));
+    expect(getUserMedia).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        video: expect.objectContaining({ facingMode: { ideal: "environment" } }),
+      }),
+    );
+    // It recovers to a usable camera instead of showing the error state.
+    expect(await screen.findByTestId("camera-capture-shutter")).toBeInTheDocument();
+    expect(screen.queryByTestId("camera-capture-error")).toBeNull();
   });
 });

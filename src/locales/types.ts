@@ -290,6 +290,7 @@ export interface Translations {
     cameraCapture: string;
     cameraUnavailable: string;
     cameraUseDevicePicker: string;
+    cameraSwitch: string;
     applyingEffect: string;
     effectConnectionError: string;
     tabAdjust: string;

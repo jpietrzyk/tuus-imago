@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, SwitchCamera } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ const CAPTURE_MIME_TYPE = "image/jpeg";
 const CAPTURE_QUALITY = 0.92;
 
 type CameraStatus = "starting" | "ready" | "error";
+type CameraFacing = "environment" | "user";
 
 export interface CameraCaptureDialogProps {
   open: boolean;
@@ -56,6 +57,50 @@ function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
   });
 }
 
+/**
+ * Requests the highest resolution the camera can deliver. Without explicit
+ * width/height, browsers negotiate a low default (often 640×480), which is far
+ * below what a printable painting needs. `ideal` never over-constrains, and we
+ * then re-apply the track's advertised maximum for browsers that only honor
+ * capabilities on `applyConstraints`.
+ */
+async function acquireHighResolutionStream(
+  facingMode: CameraFacing,
+): Promise<MediaStream> {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { ideal: facingMode },
+      width: { ideal: 4096 },
+      height: { ideal: 4096 },
+    },
+    audio: false,
+  });
+
+  const track = stream.getVideoTracks()[0];
+  if (track) {
+    try {
+      const capabilities = track.getCapabilities?.();
+      const maxWidth = capabilities?.width?.max;
+      const maxHeight = capabilities?.height?.max;
+      const settings = track.getSettings?.();
+      if (
+        maxWidth &&
+        maxHeight &&
+        (settings?.width !== maxWidth || settings?.height !== maxHeight)
+      ) {
+        await track.applyConstraints({
+          width: { ideal: maxWidth },
+          height: { ideal: maxHeight },
+        });
+      }
+    } catch {
+      // Keep whatever resolution the initial request produced.
+    }
+  }
+
+  return stream;
+}
+
 interface CameraSessionProps {
   onCapture: (file: File) => void;
   onUseDevicePicker: () => void;
@@ -76,6 +121,8 @@ function CameraSession({
   const [status, setStatus] = useState<CameraStatus>(() =>
     cameraApiAvailable() ? "starting" : "error",
   );
+  const [facingMode, setFacingMode] = useState<CameraFacing>("environment");
+  const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
   // `video.videoWidth` stays 0 until the stream's metadata loads, so the
   // shutter must stay disabled until then or an early tap captures nothing.
   const [hasFrame, setHasFrame] = useState(false);
@@ -104,12 +151,10 @@ function CameraSession({
     cancelledRef.current = false;
     let cancelled = false;
 
-    navigator.mediaDevices
-      .getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-        audio: false,
-      })
-      .then((stream) => {
+    const startStream = async () => {
+      try {
+        const stream = await acquireHighResolutionStream(facingMode);
+
         if (cancelled) {
           stream.getTracks().forEach((track) => track.stop());
           return;
@@ -133,19 +178,54 @@ function CameraSession({
           }
         }
         setStatus("ready");
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setStatus("error");
+
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          if (!cancelled) {
+            setHasMultipleCameras(
+              devices.filter((device) => device.kind === "videoinput").length > 1,
+            );
+          }
+        } catch {
+          // Enumeration is a nice-to-have for the switch button.
         }
-      });
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        // A failed switch should not strand the user on an error screen:
+        // restore the rear camera when the front one is unavailable.
+        if (facingMode !== "environment") {
+          setFacingMode("environment");
+          return;
+        }
+
+        setStatus("error");
+      }
+    };
+
+    void startStream();
 
     return () => {
       cancelled = true;
       cancelledRef.current = true;
       stopStream();
     };
-  }, [stopStream]);
+  }, [facingMode, stopStream]);
+
+  const handleSwitchCamera = useCallback(() => {
+    if (capturingRef.current) {
+      return;
+    }
+
+    // Reset the frame gate; the new stream must load its own metadata.
+    setStatus("starting");
+    setHasFrame(false);
+    setFacingMode((previous) =>
+      previous === "environment" ? "user" : "environment",
+    );
+  }, []);
 
   const handleCapture = useCallback(() => {
     if (capturingRef.current) {
@@ -242,15 +322,30 @@ function CameraSession({
             {t("uploader.cameraUseDevicePicker")}
           </Button>
         ) : (
-          <Button
-            type="button"
+          <>
+            {hasMultipleCameras && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleSwitchCamera}
+                disabled={capturing}
+                aria-label={t("uploader.cameraSwitch")}
+                data-testid="camera-switch"
+              >
+                <SwitchCamera aria-hidden />
+              </Button>
+            )}
+            <Button
+              type="button"
               onClick={handleCapture}
               disabled={status !== "ready" || !hasFrame || capturing}
               data-testid="camera-capture-shutter"
-          >
-            <Camera aria-hidden />
-            {t("uploader.cameraCapture")}
-          </Button>
+            >
+              <Camera aria-hidden />
+              {t("uploader.cameraCapture")}
+            </Button>
+          </>
         )}
       </DialogFooter>
     </>

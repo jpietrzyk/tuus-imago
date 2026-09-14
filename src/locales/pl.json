@@ -232,6 +232,7 @@
     "cameraCapture": "Zrób zdjęcie",
     "cameraUnavailable": "Nie udało się uzyskać dostępu do aparatu. Możesz wybrać zdjęcie z urządzenia.",
     "cameraUseDevicePicker": "Wybierz z urządzenia",
+    "cameraSwitch": "Przełącz aparat",
     "applyingEffect": "Stosowanie efektu...",
     "effectConnectionError": "Nie udało się zastosować efektu z powodu problemu z połączeniem. Spróbuj ponownie za kilka minut.",
     "tabAdjust": "Korekty",

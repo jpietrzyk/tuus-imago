@@ -295,6 +295,7 @@
     "cameraCapture": "Take photo",
     "cameraUnavailable": "We couldn't access the camera. You can pick a photo from your device instead.",
     "cameraUseDevicePicker": "Choose from device",
+    "cameraSwitch": "Switch camera",
     "applyingEffect": "Applying effect...",
     "effectConnectionError": "We couldn't apply the effect because of a connection problem. Please try again in a couple of minutes.",
     "tabAdjust": "Adjust",
