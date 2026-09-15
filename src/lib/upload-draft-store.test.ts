@@ -1,11 +1,15 @@
 import "fake-indexeddb/auto";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   saveUploadDraft,
   loadUploadDraft,
   clearUploadDraft,
+  purgeExpiredUploadDraft,
+  getUploadDraftMaxAgeMs,
   type UploadDraft,
 } from "./upload-draft-store";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function makeDraft(overrides: Partial<UploadDraft> = {}): UploadDraft {
   return {
@@ -38,7 +42,12 @@ function makeDraft(overrides: Partial<UploadDraft> = {}): UploadDraft {
 
 describe("upload draft store", () => {
   beforeEach(async () => {
+    localStorage.clear();
     await clearUploadDraft();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("returns null when no draft is stored", async () => {
@@ -118,5 +127,47 @@ describe("upload draft store", () => {
     });
 
     expect(await loadUploadDraft()).toBeNull();
+  });
+
+  it("defaults to a 7 day retention window", () => {
+    expect(getUploadDraftMaxAgeMs()).toBe(7 * DAY_MS);
+  });
+
+  it("keeps a draft inside the retention window", async () => {
+    await saveUploadDraft(makeDraft({ updatedAt: Date.now() - 60 * 1000 }));
+
+    expect(await loadUploadDraft()).not.toBeNull();
+  });
+
+  it("discards and deletes a draft past the retention window", async () => {
+    await saveUploadDraft(makeDraft({ updatedAt: Date.now() - 8 * DAY_MS }));
+
+    expect(await loadUploadDraft()).toBeNull();
+    // A second read confirms the record was actually removed, not just hidden.
+    expect(await loadUploadDraft()).toBeNull();
+  });
+
+  it("honours VITE_UPLOAD_DRAFT_MAX_AGE_HOURS", async () => {
+    vi.stubEnv("VITE_UPLOAD_DRAFT_MAX_AGE_HOURS", "1");
+    await saveUploadDraft(
+      makeDraft({ updatedAt: Date.now() - 2 * 60 * 60 * 1000 }),
+    );
+
+    expect(getUploadDraftMaxAgeMs()).toBe(60 * 60 * 1000);
+    expect(await loadUploadDraft()).toBeNull();
+  });
+
+  it("purges only expired drafts", async () => {
+    await saveUploadDraft(makeDraft({ updatedAt: Date.now() - 8 * DAY_MS }));
+    expect(await purgeExpiredUploadDraft()).toBe(true);
+    expect(await loadUploadDraft()).toBeNull();
+
+    await saveUploadDraft(makeDraft({ updatedAt: Date.now() - 60 * 1000 }));
+    expect(await purgeExpiredUploadDraft()).toBe(false);
+    expect(await loadUploadDraft()).not.toBeNull();
+  });
+
+  it("does not purge when there is no draft", async () => {
+    expect(await purgeExpiredUploadDraft()).toBe(false);
   });
 });
