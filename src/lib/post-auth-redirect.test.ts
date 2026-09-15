@@ -4,6 +4,7 @@ import {
   setPostAuthRedirect,
   consumePostAuthRedirect,
   clearPostAuthRedirect,
+  hasAuthResponseInUrl,
 } from "./post-auth-redirect";
 
 describe("post-auth redirect", () => {
@@ -52,5 +53,43 @@ describe("post-auth redirect", () => {
     setPostAuthRedirect("/checkout");
     clearPostAuthRedirect();
     expect(sessionStorage.getItem(POST_AUTH_REDIRECT_KEY)).toBeNull();
+  });
+});
+
+describe("hasAuthResponseInUrl", () => {
+  it("detects implicit OAuth tokens in the hash", () => {
+    expect(
+      hasAuthResponseInUrl(
+        "https://tuusimago.com/#access_token=abc&token_type=bearer",
+      ),
+    ).toBe(true);
+  });
+
+  it("does not treat an OAuth error return as a redirect trigger", () => {
+    expect(
+      hasAuthResponseInUrl(
+        "https://tuusimago.com/#error_description=Something+failed",
+      ),
+    ).toBe(false);
+  });
+
+  it("does not treat a password-recovery return as a redirect trigger", () => {
+    expect(
+      hasAuthResponseInUrl(
+        "https://tuusimago.com/auth/update-password#access_token=abc&type=recovery",
+      ),
+    ).toBe(false);
+  });
+
+  it("ignores a normal page URL", () => {
+    expect(hasAuthResponseInUrl("https://tuusimago.com/prepare-painting")).toBe(
+      false,
+    );
+  });
+
+  it("ignores a coupon code query parameter", () => {
+    expect(hasAuthResponseInUrl("https://tuusimago.com/?code=SUMMER")).toBe(
+      false,
+    );
   });
 });

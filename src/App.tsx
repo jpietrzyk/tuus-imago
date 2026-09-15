@@ -83,6 +83,7 @@ import { ResetPasswordPage } from "./pages/auth-reset-password";
 import { UpdatePasswordPage } from "./pages/auth-update-password";
 import { AccountPage } from "./pages/account";
 import { ProtectedRoute } from "@/components/protected-route";
+import { AUTH_CALLBACK_PATH } from "@/lib/post-auth-redirect";
 import { setReferralCookie } from "@/lib/referral-cookie";
 import { useReferralTracking } from "@/lib/use-referral-tracking";
 import {
@@ -968,7 +969,7 @@ function StorefrontApp() {
           <Route path="/complaint" element={<ComplaintPage />} />
           <Route path="/panoramka" element={<PanoramkaPage />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path={AUTH_CALLBACK_PATH} element={<AuthCallbackPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
           <Route
             path="/auth/update-password"

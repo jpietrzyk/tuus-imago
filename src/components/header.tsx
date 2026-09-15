@@ -107,7 +107,7 @@ export function Header({ onOpenLegalMenu, promotionSlogan }: HeaderProps) {
                 variant="ghost"
                 className="text-xs sm:text-sm"
                 onClick={() =>
-                  navigate("/auth", {
+                  navigate(`/auth?from=${encodeURIComponent(location.pathname)}`, {
                     state: { from: { pathname: location.pathname } },
                   })
                 }

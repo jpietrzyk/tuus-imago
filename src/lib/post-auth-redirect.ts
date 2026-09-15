@@ -29,6 +29,31 @@ export function consumePostAuthRedirect(): string | null {
 }
 
 /**
+ * Resolved path of the OAuth/magic-link callback route. Shared so the redirect
+ * owner and the router definition cannot drift apart.
+ */
+export const AUTH_CALLBACK_PATH = "/auth/callback";
+
+/**
+ * Detects a successful implicit-flow OAuth response in a URL (tokens in the
+ * hash). Used to scope the global post-auth redirect to provider returns only,
+ * so an ordinary email/password sign-in can never be hijacked by a stale path.
+ *
+ * Error returns (`error_description`) and password-recovery returns
+ * (`type=recovery`) are intentionally excluded: the former must not latch the
+ * flag, and the latter is handled by the update-password page rather than
+ * redirected away.
+ */
+const IMPLICIT_OAUTH_RESPONSE_RE = /[#&]access_token=/;
+const RECOVERY_RESPONSE_RE = /[#&]type=recovery/;
+
+export function hasAuthResponseInUrl(url: string): boolean {
+  return (
+    IMPLICIT_OAUTH_RESPONSE_RE.test(url) && !RECOVERY_RESPONSE_RE.test(url)
+  );
+}
+
+/**
  * Only same-origin absolute paths are allowed. Rejects protocol-relative
  * (`//evil.com`) and backslash (`/\evil.com`) values, which browsers would
  * otherwise resolve to an external origin.
