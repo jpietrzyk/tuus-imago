@@ -1,23 +1,18 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
-import { POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
+import { consumePostAuthRedirect } from "@/lib/post-auth-redirect";
 import { Loader2 } from "lucide-react";
-
-function getPostAuthRedirectPath(): string {
-  const checkoutRedirect = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
-  if (checkoutRedirect) {
-    sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
-    return "/checkout";
-  }
-  return "/";
-}
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
     async function handleCallback() {
+      // Consume up-front so a failed callback cannot leave a stale redirect
+      // path behind for a later sign-in.
+      const redirectPath = consumePostAuthRedirect();
+
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
 
@@ -40,7 +35,7 @@ export function AuthCallbackPage() {
 
       window.history.replaceState({}, document.title, "/auth/callback");
 
-      navigate(getPostAuthRedirectPath(), { replace: true });
+      navigate(redirectPath ?? "/", { replace: true });
     }
 
     handleCallback();

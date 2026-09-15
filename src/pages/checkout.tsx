@@ -57,7 +57,11 @@ import {
   type PictureFrame,
   type PictureCanvas,
 } from "@/lib/orders-api";
-import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
+import {
+  setPostAuthRedirect,
+  clearPostAuthRedirect,
+} from "@/lib/post-auth-redirect";
 import {
   getReferralCookie,
   removeReferralCookie,
@@ -885,7 +889,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
         sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
         sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
-        sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+        clearPostAuthRedirect();
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
@@ -928,7 +932,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
         sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
         sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
-        sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+        clearPostAuthRedirect();
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
@@ -1261,7 +1265,7 @@ export function CheckoutPage() {
                         size="sm"
                         disabled={isSubmitting}
                         onClick={() => {
-                          sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
+                          setPostAuthRedirect("/checkout");
                           signInWithOAuth("google");
                         }}
                       >
@@ -1279,7 +1283,7 @@ export function CheckoutPage() {
                         size="sm"
                         disabled={isSubmitting}
                         onClick={() => {
-                          sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
+                          setPostAuthRedirect("/checkout");
                           signInWithOAuth("facebook");
                         }}
                       >

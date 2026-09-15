@@ -50,7 +50,13 @@ vi.mock("@/lib/auth-context", () => ({
     resetPassword: vi.fn(),
     updatePassword: vi.fn(),
   }),
+}));
+
+vi.mock("@/lib/post-auth-redirect", () => ({
   POST_AUTH_REDIRECT_KEY: "checkout-oauth-redirect",
+  setPostAuthRedirect: (path: string) =>
+    sessionStorage.setItem("checkout-oauth-redirect", path),
+  clearPostAuthRedirect: () => sessionStorage.removeItem("checkout-oauth-redirect"),
 }));
 
 vi.mock("@/lib/supabase-client", () => ({

@@ -7,7 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react";
 import { t } from "@/locales/i18n";
-import { useAuth, POST_AUTH_REDIRECT_KEY } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context";
+import {
+  setPostAuthRedirect,
+  clearPostAuthRedirect,
+} from "@/lib/post-auth-redirect";
 
 type AuthTab = "signin" | "signup";
 
@@ -289,8 +293,10 @@ export function AuthPage() {
                 className="w-full"
                 disabled={loading}
                 onClick={() => {
-                  if (from === "/checkout") {
-                    sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
+                  if (from && from !== "/auth") {
+                    setPostAuthRedirect(from);
+                  } else {
+                    clearPostAuthRedirect();
                   }
                   signInWithOAuth("google");
                 }}
@@ -321,8 +327,10 @@ export function AuthPage() {
                 className="w-full"
                 disabled={loading}
                 onClick={() => {
-                  if (from === "/checkout") {
-                    sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "true");
+                  if (from && from !== "/auth") {
+                    setPostAuthRedirect(from);
+                  } else {
+                    clearPostAuthRedirect();
                   }
                   signInWithOAuth("facebook");
                 }}
