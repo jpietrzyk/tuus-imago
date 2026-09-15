@@ -97,6 +97,13 @@ import {
 } from "./camera-capture-session";
 import { adjustCropForZoomPan, MAX_CROP_ZOOM } from "./use-crop-adjust";
 import { useMediaQuery } from "@/lib/use-media-query";
+import {
+  clearUploadDraft,
+  loadUploadDraft,
+  saveUploadDraft,
+  type UploadDraft,
+  type UploadDraftImage,
+} from "@/lib/upload-draft-store";
 
 export interface ImageTransformations {
   rotation: number;
@@ -504,6 +511,161 @@ function getInitialActiveIndexFromImages(
   return filledIndex >= 0 ? filledIndex : null;
 }
 
+const EMPTY_PREVIEW_EFFECTS: SelectedImageItem["previewEffects"] = {
+  brightness: 0,
+  contrast: 0,
+  grayscale: 0,
+  removeBackground: false,
+  enhance: false,
+  upscale: false,
+  restore: false,
+};
+
+/**
+ * True when the slot holds a real user file rather than the placeholder used
+ * for slots restored from an already-uploaded cloud asset.
+ */
+function hasLiveLocalFile(image: SelectedImageItem): boolean {
+  return image.file !== RESTORED_DUMMY_FILE && image.file.size > 0;
+}
+
+/**
+ * Reads the whole file into an ArrayBuffer. Prefers the modern Blob method and
+ * falls back to FileReader for environments that lack it.
+ */
+function readFileBytes(file: File): Promise<ArrayBuffer> {
+  if (typeof file.arrayBuffer === "function") {
+    return file.arrayBuffer();
+  }
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as ArrayBuffer);
+    reader.onerror = () =>
+      reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function toDraftImage(
+  image: SelectedImageItem,
+  slotIndex: number,
+): Promise<UploadDraftImage> {
+  const hasLocalFile = hasLiveLocalFile(image);
+  let bytes: ArrayBuffer | undefined;
+  if (hasLocalFile) {
+    try {
+      bytes = await readFileBytes(image.file);
+    } catch {
+      bytes = undefined;
+    }
+  }
+
+  return {
+    slotIndex,
+    bytes,
+    fileName: hasLocalFile ? image.file.name : undefined,
+    fileType: hasLocalFile ? image.file.type : undefined,
+    fileLastModified: hasLocalFile ? image.file.lastModified : undefined,
+    // Only needed for slots restored from a cloud asset (no local bytes).
+    previewUrl: hasLocalFile ? undefined : image.previewUrl,
+    metadata: image.metadata,
+    displayImageProportion: image.displayImageProportion,
+    previewEffects: { ...image.previewEffects },
+    previewTransform: image.previewTransform
+      ? { ...image.previewTransform }
+      : undefined,
+    previewCropAdjust: image.previewCropAdjust
+      ? { ...image.previewCropAdjust }
+      : undefined,
+    triptychWindowIndex: image.triptychWindowIndex,
+    uploadedAsset: image.uploadedAsset ? { ...image.uploadedAsset } : undefined,
+  };
+}
+
+async function buildUploadDraft(
+  images: Array<SelectedImageItem | null>,
+  activeImageIndex: number | null,
+  isTriptychSplit: boolean,
+  isTriptychLinked: boolean,
+  selectedPaintingSizeIndex: PaintingSizeIndex,
+): Promise<UploadDraft> {
+  const draftImages = await Promise.all(
+    images.flatMap((image, slotIndex) =>
+      image ? [toDraftImage(image, slotIndex)] : [],
+    ),
+  );
+
+  return {
+    updatedAt: Date.now(),
+    activeImageIndex,
+    isTriptychSplit,
+    isTriptychLinked,
+    selectedPaintingSizeIndex,
+    images: draftImages,
+  };
+}
+
+function fromDraftImage(draftImage: UploadDraftImage): SelectedImageItem | null {
+  const previewEffects = {
+    ...EMPTY_PREVIEW_EFFECTS,
+    ...draftImage.previewEffects,
+  };
+
+  if (draftImage.bytes && draftImage.fileType) {
+    const file = new File(
+      [draftImage.bytes],
+      draftImage.fileName ?? "photo.jpg",
+      {
+        type: draftImage.fileType,
+        lastModified: draftImage.fileLastModified,
+      },
+    );
+    return {
+      file,
+      previewUrl: URL.createObjectURL(file),
+      metadata: draftImage.metadata ?? null,
+      displayImageProportion: draftImage.displayImageProportion ?? "horizontal",
+      previewEffects,
+      previewTransform: draftImage.previewTransform,
+      previewCropAdjust: draftImage.previewCropAdjust,
+      triptychWindowIndex: draftImage.triptychWindowIndex,
+      uploadedAsset: draftImage.uploadedAsset,
+    };
+  }
+
+  // A slot with neither local bytes nor a cloud URL cannot be rendered; skip it
+  // rather than restoring a broken slot.
+  if (!draftImage.previewUrl) {
+    return null;
+  }
+
+  return {
+    file: RESTORED_DUMMY_FILE,
+    previewUrl: draftImage.previewUrl,
+    metadata: draftImage.metadata ?? null,
+    displayImageProportion: draftImage.displayImageProportion ?? "horizontal",
+    previewEffects,
+    previewTransform: draftImage.previewTransform,
+    previewCropAdjust: draftImage.previewCropAdjust,
+    triptychWindowIndex: draftImage.triptychWindowIndex,
+    uploadedAsset: draftImage.uploadedAsset,
+  };
+}
+
+function buildDraftSelectedImages(
+  draftImages: UploadDraftImage[],
+): Array<SelectedImageItem | null> {
+  const images = createEmptySelectionSlots();
+  for (const draftImage of draftImages) {
+    const index = draftImage.slotIndex;
+    if (index < 0 || index >= MAX_SELECTED_IMAGES) {
+      continue;
+    }
+    images[index] = fromDraftImage(draftImage);
+  }
+  return images;
+}
+
 export const ImageUploader = forwardRef<
   ImageUploaderHandle,
   ImageUploaderProps
@@ -547,6 +709,10 @@ export const ImageUploader = forwardRef<
       return getInitialActiveIndexFromImages(images);
     },
   );
+  // Whether the durable draft has been read once on mount. Persistence is
+  // gated on this so the empty initial render cannot clear a stored draft
+  // before it has been restored.
+  const [draftHydrated, setDraftHydrated] = useState(false);
   const [busyBackgroundUploadSlots, setBusyBackgroundUploadSlots] = useState<
     Set<number>
   >(() => new Set());
@@ -655,6 +821,99 @@ export const ImageUploader = forwardRef<
       : createEmptySelectionSlots(),
   );
   const backgroundUploadPromisesRef = useRef(new Map<number, Promise<void>>());
+
+  // Restore the durable in-progress draft (photo + crop + effects + transform)
+  // after a reload, an OAuth login redirect, or a mobile OS killing the tab.
+  // Applies only while the uploader is still empty, so a real selection made
+  // in the (very short) window before the async read resolved always wins.
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const draft = await loadUploadDraft();
+        if (cancelled || !draft || draft.images.length === 0) {
+          return;
+        }
+        if (
+          selectedImagesRef.current.some(
+            (image) => image && hasLiveLocalFile(image),
+          )
+        ) {
+          return;
+        }
+
+        const images = buildDraftSelectedImages(draft.images);
+        if (!images.some(Boolean)) {
+          return;
+        }
+
+        const nextActiveIndex =
+          draft.activeImageIndex ?? getInitialActiveIndexFromImages(images);
+        const restoredSizeIndex = (
+          Number.isInteger(draft.selectedPaintingSizeIndex) &&
+          draft.selectedPaintingSizeIndex >= 0 &&
+          draft.selectedPaintingSizeIndex <= 5
+            ? draft.selectedPaintingSizeIndex
+            : DEFAULT_PAINTING_SIZE_INDEX
+        ) as PaintingSizeIndex;
+        selectedImagesRef.current = images;
+        activeImageIndexRef.current = nextActiveIndex;
+        setSelectedImages(images);
+        setActiveImageIndex(nextActiveIndex);
+        setIsTriptychSplit(draft.isTriptychSplit);
+        setIsTriptychLinked(draft.isTriptychLinked);
+        setSelectedPaintingSize(restoredSizeIndex);
+        if (restoredSizeIndex !== DEFAULT_PAINTING_SIZE_INDEX) {
+          userSelectedPaintingSizeRef.current = true;
+        }
+      } catch {
+        // A failed restore must never block the uploader.
+      } finally {
+        if (!cancelled) {
+          setDraftHydrated(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist the draft whenever the editor state changes. Debounced because
+  // serializing the original image bytes is not free; cleared when the
+  // uploader is emptied (reset / all slots removed).
+  useEffect(() => {
+    if (!draftHydrated) {
+      return;
+    }
+
+    const hasImages = selectedImages.some(Boolean);
+    const timeout = window.setTimeout(() => {
+      if (!hasImages) {
+        void clearUploadDraft();
+        return;
+      }
+
+      void buildUploadDraft(
+        selectedImages,
+        activeImageIndex,
+        isTriptychSplit,
+        isTriptychLinked,
+        selectedPaintingSize,
+      ).then(saveUploadDraft);
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [
+    draftHydrated,
+    selectedImages,
+    activeImageIndex,
+    isTriptychSplit,
+    isTriptychLinked,
+    selectedPaintingSize,
+  ]);
 
   const selectedImageCount = selectedImages.filter(Boolean).length;
   const shouldShowUploaderDebugData = SHOW_UPLOADER_DEBUG && showDebugData;
