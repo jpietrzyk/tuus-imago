@@ -171,8 +171,8 @@ describe("App Component Routing", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: tr("landing.cta.button") }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: tr("landing.cta.button") }).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByRole("heading", { name: tr("landing.hero.title") }),
     ).toBeInTheDocument();
@@ -309,10 +309,10 @@ describe("App Component Routing", () => {
       </MemoryRouter>,
     );
 
-    // Upload button should be on how-it-works page
+    // Upload button should be on how-it-works page (top + mobile bottom repeat)
     expect(
-      screen.getByRole("button", { name: tr("landing.cta.button") }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: tr("landing.cta.button") }).length,
+    ).toBeGreaterThan(0);
   });
 
   it("should not render upload button on about page", () => {

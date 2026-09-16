@@ -5,6 +5,20 @@ import { ProcessTimeline } from "@/components/process-timeline";
 import { t } from "@/locales/i18n";
 
 export function LandingPage() {
+  const uploadCta = (
+    <div className="text-center">
+      <Link to="/upload">
+        <Button
+          size="lg"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
+        >
+          <Upload className="w-6 h-6 mr-3" />
+          {t("landing.cta.button")}
+        </Button>
+      </Link>
+    </div>
+  );
+
   return (
     <div className="h-full flex flex-col items-center justify-center gap-6 lg:gap-8 px-4 py-6">
       {/* Hero section */}
@@ -18,22 +32,15 @@ export function LandingPage() {
       </div>
 
       {/* CTA button */}
-      <div className="text-center">
-        <Link to="/upload">
-          <Button
-            size="lg"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 text-2xl px-16 py-6 font-semibold shadow-2xl"
-          >
-            <Upload className="w-6 h-6 mr-3" />
-            {t("landing.cta.button")}
-          </Button>
-        </Link>
-      </div>
+      {uploadCta}
 
       {/* Timeline section */}
       <div className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto">
         <ProcessTimeline />
       </div>
+
+      {/* Repeated CTA at the bottom (mobile only) */}
+      <div className="md:hidden">{uploadCta}</div>
     </div>
   );
 }
