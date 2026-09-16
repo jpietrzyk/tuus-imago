@@ -2592,4 +2592,182 @@ describe("admin-api handler", () => {
       );
     });
   });
+
+  describe("shipping_methods", () => {
+    function makeProfileAuth() {
+      const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
+      const eq = vi.fn().mockReturnValue({ single });
+      const select = vi.fn().mockReturnValue({ eq });
+      return { select, eq, single };
+    }
+
+    it("returns 400 for unknown resource", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeProfileAuth() });
+
+      const response = await handler({
+        httpMethod: "GET",
+        headers: { authorization: "Bearer valid-token" },
+        queryStringParameters: { resource: "shipping_methodz" },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid resource");
+    });
+
+    it("clears the default flag on other methods when setting a new default", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const unsetNeq = vi.fn().mockResolvedValue({ error: null });
+      const unsetEq = vi.fn().mockReturnValue({ neq: unsetNeq });
+      const unsetUpdate = vi.fn().mockReturnValue({ eq: unsetEq });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "ship-2", name: "DHL Express", is_default: true },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+
+      const { client } = setupClient({ profiles: makeProfileAuth() });
+      let shippingCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        if (table === "shipping_methods") {
+          shippingCallCount++;
+          if (shippingCallCount === 1) {
+            return { update: unsetUpdate } as never;
+          }
+          return { update } as never;
+        }
+        if (table === "profiles") {
+          return makeProfileAuth() as never;
+        }
+        throw new Error(`Unexpected table: ${table}`);
+      });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "shipping_methods",
+          id: "ship-2",
+          data: { is_default: true },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(unsetUpdate).toHaveBeenCalledWith({ is_default: false });
+      expect(unsetEq).toHaveBeenCalledWith("is_default", true);
+      expect(unsetNeq).toHaveBeenCalledWith("id", "ship-2");
+      expect(update).toHaveBeenCalledWith({ is_default: true });
+    });
+
+    it("clears is_default when deactivating a shipping method", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "ship-1", name: "InPost", is_active: false, is_default: false },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const eq = vi.fn().mockReturnValue({ select });
+      const update = vi.fn().mockReturnValue({ eq });
+
+      setupClient({ profiles: makeProfileAuth(), shipping_methods: { update } });
+
+      const response = await handler({
+        httpMethod: "PATCH",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "shipping_methods",
+          id: "ship-1",
+          data: { is_active: false },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(update).toHaveBeenCalledWith({ is_active: false, is_default: false });
+    });
+
+    it("creates a method and clears existing defaults when created as default", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const unsetEq = vi.fn().mockResolvedValue({ error: null });
+      const unsetUpdate = vi.fn().mockReturnValue({ eq: unsetEq });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "ship-new", name: "InPost", is_default: true },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const insert = vi.fn().mockReturnValue({ select });
+
+      const { client } = setupClient({ profiles: makeProfileAuth() });
+      let shippingCallCount = 0;
+      client.from.mockImplementation((table: string) => {
+        if (table === "shipping_methods") {
+          shippingCallCount++;
+          if (shippingCallCount === 1) {
+            return { update: unsetUpdate } as never;
+          }
+          return { insert } as never;
+        }
+        if (table === "profiles") {
+          return makeProfileAuth() as never;
+        }
+        throw new Error(`Unexpected table: ${table}`);
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "shipping_methods",
+          data: {
+            name: "InPost",
+            price: 12.5,
+            delivery_time: "1-2 dni",
+            free_shipping_threshold: 300,
+            is_active: true,
+            is_default: true,
+          },
+        }),
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(unsetUpdate).toHaveBeenCalledWith({ is_default: false });
+      expect(unsetEq).toHaveBeenCalledWith("is_default", true);
+      expect(insert).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "InPost", is_default: true }),
+      );
+    });
+
+    it("forces is_default false when creating an inactive shipping method", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+
+      const single = vi.fn().mockResolvedValue({
+        data: { id: "ship-new", name: "Draft", is_active: false, is_default: false },
+        error: null,
+      });
+      const select = vi.fn().mockReturnValue({ single });
+      const insert = vi.fn().mockReturnValue({ select });
+
+      setupClient({ profiles: makeProfileAuth(), shipping_methods: { insert } });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "shipping_methods",
+          data: { name: "Draft", price: 10, is_active: false, is_default: true },
+        }),
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(insert).toHaveBeenCalledWith(
+        expect.objectContaining({ is_active: false, is_default: false }),
+      );
+    });
+  });
 });
