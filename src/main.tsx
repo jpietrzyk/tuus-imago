@@ -10,8 +10,13 @@ import {
   forceRefreshIfOutdated,
 } from "@/lib/app-version";
 import { setupServiceWorkerUpdates } from "@/lib/service-worker-updates";
+import { purgeExpiredUploadDraft } from "@/lib/upload-draft-store";
 import "./index.css";
 import App from "./App.tsx";
+
+// Drop an abandoned upload draft once its retention window has elapsed, so
+// stored photos are not kept in the browser indefinitely.
+void purgeExpiredUploadDraft();
 
 registerSW({
   immediate: true,

@@ -39,10 +39,14 @@ vi.mock("@/locales/i18n", () => ({
   t: (key: string) => key,
 }));
 
-function renderWithRouter(initialPath = "/auth", state?: unknown) {
+function renderWithRouter(
+  initialPath = "/auth",
+  state?: unknown,
+  search = "",
+) {
   return render(
     <MemoryRouter
-      initialEntries={[{ pathname: initialPath, search: "", state }]}
+      initialEntries={[{ pathname: initialPath, search, state }]}
     >
       <AuthPage />
     </MemoryRouter>,
@@ -154,6 +158,21 @@ describe("AuthPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("stores the from path when a magic link is requested", async () => {
+    const user = userEvent.setup();
+    renderWithRouter("/auth", undefined, "?from=%2Fprepare-painting");
+
+    await user.type(screen.getByLabelText("auth.email"), "magic@test.com");
+    await user.click(screen.getByText("auth.sendMagicLink"));
+
+    await waitFor(() => {
+      expect(mockSignInWithOtp).toHaveBeenCalledWith("magic@test.com");
+    });
+    expect(sessionStorage.getItem("post-auth-redirect")).toBe(
+      "/prepare-painting",
+    );
+  });
+
   it("shows error when magic link clicked without email", async () => {
     const user = userEvent.setup();
     renderWithRouter();
@@ -243,6 +262,18 @@ describe("AuthPage", () => {
 
     expect(mockSignInWithOAuth).toHaveBeenCalledWith("google");
     expect(sessionStorage.getItem("post-auth-redirect")).toBe("/account");
+  });
+
+  it("reads the from path from the query parameter when router state is lost", async () => {
+    const user = userEvent.setup();
+    renderWithRouter("/auth", undefined, "?from=%2Fprepare-painting");
+
+    await user.click(screen.getByText("Google"));
+
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith("google");
+    expect(sessionStorage.getItem("post-auth-redirect")).toBe(
+      "/prepare-painting",
+    );
   });
 
   it("does not store a redirect when there is no from path", async () => {

@@ -406,11 +406,12 @@ export function UploadPage({
     onSuccessfulSlotsChange?.(successful);
   }, [uploadedSlots, onSuccessfulSlotsChange]);
 
-  useEffect(() => {
-    return () => {
-      onSuccessfulSlotsChange?.([]);
-    };
-  }, [onSuccessfulSlotsChange]);
+  // NOTE: successful slots are intentionally NOT cleared on unmount. Leaving
+  // the flow is not abandoning the work — the user may be navigating to
+  // /auth to log in, to /checkout to pay, or just away and back. Wiping the
+  // persisted draft here deleted the user's paintings the moment they opened
+  // the login page. The draft is cleared explicitly on reset and after a
+  // completed order instead.
 
   useEffect(() => {
     return () => {

@@ -2,12 +2,18 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
   type ReactNode,
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase-client";
+import {
+  AUTH_CALLBACK_PATH,
+  consumePostAuthRedirect,
+  hasAuthResponseInUrl,
+} from "@/lib/post-auth-redirect";
 
 export interface AuthContextValue {
   user: User | null;
@@ -29,6 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Captured synchronously on the first render, before the Supabase client
+  // consumes the tokens from the URL. Records that this page load is an OAuth
+  // provider return, which is what scopes the global redirect below.
+  const isOAuthReturnRef = useRef(
+    typeof window !== "undefined" && hasAuthResponseInUrl(window.location.href),
+  );
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
@@ -48,6 +61,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Single owner of the post-auth redirect. Runs whenever this page load is an
+  // OAuth return, regardless of the landing route (the provider/Supabase can
+  // send the user to the site root instead of `/auth/callback`). Scoped to
+  // successful OAuth returns so email/password sign-ins and password recovery
+  // are never redirected by a stale path.
+  useEffect(() => {
+    if (!session || !isOAuthReturnRef.current) {
+      return;
+    }
+    isOAuthReturnRef.current = false;
+
+    const pathname = window.location.pathname;
+    const stored = consumePostAuthRedirect();
+
+    // The callback route always moves the user off itself.
+    if (pathname === AUTH_CALLBACK_PATH) {
+      window.location.assign(stored ?? "/");
+      return;
+    }
+
+    // Elsewhere, only redirect when the user explicitly asked to return there.
+    if (stored && stored !== pathname) {
+      window.location.assign(stored);
+    }
+  }, [session]);
 
   const signUp = useCallback(
     async (email: string, password: string, fullName: string) => {
@@ -81,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}${AUTH_CALLBACK_PATH}`,
         },
       });
       if (error) throw error;
@@ -93,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}${AUTH_CALLBACK_PATH}`,
       },
     });
     if (error) throw error;

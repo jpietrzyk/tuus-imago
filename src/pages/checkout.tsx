@@ -66,6 +66,7 @@ import {
   getReferralCookie,
   removeReferralCookie,
 } from "@/lib/referral-cookie";
+import { clearPersistedUploadWork } from "@/lib/upload-draft-store";
 
 type UploadedCheckoutSlot = UploadedSlotResult & { transformedUrl: string };
 
@@ -890,6 +891,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
         sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
         clearPostAuthRedirect();
+        clearPersistedUploadWork();
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
@@ -933,6 +935,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(PENDING_ORDER_ID_STORAGE);
         sessionStorage.removeItem(CHECKOUT_SLOTS_STORAGE);
         clearPostAuthRedirect();
+        clearPersistedUploadWork();
         sessionStorage.removeItem(CHECKOUT_COUPON_CODE_STORAGE);
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
@@ -957,6 +960,7 @@ export function CheckoutPage() {
         orderId: returnOrderId,
         language: getCurrentLanguage(),
       });
+      clearPersistedUploadWork();
       window.location.href = p24Response.redirectUrl;
     } catch {
       setIsRedirecting(false);

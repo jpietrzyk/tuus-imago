@@ -69,12 +69,12 @@ describe("Header", () => {
     expect(screen.getByText("auth.signIn")).toBeInTheDocument();
   });
 
-  it("sign-in button navigates to /auth with current location in state", async () => {
+  it("sign-in button navigates to /auth with current location in state and query", async () => {
     mockAuthState = { user: null, loading: false };
     mockLocationState = { pathname: "/somewhere" };
     renderHeader();
     await userEvent.click(screen.getByText("auth.signIn"));
-    expect(mockNavigate).toHaveBeenCalledWith("/auth", {
+    expect(mockNavigate).toHaveBeenCalledWith("/auth?from=%2Fsomewhere", {
       state: { from: { pathname: "/somewhere" } },
     });
   });

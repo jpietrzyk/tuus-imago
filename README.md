@@ -73,6 +73,7 @@ All variables are documented in `.env.example`. Copy it to `.env` and fill in va
 | `VITE_CLOUDINARY_UPLOAD_PRESET` | Yes | Cloudinary signed upload preset name |
 | `VITE_CLOUDINARY_AI_TEMPLATE` | No | Cloudinary named transformation for AI preview (without `t_` prefix) |
 | `VITE_SHOW_UPLOADER_DEBUG` | No | Enable debug mode (`true`/`false`) |
+| `VITE_UPLOAD_DRAFT_MAX_AGE_HOURS` | No | Retention for an in-progress upload draft before it is discarded (default `168` = 7 days) |
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable (anon) key |
 

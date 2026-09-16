@@ -1,18 +1,25 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase-client";
-import { consumePostAuthRedirect } from "@/lib/post-auth-redirect";
+import {
+  AUTH_CALLBACK_PATH,
+  clearPostAuthRedirect,
+} from "@/lib/post-auth-redirect";
 import { Loader2 } from "lucide-react";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
+  // One-shot guard so the effect body runs once even when React StrictMode
+  // double-invokes effects in development.
+  const handledRef = useRef(false);
 
   useEffect(() => {
-    async function handleCallback() {
-      // Consume up-front so a failed callback cannot leave a stale redirect
-      // path behind for a later sign-in.
-      const redirectPath = consumePostAuthRedirect();
+    if (handledRef.current) {
+      return;
+    }
+    handledRef.current = true;
 
+    async function handleCallback() {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
 
@@ -29,13 +36,15 @@ export function AuthCallbackPage() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
+        // A failed callback must not leave a stale return path behind.
+        clearPostAuthRedirect();
         navigate("/auth?error=callback_failed", { replace: true });
         return;
       }
 
-      window.history.replaceState({}, document.title, "/auth/callback");
-
-      navigate(redirectPath ?? "/", { replace: true });
+      // On success the post-auth redirect is owned by AuthProvider, which
+      // handles it for every landing route (including this one).
+      window.history.replaceState({}, document.title, AUTH_CALLBACK_PATH);
     }
 
     handleCallback();

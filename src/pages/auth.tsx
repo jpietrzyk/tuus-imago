@@ -19,8 +19,13 @@ export function AuthPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const errorParam = searchParams.get("error");
-  const from = (location.state as { from?: { pathname: string } } | null)?.from
-    ?.pathname;
+  // The return path can arrive either as router state (normal header click) or
+  // as a `from` query parameter (survives a reload / new tab, where router
+  // state is lost).
+  const from =
+    (location.state as { from?: { pathname: string } } | null)?.from?.pathname ??
+    searchParams.get("from") ??
+    undefined;
 
   const [tab, setTab] = useState<AuthTab>("signin");
   const [email, setEmail] = useState("");
@@ -75,6 +80,11 @@ export function AuthPage() {
     setError(null);
     setLoading(true);
     try {
+      if (from && from !== "/auth") {
+        setPostAuthRedirect(from);
+      } else {
+        clearPostAuthRedirect();
+      }
       await signInWithOtp(email);
       setMessage("Check your email for a sign-in link.");
     } catch (err) {
