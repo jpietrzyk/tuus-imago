@@ -33,6 +33,7 @@ export interface CreateOrderRequest {
   couponCode?: string;
   refCode?: string;
   userId?: string;
+  shippingMethodId?: string | null;
 }
 
 export interface CreateOrderResponse {
@@ -89,6 +90,8 @@ export interface CustomerOrder {
   shipment_status: string;
   tracking_number: string | null;
   shipping_method: string;
+  shipping_method_id?: string | null;
+  shipping_delivery_time?: string | null;
   created_at: string;
   updated_at: string;
   items: CustomerOrderItem[];
@@ -181,6 +184,25 @@ export async function getAvailableCanvases(): Promise<PictureCanvas[]> {
   const response = await fetch("/.netlify/functions/available-canvases");
   const data = await parseJsonResponse<{ canvases: PictureCanvas[] }>(response);
   return Array.isArray(data.canvases) ? data.canvases : [];
+}
+
+export interface ShippingMethod {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  currency: string;
+  deliveryTime: string | null;
+  freeShippingThreshold: number | null;
+  isDefault: boolean;
+}
+
+export async function getAvailableShippingMethods(): Promise<ShippingMethod[]> {
+  const response = await fetch("/.netlify/functions/available-shipping");
+  const data = await parseJsonResponse<{ shippingMethods: ShippingMethod[] }>(
+    response,
+  );
+  return Array.isArray(data.shippingMethods) ? data.shippingMethods : [];
 }
 
 export interface DpiSettingsResponse {

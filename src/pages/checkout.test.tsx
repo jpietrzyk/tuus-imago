@@ -1625,5 +1625,217 @@ describe("CheckoutPage", () => {
       expect(payload.uploadedSlots[0].canvasId).toBe("canvas-1");
     });
   });
+
+  describe("shipping methods", () => {
+    const SHIPPING_RESPONSE = {
+      shippingMethods: [
+        {
+          id: "ship-1",
+          name: "InPost Paczkomat",
+          description: "Parcel locker",
+          price: 12.5,
+          currency: "PLN",
+          deliveryTime: "1-2 dni",
+          freeShippingThreshold: null as number | null,
+          isDefault: true,
+        },
+        {
+          id: "ship-2",
+          name: "DHL Express",
+          description: null,
+          price: 25,
+          currency: "PLN",
+          deliveryTime: null,
+          freeShippingThreshold: null as number | null,
+          isDefault: false,
+        },
+      ],
+    };
+
+    function createShippingFetchMock(response = SHIPPING_RESPONSE) {
+      return vi.fn((url: string) => {
+        if (url.includes("available-shipping")) {
+          return Promise.resolve(
+            new Response(JSON.stringify(response), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }),
+          );
+        }
+        return createFetchMock()(url);
+      });
+    }
+
+    const singleSlot: UploadedSlotResult = {
+      slotIndex: 0,
+      slotKey: "left",
+      transformations: {
+        brightness: 0,
+        contrast: 0,
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        grayscale: 0,
+        blur: 0,
+      },
+      transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+      publicId: "tuus-imago/left",
+      secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+    };
+
+    it("renders shipping options and preselects the default", async () => {
+      vi.stubGlobal("fetch", createShippingFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      const defaultOption = await waitFor(() =>
+        screen.getByRole("radio", { name: /InPost Paczkomat/ }),
+      );
+      expect(defaultOption).toBeChecked();
+
+      expect(
+        screen.getByRole("radio", { name: /DHL Express/ }),
+      ).not.toBeChecked();
+      expect(screen.getByText(tr("checkout.shipping.methodLabel"))).toBeInTheDocument();
+      expect(
+        screen.getByText(tr("checkout.shipping.summaryLabel")),
+      ).toBeInTheDocument();
+    });
+
+    it("adds the selected shipping cost to the total", async () => {
+      vi.stubGlobal("fetch", createShippingFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() =>
+        screen.getByRole("radio", { name: /InPost Paczkomat/ }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(
+              formatPrice(CANVAS_PRINT_UNIT_PRICE + 12.5),
+            ),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it("shows free shipping when the subtotal reaches the threshold", async () => {
+      vi.stubGlobal(
+        "fetch",
+        createShippingFetchMock({
+          shippingMethods: [
+            {
+              id: "ship-1",
+              name: "InPost Paczkomat",
+              description: null,
+              price: 12.5,
+              currency: "PLN",
+              deliveryTime: null,
+              freeShippingThreshold: 150,
+              isDefault: true,
+            },
+          ],
+        }),
+      );
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() =>
+        screen.getByRole("radio", { name: /InPost Paczkomat/ }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(tr("checkout.shipping.free")),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+
+      // Shipping is free, so the total is just the print price.
+      expect(
+        screen.getAllByText(
+          hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE)),
+        ).length,
+      ).toBeGreaterThan(0);
+    });
+
+    it("updates the total when switching method", async () => {
+      vi.stubGlobal("fetch", createShippingFetchMock());
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() =>
+        screen.getByRole("radio", { name: /InPost Paczkomat/ }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(
+              formatPrice(CANVAS_PRINT_UNIT_PRICE + 12.5),
+            ),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+
+      await userEvent.click(
+        screen.getByRole("radio", { name: /DHL Express/ }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(
+            hasExactTextContent(formatPrice(CANVAS_PRINT_UNIT_PRICE + 25)),
+          ).length,
+        ).toBeGreaterThan(0);
+      });
+    });
+
+    it("sends the selected shippingMethodId in the create-order payload", async () => {
+      const fetchMock = createShippingFetchMock();
+      vi.stubGlobal("fetch", fetchMock);
+      stubLocationHref();
+      seedDraft({});
+
+      renderWithSlots([singleSlot]);
+
+      await waitFor(() =>
+        screen.getByRole("radio", { name: /InPost Paczkomat/ }),
+      );
+
+      const termsCheckbox = document.getElementById(
+        "termsAccepted",
+      ) as HTMLInputElement;
+      const privacyCheckbox = document.getElementById(
+        "privacyAccepted",
+      ) as HTMLInputElement;
+      if (termsCheckbox) await userEvent.click(termsCheckbox);
+      if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+      await userEvent.click(
+        screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+      );
+
+      await waitFor(
+        () => {
+          expect(fetchMock).toHaveBeenCalledWith(
+            expect.stringContaining("create-order"),
+            expect.anything(),
+          );
+        },
+        { timeout: 3000 },
+      );
+
+      const orderCall = fetchMock.mock.calls.find(([url]: [string]) =>
+        url.includes("create-order"),
+      ) as unknown as [string, RequestInit];
+      const payload = JSON.parse(orderCall[1].body as string);
+      expect(payload.shippingMethodId).toBe("ship-1");
+    });
+  });
 });
 

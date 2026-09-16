@@ -449,6 +449,13 @@
       "noCanvas": "No canvas",
       "summaryLabel": "Canvases"
     },
+    "shipping": {
+      "methodLabel": "Shipping method",
+      "summaryLabel": "Shipping",
+      "free": "Free",
+      "freeFrom": "Free from {amount}",
+      "required": "Please select a shipping method."
+    },
     "promotionDiscount": "Promotion discount"
   },
   "complaint": {

@@ -52,6 +52,7 @@ type CreateOrderPayload = {
   couponCode?: string;
   refCode?: string;
   userId?: string;
+  shippingMethodId?: string;
 };
 
 const DEFAULT_SHIPPING_METHOD = "inpost_courier";
@@ -362,7 +363,65 @@ export const handler = async (event: NetlifyEvent) => {
     }
   }
 
-  const totalPrice = Math.max(subtotal - discountAmount - promotionDiscountAmount, 0);
+  const goodsTotal = Math.max(subtotal - discountAmount - promotionDiscountAmount, 0);
+
+  // Resolve the shipping method chosen at checkout. The price is always
+  // recomputed server-side so a client cannot change what is charged, and the
+  // free-shipping threshold is evaluated against the goods subtotal (before
+  // discounts), matching the coupon/promotion base.
+  let shippingMethodId: string | null = null;
+  let shippingMethodName = DEFAULT_SHIPPING_METHOD;
+  let shippingDeliveryTime: string | null = null;
+  let shippingCost = DEFAULT_SHIPPING_COST;
+  let shippingChosen = false;
+
+  const requestedShippingMethodId = parsedBody.shippingMethodId?.trim();
+  if (requestedShippingMethodId) {
+    const { data: shippingMethod, error: shippingError } = await supabase
+      .from("shipping_methods")
+      .select("id, name, price, delivery_time, free_shipping_threshold")
+      .eq("id", requestedShippingMethodId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (shippingError) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: "Could not validate selected shipping method.",
+        }),
+      };
+    }
+
+    if (!shippingMethod) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Selected shipping method is not available.",
+        }),
+      };
+    }
+
+    const basePrice = Number(shippingMethod.price) || 0;
+    const freeShippingThreshold =
+      shippingMethod.free_shipping_threshold === null
+        ? null
+        : Number(shippingMethod.free_shipping_threshold);
+
+    shippingChosen = true;
+    shippingMethodId = shippingMethod.id;
+    shippingMethodName = shippingMethod.name;
+    shippingDeliveryTime = shippingMethod.delivery_time;
+    shippingCost =
+      freeShippingThreshold !== null && subtotal >= freeShippingThreshold
+        ? 0
+        : basePrice;
+  }
+
+  // When the customer picked a method, shipping is part of what they pay
+  // (P24 charges orders.total_price). The legacy fallback keeps the historical
+  // behavior for API callers that do not send a method.
+  const totalPrice = shippingChosen ? goodsTotal + shippingCost : goodsTotal;
 
   const orderInsert: Record<string, unknown> = {
     customer_name: parsedBody.customer.name.trim(),
@@ -376,8 +435,8 @@ export const handler = async (event: NetlifyEvent) => {
     privacy_accepted: parsedBody.customer.privacyAccepted,
     marketing_consent: parsedBody.customer.marketingConsent,
     status: "pending_payment",
-    shipping_method: DEFAULT_SHIPPING_METHOD,
-    shipping_cost: DEFAULT_SHIPPING_COST,
+    shipping_method: shippingMethodName,
+    shipping_cost: shippingCost,
     shipment_status: DEFAULT_SHIPMENT_STATUS,
     currency: "PLN",
     idempotency_key: idempotencyKey,
@@ -387,6 +446,11 @@ export const handler = async (event: NetlifyEvent) => {
     discount_amount: discountAmount,
     promotion_discount_amount: promotionDiscountAmount,
   };
+
+  if (shippingMethodId) {
+    orderInsert.shipping_method_id = shippingMethodId;
+    orderInsert.shipping_delivery_time = shippingDeliveryTime;
+  }
 
   if (couponId) {
     orderInsert.coupon_id = couponId;

@@ -1088,4 +1088,202 @@ describe("create-order handler", () => {
       });
     });
   });
+
+  describe("shipping methods", () => {
+    function buildSlot(slotKey: "left" | "center" | "right", slotIndex: number) {
+      return {
+        slotIndex,
+        slotKey,
+        transformedUrl: `https://example.com/${slotKey}.jpg`,
+        publicId: `public-${slotKey}`,
+        secureUrl: `https://example.com/secure-${slotKey}.jpg`,
+        transformations: {
+          rotation: 0,
+          flipHorizontal: false,
+          flipVertical: false,
+          brightness: 0,
+          contrast: 0,
+          grayscale: 0,
+          blur: 0,
+        },
+        aiAdjustments: null,
+      };
+    }
+
+    function setupShippingMocks(
+      method: {
+        id: string;
+        name: string;
+        price: number | string;
+        delivery_time: string | null;
+        free_shipping_threshold: number | string | null;
+      } | null,
+    ) {
+      const { insert: orderInsert } = createInsertSelectSingle({
+        data: {
+          id: "order-ship-1",
+          order_number: "TI-2026-000300",
+          status: "pending_payment",
+        },
+        error: null,
+      });
+      const orderItemsInsert = vi.fn().mockResolvedValue({ error: null });
+      const historyInsert = vi.fn().mockResolvedValue({ error: null });
+
+      const maybeSingle = vi
+        .fn()
+        .mockResolvedValue({ data: method, error: null });
+      const eqSecond = vi.fn().mockReturnValue({ maybeSingle });
+      const eqFirst = vi.fn().mockReturnValue({ eq: eqSecond });
+      const select = vi.fn().mockReturnValue({ eq: eqFirst });
+
+      mockSupabaseClient(createClientMock, {
+        orders: {
+          insert: orderInsert,
+          select: vi.fn(),
+          delete: vi.fn(),
+        },
+        order_items: {
+          insert: orderItemsInsert,
+        },
+        order_status_history: {
+          insert: historyInsert,
+        },
+        promotions: createPromotionsNoActiveMock(),
+        shipping_methods: {
+          select,
+        },
+      });
+
+      return { orderInsert, orderItemsInsert, historyInsert };
+    }
+
+    it("charges the selected method and includes shipping in the total", async () => {
+      const mocks = setupShippingMocks({
+        id: "ship-1",
+        name: "InPost Paczkomat",
+        price: "12.50",
+        delivery_time: "1-2 dni",
+        free_shipping_threshold: null,
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "shipping-test-1",
+          uploadedSlots: [buildSlot("left", 0)],
+          shippingMethodId: "ship-1",
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shipping_method: "InPost Paczkomat",
+          shipping_method_id: "ship-1",
+          shipping_delivery_time: "1-2 dni",
+          shipping_cost: 12.5,
+          total_price: 212.5,
+        }),
+      );
+    });
+
+    it("makes shipping free once the subtotal reaches the threshold", async () => {
+      const mocks = setupShippingMocks({
+        id: "ship-1",
+        name: "InPost Paczkomat",
+        price: 12.5,
+        delivery_time: null,
+        free_shipping_threshold: 150,
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "shipping-test-2",
+          uploadedSlots: [buildSlot("left", 0)],
+          shippingMethodId: "ship-1",
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shipping_cost: 0,
+          total_price: 200,
+        }),
+      );
+    });
+
+    it("charges shipping when the subtotal is below the threshold", async () => {
+      const mocks = setupShippingMocks({
+        id: "ship-1",
+        name: "InPost Paczkomat",
+        price: 12.5,
+        delivery_time: null,
+        free_shipping_threshold: 300,
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "shipping-test-3",
+          uploadedSlots: [buildSlot("left", 0)],
+          shippingMethodId: "ship-1",
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shipping_cost: 12.5,
+          total_price: 212.5,
+        }),
+      );
+    });
+
+    it("rejects an unavailable shipping method with 400", async () => {
+      setupShippingMocks(null);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "shipping-test-4",
+          uploadedSlots: [buildSlot("left", 0)],
+          shippingMethodId: "ship-missing",
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response)).toEqual({
+        error: "Selected shipping method is not available.",
+      });
+    });
+
+    it("falls back to the legacy default when no method is sent", async () => {
+      const mocks = setupShippingMocks(null);
+
+      const response = await handler({
+        httpMethod: "POST",
+        body: JSON.stringify({
+          customer: buildCustomer(),
+          idempotencyKey: "shipping-test-5",
+          uploadedSlots: [buildSlot("left", 0)],
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(mocks.orderInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shipping_method: "inpost_courier",
+          shipping_cost: 14.99,
+          total_price: 200,
+        }),
+      );
+    });
+  });
 });
