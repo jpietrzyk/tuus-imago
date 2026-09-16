@@ -36,6 +36,7 @@ import {
   Tag,
   Frame as FrameIcon,
   Image as ImageIcon,
+  Truck,
 } from "lucide-react";
 import { t, getCurrentLanguage } from "@/locales/i18n";
 import { type UploadedSlotResult } from "@/components/image-uploader";
@@ -51,11 +52,13 @@ import {
   getActivePromotion,
   getAvailableFrames,
   getAvailableCanvases,
+  getAvailableShippingMethods,
   type ValidateCouponResponse,
   type CustomerAddress,
   type ActivePromotionResponse,
   type PictureFrame,
   type PictureCanvas,
+  type ShippingMethod,
 } from "@/lib/orders-api";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -93,6 +96,7 @@ const CHECKOUT_COUPON_CODE_STORAGE = "checkout-coupon-code";
 const CHECKOUT_COUPON_RESULT_STORAGE = "checkout-coupon-result";
 const CHECKOUT_FRAME_SELECTIONS_STORAGE = "checkout-frame-selections";
 const CHECKOUT_CANVAS_SELECTIONS_STORAGE = "checkout-canvas-selections";
+const CHECKOUT_SHIPPING_METHOD_STORAGE = "checkout-shipping-method";
 
 const NO_FRAME_VALUE = "__none__";
 const NO_CANVAS_VALUE = "__none__";
@@ -110,6 +114,26 @@ function generateOrderSubmissionKey(): string {
 }
 
 /**
+ * Shipping actually charged for a method: free once the goods subtotal reaches
+ * the method's threshold, otherwise its flat price.
+ */
+function resolveShippingCost(
+  method: ShippingMethod | undefined,
+  goodsSubtotal: number,
+): number {
+  if (!method) {
+    return 0;
+  }
+  if (
+    method.freeShippingThreshold != null &&
+    goodsSubtotal >= method.freeShippingThreshold
+  ) {
+    return 0;
+  }
+  return method.price;
+}
+
+/**
  * Renders the order summary section showing ordered images and total price
  */
 function OrderSummary({
@@ -124,6 +148,11 @@ function OrderSummary({
   availableCanvases,
   selectedCanvasBySlot,
   onCanvasChange,
+  shippingMethods,
+  selectedShippingMethodId,
+  onShippingMethodChange,
+  shippingCost,
+  shippingRequired,
 }: {
   uploadedSlots: UploadedCheckoutSlot[];
   totalPrice: number;
@@ -136,9 +165,16 @@ function OrderSummary({
   availableCanvases: PictureCanvas[];
   selectedCanvasBySlot: Record<string, string | null>;
   onCanvasChange: (slotKey: UploadedSlotResult["slotKey"], canvasId: string | null) => void;
+  shippingMethods: ShippingMethod[];
+  selectedShippingMethodId: string | null;
+  onShippingMethodChange: (methodId: string) => void;
+  shippingCost: number;
+  shippingRequired: boolean;
 }): React.ReactNode {
   const showFrameSelectors = uploadedSlots.length > 0 && availableFrames.length > 0;
   const showCanvasSelectors = uploadedSlots.length > 0 && availableCanvases.length > 0;
+  const hasShippingOptions = shippingMethods.length > 0;
+  const goodsTotal = totalPrice + shippingCost;
 
   return (
     <div className="space-y-4">
@@ -309,9 +345,86 @@ function OrderSummary({
             </span>
           </div>
         )}
+        {hasShippingOptions && (
+          <div className="border-t pt-3 mt-1 space-y-2">
+            <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Truck className="h-4 w-4 text-blue-600" />
+              {t("checkout.shipping.methodLabel")}
+            </p>
+            <div className="space-y-2">
+              {shippingMethods.map((method) => {
+                const isFree =
+                  method.freeShippingThreshold != null &&
+                  totalPrice >= method.freeShippingThreshold;
+                const isSelected = selectedShippingMethodId === method.id;
+                return (
+                  <label
+                    key={method.id}
+                    className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${
+                      isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="shippingMethod"
+                      value={method.id}
+                      checked={isSelected}
+                      onChange={() => onShippingMethodChange(method.id)}
+                      className="mt-1 h-4 w-4 text-blue-600"
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-sm font-medium text-gray-900">
+                        {method.name}
+                      </span>
+                      {method.deliveryTime && (
+                        <span className="block text-xs text-gray-500">
+                          {method.deliveryTime}
+                        </span>
+                      )}
+                      {method.description && (
+                        <span className="block text-xs text-gray-500">
+                          {method.description}
+                        </span>
+                      )}
+                      {!isFree && method.freeShippingThreshold != null && (
+                        <span className="block text-xs text-blue-600">
+                          {t("checkout.shipping.freeFrom", {
+                            amount: formatPrice(method.freeShippingThreshold),
+                          })}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 shrink-0">
+                      {isFree
+                        ? t("checkout.shipping.free")
+                        : formatPrice(method.price)}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+            {shippingRequired && (
+              <p className="text-xs text-red-600">
+                {t("checkout.shipping.required")}
+              </p>
+            )}
+          </div>
+        )}
+        {hasShippingOptions && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-700">
+              {t("checkout.shipping.summaryLabel")}
+            </span>
+            <span className="font-medium text-gray-900">
+              {shippingCost === 0
+                ? t("checkout.shipping.free")
+                : formatPrice(shippingCost)}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between text-lg font-bold border-t pt-2">
           <span className="text-gray-900">{t("checkout.total")}</span>
-          <span className="text-blue-600">{formatPrice(totalPrice)}</span>
+          <span className="text-blue-600">{formatPrice(goodsTotal)}</span>
         </div>
       </div>
     </div>
@@ -530,6 +643,59 @@ export function CheckoutPage() {
       : undefined;
     return sum + (canvas?.price ?? 0);
   }, 0);
+
+  const [availableShippingMethods, setAvailableShippingMethods] = useState<
+    ShippingMethod[]
+  >([]);
+  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<
+    string | null
+  >(() => {
+    try {
+      return sessionStorage.getItem(CHECKOUT_SHIPPING_METHOD_STORAGE);
+    } catch {
+      // ignore malformed data
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    getAvailableShippingMethods()
+      .then((methods) => {
+        if (cancelled) return;
+        setAvailableShippingMethods(methods);
+        const defaultMethodId = methods.find((m) => m.isDefault)?.id ?? null;
+        setSelectedShippingMethodId((prev) => {
+          if (prev && methods.some((m) => m.id === prev)) return prev;
+          return defaultMethodId ?? methods[0]?.id ?? null;
+        });
+      })
+      .catch(() => {
+        // Shipping selection degrades gracefully when the list is unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (selectedShippingMethodId) {
+        sessionStorage.setItem(
+          CHECKOUT_SHIPPING_METHOD_STORAGE,
+          selectedShippingMethodId,
+        );
+      } else {
+        sessionStorage.removeItem(CHECKOUT_SHIPPING_METHOD_STORAGE);
+      }
+    } catch {
+      // sessionStorage may be unavailable
+    }
+  }, [selectedShippingMethodId]);
+
+  const handleShippingMethodChange = (methodId: string) => {
+    setSelectedShippingMethodId(methodId);
+  };
 
   const totalPrice = itemCount * CANVAS_PRINT_UNIT_PRICE + framesTotal + canvasesTotal;
 
@@ -754,6 +920,14 @@ export function CheckoutPage() {
 
   const finalPrice = totalPrice - discountAmount - promotionDiscountAmount;
 
+  const selectedShippingMethod = selectedShippingMethodId
+    ? availableShippingMethods.find((m) => m.id === selectedShippingMethodId)
+    : undefined;
+  const shippingCost = resolveShippingCost(selectedShippingMethod, totalPrice);
+  const grandTotal = finalPrice + shippingCost;
+  const shippingRequired =
+    availableShippingMethods.length > 0 && !selectedShippingMethodId;
+
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -856,6 +1030,7 @@ export function CheckoutPage() {
     setTouched(newTouched);
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
+    if (shippingRequired) return;
 
     setIsSubmitting(true);
     try {
@@ -870,6 +1045,7 @@ export function CheckoutPage() {
         couponCode: couponResult?.valid ? couponResult.code : undefined,
         refCode: getReferralCookie() ?? undefined,
         userId: user?.id,
+        shippingMethodId: selectedShippingMethodId,
       });
 
       sessionStorage.setItem(
@@ -896,6 +1072,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
         sessionStorage.removeItem(CHECKOUT_CANVAS_SELECTIONS_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_SHIPPING_METHOD_STORAGE);
         removeReferralCookie();
         setSubmissionKey(generateOrderSubmissionKey());
 
@@ -940,6 +1117,7 @@ export function CheckoutPage() {
         sessionStorage.removeItem(CHECKOUT_COUPON_RESULT_STORAGE);
         sessionStorage.removeItem(CHECKOUT_FRAME_SELECTIONS_STORAGE);
         sessionStorage.removeItem(CHECKOUT_CANVAS_SELECTIONS_STORAGE);
+        sessionStorage.removeItem(CHECKOUT_SHIPPING_METHOD_STORAGE);
         removeReferralCookie();
         window.location.href = p24Response.redirectUrl;
     } catch (p24Err) {
@@ -1044,6 +1222,11 @@ export function CheckoutPage() {
             availableCanvases={availableCanvases}
             selectedCanvasBySlot={selectedCanvasBySlot}
             onCanvasChange={handleCanvasChange}
+            shippingMethods={availableShippingMethods}
+            selectedShippingMethodId={selectedShippingMethodId}
+            onShippingMethodChange={handleShippingMethodChange}
+            shippingCost={shippingCost}
+            shippingRequired={shippingRequired}
           />
 
           {/* Coupon Code */}
@@ -1120,9 +1303,19 @@ export function CheckoutPage() {
                   <span>-{formatPrice(promotionDiscountAmount)}</span>
                 </div>
               )}
+              {availableShippingMethods.length > 0 && (
+                <div className="flex justify-between text-gray-600">
+                  <span>{t("checkout.shipping.summaryLabel")}</span>
+                  <span>
+                    {shippingCost === 0
+                      ? t("checkout.shipping.free")
+                      : formatPrice(shippingCost)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-gray-900 border-t pt-1 mt-1">
                 <span>{t("checkout.total")}</span>
-                <span className="text-blue-600">{formatPrice(finalPrice)}</span>
+                <span className="text-blue-600">{formatPrice(grandTotal)}</span>
               </div>
             </div>
           )}
@@ -1722,7 +1915,7 @@ export function CheckoutPage() {
                       {t("checkout.total")}
                     </span>
                     <span className="text-lg font-bold text-blue-600">
-                      {formatPrice(totalPrice)}
+                      {formatPrice(grandTotal)}
                     </span>
                   </div>
                 </div>

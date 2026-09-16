@@ -386,6 +386,13 @@
       "noCanvas": "Bez płótna",
       "summaryLabel": "Płótna"
     },
+    "shipping": {
+      "methodLabel": "Metoda dostawy",
+      "summaryLabel": "Dostawa",
+      "free": "Darmowa",
+      "freeFrom": "Darmowa od {amount}",
+      "required": "Wybierz metodę dostawy."
+    },
     "promotionDiscount": "Rabat promocyjny"
   },
   "auth": {

@@ -435,6 +435,13 @@ export interface Translations {
       noCanvas: string;
       summaryLabel: string;
     };
+    shipping: {
+      methodLabel: string;
+      summaryLabel: string;
+      free: string;
+      freeFrom: string;
+      required: string;
+    };
   };
   complaint: {
     title: string;

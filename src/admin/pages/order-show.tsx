@@ -48,6 +48,7 @@ type OrderDetail = {
   shipping_country: string;
   shipping_method: string;
   shipping_cost: number;
+  shipping_delivery_time: string | null;
   total_price: number;
   unit_price: number;
   items_count: number;
@@ -543,6 +544,9 @@ export function OrderShowPage() {
               <p>
                 <span className="font-medium">Method:</span>{" "}
                 {order.shipping_method}
+                {order.shipping_delivery_time
+                  ? ` (${order.shipping_delivery_time})`
+                  : ""}
               </p>
               <p>
                 <span className="font-medium">Cost:</span>{" "}
