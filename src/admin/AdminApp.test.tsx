@@ -34,7 +34,7 @@ describe("AdminApp", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId("resource-count")).toHaveTextContent("12");
+    expect(screen.getByTestId("resource-count")).toHaveTextContent("13");
     expect(screen.getByTestId("resource-dashboard")).toBeInTheDocument();
     expect(screen.getByTestId("resource-orders")).toBeInTheDocument();
     expect(screen.getByTestId("resource-coupons")).toBeInTheDocument();
@@ -42,6 +42,7 @@ describe("AdminApp", () => {
     expect(screen.getByTestId("resource-partners")).toBeInTheDocument();
     expect(screen.getByTestId("resource-picture_frames")).toBeInTheDocument();
     expect(screen.getByTestId("resource-picture_canvases")).toBeInTheDocument();
+    expect(screen.getByTestId("resource-shipping_methods")).toBeInTheDocument();
     expect(screen.getByTestId("resource-customers")).toBeInTheDocument();
     expect(screen.getByTestId("resource-users")).toBeInTheDocument();
     expect(screen.getByTestId("resource-admins")).toBeInTheDocument();

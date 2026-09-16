@@ -50,8 +50,19 @@ const ALLOWED_RESOURCES = new Set([
   "promotions",
   "picture_frames",
   "picture_canvases",
+  "shipping_methods",
   "app_settings",
   "content_pages",
+]);
+
+/**
+ * Resources that support a single checkout default and can be deactivated.
+ * Creating/updating one as default clears the flag on its siblings.
+ */
+const DEFAULTABLE_RESOURCES = new Set([
+  "picture_frames",
+  "picture_canvases",
+  "shipping_methods",
 ]);
 
 const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
@@ -374,7 +385,7 @@ export const handler = async (event: NetlifyEvent) => {
           return jsonResponse(400, { error: "Missing data payload." });
         }
 
-        if (resource === "picture_frames" || resource === "picture_canvases") {
+        if (DEFAULTABLE_RESOURCES.has(resource)) {
           if (data.is_default === true && data.is_active !== false) {
             await adminClient
               .from(resource)
@@ -434,7 +445,7 @@ export const handler = async (event: NetlifyEvent) => {
             .eq("is_active", true);
         }
 
-        if (resource === "picture_frames" || resource === "picture_canvases") {
+        if (DEFAULTABLE_RESOURCES.has(resource)) {
           if (data.is_default === true) {
             await adminClient
               .from(resource)
@@ -444,8 +455,8 @@ export const handler = async (event: NetlifyEvent) => {
           }
 
           if (data.is_active === false) {
-            // Deactivating a frame/canvas makes it unavailable in checkout, so
-            // it can no longer be the checkout default.
+            // Deactivating a frame/canvas/shipping method makes it unavailable
+            // in checkout, so it can no longer be the checkout default.
             data = { ...data, is_default: false };
           }
         }

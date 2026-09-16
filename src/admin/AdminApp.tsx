@@ -62,6 +62,14 @@ export function AdminApp({ children }: { children: ReactNode }) {
           meta: { label: "Canvases" },
         },
         {
+          name: "shipping_methods",
+          list: "/admin/shipping",
+          create: "/admin/shipping/new",
+          edit: "/admin/shipping/:id/edit",
+          show: "/admin/shipping/:id",
+          meta: { label: "Shipping" },
+        },
+        {
           name: "customers",
           list: "/admin/customers",
           show: "/admin/customers/:email",

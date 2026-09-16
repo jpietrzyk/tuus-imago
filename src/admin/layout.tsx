@@ -16,6 +16,7 @@ import {
   FileText,
   Frame,
   Image as ImageIcon,
+  Truck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.canvases"),
     icon: <ImageIcon className="h-5 w-5" />,
     path: "/admin/canvases",
+  },
+  {
+    label: t("admin.navigation.shipping"),
+    icon: <Truck className="h-5 w-5" />,
+    path: "/admin/shipping",
   },
   {
     label: t("admin.navigation.referralCodes"),

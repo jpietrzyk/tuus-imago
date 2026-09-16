@@ -248,6 +248,30 @@ const CanvasEditPage = lazy(() =>
     default: m.CanvasEditPage,
   })),
 );
+
+const ShippingListPage = lazy(() =>
+  import("./admin/pages/shipping-list").then((m) => ({
+    default: m.ShippingListPage,
+  })),
+);
+
+const ShippingCreatePage = lazy(() =>
+  import("./admin/pages/shipping-create").then((m) => ({
+    default: m.ShippingCreatePage,
+  })),
+);
+
+const ShippingShowPage = lazy(() =>
+  import("./admin/pages/shipping-show").then((m) => ({
+    default: m.ShippingShowPage,
+  })),
+);
+
+const ShippingEditPage = lazy(() =>
+  import("./admin/pages/shipping-edit").then((m) => ({
+    default: m.ShippingEditPage,
+  })),
+);
 const SettingsPage = lazy(() =>
   import("./admin/pages/settings").then((m) => ({ default: m.SettingsPage })),
 );
@@ -536,6 +560,38 @@ export function App() {
               element={
                 <Suspense fallback={<AdminPageLoader />}>
                   <CanvasEditPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="shipping"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ShippingListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="shipping/new"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ShippingCreatePage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="shipping/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ShippingShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="shipping/:id/edit"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ShippingEditPage />
                 </Suspense>
               }
             />
