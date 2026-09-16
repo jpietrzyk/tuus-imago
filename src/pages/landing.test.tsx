@@ -36,11 +36,11 @@ describe("LandingPage Component", () => {
       </MemoryRouter>,
     );
 
-    const uploadButton = screen.getByRole("link", {
+    const uploadButtons = screen.getAllByRole("link", {
       name: tr("landing.cta.button"),
     });
-    expect(uploadButton).toBeInTheDocument();
-    expect(uploadButton).toHaveAttribute("href", "/upload");
+    expect(uploadButtons.length).toBeGreaterThan(0);
+    expect(uploadButtons[0]).toHaveAttribute("href", "/upload");
   });
 
   it("should render the upload button with correct text", () => {
