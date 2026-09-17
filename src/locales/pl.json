@@ -206,6 +206,7 @@
     "splitPrintabilityConfirmDescription": "Podział zmniejsza każdy panel do jednej trzeciej szerokości oryginału. Panele zachowają aktualną wysokość, jeśli będzie to wciąż możliwe do wydrukowania, w przeciwnym razie zmienią się na najbliższy mniejszy dostępny rozmiar. Czy chcesz kontynuować?",
     "splitBothConfirmDescription": "Ta operacja podzieli Twoje zdjęcie na trzy pionowe sekcje i zastąpi wszystkie aktualne sloty. Ponieważ każdy panel będzie miał jedną trzecią szerokości, wybrany rozmiar wydruku zachowa aktualną wysokość, jeśli będzie to wciąż możliwe do wydrukowania, w przeciwnym razie zmieni się na najbliższy mniejszy dostępny rozmiar. Tej operacji nie można cofnąć.",
     "triptychUnavailableNoSize": "Zdjęcie jest za małe: po podziale żaden rozmiar wydruku nie byłby dostępny.",
+    "triptychUnavailableSlotsInUse": "Tryptyk można utworzyć tylko wtedy, gdy używany jest jeden slot. Wyczyść pozostałe sloty, aby kontynuować.",
     "splitSlotsConfirmAction": "Podziel",
     "resetSlotsConfirmTitle": "Wyczyścić wszystkie wybrane sloty?",
     "resetSlotsConfirmDescription": "Ta operacja usunie wszystkie aktualnie wybrane zdjęcia z uploadera i nie można jej cofnąć.",

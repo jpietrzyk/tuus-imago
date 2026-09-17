@@ -175,22 +175,6 @@ const SHOW_UPLOADER_DEBUG = import.meta.env.VITE_SHOW_UPLOADER_DEBUG === "true";
 const createEmptySelectionSlots = (): Array<SelectedImageItem | null> =>
   Array.from({ length: MAX_SELECTED_IMAGES }, () => null);
 
-const resolveSplitConfirmVariant = (
-  hasOverwriteReason: boolean,
-  willSelectedSizeBeBlocked: boolean,
-): FooterToolsBarProps["splitConfirmVariant"] => {
-  if (hasOverwriteReason && willSelectedSizeBeBlocked) {
-    return "both";
-  }
-  if (willSelectedSizeBeBlocked) {
-    return "printability";
-  }
-  if (hasOverwriteReason) {
-    return "overwrite";
-  }
-  return "none";
-};
-
 export interface SelectedImageItem {
   file: File;
   previewUrl: string;
@@ -2968,17 +2952,21 @@ export const ImageUploader = forwardRef<
     return {
       onSplitImage: () => void handleSplitActiveImage(),
       canSplitImage:
-        !!activeImage && !(splitPrintability?.noSizePrintable ?? false),
-      shouldConfirmSplit:
-        selectedImageCount > 1 ||
-        (splitPrintability?.willSelectedSizeBeBlocked ?? false),
-      splitConfirmVariant: resolveSplitConfirmVariant(
-        selectedImageCount > 1,
-        splitPrintability?.willSelectedSizeBeBlocked ?? false,
-      ),
-      triptychDisabledReason: splitPrintability?.noSizePrintable
-        ? "noPrintableSize"
-        : undefined,
+        !!activeImage &&
+        selectedImageCount <= 1 &&
+        !(splitPrintability?.noSizePrintable ?? false),
+      shouldConfirmSplit: splitPrintability?.willSelectedSizeBeBlocked ?? false,
+      // Splitting requires exactly one filled slot, so the only confirmation
+      // left is the printability downgrade.
+      splitConfirmVariant: splitPrintability?.willSelectedSizeBeBlocked
+        ? "printability"
+        : "none",
+      triptychDisabledReason:
+        selectedImageCount > 1
+          ? "slotsInUse"
+          : splitPrintability?.noSizePrintable
+            ? "noPrintableSize"
+            : undefined,
       isTriptychLinked,
       canToggleTriptychLink:
         isTriptychSplit &&
