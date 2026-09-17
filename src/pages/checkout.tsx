@@ -153,6 +153,7 @@ function OrderSummary({
   onShippingMethodChange,
   shippingCost,
   shippingRequired,
+  readOnly = false,
 }: {
   uploadedSlots: UploadedCheckoutSlot[];
   totalPrice: number;
@@ -170,11 +171,19 @@ function OrderSummary({
   onShippingMethodChange: (methodId: string) => void;
   shippingCost: number;
   shippingRequired: boolean;
+  /** Renders a locked summary with plain values instead of form controls. */
+  readOnly?: boolean;
 }): React.ReactNode {
   const showFrameSelectors = uploadedSlots.length > 0 && availableFrames.length > 0;
   const showCanvasSelectors = uploadedSlots.length > 0 && availableCanvases.length > 0;
   const hasShippingOptions = shippingMethods.length > 0;
   const goodsTotal = totalPrice + shippingCost;
+  const selectedShippingMethod =
+    shippingMethods.find((method) => method.id === selectedShippingMethodId) ??
+    null;
+  const selectedShippingIsFree =
+    selectedShippingMethod?.freeShippingThreshold != null &&
+    totalPrice >= selectedShippingMethod.freeShippingThreshold;
 
   return (
     <div className="space-y-4">
@@ -191,6 +200,15 @@ function OrderSummary({
             {uploadedSlots.map((slot) => {
               const selectedFrameId = selectedFrameBySlot[slot.slotKey] ?? null;
               const selectedCanvasId = selectedCanvasBySlot[slot.slotKey] ?? null;
+              const selectedFrame = selectedFrameId
+                ? availableFrames.find((frame) => frame.id === selectedFrameId) ??
+                  null
+                : null;
+              const selectedCanvas = selectedCanvasId
+                ? availableCanvases.find(
+                    (canvas) => canvas.id === selectedCanvasId,
+                  ) ?? null
+                : null;
 
               return (
                 <div key={slot.slotKey} className="py-1">
@@ -218,97 +236,113 @@ function OrderSummary({
                   {showFrameSelectors && (
                     <div className="flex items-center gap-2 pl-14 pt-1">
                       <FrameIcon className="h-4 w-4 text-gray-400 shrink-0" />
-                      <Select
-                        value={selectedFrameId ?? NO_FRAME_VALUE}
-                        onValueChange={(value) =>
-                          onFrameChange(
-                            slot.slotKey,
-                            value === NO_FRAME_VALUE ? null : value,
-                          )
-                        }
-                      >
-                        <SelectTrigger
-                          className="h-8 w-full text-xs"
-                          aria-label={t("checkout.frames.selectLabel", {
-                            slot: slotLabel(slot.slotKey),
-                          })}
+                      {readOnly ? (
+                        <span className="text-xs text-gray-700">
+                          {selectedFrame
+                            ? `${selectedFrame.name} (+${formatPrice(selectedFrame.price)})`
+                            : t("checkout.frames.noFrame")}
+                        </span>
+                      ) : (
+                        <Select
+                          value={selectedFrameId ?? NO_FRAME_VALUE}
+                          onValueChange={(value) =>
+                            onFrameChange(
+                              slot.slotKey,
+                              value === NO_FRAME_VALUE ? null : value,
+                            )
+                          }
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={NO_FRAME_VALUE} className="text-xs">
-                            {t("checkout.frames.noFrame")}
-                          </SelectItem>
-                          {availableFrames.map((frame) => (
-                            <SelectItem
-                              key={frame.id}
-                              value={frame.id}
-                              className="text-xs"
-                            >
-                              <span className="inline-flex items-center gap-2">
-                                {frame.color && (
-                                  <span
-                                    aria-hidden="true"
-                                    className="inline-block h-3 w-3 rounded-sm border border-gray-300 shrink-0"
-                                    style={{ backgroundColor: frame.color }}
-                                  />
-                                )}
-                                <span>
-                                  {frame.name} (+{formatPrice(frame.price)})
-                                </span>
-                              </span>
+                          <SelectTrigger
+                            className="h-8 w-full text-xs"
+                            aria-label={t("checkout.frames.selectLabel", {
+                              slot: slotLabel(slot.slotKey),
+                            })}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_FRAME_VALUE} className="text-xs">
+                              {t("checkout.frames.noFrame")}
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            {availableFrames.map((frame) => (
+                              <SelectItem
+                                key={frame.id}
+                                value={frame.id}
+                                className="text-xs"
+                              >
+                                <span className="inline-flex items-center gap-2">
+                                  {frame.color && (
+                                    <span
+                                      aria-hidden="true"
+                                      className="inline-block h-3 w-3 rounded-sm border border-gray-300 shrink-0"
+                                      style={{ backgroundColor: frame.color }}
+                                    />
+                                  )}
+                                  <span>
+                                    {frame.name} (+{formatPrice(frame.price)})
+                                  </span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   )}
                   {showCanvasSelectors && (
                     <div className="flex items-center gap-2 pl-14 pt-1">
                       <ImageIcon className="h-4 w-4 text-gray-400 shrink-0" />
-                      <Select
-                        value={selectedCanvasId ?? NO_CANVAS_VALUE}
-                        onValueChange={(value) =>
-                          onCanvasChange(
-                            slot.slotKey,
-                            value === NO_CANVAS_VALUE ? null : value,
-                          )
-                        }
-                      >
-                        <SelectTrigger
-                          className="h-8 w-full text-xs"
-                          aria-label={t("checkout.canvases.selectLabel", {
-                            slot: slotLabel(slot.slotKey),
-                          })}
+                      {readOnly ? (
+                        <span className="text-xs text-gray-700">
+                          {selectedCanvas
+                            ? `${selectedCanvas.name} (+${formatPrice(selectedCanvas.price)})`
+                            : t("checkout.canvases.noCanvas")}
+                        </span>
+                      ) : (
+                        <Select
+                          value={selectedCanvasId ?? NO_CANVAS_VALUE}
+                          onValueChange={(value) =>
+                            onCanvasChange(
+                              slot.slotKey,
+                              value === NO_CANVAS_VALUE ? null : value,
+                            )
+                          }
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={NO_CANVAS_VALUE} className="text-xs">
-                            {t("checkout.canvases.noCanvas")}
-                          </SelectItem>
-                          {availableCanvases.map((canvas) => (
-                            <SelectItem
-                              key={canvas.id}
-                              value={canvas.id}
-                              className="text-xs"
-                            >
-                              <span className="inline-flex items-center gap-2">
-                                {canvas.color && (
-                                  <span
-                                    aria-hidden="true"
-                                    className="inline-block h-3 w-3 rounded-sm border border-gray-300 shrink-0"
-                                    style={{ backgroundColor: canvas.color }}
-                                  />
-                                )}
-                                <span>
-                                  {canvas.name} (+{formatPrice(canvas.price)})
-                                </span>
-                              </span>
+                          <SelectTrigger
+                            className="h-8 w-full text-xs"
+                            aria-label={t("checkout.canvases.selectLabel", {
+                              slot: slotLabel(slot.slotKey),
+                            })}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_CANVAS_VALUE} className="text-xs">
+                              {t("checkout.canvases.noCanvas")}
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            {availableCanvases.map((canvas) => (
+                              <SelectItem
+                                key={canvas.id}
+                                value={canvas.id}
+                                className="text-xs"
+                              >
+                                <span className="inline-flex items-center gap-2">
+                                  {canvas.color && (
+                                    <span
+                                      aria-hidden="true"
+                                      className="inline-block h-3 w-3 rounded-sm border border-gray-300 shrink-0"
+                                      style={{ backgroundColor: canvas.color }}
+                                    />
+                                  )}
+                                  <span>
+                                    {canvas.name} (+{formatPrice(canvas.price)})
+                                  </span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
                   )}
                 </div>
@@ -351,59 +385,81 @@ function OrderSummary({
               <Truck className="h-4 w-4 text-blue-600" />
               {t("checkout.shipping.methodLabel")}
             </p>
-            <div className="space-y-2">
-              {shippingMethods.map((method) => {
-                const isFree =
-                  method.freeShippingThreshold != null &&
-                  totalPrice >= method.freeShippingThreshold;
-                const isSelected = selectedShippingMethodId === method.id;
-                return (
-                  <label
-                    key={method.id}
-                    className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${
-                      isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="shippingMethod"
-                      value={method.id}
-                      checked={isSelected}
-                      onChange={() => onShippingMethodChange(method.id)}
-                      className="mt-1 h-4 w-4 text-blue-600"
-                    />
-                    <span className="flex-1 min-w-0">
-                      <span className="block text-sm font-medium text-gray-900">
-                        {method.name}
+            {readOnly ? (
+              selectedShippingMethod ? (
+                <div className="flex items-start gap-3 rounded-md border border-gray-200 p-3">
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-gray-900">
+                      {selectedShippingMethod.name}
+                    </span>
+                    {selectedShippingMethod.deliveryTime && (
+                      <span className="block text-xs text-gray-500">
+                        {selectedShippingMethod.deliveryTime}
                       </span>
-                      {method.deliveryTime && (
-                        <span className="block text-xs text-gray-500">
-                          {method.deliveryTime}
+                    )}
+                  </span>
+                  <span className="text-sm font-semibold text-gray-900 shrink-0">
+                    {selectedShippingIsFree
+                      ? t("checkout.shipping.free")
+                      : formatPrice(selectedShippingMethod.price)}
+                  </span>
+                </div>
+              ) : null
+            ) : (
+              <div className="space-y-2">
+                {shippingMethods.map((method) => {
+                  const isFree =
+                    method.freeShippingThreshold != null &&
+                    totalPrice >= method.freeShippingThreshold;
+                  const isSelected = selectedShippingMethodId === method.id;
+                  return (
+                    <label
+                      key={method.id}
+                      className={`flex items-start gap-3 rounded-md border p-3 cursor-pointer ${
+                        isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="shippingMethod"
+                        value={method.id}
+                        checked={isSelected}
+                        onChange={() => onShippingMethodChange(method.id)}
+                        className="mt-1 h-4 w-4 text-blue-600"
+                      />
+                      <span className="flex-1 min-w-0">
+                        <span className="block text-sm font-medium text-gray-900">
+                          {method.name}
                         </span>
-                      )}
-                      {method.description && (
-                        <span className="block text-xs text-gray-500">
-                          {method.description}
-                        </span>
-                      )}
-                      {!isFree && method.freeShippingThreshold != null && (
-                        <span className="block text-xs text-blue-600">
-                          {t("checkout.shipping.freeFrom", {
-                            amount: formatPrice(method.freeShippingThreshold),
-                          })}
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900 shrink-0">
-                      {isFree
-                        ? t("checkout.shipping.free")
-                        : formatPrice(method.price)}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-            {shippingRequired && (
+                        {method.deliveryTime && (
+                          <span className="block text-xs text-gray-500">
+                            {method.deliveryTime}
+                          </span>
+                        )}
+                        {method.description && (
+                          <span className="block text-xs text-gray-500">
+                            {method.description}
+                          </span>
+                        )}
+                        {!isFree && method.freeShippingThreshold != null && (
+                          <span className="block text-xs text-blue-600">
+                            {t("checkout.shipping.freeFrom", {
+                              amount: formatPrice(method.freeShippingThreshold),
+                            })}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900 shrink-0">
+                        {isFree
+                          ? t("checkout.shipping.free")
+                          : formatPrice(method.price)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            {shippingRequired && !readOnly && (
               <p className="text-xs text-red-600">
                 {t("checkout.shipping.required")}
               </p>
@@ -1153,6 +1209,10 @@ export function CheckoutPage() {
   const fieldError = (field: keyof FormData) =>
     touched[field] && errors[field] ? errors[field] : undefined;
 
+  // Once the payment is confirmed the order is final: hide every control that
+  // could mutate it and show a locked summary instead.
+  const isPaymentPaid = paymentReturn && paymentPollStatus === "paid";
+
   useEffect(() => {
     try {
       sessionStorage.setItem(ORDER_SUBMISSION_KEY_STORAGE, submissionKey);
@@ -1164,13 +1224,15 @@ export function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <button
-          type="button"
-          onClick={() => setIsBackDialogOpen(true)}
-          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
-        >
-          {t("checkout.backToUpload")}
-        </button>
+        {!isPaymentPaid && (
+          <button
+            type="button"
+            onClick={() => setIsBackDialogOpen(true)}
+            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors mb-6"
+          >
+            {t("checkout.backToUpload")}
+          </button>
+        )}
 
         <AlertDialog open={isBackDialogOpen} onOpenChange={setIsBackDialogOpen}>
           <AlertDialogContent>
@@ -1227,65 +1289,68 @@ export function CheckoutPage() {
             onShippingMethodChange={handleShippingMethodChange}
             shippingCost={shippingCost}
             shippingRequired={shippingRequired}
+            readOnly={isPaymentPaid}
           />
 
           {/* Coupon Code */}
-          <div className="mt-4 max-w-2xl mx-auto">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Tag className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {t("checkout.coupon.title")}
-                </span>
-              </div>
-              {couponResult?.valid ? (
-                <div className="flex items-center justify-between bg-green-50 rounded-md p-2 border border-green-200">
-                  <span className="text-sm text-green-700">
-                    {t("checkout.coupon.applied")}: <strong>{couponResult.code}</strong>
-                    {couponResult.discountType === "percentage"
-                      ? ` (-${couponResult.discountValue}%)`
-                      : ` (-${formatPrice(couponResult.discountAmount ?? 0)})`}
+          {!isPaymentPaid && (
+            <div className="mt-4 max-w-2xl mx-auto">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {t("checkout.coupon.title")}
                   </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRemoveCoupon}
-                    className="text-red-500 hover:text-red-700 text-xs"
-                  >
-                    {t("checkout.coupon.remove")}
-                  </Button>
                 </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Input
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder={t("checkout.coupon.placeholder")}
-                    className="flex-1"
-                    disabled={couponLoading}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleApplyCoupon}
-                    disabled={couponLoading || !couponCode.trim()}
-                  >
-                    {couponLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      t("checkout.coupon.apply")
-                    )}
-                  </Button>
-                </div>
-              )}
-              {couponError && (
-                <p className="text-xs text-red-600 mt-1">{couponError}</p>
-              )}
+                {couponResult?.valid ? (
+                  <div className="flex items-center justify-between bg-green-50 rounded-md p-2 border border-green-200">
+                    <span className="text-sm text-green-700">
+                      {t("checkout.coupon.applied")}: <strong>{couponResult.code}</strong>
+                      {couponResult.discountType === "percentage"
+                        ? ` (-${couponResult.discountValue}%)`
+                        : ` (-${formatPrice(couponResult.discountAmount ?? 0)})`}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveCoupon}
+                      className="text-red-500 hover:text-red-700 text-xs"
+                    >
+                      {t("checkout.coupon.remove")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      placeholder={t("checkout.coupon.placeholder")}
+                      className="flex-1"
+                      disabled={couponLoading}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                    >
+                      {couponLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        t("checkout.coupon.apply")
+                      )}
+                    </Button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="text-xs text-red-600 mt-1">{couponError}</p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
-          {(discountAmount > 0 || promotionDiscountAmount > 0) && (
+          {!isPaymentPaid && (discountAmount > 0 || promotionDiscountAmount > 0) && (
             <div className="max-w-2xl mx-auto mt-2 bg-blue-50 rounded-lg p-3 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>{t("checkout.coupon.subtotal")}</span>
@@ -1322,9 +1387,11 @@ export function CheckoutPage() {
         </div>
 
         <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle>{t("checkout.shippingInformation")}</CardTitle>
-          </CardHeader>
+          {!isPaymentPaid && (
+            <CardHeader>
+              <CardTitle>{t("checkout.shippingInformation")}</CardTitle>
+            </CardHeader>
+          )}
           <CardContent>
             {paymentReturn ? (
               <div className="py-12 text-center">

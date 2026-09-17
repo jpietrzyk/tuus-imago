@@ -848,6 +848,145 @@ describe("CheckoutPage", () => {
     ).toBeNull();
   });
 
+  it("locks the order summary after a successful payment", async () => {
+    const paidSlot: UploadedSlotResult = {
+      slotIndex: 0,
+      slotKey: "left",
+      transformations: {
+        brightness: 0,
+        contrast: 0,
+        rotation: 0,
+        flipHorizontal: false,
+        flipVertical: false,
+        grayscale: 0,
+        blur: 0,
+      },
+      transformedUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+      publicId: "tuus-imago/left",
+      secureUrl: "https://res.cloudinary.com/test/image/upload/left.jpg",
+    };
+    sessionStorage.setItem(
+      "checkout-uploaded-slots",
+      JSON.stringify([paidSlot]),
+    );
+
+    const jsonResponse = (body: unknown) =>
+      Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        if (url.includes("order-status")) {
+          return jsonResponse({
+            orderId: "order-123",
+            orderNumber: "TI-2026-000123",
+            status: "paid",
+            payment_status: "verified",
+          });
+        }
+        if (url.includes("available-frames")) {
+          return jsonResponse({
+            frames: [
+              {
+                id: "frame-1",
+                name: "Oak Classic",
+                description: null,
+                price: 49,
+                currency: "PLN",
+                imageUrl: null,
+                color: "#c8a165",
+                material: "oak",
+                isDefault: true,
+              },
+            ],
+          });
+        }
+        if (url.includes("available-canvases")) {
+          return jsonResponse({
+            canvases: [
+              {
+                id: "canvas-1",
+                name: "Matte Canvas",
+                description: null,
+                price: 25,
+                currency: "PLN",
+                imageUrl: null,
+                color: null,
+                material: "cotton",
+                isDefault: true,
+              },
+            ],
+          });
+        }
+        if (url.includes("available-shipping")) {
+          return jsonResponse({
+            shippingMethods: [
+              {
+                id: "ship-1",
+                name: "Courier",
+                description: "Next day",
+                price: 15,
+                currency: "PLN",
+                deliveryTime: "1-2 days",
+                freeShippingThreshold: null,
+                isDefault: true,
+              },
+            ],
+          });
+        }
+        return createFetchMock()(url);
+      }),
+    );
+
+    renderWithSearchParams(
+      "?payment=return&orderId=order-123&orderNumber=TI-2026-000123",
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(tr("checkout.paymentSuccessTitle")),
+      ).toBeInTheDocument();
+    });
+
+    // The summary keeps showing the ordered configuration as plain values.
+    await waitFor(() => {
+      expect(screen.getByText(/Oak Classic/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Matte Canvas/)).toBeInTheDocument();
+    expect(screen.getByText(/Courier/)).toBeInTheDocument();
+
+    // …but nothing on the paid screen can mutate the placed order.
+    expect(
+      screen.queryByRole("combobox", {
+        name: tr("checkout.frames.selectLabel", {
+          slot: tr("upload.slotLeft"),
+        }),
+      }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("combobox", {
+        name: tr("checkout.canvases.selectLabel", {
+          slot: tr("upload.slotLeft"),
+        }),
+      }),
+    ).toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.queryByPlaceholderText(tr("checkout.coupon.placeholder")),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: tr("checkout.backToUpload") }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: tr("checkout.backToHomeButton") }),
+    ).toBeInTheDocument();
+  });
+
   it("stores pending order ID in sessionStorage when P24 session fails", async () => {
     vi.stubGlobal(
       "fetch",
