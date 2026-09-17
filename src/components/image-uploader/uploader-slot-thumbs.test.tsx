@@ -44,14 +44,14 @@ describe("UploaderSlotSwitcher thumbnail strip", () => {
     expect(screen.getByTestId("uploader-slot-thumb-dot-2")).toBeInTheDocument();
   });
 
-  it("renders an image for filled slots and an add icon for empty slots", () => {
+  it("renders a preview surface for filled slots and an add icon for empty slots", () => {
     renderThumbs();
 
     expect(
-      screen.getByTestId("uploader-slot-thumb-dot-0").querySelector("img"),
+      screen.getByTestId("uploader-slot-thumb-dot-0").querySelector("canvas"),
     ).not.toBeNull();
     expect(
-      screen.getByTestId("uploader-slot-thumb-dot-2").querySelector("img"),
+      screen.getByTestId("uploader-slot-thumb-dot-2").querySelector("canvas"),
     ).toBeNull();
     expect(
       screen.getByTestId("uploader-slot-thumb-dot-2").querySelector("svg"),
@@ -69,8 +69,8 @@ describe("UploaderSlotSwitcher thumbnail strip", () => {
       expect.objectContaining({ previewUrl: "blob:a" }),
     );
     expect(
-      screen.getByTestId("uploader-slot-thumb-dot-0").querySelector("img"),
-    ).toHaveAttribute("src", "transformed:blob:a");
+      screen.getByTestId("uploader-slot-thumb-canvas-0"),
+    ).toBeInTheDocument();
   });
 
   it("marks the active slot tile as aria-pressed and highlights it", () => {

@@ -117,7 +117,7 @@ let mockImageFailPattern: RegExp | null = null;
 
 function slotDotHasImage(index: number): boolean {
   const dot = screen.getByTestId(`uploader-slot-dot-${index}`);
-  return !!dot.querySelector("img");
+  return !!dot.querySelector("img, canvas");
 }
 
 describe("ImageUploader", () => {

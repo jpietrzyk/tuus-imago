@@ -142,8 +142,7 @@ describe("useSliderSwipeNavigation", () => {
     expect(area.style.transform).toContain("translateX(-28px)");
   });
 
-  it("clears drag feedback when the touch is cancelled", () => {
-    const onSwipeLeft = vi.fn();
+  it("clears drag feedback when the touch is cancelled", () => {    const onSwipeLeft = vi.fn();
     const onSwipeRight = vi.fn();
 
     render(
@@ -165,3 +164,147 @@ describe("useSliderSwipeNavigation", () => {
     expect(onSwipeRight).not.toHaveBeenCalled();
   });
 });
+
+function NeighbourHarness({
+  onSwipeLeft,
+  onSwipeRight,
+}: {
+  onSwipeLeft: () => void;
+  onSwipeRight: () => void;
+}) {
+  const {
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
+    onTouchCancel,
+    frameRef,
+    contentRef,
+    incomingPrevRef,
+    incomingNextRef,
+  } = useSliderSwipeNavigation({
+    onSwipeLeft,
+    onSwipeRight,
+    animationDurationMs: 0,
+  });
+
+  return (
+    <div
+      ref={frameRef}
+      data-testid="swipe-frame"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+    >
+      <div ref={contentRef} data-testid="swipe-content" />
+      <div ref={incomingPrevRef} data-testid="incoming-prev" />
+      <div ref={incomingNextRef} data-testid="incoming-next" />
+    </div>
+  );
+}
+
+describe("useSliderSwipeNavigation neighbour previews", () => {
+  const mockFrameWidth = (element: HTMLElement, width: number) => {
+    element.getBoundingClientRect = () =>
+      ({
+        width,
+        height: 100,
+        top: 0,
+        left: 0,
+        right: width,
+        bottom: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }) as DOMRect;
+  };
+
+  it("keeps the frame still while the content and neighbour slide", () => {
+    const onSwipeLeft = vi.fn();
+    const onSwipeRight = vi.fn();
+
+    render(
+      <NeighbourHarness
+        onSwipeLeft={onSwipeLeft}
+        onSwipeRight={onSwipeRight}
+      />,
+    );
+
+    const frame = screen.getByTestId("swipe-frame");
+    mockFrameWidth(frame, 100);
+
+    fireEvent.touchStart(frame, { touches: [{ clientX: 200, clientY: 100 }] });
+    fireEvent.touchMove(frame, { touches: [{ clientX: 150, clientY: 100 }] });
+
+    // The frame is only the clip window now: it must not move itself.
+    expect(frame.style.transform).toBe("");
+
+    const content = screen.getByTestId("swipe-content");
+    expect(content.style.transform).toContain("translateX(-50px)");
+
+    // Swiping left pulls the next neighbour in from the right edge (one frame
+    // width away at rest) while the previous one stays parked off the left.
+    expect(screen.getByTestId("incoming-next").style.transform).toBe(
+      "translateX(50px)",
+    );
+    expect(screen.getByTestId("incoming-prev").style.transform).toBe(
+      "translateX(-150px)",
+    );
+  });
+
+  it("parks the neighbour previews again when the touch is cancelled", () => {
+    const onSwipeLeft = vi.fn();
+    const onSwipeRight = vi.fn();
+
+    render(
+      <NeighbourHarness
+        onSwipeLeft={onSwipeLeft}
+        onSwipeRight={onSwipeRight}
+      />,
+    );
+
+    const frame = screen.getByTestId("swipe-frame");
+    mockFrameWidth(frame, 100);
+
+    fireEvent.touchStart(frame, { touches: [{ clientX: 200, clientY: 100 }] });
+    fireEvent.touchMove(frame, { touches: [{ clientX: 150, clientY: 100 }] });
+    fireEvent.touchCancel(frame);
+
+    expect(screen.getByTestId("incoming-next").style.transform).toBe(
+      "translateX(100%)",
+    );
+    expect(screen.getByTestId("incoming-prev").style.transform).toBe(
+      "translateX(-100%)",
+    );
+    expect(screen.getByTestId("swipe-content").style.transform).toBe("");
+  });
+
+  it("snaps the slid-in neighbour into place after a successful swipe", async () => {
+    const onSwipeLeft = vi.fn();
+    const onSwipeRight = vi.fn();
+
+    render(
+      <NeighbourHarness
+        onSwipeLeft={onSwipeLeft}
+        onSwipeRight={onSwipeRight}
+      />,
+    );
+
+    const frame = screen.getByTestId("swipe-frame");
+    mockFrameWidth(frame, 100);
+
+    fireEvent.touchStart(frame, { touches: [{ clientX: 200, clientY: 100 }] });
+    fireEvent.touchMove(frame, { touches: [{ clientX: 100, clientY: 100 }] });
+    fireEvent.touchEnd(frame, { changedTouches: [{ clientX: 100, clientY: 100 }] });
+
+    await waitFor(() => expect(onSwipeLeft).toHaveBeenCalledTimes(1));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("swipe-content").style.transform).toBe("");
+      expect(screen.getByTestId("incoming-next").style.transform).toBe(
+        "translateX(100%)",
+      );
+    });
+  });
+});
+
