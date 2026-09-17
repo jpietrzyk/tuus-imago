@@ -114,7 +114,7 @@
   "landing": {
     "hero": {
       "title": "Paint your photo",
-      "description": "We print your AI-enhanced images on professional canvas with a beautiful beveled edge. Real looking paintings crafted with museum-quality materials for lasting beauty."
+      "description": "We print your AI-enhanced photos on real canvas with a beautiful beveled edge. Your painting on the wall looks hand-painted — true to life and built to last."
     },
     "cta": {
       "button": "Upload Your Photo"
@@ -141,7 +141,7 @@
       },
       "result": {
         "title": "Get your painting",
-        "description": "Receive your museum-quality painting at your door"
+        "description": "Receive your canvas and hang your painting on the wall"
       }
     }
   },

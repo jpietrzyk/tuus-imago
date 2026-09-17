@@ -51,7 +51,7 @@
   "landing": {
     "hero": {
       "title": "Ozdób swoje zdjęcie",
-      "description": "Drukujemy Twoje ulepszone zdjęcia AI na profesjonalnym płótnie z piękną fazowaną krawędzią. Prawdziwe obrazy wykonane z materiałów muzealnej jakości dla trwałego piękna."
+      "description": "Drukujemy Twoje ulepszone zdjęcia AI na prawdziwym płótnie z piękną fazowaną krawędzią. Twój obraz na ścianie wygląda jak ręcznie malowany — realistyczny i trwały."
     },
     "cta": {
       "button": "Prześlij swoje zdjęcie"
@@ -78,7 +78,7 @@
       },
       "result": {
         "title": "Odbierz obraz",
-        "description": "Odbierz swój obraz muzealnej jakości pod drzwiami"
+        "description": "Odbierz swoje płótno i powieś obraz na ścianie"
       }
     }
   },
