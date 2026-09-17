@@ -325,6 +325,26 @@ describe("FooterToolsBar", () => {
     );
   });
 
+  it("shows unavailable tooltip when split disabled because another slot is in use", () => {
+    const props = createProps();
+    render(
+      <FooterToolsBar
+        {...props}
+        canSplitImage={false}
+        triptychDisabledReason="slotsInUse"
+      />,
+    );
+
+    const splitButton = screen.getByRole("button", {
+      name: t("uploader.splitSelectedImage"),
+    });
+    expect(splitButton).toBeDisabled();
+    expect(splitButton).toHaveAttribute(
+      "title",
+      t("uploader.triptychUnavailableSlotsInUse"),
+    );
+  });
+
   it("disables kadr button when canToggleZoomPan is false", () => {
     const props = createProps();
     render(<FooterToolsBar {...props} canToggleZoomPan={false} />);

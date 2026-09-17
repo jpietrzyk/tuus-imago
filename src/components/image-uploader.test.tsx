@@ -593,7 +593,7 @@ describe("ImageUploader", () => {
     }
   });
 
-  it("asks for confirmation before splitting when other slots are already used", async () => {
+  it("locks triptych split while another slot is already used", async () => {
     mockImageWidth = 7800;
     mockImageHeight = 1800;
     const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
@@ -641,28 +641,25 @@ describe("ImageUploader", () => {
       const splitButton = screen.getByRole("button", {
         name: tr("uploader.splitSelectedImage"),
       });
-      expect(screen.getByRole("img", { name: "Preview" })).toBeInTheDocument();
-      fireEvent.click(splitButton);
-
-      expect(
-        screen.getByText(tr("uploader.splitSlotsConfirmTitle")),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(tr("uploader.splitSlotsConfirmDescription")),
-      ).toBeInTheDocument();
-      expect(splitImageIntoVerticalThirdFiles).not.toHaveBeenCalled();
-
-      fireEvent.click(
-        screen.getByRole("button", {
-          name: tr("uploader.splitSlotsConfirmAction"),
-        }),
+      expect(splitButton).toBeDisabled();
+      expect(splitButton).toHaveAttribute(
+        "title",
+        tr("uploader.triptychUnavailableSlotsInUse"),
       );
 
-      await waitFor(() => {
-        // The split populated the previously-empty left slot (wide panoramas
-        // use the seamless window model, so no third-file split is invoked).
-        expect(slotDotHasImage(0)).toBe(true);
-      });
+      // The locked button must neither open the confirmation dialog nor start
+      // a split while other slots are in use.
+      fireEvent.click(splitButton);
+      expect(
+        screen.queryByText(tr("uploader.splitSlotsConfirmTitle")),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", {
+          name: tr("uploader.splitSlotsConfirmAction"),
+        }),
+      ).not.toBeInTheDocument();
+      expect(splitImageIntoVerticalThirdFiles).not.toHaveBeenCalled();
+      expect(slotDotHasImage(0)).toBe(false);
     }
   });
 

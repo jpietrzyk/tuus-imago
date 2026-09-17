@@ -45,7 +45,7 @@ export interface FooterToolsBarProps {
   canSplitImage: boolean;
   shouldConfirmSplit: boolean;
   splitConfirmVariant: "overwrite" | "printability" | "both" | "none";
-  triptychDisabledReason?: "noPrintableSize";
+  triptychDisabledReason?: "noPrintableSize" | "slotsInUse";
 
   isTriptychLinked?: boolean;
   canToggleTriptychLink?: boolean;
@@ -114,6 +114,14 @@ export function FooterToolsBar({
   paintingShape,
   sizesDpiInfo,
 }: FooterToolsBarProps) {
+  const triptychDisabledTitle = !canSplitImage
+    ? triptychDisabledReason === "noPrintableSize"
+      ? t("uploader.triptychUnavailableNoSize")
+      : triptychDisabledReason === "slotsInUse"
+        ? t("uploader.triptychUnavailableSlotsInUse")
+        : undefined
+    : undefined;
+
   const triptychButton = (
     <Button
       type="button"
@@ -121,11 +129,7 @@ export function FooterToolsBar({
       onClick={shouldConfirmSplit ? undefined : onSplitImage}
       disabled={!canSplitImage}
       aria-label={t("uploader.splitSelectedImage")}
-      title={
-        !canSplitImage && triptychDisabledReason === "noPrintableSize"
-          ? t("uploader.triptychUnavailableNoSize")
-          : undefined
-      }
+      title={triptychDisabledTitle}
       className={TOOLBAR_BUTTON_CLASS}
     >
       <IconTriptych style={ICON_STYLE} />
