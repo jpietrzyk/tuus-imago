@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IconAdd from "@/components/icons/icon-add.svg?react";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
+import SlotPreviewCanvas from "./slot-preview-canvas";
 import { t } from "@/locales/i18n";
 import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import { type ImageDisplayProportion, getFrameAspectRatioClassName, getTargetAspectRatio } from "./image-proportion-calculator";
@@ -37,6 +38,17 @@ interface PaintingPreviewSlotProps {
   cropMaxZoom?: number;
   onMaxZoomReached?: () => void;
   swipeFrameRef?: React.RefObject<HTMLDivElement | null>;
+  swipeContentRef?: React.RefObject<HTMLDivElement | null>;
+  swipeIncomingPrevRef?: React.RefObject<HTMLDivElement | null>;
+  swipeIncomingNextRef?: React.RefObject<HTMLDivElement | null>;
+  /** Preview URL of the previous filled slot, shown while swiping right. */
+  prevSlotPreviewUrl?: string | null;
+  /** Preview URL of the next filled slot, shown while swiping left. */
+  nextSlotPreviewUrl?: string | null;
+  /** Previous filled slot, rendered cropped while swiping right. */
+  prevSlotImage?: SelectedImageItem | null;
+  /** Next filled slot, rendered cropped while swiping left. */
+  nextSlotImage?: SelectedImageItem | null;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchMove?: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
@@ -74,6 +86,13 @@ export default function PaintingPreviewSlot({
   cropMaxZoom,
   onMaxZoomReached,
   swipeFrameRef,
+  swipeContentRef,
+  swipeIncomingPrevRef,
+  swipeIncomingNextRef,
+  prevSlotPreviewUrl = null,
+  nextSlotPreviewUrl = null,
+  prevSlotImage = null,
+  nextSlotImage = null,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -300,35 +319,77 @@ export default function PaintingPreviewSlot({
         onTouchEnd={canSwipe ? onTouchEnd : undefined}
         onTouchCancel={canSwipe ? onTouchCancel : undefined}
       >
-        {selectedImage ? (
-          <canvas
-            ref={previewCanvasRef}
-            role="img"
-            aria-label="Preview"
-            data-testid="selected-image-preview-canvas"
-            className="w-full h-full"
-            style={{
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              ...(isEditMode ? { cursor: "grab" } : {}),
-            }}
-          />
-        ) : (
-          <button
-            type="button"
-            data-testid="selected-image-preview-placeholder"
-            className="flex h-full w-full cursor-pointer items-center justify-center border border-dashed border-primary/70 bg-primary/5 px-4 text-center transition-colors duration-150 hover:border-primary hover:bg-primary/10"
-            aria-label={
-              typeof activeSlotIndex === "number"
-                ? t("uploader.addImageSlot", {
-                    index: String(activeSlotIndex + 1),
-                  })
-                : t("upload.clickToUpload")
-            }
-            onClick={onSelectEmptySlot}
+        <div
+          ref={swipeContentRef}
+          data-testid="selected-image-content"
+          className="absolute inset-0 flex items-center justify-center will-change-transform motion-reduce:transform-none motion-reduce:transition-none"
+        >
+          {selectedImage ? (
+            <canvas
+              ref={previewCanvasRef}
+              role="img"
+              aria-label="Preview"
+              data-testid="selected-image-preview-canvas"
+              className="w-full h-full"
+              style={{
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                ...(isEditMode ? { cursor: "grab" } : {}),
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              data-testid="selected-image-preview-placeholder"
+              className="flex h-full w-full cursor-pointer items-center justify-center border border-dashed border-primary/70 bg-primary/5 px-4 text-center transition-colors duration-150 hover:border-primary hover:bg-primary/10"
+              aria-label={
+                typeof activeSlotIndex === "number"
+                  ? t("uploader.addImageSlot", {
+                      index: String(activeSlotIndex + 1),
+                    })
+                  : t("upload.clickToUpload")
+              }
+              onClick={onSelectEmptySlot}
+            >
+              <IconAdd className="h-8 w-8 text-muted-foreground/50" />
+            </button>
+          )}
+        </div>
+
+        {canSwipe && prevSlotImage && prevSlotPreviewUrl && (
+          <div
+            ref={swipeIncomingPrevRef}
+            aria-hidden="true"
+            data-testid="uploader-swipe-incoming-prev"
+            className="pointer-events-none absolute inset-0"
+            style={{ transform: "translateX(-100%)" }}
           >
-            <IconAdd className="h-8 w-8 text-muted-foreground/50" />
-          </button>
+            <SlotPreviewCanvas
+              image={prevSlotImage}
+              previewUrl={prevSlotPreviewUrl}
+              useCloudPreview={!!prevSlotImage.uploadedAsset}
+              className="h-full w-full object-cover"
+              debugLabel="swipe-incoming-prev"
+            />
+          </div>
+        )}
+
+        {canSwipe && nextSlotImage && nextSlotPreviewUrl && (
+          <div
+            ref={swipeIncomingNextRef}
+            aria-hidden="true"
+            data-testid="uploader-swipe-incoming-next"
+            className="pointer-events-none absolute inset-0"
+            style={{ transform: "translateX(100%)" }}
+          >
+            <SlotPreviewCanvas
+              image={nextSlotImage}
+              previewUrl={nextSlotPreviewUrl}
+              useCloudPreview={!!nextSlotImage.uploadedAsset}
+              className="h-full w-full object-cover"
+              debugLabel="swipe-incoming-next"
+            />
+          </div>
         )}
 
         <UploadProgressOverlay

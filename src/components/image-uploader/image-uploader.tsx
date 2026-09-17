@@ -2486,6 +2486,9 @@ export const ImageUploader = forwardRef<
     onTouchEnd: handleSliderTouchEnd,
     onTouchCancel: handleSliderTouchCancel,
     frameRef: sliderSwipeFrameRef,
+    contentRef: sliderSwipeContentRef,
+    incomingPrevRef: sliderSwipeIncomingPrevRef,
+    incomingNextRef: sliderSwipeIncomingNextRef,
   } = useSliderSwipeNavigation({
     onSwipeLeft: moveToNextImage,
     onSwipeRight: moveToPreviousImage,
@@ -3284,6 +3287,9 @@ export const ImageUploader = forwardRef<
               onCropAdjustChange={updateActiveImageCropAdjust}
               cropMaxZoom={maxCropZoom}
               swipeFrameRef={sliderSwipeFrameRef}
+              swipeContentRef={sliderSwipeContentRef}
+              swipeIncomingPrevRef={sliderSwipeIncomingPrevRef}
+              swipeIncomingNextRef={sliderSwipeIncomingNextRef}
               onTouchStart={handleSliderTouchStart}
               onTouchMove={handleSliderTouchMove}
               onTouchEnd={handleSliderTouchEnd}

@@ -7,6 +7,20 @@ interface UseSliderSwipeNavigationParams {
   canSwipeRight?: boolean;
   swipeThreshold?: number;
   animationDurationMs?: number;
+  /**
+   * Layer that receives the drag translate/scale/opacity. Defaults to the
+   * measured frame so the hook still works standalone (tests, simple hosts);
+   * the slider passes an inner content layer instead, which keeps the frame
+   * itself stationary as the clip window.
+   */
+  contentRef?: React.RefObject<HTMLDivElement | null>;
+  /**
+   * Neighbour preview layers parked one frame-width past each edge. While the
+   * user drags they slide towards the frame, so the adjacent slot visibly
+   * comes into the scene instead of only the current picture moving.
+   */
+  incomingPrevRef?: React.RefObject<HTMLDivElement | null>;
+  incomingNextRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 type SwipeAxis = "horizontal" | "vertical" | null;
@@ -14,7 +28,7 @@ type SwipeAxis = "horizontal" | "vertical" | null;
 const AXIS_LOCK_PX = 8;
 const EDGE_RESISTANCE = 0.35;
 const ENTER_OFFSET_RATIO = 0.4;
-const OPACITY_FADE = 0.45;
+const OPACITY_FADE = 0.25;
 
 const prefersReducedMotion = (() => {
   let query: MediaQueryList | null = null;
@@ -30,12 +44,13 @@ const prefersReducedMotion = (() => {
 })();
 
 /**
- * Drives the single-preview slider gesture. The active frame follows the
- * finger while the user drags horizontally, then either snaps back or slides
- * out and swaps to the neighbouring filled slot.
+ * Drives the single-preview slider gesture. The active content follows the
+ * finger while the user drags horizontally and the neighbouring preview slides
+ * in from the matching edge, then either snaps back or swaps to the
+ * neighbouring filled slot.
  *
- * All movement is written straight to the frame element so dragging never
- * re-renders the (large) uploader tree.
+ * All movement is written straight to the DOM so dragging never re-renders the
+ * (large) uploader tree.
  */
 export const useSliderSwipeNavigation = ({
   onSwipeLeft,
@@ -44,8 +59,14 @@ export const useSliderSwipeNavigation = ({
   canSwipeRight = true,
   swipeThreshold = 48,
   animationDurationMs = 200,
+  contentRef,
+  incomingPrevRef,
+  incomingNextRef,
 }: UseSliderSwipeNavigationParams) => {
   const frameRef = useRef<HTMLDivElement | null>(null);
+  const internalContentRef = useRef<HTMLDivElement | null>(null);
+  const internalIncomingPrevRef = useRef<HTMLDivElement | null>(null);
+  const internalIncomingNextRef = useRef<HTMLDivElement | null>(null);
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const axisRef = useRef<SwipeAxis>(null);
@@ -53,6 +74,15 @@ export const useSliderSwipeNavigation = ({
   const isAnimatingRef = useRef(false);
   const settleTimeoutRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
+
+  const resolvedContentRef = contentRef ?? internalContentRef;
+  const resolvedIncomingPrevRef = incomingPrevRef ?? internalIncomingPrevRef;
+  const resolvedIncomingNextRef = incomingNextRef ?? internalIncomingNextRef;
+
+  const getContentElement = useCallback(
+    () => resolvedContentRef.current ?? frameRef.current,
+    [resolvedContentRef],
+  );
 
   const clearTimers = useCallback(() => {
     if (settleTimeoutRef.current !== null) {
@@ -66,21 +96,32 @@ export const useSliderSwipeNavigation = ({
   }, []);
 
   const clearFrameStyles = useCallback(() => {
-    const el = frameRef.current;
-    if (!el) return;
-    el.style.removeProperty("transform");
-    el.style.removeProperty("transition");
-    el.style.removeProperty("opacity");
-  }, []);
+    const el = getContentElement();
+    if (el) {
+      el.style.removeProperty("transform");
+      el.style.removeProperty("transition");
+      el.style.removeProperty("opacity");
+    }
+    const prev = resolvedIncomingPrevRef.current;
+    if (prev) {
+      prev.style.transition = "none";
+      prev.style.transform = "translateX(-100%)";
+    }
+    const next = resolvedIncomingNextRef.current;
+    if (next) {
+      next.style.transition = "none";
+      next.style.transform = "translateX(100%)";
+    }
+  }, [getContentElement, resolvedIncomingNextRef, resolvedIncomingPrevRef]);
 
   const getEffectiveDuration = useCallback(
     () => (prefersReducedMotion() ? 0 : animationDurationMs),
     [animationDurationMs],
   );
 
-  const applyFrame = useCallback(
+  const applyContent = useCallback(
     (offsetX: number, transition: boolean, opacity: number) => {
-      const el = frameRef.current;
+      const el = getContentElement();
       if (!el) return;
 
       const duration = getEffectiveDuration();
@@ -90,14 +131,50 @@ export const useSliderSwipeNavigation = ({
 
       const width = frameWidthRef.current || 1;
       const progress = Math.min(1, Math.abs(offsetX) / width);
-      const scale = 1 - progress * 0.04;
+      // With neighbour previews the content tiles against the incoming panel,
+      // so it must keep its full size or a seam shows at the shared edge.
+      const hasIncomingPreview = Boolean(
+        resolvedIncomingPrevRef.current || resolvedIncomingNextRef.current,
+      );
+      const scale = hasIncomingPreview ? 1 : 1 - progress * 0.04;
       el.style.transform =
         offsetX === 0 && scale === 1
           ? ""
           : `translateX(${offsetX}px) scale(${scale})`;
       el.style.opacity = String(opacity);
     },
-    [getEffectiveDuration],
+    [
+      getContentElement,
+      getEffectiveDuration,
+      resolvedIncomingNextRef,
+      resolvedIncomingPrevRef,
+    ],
+  );
+
+  // The incoming neighbours tile against the moving content: at rest they sit
+  // exactly one frame-width outside each edge and slide to 0 as the content
+  // travels a full width, so the pair reads as one continuous filmstrip.
+  const applyIncoming = useCallback(
+    (offsetX: number, transition: boolean) => {
+      const width = frameWidthRef.current || 1;
+      const duration = getEffectiveDuration();
+      const transitionValue = transition
+        ? `transform ${duration}ms cubic-bezier(0.22, 0.61, 0.36, 1)`
+        : "none";
+
+      const prev = resolvedIncomingPrevRef.current;
+      if (prev) {
+        prev.style.transition = transitionValue;
+        prev.style.transform = `translateX(${Math.min(0, offsetX - width)}px)`;
+      }
+
+      const next = resolvedIncomingNextRef.current;
+      if (next) {
+        next.style.transition = transitionValue;
+        next.style.transform = `translateX(${Math.max(0, offsetX + width)}px)`;
+      }
+    },
+    [getEffectiveDuration, resolvedIncomingNextRef, resolvedIncomingPrevRef],
   );
 
   useEffect(() => clearTimers, [clearTimers]);
@@ -154,21 +231,29 @@ export const useSliderSwipeNavigation = ({
 
       const width = frameWidthRef.current || 1;
       const progress = Math.min(1, Math.abs(offset) / width);
-      applyFrame(offset, false, 1 - progress * OPACITY_FADE);
+      applyContent(offset, false, 1 - progress * OPACITY_FADE);
+      applyIncoming(offset, false);
     },
-    [applyFrame, canSwipeLeft, canSwipeRight],
+    [applyContent, applyIncoming, canSwipeLeft, canSwipeRight],
   );
 
   const settleBack = useCallback(() => {
     isAnimatingRef.current = true;
     clearTimers();
-    applyFrame(0, true, 1);
+    applyContent(0, true, 1);
+    applyIncoming(0, true);
     settleTimeoutRef.current = window.setTimeout(() => {
       clearFrameStyles();
       isAnimatingRef.current = false;
       settleTimeoutRef.current = null;
     }, getEffectiveDuration());
-  }, [applyFrame, clearFrameStyles, clearTimers, getEffectiveDuration]);
+  }, [
+    applyContent,
+    applyIncoming,
+    clearFrameStyles,
+    clearTimers,
+    getEffectiveDuration,
+  ]);
 
   const animateNavigation = useCallback(
     (direction: 1 | -1, navigate: () => void) => {
@@ -179,19 +264,38 @@ export const useSliderSwipeNavigation = ({
 
       isAnimatingRef.current = true;
       clearTimers();
-      applyFrame(direction * width, true, 0);
+      applyContent(direction * width, true, 0);
+      applyIncoming(direction * width, true);
 
       settleTimeoutRef.current = window.setTimeout(() => {
         settleTimeoutRef.current = null;
         navigate();
 
-        // Park the incoming image just off the opposite edge without a
-        // transition, then let it slide into place.
-        applyFrame(-direction * width * ENTER_OFFSET_RATIO, false, 0);
+        const hasIncomingLayer = Boolean(
+          resolvedIncomingPrevRef.current || resolvedIncomingNextRef.current,
+        );
+
+        if (hasIncomingLayer) {
+          // The neighbour preview already slid to the frame centre, so after
+          // the active slot swaps the same picture is in place. Snap the
+          // layers back without a transition to avoid a second slide-in.
+          rafRef.current = window.requestAnimationFrame(() => {
+            rafRef.current = window.requestAnimationFrame(() => {
+              rafRef.current = null;
+              clearFrameStyles();
+              isAnimatingRef.current = false;
+            });
+          });
+          return;
+        }
+
+        // No neighbour preview: park the incoming image just off the opposite
+        // edge without a transition, then let it slide into place.
+        applyContent(-direction * width * ENTER_OFFSET_RATIO, false, 0);
         rafRef.current = window.requestAnimationFrame(() => {
           rafRef.current = window.requestAnimationFrame(() => {
             rafRef.current = null;
-            applyFrame(0, true, 1);
+            applyContent(0, true, 1);
             settleTimeoutRef.current = window.setTimeout(() => {
               clearFrameStyles();
               isAnimatingRef.current = false;
@@ -201,7 +305,15 @@ export const useSliderSwipeNavigation = ({
         });
       }, getEffectiveDuration());
     },
-    [applyFrame, clearFrameStyles, clearTimers, getEffectiveDuration],
+    [
+      applyContent,
+      applyIncoming,
+      clearFrameStyles,
+      clearTimers,
+      getEffectiveDuration,
+      resolvedIncomingNextRef,
+      resolvedIncomingPrevRef,
+    ],
   );
 
   const onTouchEnd = useCallback(
@@ -270,5 +382,8 @@ export const useSliderSwipeNavigation = ({
     onTouchEnd,
     onTouchCancel,
     frameRef,
+    contentRef: resolvedContentRef,
+    incomingPrevRef: resolvedIncomingPrevRef,
+    incomingNextRef: resolvedIncomingNextRef,
   };
 };

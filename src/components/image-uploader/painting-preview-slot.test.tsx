@@ -283,6 +283,57 @@ describe("PaintingPreviewSlot", () => {
     },
   );
 
+  it("renders the parked neighbour preview layers when swipe is enabled", () => {
+    const props = {
+      ...createProps(),
+      prevSlotImage: createImageItem("prev"),
+      nextSlotImage: createImageItem("next"),
+      prevSlotPreviewUrl: "blob:prev-slot",
+      nextSlotPreviewUrl: "blob:next-slot",
+    };
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    const prev = screen.getByTestId("uploader-swipe-incoming-prev");
+    const next = screen.getByTestId("uploader-swipe-incoming-next");
+
+    expect(prev.style.transform).toBe("translateX(-100%)");
+    expect(next.style.transform).toBe("translateX(100%)");
+    expect(prev.querySelector("canvas")).not.toBeNull();
+    expect(next.querySelector("canvas")).not.toBeNull();
+  });
+
+  it("skips the neighbour preview layers when swipe is disabled", () => {
+    const props = {
+      ...createProps(),
+      swipeDisabled: true,
+      prevSlotImage: createImageItem("prev"),
+      nextSlotImage: createImageItem("next"),
+      prevSlotPreviewUrl: "blob:prev-slot",
+      nextSlotPreviewUrl: "blob:next-slot",
+    };
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    expect(screen.queryByTestId("uploader-swipe-incoming-prev")).toBeNull();
+    expect(screen.queryByTestId("uploader-swipe-incoming-next")).toBeNull();
+  });
+
+  it("skips only the neighbour preview layer that has no filled slot", () => {
+    const props = {
+      ...createProps(),
+      nextSlotImage: createImageItem("next"),
+      nextSlotPreviewUrl: "blob:next-slot",
+    };
+
+    render(<PaintingPreviewSlot {...props} />);
+
+    expect(screen.queryByTestId("uploader-swipe-incoming-prev")).toBeNull();
+    expect(
+      screen.getByTestId("uploader-swipe-incoming-next"),
+    ).toBeInTheDocument();
+  });
+
   it("passes previewCropAdjust to canvas render pipeline", async () => {
     const props = {
       ...createProps(),

@@ -4,6 +4,7 @@ import { UploadProgressOverlay } from "@/components/ui/upload-progress-overlay";
 import PaintingPreviewSlot from "./painting-preview-slot";
 import PaintingSizeHelperOverlay from "./painting-size-helper-overlay";
 import UploaderSlotSwitcher from "./uploader-slot-switcher";
+import SlotPreviewCanvas from "./slot-preview-canvas";
 import { useEstimatedProgress } from "./use-estimated-progress";
 import {
   UploaderSwipeNavHint,
@@ -11,11 +12,6 @@ import {
 } from "./uploader-swipe-nav-hint";
 import IconRemove from "@/components/icons/icon-remove.svg?react";
 import IconClose from "@/components/icons/icon-close.svg?react";
-import {
-  computeSidePanelCrop,
-  loadCachedImageElement,
-} from "./side-panel-crop";
-import { drawCroppedImageToCanvas } from "./preview-canvas-utils";
 import { useRecentlyChanged } from "./use-recently-changed";
 import { PREVIEW_SLIDER_BOTTOM_RESERVE_PX } from "./preview-slider-layout";
 import type {
@@ -60,8 +56,6 @@ interface TriptychSidePanelProps {
   onOtherInteraction: () => void;
 }
 
-const SIDE_PANEL_MAX_DRAW_RETRIES = 10;
-
 function TriptychSidePanel({
   slotIndex,
   image,
@@ -76,173 +70,12 @@ function TriptychSidePanel({
   const [confirmedCloudUrl, setConfirmedCloudUrl] = useState<string | null>(
     null,
   );
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const imageElRef = useRef<HTMLImageElement | null>(null);
-  const cachedDimsRef = useRef<{ w: number; h: number } | null>(null);
-  const retryStateRef = useRef<{ frame: number | null; failures: number }>({
-    frame: null,
-    failures: 0,
-  });
-  const [decoded, setDecoded] = useState<{
-    url: string;
-    dims: { width: number; height: number };
-  } | null>(null);
   const effectivePreviewUrl = previewUrl ?? image.previewUrl;
   const isEffectImageLoading =
     useCloudPreview &&
     effectivePreviewUrl !== null &&
     effectivePreviewUrl !== confirmedCloudUrl;
   const effectProgress = useEstimatedProgress(isEffectImageLoading);
-
-  // Local previews decode the source ONCE per URL (shared with the sibling
-  // panels) and render through a canvas at frame resolution — the same path
-  // as the active slot. Sizing a multi-megapixel <img> beyond the frame and
-  // relying on the browser to rasterize the visible window proved unreliable
-  // at panorama sizes: panels painted partially or not at all while the
-  // canvas-drawn center slot stayed correct.
-  useEffect(() => {
-    let active = true;
-    imageElRef.current = null;
-    loadCachedImageElement(effectivePreviewUrl)
-      .then((img) => {
-        if (!active) return;
-        imageElRef.current = img;
-        setDecoded({
-          url: effectivePreviewUrl,
-          dims: { width: img.naturalWidth, height: img.naturalHeight },
-        });
-      })
-      .catch(() => {
-        // Preview load errors are ignored, matching the previous <img>
-        // onError behaviour.
-      });
-    return () => {
-      active = false;
-    };
-  }, [effectivePreviewUrl]);
-
-  const sourceDims =
-    image.metadata ??
-    (decoded?.url === effectivePreviewUrl ? decoded.dims : null);
-  const crop = computeSidePanelCrop(image, sourceDims);
-
-  const drawSidePanel = () => {
-    const canvas = canvasRef.current;
-    const img = imageElRef.current;
-    if (!canvas || !img || !crop) {
-      return;
-    }
-
-    const painted = drawCroppedImageToCanvas({
-      canvas,
-      image: img,
-      crop,
-      effects: {
-        brightness: image.previewEffects.brightness,
-        contrast: image.previewEffects.contrast,
-        grayscale: image.previewEffects.grayscale ?? 0,
-      },
-      transform: image.previewTransform ?? null,
-      cachedDimensions: cachedDimsRef.current ?? undefined,
-    });
-
-    if (painted === false) {
-      const retry = retryStateRef.current;
-      retry.failures += 1;
-      if (
-        retry.failures === 1 ||
-        retry.failures > SIDE_PANEL_MAX_DRAW_RETRIES
-      ) {
-        console.error(
-          `[triptych-side-panel ${slotIndex}] draw failed (attempt ${retry.failures}): buffer ${canvas.width}x${canvas.height}, crop ${Math.round(crop.cropX)},${Math.round(crop.cropY)} ${Math.round(crop.cropWidth)}x${Math.round(crop.cropHeight)}`,
-        );
-      }
-      if (
-        retry.failures <= SIDE_PANEL_MAX_DRAW_RETRIES &&
-        retry.frame === null
-      ) {
-        retry.frame = window.requestAnimationFrame(() => {
-          retry.frame = null;
-          drawSidePanel();
-        });
-      }
-    } else {
-      retryStateRef.current.failures = 0;
-    }
-  };
-
-  const drawRef = useRef(drawSidePanel);
-  useEffect(() => {
-    drawRef.current = drawSidePanel;
-    drawSidePanel();
-  });
-
-  // Redraw when the frame resizes; repaint after a GPU context loss.
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) {
-      return;
-    }
-
-    // The retry state object is stable for the panel's lifetime; capture it
-    // so the cleanup does not read the ref at unmount time.
-    const retryState = retryStateRef.current;
-
-    const updateCachedDims = () => {
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width >= 32 && rect.height >= 32) {
-        cachedDimsRef.current = {
-          w: Math.max(1, Math.round(rect.width)),
-          h: Math.max(1, Math.round(rect.height)),
-        };
-      }
-    };
-
-    const handleContextLost = (event: Event) => {
-      event.preventDefault();
-      console.error(
-        `[triptych-side-panel ${slotIndex}] 2D context lost — will redraw on restore`,
-      );
-    };
-    const handleContextRestored = () => {
-      retryState.failures = 0;
-      drawRef.current();
-    };
-
-    updateCachedDims();
-
-    let resizeFrame: number | null = null;
-    const scheduleDraw = () => {
-      updateCachedDims();
-      if (resizeFrame !== null) {
-        window.cancelAnimationFrame(resizeFrame);
-      }
-      resizeFrame = window.requestAnimationFrame(() => {
-        resizeFrame = null;
-        drawRef.current();
-      });
-    };
-
-    const observer =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(scheduleDraw)
-        : null;
-    observer?.observe(canvas);
-    canvas.addEventListener("contextlost", handleContextLost);
-    canvas.addEventListener("contextrestored", handleContextRestored);
-
-    return () => {
-      if (resizeFrame !== null) {
-        window.cancelAnimationFrame(resizeFrame);
-      }
-      if (retryState.frame !== null) {
-        window.cancelAnimationFrame(retryState.frame);
-      }
-      observer?.disconnect();
-      canvas.removeEventListener("contextlost", handleContextLost);
-      canvas.removeEventListener("contextrestored", handleContextRestored);
-    };
-  }, [slotIndex]);
 
   return (
     <button
@@ -260,30 +93,23 @@ function TriptychSidePanel({
         className="painting-plate relative h-full w-auto max-w-full overflow-hidden rounded-none border-0 transition-opacity duration-200 ease-out motion-reduce:transition-none opacity-95 hover:opacity-100"
         style={{ aspectRatio: String(previewFrameAspectRatio) }}
       >
-        {useCloudPreview ? (
-          <img
-            src={effectivePreviewUrl}
-            alt={t("uploader.selectImageSlot", {
-              index: String(slotIndex + 1),
-            })}
-            className="absolute object-cover will-change-transform transition-transform duration-100 ease-out motion-reduce:transition-none"
-            style={{ width: "100%", height: "100%", top: "0%", left: "0%" }}
-            draggable={false}
-            onLoad={() => {
-              setConfirmedCloudUrl(effectivePreviewUrl);
-            }}
-            onError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
-          />
-        ) : (
-          <canvas
-            ref={canvasRef}
-            aria-label={t("uploader.selectImageSlot", {
-              index: String(slotIndex + 1),
-            })}
-            data-testid={`triptych-side-panel-canvas-${slotIndex}`}
-            className="absolute inset-0 h-full w-full"
-          />
-        )}
+        <SlotPreviewCanvas
+          image={image}
+          previewUrl={effectivePreviewUrl}
+          useCloudPreview={useCloudPreview}
+          className={
+            useCloudPreview
+              ? "absolute h-full w-full object-cover"
+              : "absolute inset-0 h-full w-full"
+          }
+          testId={`triptych-side-panel-canvas-${slotIndex}`}
+          ariaLabel={t("uploader.selectImageSlot", {
+            index: String(slotIndex + 1),
+          })}
+          debugLabel={`triptych-side-panel ${slotIndex}`}
+          onCloudLoad={() => setConfirmedCloudUrl(effectivePreviewUrl)}
+          onCloudError={() => setConfirmedCloudUrl(effectivePreviewUrl)}
+        />
         <UploadProgressOverlay
           isVisible={isEffectImageLoading}
           progress={effectProgress}
@@ -327,6 +153,9 @@ interface UploaderPreviewSliderProps {
   onCropAdjustChange?: (adjust: CropAdjust | undefined) => void;
   cropMaxZoom?: number;
   swipeFrameRef?: React.RefObject<HTMLDivElement | null>;
+  swipeContentRef?: React.RefObject<HTMLDivElement | null>;
+  swipeIncomingPrevRef?: React.RefObject<HTMLDivElement | null>;
+  swipeIncomingNextRef?: React.RefObject<HTMLDivElement | null>;
   onTouchStart: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchMove?: (event: React.TouchEvent<HTMLDivElement>) => void;
   onTouchEnd: (event: React.TouchEvent<HTMLDivElement>) => void;
@@ -374,6 +203,9 @@ export default function UploaderPreviewSlider({
   onCropAdjustChange,
   cropMaxZoom,
   swipeFrameRef,
+  swipeContentRef,
+  swipeIncomingPrevRef,
+  swipeIncomingNextRef,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -443,6 +275,33 @@ export default function UploaderPreviewSlider({
   }, [clearTrashTimeout]);
   const effectiveSwipeDisabled = swipeDisabled || isDesktopTriptych;
 
+  // Nearest filled neighbours, mirroring the swipe navigation (which skips
+  // empty slots). Used both for the resting edge peeks and for the incoming
+  // previews that slide into the frame while the user drags.
+  const neighbourImages = useMemo(() => {
+    if (typeof activeImageIndex !== "number" || !Array.isArray(slots)) {
+      return {
+        prev: null as SelectedImageItem | null,
+        next: null as SelectedImageItem | null,
+      };
+    }
+
+    const prev =
+      slots
+        .slice(0, activeImageIndex)
+        .reverse()
+        .find((slot): slot is SelectedImageItem => Boolean(slot)) ?? null;
+    const next =
+      slots
+        .slice(activeImageIndex + 1)
+        .find((slot): slot is SelectedImageItem => Boolean(slot)) ?? null;
+
+    return { prev, next };
+  }, [activeImageIndex, slots]);
+
+  const resolveSlotPreviewUrl = (image: SelectedImageItem) =>
+    getSlotPreviewUrl ? getSlotPreviewUrl(image) : image.previewUrl;
+
   const handleTouchMove = useCallback(
     (event: React.TouchEvent<HTMLDivElement>) => {
       onTouchMove?.(event);
@@ -472,6 +331,17 @@ export default function UploaderPreviewSlider({
       cropMaxZoom={cropMaxZoom}
       onMaxZoomReached={onMaxZoomReached}
       swipeFrameRef={swipeFrameRef}
+      swipeContentRef={swipeContentRef}
+      swipeIncomingPrevRef={swipeIncomingPrevRef}
+      swipeIncomingNextRef={swipeIncomingNextRef}
+      prevSlotPreviewUrl={
+        neighbourImages.prev ? resolveSlotPreviewUrl(neighbourImages.prev) : null
+      }
+      nextSlotPreviewUrl={
+        neighbourImages.next ? resolveSlotPreviewUrl(neighbourImages.next) : null
+      }
+      prevSlotImage={neighbourImages.prev}
+      nextSlotImage={neighbourImages.next}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -653,25 +523,8 @@ export default function UploaderPreviewSlider({
 
   // Peeks mirror the swipe navigation, which skips empty slots, so scan
   // outward for the nearest filled neighbour instead of only the adjacent slot.
-  const leftPeekImage =
-    showSlotThumbs && typeof activeImageIndex === "number" && slots
-      ? (slots
-          .slice(0, activeImageIndex)
-          .reverse()
-          .find(
-            (slot): slot is SelectedImageItem => Boolean(slot),
-          ) ?? null)
-      : null;
-  const rightPeekImage =
-    showSlotThumbs && typeof activeImageIndex === "number" && slots
-      ? (slots
-          .slice(activeImageIndex + 1)
-          .find(
-            (slot): slot is SelectedImageItem => Boolean(slot),
-          ) ?? null)
-      : null;
-  const resolvePeekUrl = (image: SelectedImageItem) =>
-    getSlotPreviewUrl ? getSlotPreviewUrl(image) : image.previewUrl;
+  const leftPeekImage = showSlotThumbs ? neighbourImages.prev : null;
+  const rightPeekImage = showSlotThumbs ? neighbourImages.next : null;
 
   const showSlotThumbStrip =
     showSlotThumbs &&
@@ -695,11 +548,12 @@ export default function UploaderPreviewSlider({
           data-testid="uploader-slot-peek-left"
           className="pointer-events-none absolute inset-y-0 left-0 z-0 w-[8%] max-w-16 overflow-hidden"
         >
-          <img
-            src={resolvePeekUrl(leftPeekImage)}
-            alt=""
+          <SlotPreviewCanvas
+            image={leftPeekImage}
+            previewUrl={resolveSlotPreviewUrl(leftPeekImage)}
+            useCloudPreview={!!leftPeekImage.uploadedAsset}
             className="h-full w-full object-cover object-right opacity-60 [mask-image:linear-gradient(to_right,black,transparent)]"
-            draggable={false}
+            debugLabel="slot-peek-left"
           />
         </div>
       )}
@@ -709,11 +563,12 @@ export default function UploaderPreviewSlider({
           data-testid="uploader-slot-peek-right"
           className="pointer-events-none absolute inset-y-0 right-0 z-0 w-[8%] max-w-16 overflow-hidden"
         >
-          <img
-            src={resolvePeekUrl(rightPeekImage)}
-            alt=""
+          <SlotPreviewCanvas
+            image={rightPeekImage}
+            previewUrl={resolveSlotPreviewUrl(rightPeekImage)}
+            useCloudPreview={!!rightPeekImage.uploadedAsset}
             className="h-full w-full object-cover object-left opacity-60 [mask-image:linear-gradient(to_left,black,transparent)]"
-            draggable={false}
+            debugLabel="slot-peek-right"
           />
         </div>
       )}

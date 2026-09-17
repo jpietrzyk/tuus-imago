@@ -1,5 +1,6 @@
 import IconAdd from "@/components/icons/icon-add.svg?react";
 import { t } from "@/locales/i18n";
+import SlotPreviewCanvas from "./slot-preview-canvas";
 import type { SelectedImageItem } from "./image-uploader";
 
 export interface SlotSwitcherBarProps {
@@ -63,11 +64,13 @@ export function UploaderSlotSwitcher({
             }`}
           >
             {slot && previewUrl ? (
-              <img
-                src={previewUrl}
-                alt=""
-                className="h-full w-full object-cover"
-                draggable={false}
+              <SlotPreviewCanvas
+                image={slot}
+                previewUrl={previewUrl}
+                useCloudPreview={!!slot.uploadedAsset}
+                className="h-full w-full"
+                testId={`${testIdPrefix}-canvas-${index}`}
+                debugLabel={`slot-thumb ${index}`}
               />
             ) : (
               <IconAdd
