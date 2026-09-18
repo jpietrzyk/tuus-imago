@@ -95,6 +95,7 @@ import {
   markCaptureStarted,
   persistSelectionError,
 } from "./camera-capture-session";
+import { recordDiagnostic } from "@/lib/diagnostics-log";
 import { adjustCropForZoomPan, MAX_CROP_ZOOM } from "./use-crop-adjust";
 import { useMediaQuery } from "@/lib/use-media-query";
 import {
@@ -1916,6 +1917,10 @@ export const ImageUploader = forwardRef<
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
+      recordDiagnostic("file-selected", {
+        kind: "file",
+        data: { count: files?.length ?? 0 },
+      });
 
       if (files && files.length > 0) {
         if (files.length === 1) {
@@ -2806,6 +2811,7 @@ export const ImageUploader = forwardRef<
       return;
     }
     pendingSelectionSlotRef.current = activeImageIndex;
+    recordDiagnostic("camera-dialog-open", { kind: "camera", detail: "retake" });
     setIsCameraDialogOpen(true);
   }, [activeImageIndex]);
 
@@ -2822,6 +2828,7 @@ export const ImageUploader = forwardRef<
   // File is complete and no interrupted-capture marker is involved.
   const handleCameraCapture = useCallback(
     (file: File) => {
+      recordDiagnostic("camera-captured", { kind: "camera" });
       setIsCameraDialogOpen(false);
       acceptSelectedFile(file);
     },
@@ -2831,6 +2838,7 @@ export const ImageUploader = forwardRef<
   // getUserMedia unavailable/denied: fall back to the device picker, which
   // keeps the interrupted-capture recovery for that path.
   const handleUseDevicePicker = useCallback(() => {
+    recordDiagnostic("camera-device-picker", { kind: "camera" });
     setIsCameraDialogOpen(false);
     markCaptureStarted("camera");
     cameraInputRef.current?.click();
@@ -3202,7 +3210,13 @@ export const ImageUploader = forwardRef<
           error={selectionError}
           onDismissError={() => applySelectionError(null)}
           onCaptureStart={markCaptureStarted}
-          onCameraClick={() => setIsCameraDialogOpen(true)}
+          onCameraClick={() => {
+            recordDiagnostic("camera-dialog-open", {
+              kind: "camera",
+              detail: "capture",
+            });
+            setIsCameraDialogOpen(true);
+          }}
         />
         {cameraCaptureDialog}
       </>

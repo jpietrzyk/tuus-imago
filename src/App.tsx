@@ -15,6 +15,8 @@ import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { OfflineBanner } from "@/components/offline-banner";
 import { BuildVersionBadge } from "@/components/build-version-badge";
+import { DiagnosticsOverlay } from "@/components/diagnostics-overlay";
+import { recordDiagnostic, sanitizeDiagnosticRoute } from "@/lib/diagnostics-log";
 import { RotateWarningOverlay } from "@/components/rotate-warning-overlay";
 import { type FooterToolsBarProps } from "@/components/footer-tools-bar";
 import {
@@ -794,6 +796,15 @@ function StorefrontApp() {
   );
   const location = useLocation();
   const navigate = useNavigate();
+  // Journal route changes so a lost flow can be told apart from a full reload:
+  // a reload keeps the same route in the journal's boot entry, while an internal
+  // redirect (e.g. back to "/") shows up as a `route` entry here.
+  useEffect(() => {
+    recordDiagnostic("route", {
+      kind: "route",
+      detail: sanitizeDiagnosticRoute(location.pathname, location.search),
+    });
+  }, [location.pathname, location.search]);
   // Both flow routes render the same UploadPage instance with a constant
   // key, so the /upload ↔ /prepare-painting replace-navigations never
   // remount the page and local photo state (File objects, object URLs) is
@@ -1090,6 +1101,7 @@ function StorefrontApp() {
         />
       )}
       <BuildVersionBadge />
+      <DiagnosticsOverlay />
     </div>
   );
 }

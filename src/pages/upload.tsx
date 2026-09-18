@@ -17,6 +17,7 @@ import {
   getCloudinaryUploadConfigError,
 } from "@/lib/cloudinary";
 import { CheckCircle2, AlertCircle, ExternalLink, Sliders } from "lucide-react";
+import { recordDiagnostic } from "@/lib/diagnostics-log";
 import { t } from "@/locales/i18n";
 import {
   type ImageTransformations,
@@ -175,6 +176,7 @@ export function UploadPage({
         },
     transformationsParam: ImageTransformations,
   ) => {
+    recordDiagnostic("upload-success", { kind: "upload" });
     // Handle both formats (from CloudinaryUploadWidget and ImageUploader)
     const uploadResult: UploadResult =
       "event" in result
@@ -214,6 +216,7 @@ export function UploadPage({
   };
 
   const handleUploadError = (error: string) => {
+    recordDiagnostic("upload-error", { kind: "upload", detail: error });
     setUploadError(error);
     setUploadedImage(null);
     setHasUploaderSelection(false);

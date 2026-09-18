@@ -8,6 +8,8 @@
  * would otherwise keep serving a stale precache.
  */
 
+import { recordDiagnostic } from "./diagnostics-log";
+
 export const APP_VERSION: string =
   typeof __APP_VERSION__ === "string" ? __APP_VERSION__ : "0.0.0+test";
 
@@ -70,7 +72,10 @@ export async function clearAppCaches(): Promise<void> {
   }
 }
 
-export async function forceRefreshApp(): Promise<void> {
+export async function forceRefreshApp(
+  reason = "manual",
+): Promise<void> {
+  recordDiagnostic("force-refresh", { kind: "reload", detail: reason });
   await unregisterServiceWorkers();
   await clearAppCaches();
   window.location.reload();
@@ -109,9 +114,18 @@ export async function forceRefreshIfOutdated(
   storage?: RefreshStorage | null,
 ): Promise<boolean> {
   if (!markForceRefreshAttempted(deployedVersion, storage)) {
+    recordDiagnostic("force-refresh-skipped", {
+      kind: "reload",
+      detail: "already attempted for this deployed version in this session",
+      data: { deployedVersion },
+    });
     return false;
   }
 
-  await forceRefreshApp();
+  recordDiagnostic("outdated-deployed-version", {
+    kind: "version",
+    data: { running: APP_VERSION, deployed: deployedVersion },
+  });
+  await forceRefreshApp("outdated-deployed-version");
   return true;
 }

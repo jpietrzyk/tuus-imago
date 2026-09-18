@@ -17,6 +17,8 @@
  * selection error banner.
  */
 
+import { recordDiagnostic } from "@/lib/diagnostics-log";
+
 const CAPTURE_PENDING_KEY = "uploader-camera-capture-pending";
 const SELECTION_ERROR_KEY = "uploader-selection-error";
 const MAX_ENTRY_AGE_MS = 5 * 60 * 1000;
@@ -75,6 +77,7 @@ function isFresh(entry: TimestampedEntry): boolean {
 }
 
 export function markCaptureStarted(source: CaptureSource): void {
+  recordDiagnostic("capture-started", { kind: "camera", data: { source } });
   writeEntry(CAPTURE_PENDING_KEY, { savedAt: Date.now(), source });
 }
 
@@ -95,12 +98,20 @@ export function consumeInterruptedCapture(): CaptureSource | null {
     return null;
   }
 
-  return entry.source === "camera" || entry.source === "gallery"
-    ? entry.source
-    : null;
+  if (entry.source === "camera" || entry.source === "gallery") {
+    recordDiagnostic("interrupted-capture", {
+      kind: "camera",
+      detail: "page reloaded before the picker returned a file",
+      data: { source: entry.source },
+    });
+    return entry.source;
+  }
+
+  return null;
 }
 
 export function persistSelectionError(message: string): void {
+  recordDiagnostic("selection-error", { kind: "file", detail: message });
   writeEntry(SELECTION_ERROR_KEY, { savedAt: Date.now(), message });
 }
 
@@ -120,5 +131,9 @@ export function consumePersistedSelectionError(): string | null {
     return null;
   }
 
+  recordDiagnostic("persisted-selection-error", {
+    kind: "file",
+    detail: entry.message,
+  });
   return entry.message;
 }
