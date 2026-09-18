@@ -58,7 +58,34 @@ function buildVersionPlugin(info: BuildInfo): Plugin {
   }
 }
 
+/**
+ * Fails the production build when the Przelewy24 API target is missing or still
+ * pointed at the sandbox. The runtime guard in the functions fails closed
+ * (checkout/payment return 500), so catching it at build time avoids shipping a
+ * silent payment outage. Only enforced for Netlify's production context.
+ */
+function assertP24ProductionConfig(): void {
+  if (process.env.CONTEXT !== "production") {
+    return
+  }
+
+  const baseUrl = process.env.P24_API_BASE_URL?.trim()
+
+  if (!baseUrl) {
+    throw new Error(
+      "P24_API_BASE_URL must be set for production builds (expected https://secure.przelewy24.pl/api/v1).",
+    )
+  }
+
+  if (baseUrl.includes("sandbox")) {
+    throw new Error(
+      "P24_API_BASE_URL must not point at the Przelewy24 sandbox for production builds.",
+    )
+  }
+}
+
 export default defineConfig(({ mode }) => {
+  assertP24ProductionConfig()
   const buildInfo = resolveBuildInfo()
 
   return {

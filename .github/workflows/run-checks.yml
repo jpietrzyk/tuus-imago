@@ -36,6 +36,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Run linter
         run: pnpm lint
+      - name: Typecheck
+        run: npx tsc -b
 
   migrate:
     runs-on: ubuntu-latest

@@ -70,10 +70,11 @@ export const handler = async (event: NetlifyEvent) => {
   try {
     config = getP24Config();
   } catch (error) {
+    console.error("[przelewy24-webhook] config error:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Missing Przelewy24 configuration.",
+        error: "Payment provider is not configured.",
       }),
     };
   }

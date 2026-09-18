@@ -37,7 +37,23 @@ export const handler = async (event: NetlifyEvent) => {
     };
   }
 
-  const supabase = createServiceClient();
+  if (refCode.length > 100) {
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, tracked: false }),
+    };
+  }
+
+  let supabase;
+  try {
+    supabase = createServiceClient();
+  } catch (e) {
+    console.error("[track-referral] client init failed:", e);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Tracking is unavailable." }),
+    };
+  }
 
   const { data: refRow, error: refError } = await supabase
     .from("partner_refs")
@@ -53,20 +69,22 @@ export const handler = async (event: NetlifyEvent) => {
     };
   }
 
-  const userAgent = event.headers?.["user-agent"] ?? null;
+  const userAgent = (event.headers?.["user-agent"] ?? null)?.slice(0, 500) ?? null;
+  const path = typeof parsed.path === "string" ? parsed.path.slice(0, 500) : null;
 
   const { error: insertError } = await supabase
     .from("referral_events")
     .insert({
       partner_ref_id: refRow.id,
-      path: parsed.path ?? null,
+      path,
       user_agent: userAgent,
     });
 
   if (insertError) {
+    console.error("[track-referral] insert failed:", insertError.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: insertError.message }),
+      body: JSON.stringify({ error: "Could not record referral event." }),
     };
   }
 

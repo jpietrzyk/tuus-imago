@@ -59,6 +59,7 @@ describe("przelewy24-webhook handler", () => {
     process.env.P24_API_KEY = "api-key";
     process.env.P24_API_BASE_URL = "https://sandbox.przelewy24.pl/api/v1";
     process.env.SITE_URL = "https://tuusimago.test";
+    process.env.P24_ALLOW_SANDBOX = "true";
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
   });
@@ -72,6 +73,7 @@ describe("przelewy24-webhook handler", () => {
     delete process.env.P24_API_KEY;
     delete process.env.P24_API_BASE_URL;
     delete process.env.SITE_URL;
+    delete process.env.P24_ALLOW_SANDBOX;
     vi.unstubAllGlobals();
   });
 

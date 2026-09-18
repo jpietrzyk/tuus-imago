@@ -189,6 +189,16 @@ function jsonResponse(statusCode: number, body: unknown) {
   };
 }
 
+/**
+ * Logs the underlying failure server-side and returns a generic 500 body so
+ * database/client error details are never exposed to the browser.
+ */
+function serverError(context: string, error: unknown) {
+  const detail = error instanceof Error ? error.message : String(error);
+  console.error(`[admin-api] ${context}:`, detail);
+  return jsonResponse(500, { error: "Internal server error." });
+}
+
 function csvResponse(filename: string, csv: string) {
   return {
     statusCode: 200,
@@ -216,14 +226,14 @@ export const handler = async (event: NetlifyEvent) => {
   const token = getAuthHeader(event);
 
   if (!token) {
-    return jsonResponse(401, { error: "Missing authorization token.", debug: "no_auth_header" });
+    return jsonResponse(401, { error: "Missing authorization token." });
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const apiKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !apiKey) {
-    return jsonResponse(500, { error: "Missing Supabase configuration.", debug: { hasUrl: !!supabaseUrl, hasKey: !!apiKey } });
+    return jsonResponse(500, { error: "Missing Supabase configuration." });
   }
 
   let user: User | null = null;
@@ -236,13 +246,13 @@ export const handler = async (event: NetlifyEvent) => {
     });
 
     if (!authResponse.ok) {
-      const body = await authResponse.text();
-      return jsonResponse(401, { error: "Invalid or expired token.", debug: { status: authResponse.status, body: body.slice(0, 300) } });
+      return jsonResponse(401, { error: "Invalid or expired token." });
     }
 
     user = (await authResponse.json()) as User;
   } catch (err) {
-    return jsonResponse(500, { error: "Auth request failed.", debug: String(err) });
+    console.error("[admin-api] auth request failed:", err);
+    return jsonResponse(500, { error: "Auth request failed." });
   }
 
   const adminClient = createAdminClient();
@@ -254,7 +264,10 @@ export const handler = async (event: NetlifyEvent) => {
     .single();
 
   if (profileError || !profile?.is_admin) {
-    return jsonResponse(403, { error: "Forbidden: not an admin user.", debug: { userId: user.id, profileError: profileError?.message } });
+    if (profileError) {
+      console.error("[admin-api] admin check failed:", profileError.message);
+    }
+    return jsonResponse(403, { error: "Forbidden: not an admin user." });
   }
 
   const method = (event.httpMethod ?? "GET").toUpperCase();
@@ -263,21 +276,25 @@ export const handler = async (event: NetlifyEvent) => {
 
   if (method === "GET") {
     const qs = event.queryStringParameters ?? {};
-    requestPayload = {
-      resource: qs.resource,
-      id: qs.id,
-      meta: {
-        select: qs.select,
-        filters: qs.filters ? JSON.parse(qs.filters) : undefined,
-        pagination: qs.pagination
-          ? JSON.parse(qs.pagination)
-          : undefined,
-        sorters: qs.sorters ? JSON.parse(qs.sorters) : undefined,
-        aggregate: qs.aggregate,
-        aggregateFunction: qs.aggregateFunction,
-        groupBy: qs.groupBy,
-      },
-    };
+    try {
+      requestPayload = {
+        resource: qs.resource,
+        id: qs.id,
+        meta: {
+          select: qs.select,
+          filters: qs.filters ? JSON.parse(qs.filters) : undefined,
+          pagination: qs.pagination
+            ? JSON.parse(qs.pagination)
+            : undefined,
+          sorters: qs.sorters ? JSON.parse(qs.sorters) : undefined,
+          aggregate: qs.aggregate,
+          aggregateFunction: qs.aggregateFunction,
+          groupBy: qs.groupBy,
+        },
+      };
+    } catch {
+      return jsonResponse(400, { error: "Invalid query parameters." });
+    }
   } else {
     try {
       requestPayload = JSON.parse(event.body ?? "{}");
@@ -324,7 +341,7 @@ export const handler = async (event: NetlifyEvent) => {
           const { data: record, error } = await query.maybeSingle();
 
           if (error) {
-            return jsonResponse(500, { error: error.message });
+            return serverError("request failed", error);
           }
 
           if (!record) {
@@ -355,7 +372,7 @@ export const handler = async (event: NetlifyEvent) => {
         const { data: records, error, count } = await query;
 
         if (error) {
-          return jsonResponse(500, { error: error.message });
+          return serverError("request failed", error);
         }
 
         return jsonResponse(200, {
@@ -405,7 +422,7 @@ export const handler = async (event: NetlifyEvent) => {
           .single();
 
         if (error) {
-          return jsonResponse(500, { error: error.message });
+          return serverError("request failed", error);
         }
 
         return jsonResponse(201, { data: created });
@@ -469,7 +486,7 @@ export const handler = async (event: NetlifyEvent) => {
           .single();
 
         if (error) {
-          return jsonResponse(500, { error: error.message });
+          return serverError("request failed", error);
         }
 
         if (!updated) {
@@ -490,7 +507,7 @@ export const handler = async (event: NetlifyEvent) => {
           .eq("id", id);
 
         if (error) {
-          return jsonResponse(500, { error: error.message });
+          return serverError("request failed", error);
         }
 
         return jsonResponse(200, { data: { id } });
@@ -500,8 +517,7 @@ export const handler = async (event: NetlifyEvent) => {
         return jsonResponse(405, { error: "Method Not Allowed" });
     }
   } catch (err) {
-    console.error("[admin-api] Error:", err);
-    return jsonResponse(500, { error: "Internal server error." });
+    return serverError("unhandled error", err);
   }
 };
 
@@ -539,7 +555,7 @@ async function handleAggregation(
       .select(groupBy);
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     const grouped = new Map<string, number>();
@@ -563,7 +579,7 @@ async function handleAggregation(
       .select(`${groupBy}, ${sumField}`);
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     const grouped = new Map<string, { sum: number; count: number }>();
@@ -589,7 +605,7 @@ async function handleAggregation(
       .select("*", { count: "exact", head: true });
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     return jsonResponse(200, { data: { count: count ?? 0 } });
@@ -602,7 +618,7 @@ async function handleAggregation(
       .select(sumField);
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     const sum = (data ?? []).reduce((acc, row) => acc + (Number(row[sumField]) || 0), 0);
@@ -621,7 +637,7 @@ async function handleCustomerList(
     .select("customer_email, customer_name, total_price, marketing_consent, created_at");
 
   if (error) {
-    return jsonResponse(500, { error: error.message });
+    return serverError("request failed", error);
   }
 
   const customerMap = new Map<string, {
@@ -679,7 +695,7 @@ async function handleRevenueOverTime(
     .gte("created_at", since.toISOString());
 
   if (error) {
-    return jsonResponse(500, { error: error.message });
+    return serverError("request failed", error);
   }
 
   const dayMap = new Map<string, { date: string; revenue: number; count: number }>();
@@ -704,7 +720,7 @@ async function handleRevenueByMonth(
     .select("created_at, total_price");
 
   if (error) {
-    return jsonResponse(500, { error: error.message });
+    return serverError("request failed", error);
   }
 
   const monthMap = new Map<string, { month: string; revenue: number; count: number }>();
@@ -736,7 +752,7 @@ async function handlePartnerStats(
       .eq("partner_id", partnerId);
 
     if (couponsError) {
-      return jsonResponse(500, { error: couponsError.message });
+      return serverError("coupons query failed", couponsError);
     }
 
     const { data: refs, error: refsError } = await supabase
@@ -745,7 +761,7 @@ async function handlePartnerStats(
       .eq("partner_id", partnerId);
 
     if (refsError) {
-      return jsonResponse(500, { error: refsError.message });
+      return serverError("partner refs query failed", refsError);
     }
 
     // Collect order IDs from coupon usages
@@ -759,7 +775,7 @@ async function handlePartnerStats(
         .in("coupon_id", couponIds);
 
       if (usagesError) {
-        return jsonResponse(500, { error: usagesError.message });
+        return serverError("coupon usages query failed", usagesError);
       }
 
       for (const u of usages ?? []) {
@@ -778,7 +794,7 @@ async function handlePartnerStats(
         .in("ref_code", refCodes);
 
       if (refOrdersError) {
-        return jsonResponse(500, { error: refOrdersError.message });
+        return serverError("referral orders query failed", refOrdersError);
       }
 
       for (const o of refOrders ?? []) {
@@ -800,7 +816,7 @@ async function handlePartnerStats(
         .in("id", allOrderIds);
 
       if (ordersError) {
-        return jsonResponse(500, { error: ordersError.message });
+        return serverError("orders query failed", ordersError);
       }
 
       totalOrders = orders?.length ?? 0;
@@ -825,7 +841,7 @@ async function handlePartnerStats(
         .in("partner_ref_id", refIds);
 
       if (refEventsError) {
-        return jsonResponse(500, { error: refEventsError.message });
+        return serverError("referral events query failed", refEventsError);
       }
 
       totalRefEvents = refEvents?.length ?? 0;
@@ -859,7 +875,7 @@ async function handlePartnerStats(
     .select("id, company_name, is_active, created_at");
 
   if (partnersError) {
-    return jsonResponse(500, { error: partnersError.message });
+    return serverError("partners query failed", partnersError);
   }
 
   const { data: allCoupons, error: allCouponsError } = await supabase
@@ -867,7 +883,7 @@ async function handlePartnerStats(
     .select("id, partner_id");
 
   if (allCouponsError) {
-    return jsonResponse(500, { error: allCouponsError.message });
+    return serverError("coupon list query failed", allCouponsError);
   }
 
   const { data: allRefs, error: allRefsError } = await supabase
@@ -875,7 +891,7 @@ async function handlePartnerStats(
     .select("id, partner_id, ref_code");
 
   if (allRefsError) {
-    return jsonResponse(500, { error: allRefsError.message });
+    return serverError("partner refs list query failed", allRefsError);
   }
 
   const refPartnerMap = new Map<string, number>();
@@ -905,7 +921,7 @@ async function handlePartnerStats(
     .in("coupon_id", allCouponIds.length > 0 ? allCouponIds : ["00000000-0000-0000-0000-000000000000"]);
 
   if (usagesError) {
-    return jsonResponse(500, { error: usagesError.message });
+    return serverError("coupon usages query failed", usagesError);
   }
 
   const couponOrderMap = new Map<string, Set<string>>();
@@ -936,7 +952,7 @@ async function handlePartnerStats(
       .in("ref_code", allRefCodes);
 
     if (refOrdersError) {
-      return jsonResponse(500, { error: refOrdersError.message });
+      return serverError("referral orders query failed", refOrdersError);
     }
 
     for (const o of refOrders ?? []) {
@@ -962,7 +978,7 @@ async function handlePartnerStats(
       .in("id", [...allOrderIds]);
 
     if (orderError) {
-      return jsonResponse(500, { error: orderError.message });
+      return serverError("order query failed", orderError);
     }
 
     for (const o of orderData ?? []) {
@@ -1009,7 +1025,7 @@ async function handleUserList(
 ) {
   const { data: authData, error: authError } = await supabase.auth.admin.listUsers({ pageSize: 1000 });
   if (authError) {
-    return jsonResponse(500, { error: authError.message });
+    return serverError("auth lookup failed", authError);
   }
 
   const { data: profiles, error: profilesError } = await supabase
@@ -1017,7 +1033,7 @@ async function handleUserList(
     .select("id, full_name, phone, is_admin, created_at, updated_at");
 
   if (profilesError) {
-    return jsonResponse(500, { error: profilesError.message });
+    return serverError("profiles query failed", profilesError);
   }
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
@@ -1273,7 +1289,8 @@ async function handleBulkStatusUpdate(
 
     if (updateError) {
       failed += 1;
-      errors.push(`Order ${orderId}: ${updateError.message}`);
+      console.error(`[admin-api] bulk status update failed for ${orderId}:`, updateError.message);
+      errors.push(`Order ${orderId}: update failed.`);
       continue;
     }
 
@@ -1313,7 +1330,7 @@ async function handleExport(
     const { data, error } = await query;
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     const header = toCsvRow([
@@ -1338,7 +1355,7 @@ async function handleExport(
       .order("created_at", { ascending: false });
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     const header = toCsvRow([
@@ -1379,7 +1396,7 @@ async function handleExport(
       .order("created_at", { ascending: false });
 
     if (error) {
-      return jsonResponse(500, { error: error.message });
+      return serverError("request failed", error);
     }
 
     const header = toCsvRow([

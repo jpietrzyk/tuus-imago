@@ -37,13 +37,17 @@ export function t(path: string, params?: Record<string, string | number>): strin
     if (result && typeof result === 'object' && key in result) {
       result = (result as Record<string, unknown>)[key];
     } else {
-      console.warn(`Translation key not found: ${path}`);
+      if (import.meta.env.DEV) {
+        console.warn(`Translation key not found: ${path}`);
+      }
       return path;
     }
   }
 
   if (typeof result !== 'string') {
-    console.warn(`Translation value is not a string: ${path}`);
+    if (import.meta.env.DEV) {
+      console.warn(`Translation value is not a string: ${path}`);
+    }
     return path;
   }
 

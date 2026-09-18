@@ -28,12 +28,12 @@ export const handler = async (event: NetlifyEvent) => {
   try {
     supabase = createServiceClient();
   } catch (e) {
+    console.error("[available-shipping] client init failed:", e);
     return {
       statusCode: 500,
       body: JSON.stringify({
         shippingMethods: [],
         error: "Supabase client init failed",
-        detail: e instanceof Error ? e.message : String(e),
       }),
     };
   }
@@ -48,12 +48,12 @@ export const handler = async (event: NetlifyEvent) => {
     .order("created_at", { ascending: true });
 
   if (fetchError) {
+    console.error("[available-shipping] query failed:", fetchError.message);
     return {
       statusCode: 500,
       body: JSON.stringify({
         shippingMethods: [],
         error: "Query failed",
-        detail: fetchError.message,
       }),
     };
   }

@@ -28,6 +28,19 @@ function normalizeUrl(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
+const SANDBOX_API_BASE_URL = "https://sandbox.przelewy24.pl/api/v1";
+const LOCAL_SITE_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1"]);
+
+function isLocalSite(siteUrl: string): boolean {
+  try {
+    // Node returns IPv6 hosts bracketed, e.g. "[::1]".
+    const hostname = new URL(siteUrl).hostname.replace(/^\[|\]$/g, "");
+    return LOCAL_SITE_HOSTS.has(hostname) || hostname.endsWith(".local");
+  } catch {
+    return false;
+  }
+}
+
 export function buildP24Sign(payload: Record<string, string | number | boolean>) {
   return createHash("sha384").update(JSON.stringify(payload)).digest("hex");
 }
@@ -47,9 +60,7 @@ export function getP24Config(): P24Config {
   const posId = Number.parseInt(process.env.P24_POS_ID ?? "", 10);
   const crc = process.env.P24_CRC?.trim();
   const apiKey = process.env.P24_API_KEY?.trim();
-  const apiBaseUrl = normalizeUrl(
-    process.env.P24_API_BASE_URL?.trim() || "https://sandbox.przelewy24.pl/api/v1",
-  );
+  const explicitApiBaseUrl = process.env.P24_API_BASE_URL?.trim();
   const siteUrl = normalizeUrl(
     process.env.SITE_URL?.trim() || process.env.URL?.trim() || "",
   );
@@ -59,6 +70,24 @@ export function getP24Config(): P24Config {
   if (!Number.isInteger(merchantId) || !Number.isInteger(posId) || !crc || !apiKey || !siteUrl) {
     throw new Error(
       "Missing P24_MERCHANT_ID, P24_POS_ID, P24_CRC, P24_API_KEY, or SITE_URL in environment.",
+    );
+  }
+
+  if (!explicitApiBaseUrl && !isLocalSite(siteUrl)) {
+    throw new Error(
+      "P24_API_BASE_URL must be set for non-local deployments. Refusing to default to the Przelewy24 sandbox in production.",
+    );
+  }
+
+  const apiBaseUrl = normalizeUrl(explicitApiBaseUrl || SANDBOX_API_BASE_URL);
+
+  if (
+    apiBaseUrl.includes("sandbox")
+    && !isLocalSite(siteUrl)
+    && process.env.P24_ALLOW_SANDBOX !== "true"
+  ) {
+    throw new Error(
+      "P24_API_BASE_URL points at the Przelewy24 sandbox while SITE_URL is not local. Set the production API base URL, or set P24_ALLOW_SANDBOX=true to override intentionally.",
     );
   }
 

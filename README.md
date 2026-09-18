@@ -11,7 +11,6 @@ Canvas photo printing e-commerce application. Customers upload photos, preview c
 | Backend | Supabase (Postgres, Auth, RLS), Netlify Functions |
 | Images | Cloudinary (signed upload via Netlify Functions) |
 | Payments | Przelewy24 (sandbox/production) |
-| CRM | HubSpot (non-blocking contact sync) |
 | Admin | Refine + TanStack Table (`/admin`, gated by Supabase admin auth) |
 | Testing | Vitest 4, Testing Library, jsdom |
 | Linting | ESLint 9 (flat config), typescript-eslint |
@@ -86,7 +85,6 @@ All variables are documented in `.env.example`. Copy it to `.env` and fill in va
 | `SUPABASE_URL` | Yes | Supabase project URL (server-side) |
 | `SUPABASE_SECRET_KEY` | Yes | Supabase service role key |
 | `SITE_URL` | Yes | Public site URL (used for P24 return URLs) |
-| `ADMIN_SHIPMENT_TOKEN` | Yes | Token for admin shipment endpoints |
 
 ### Przelewy24
 
@@ -96,22 +94,9 @@ All variables are documented in `.env.example`. Copy it to `.env` and fill in va
 | `P24_POS_ID` | Yes | Przelewy24 POS ID |
 | `P24_CRC` | Yes | Przelewy24 CRC key |
 | `P24_API_KEY` | Yes | Przelewy24 REST API key |
-| `P24_API_BASE_URL` | Yes | `https://sandbox.przelewy24.pl/api/v1` (sandbox) or `https://secure.przelewy24.pl/api/v1` (production) |
+| `P24_API_BASE_URL` | Yes (non-local) | `https://secure.przelewy24.pl/api/v1` (production) or `https://sandbox.przelewy24.pl/api/v1` (sandbox). Must be set for non-local `SITE_URL`. |
+| `P24_ALLOW_SANDBOX` | No | Set `true` only to intentionally keep the sandbox against a non-local site (deploy previews). Defaults to `false`. |
 | `P24_STATUS_URL` | No | Override for Przelewy24 webhook target URL |
-
-### HubSpot CRM
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `HS_PRIVATE_APP_ACCESS_TOKEN` | No | HubSpot project-based app static token |
-| `HUBSPOT_API_BASE_URL` | No | Defaults to `https://api.hubapi.com`. Use `https://api.hubapi.eu` for EU data residency |
-
-### Debug
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DEBUG_ORDERS_ENABLED` | No | Enable debug orders endpoint (`true`/`false`) |
-| `DEBUG_ORDERS_TOKEN` | No | Token for debug orders endpoint |
 
 ## Project Structure
 
@@ -126,9 +111,8 @@ src/
   locales/            # i18n translations (en.json, pl.json)
   assets/             # Static assets (favicons, backgrounds)
   admin/              # Admin app wrapper, auth/data providers, layout
-netlify/functions/    # Serverless functions (orders, payments, uploads, CRM)
+netlify/functions/    # Serverless functions (orders, payments, uploads, admin)
 supabase/migrations/  # Database migration files
-content/legal/        # Markdown content for legal pages (edited in-repo)
 scripts/              # Dev scripts (Supabase migration helper)
 docs/                 # Development notes
 ```
@@ -196,7 +180,7 @@ Required GitHub configuration:
 ### Database
 
 - **Supabase** — Postgres with Row Level Security (RLS), Auth, and real-time
-- 17 migrations covering orders, addresses, coupons, partners, referrals, promotions, and payment tracking
+- Migrations covering orders, addresses, coupons, partners, referrals, promotions, content pages, and payment tracking
 
 ### Image Pipeline
 
@@ -210,16 +194,10 @@ Required GitHub configuration:
   - `create-przelewy24-session` — registers transaction, returns payment URL
   - `przelewy24-webhook` — receives async notifications, verifies and marks orders as paid
 
-### CRM
-
-- HubSpot contact sync via `sync-hubspot-contact` Netlify Function
-- Non-blocking — sync failure does not prevent checkout or payment
-- Requires custom contact properties in HubSpot (see `.env.example` comments)
-
 ## Legal Pages
 
-Legal pages are Markdown files in `content/legal/`, loaded directly by `src/lib/content-loader.ts` (frontmatter + body). They are edited in the repository — there is no separate CMS UI.
+Legal pages live in the Supabase `content_pages` table and are baked into the bundle at build time by the Vite content plugin (`virtual:tuus-content`). They are edited via the admin "Content" section, which triggers a rebuild through `NETLIFY_BUILD_HOOK_URL`.
 
-- **Slugs are derived from filenames** (e.g., `terms.md` → `/terms`). Renaming a file requires updating all references.
-- **Menu ordering** is controlled by the `menuOrder` frontmatter field within each menu section (`legal`, `payments`, `company`).
-- Pages containing `[PLACEHOLDER: ...]` markers need business-specific values filled in.
+- **Slugs** are unique per page; the storefront routes are derived from them.
+- **Menu ordering** is controlled by the `menu_section` / `menu_order` columns.
+- Only rows with `is_published = true` are publicly readable (RLS policy `content_pages_public_read`).

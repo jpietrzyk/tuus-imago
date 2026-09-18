@@ -1,4 +1,24 @@
 import { createHash } from "node:crypto";
+import { toLambdaEvent, toWebResponse } from "./_shared/v2-adapter";
+
+// Netlify inline function config: the endpoint is unauthenticated (guest
+// checkout uploads) and every call signs an upload against the paid Cloudinary
+// account, so throttle it per client. Rate limits must live in the function
+// config; Netlify does not accept them in netlify.toml. Netlify only reads this
+// config for v2 (default-export) functions, hence the adapter below.
+export const config = {
+  path: "/.netlify/functions/cloudinary-signature",
+  rateLimit: {
+    windowLimit: 20,
+    windowSize: 60,
+    aggregateBy: ["ip", "domain"],
+  },
+};
+
+export default async (request: Request): Promise<Response> => {
+  const result = await signCloudinaryUpload(await toLambdaEvent(request));
+  return toWebResponse(result);
+};
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -14,7 +34,7 @@ function buildSignaturePayload(params: ParamsToSign): string {
     .join("&");
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const signCloudinaryUpload = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,

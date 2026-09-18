@@ -75,10 +75,11 @@ export const handler = async (event: NetlifyEvent) => {
   try {
     config = getP24Config();
   } catch (error) {
+    console.error("[create-przelewy24-session] config error:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Missing Przelewy24 configuration.",
+        error: "Payment provider is not configured.",
       }),
     };
   }
@@ -122,7 +123,7 @@ export const handler = async (event: NetlifyEvent) => {
     console.error("[create-przelewy24-session] Order load error:", orderError.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Could not load order for payment.", details: orderError.message }),
+      body: JSON.stringify({ error: "Could not load order for payment." }),
     };
   }
 
@@ -211,7 +212,7 @@ export const handler = async (event: NetlifyEvent) => {
 
     return {
       statusCode: 502,
-      body: JSON.stringify({ error: errMsg }),
+      body: JSON.stringify({ error: "Could not start the payment. Please try again." }),
     };
   }
   const token = registerData?.data?.token;
@@ -229,7 +230,7 @@ export const handler = async (event: NetlifyEvent) => {
 
     return {
       statusCode: 502,
-      body: JSON.stringify({ error: p24Error }),
+      body: JSON.stringify({ error: "Could not start the payment. Please try again." }),
     };
   }
 
