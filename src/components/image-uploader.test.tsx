@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { createRef, useState, useCallback } from "react";
+import userEvent from "@testing-library/user-event";
 import {
   ImageUploader,
   type ImageUploaderHandle,
@@ -292,6 +293,74 @@ describe("ImageUploader", () => {
       }
       const calls = onActiveImageSrcChange.mock.calls;
       expect(calls[calls.length - 1]?.[0]).toBe(originalSrc);
+    }
+  });
+
+  it("adds another photo to the first free slot left to right via the floating action", async () => {
+    const user = userEvent.setup();
+    const firstFile = new File(["first"], "first.jpg", { type: "image/jpeg" });
+    const secondFile = new File(["second"], "second.jpg", {
+      type: "image/jpeg",
+    });
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    expect(input).toBeDefined();
+
+    if (input) {
+      // The very first photo lands in the center slot.
+      fireEvent.change(input, { target: { files: [firstFile] } });
+      await screen.findByRole("img", { name: "Preview" });
+      await waitFor(() => expect(slotDotHasImage(1)).toBe(true));
+
+      const fab = screen.getByTestId("add-photo-fab");
+      expect(fab).toBeEnabled();
+
+      await user.click(fab);
+      await user.click(screen.getByTestId("add-photo-from-device"));
+
+      const editorInput = document.querySelector(
+        'input[type="file"][accept*="image/jpeg"]',
+      ) as HTMLInputElement | null;
+      expect(editorInput).toBeDefined();
+      if (editorInput) {
+        fireEvent.change(editorInput, { target: { files: [secondFile] } });
+      }
+
+      // The next photo fills the first empty slot from the left.
+      await waitFor(() => {
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(1)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(false);
+      });
+    }
+  });
+
+  it("disables the floating add-photo action when all slots are filled", async () => {
+    const files = ["a", "b", "c"].map(
+      (name) => new File([name], `${name}.jpg`, { type: "image/jpeg" }),
+    );
+
+    render(<TestWrapper />);
+
+    const input = document.querySelector(
+      'input[type="file"][accept*="image/jpeg"]',
+    ) as HTMLInputElement | null;
+    expect(input).toBeDefined();
+
+    if (input) {
+      fireEvent.change(input, { target: { files } });
+
+      await waitFor(() => {
+        expect(slotDotHasImage(0)).toBe(true);
+        expect(slotDotHasImage(1)).toBe(true);
+        expect(slotDotHasImage(2)).toBe(true);
+      });
+
+      expect(screen.getByTestId("add-photo-fab")).toBeDisabled();
     }
   });
 

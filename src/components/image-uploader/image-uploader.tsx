@@ -26,6 +26,7 @@ import {
   type AiAdjustments,
 } from "@/lib/image-transformations";
 import UploaderDropArea, { SelectionErrorBanner } from "./uploader-drop-area";
+import AddPhotoFab from "./add-photo-fab";
 import UploaderPreviewSlider from "./uploader-preview-slider";
 import UploaderPreviewToolsPanel from "./uploader-preview-tools-panel";
 import type { FooterToolsBarProps } from "@/components/footer-tools-bar";
@@ -2824,6 +2825,32 @@ export const ImageUploader = forwardRef<
     fileInputRef.current?.click();
   }, [activeImageIndex]);
 
+  // Floating "add photo" action for the editor: the new photo fills the first
+  // empty slot from left to right. Slot targeting is done through the pending
+  // slot ref, the same channel the replacement flows use.
+  const handleAddPhotoFromCamera = useCallback(() => {
+    const slotIndex = selectedImages.findIndex((image) => image === null);
+    if (slotIndex < 0) {
+      return;
+    }
+    pendingSelectionSlotRef.current = slotIndex;
+    recordDiagnostic("camera-dialog-open", {
+      kind: "camera",
+      detail: "add-photo",
+    });
+    setIsCameraDialogOpen(true);
+  }, [selectedImages]);
+
+  const handleAddPhotoFromDevice = useCallback(() => {
+    const slotIndex = selectedImages.findIndex((image) => image === null);
+    if (slotIndex < 0) {
+      return;
+    }
+    pendingSelectionSlotRef.current = slotIndex;
+    markCaptureStarted("gallery");
+    fileInputRef.current?.click();
+  }, [selectedImages]);
+
   // Photo produced by the in-app camera. The page never backgrounded, so the
   // File is complete and no interrupted-capture marker is involved.
   const handleCameraCapture = useCallback(
@@ -3356,6 +3383,12 @@ export const ImageUploader = forwardRef<
               hideTransformGroup={triptychWindowIndexOfActiveSlot !== undefined}
             />
           </div>
+          <AddPhotoFab
+            disabled={selectedImageCount >= MAX_SELECTED_IMAGES}
+            onTakePhoto={handleAddPhotoFromCamera}
+            onChooseFromDevice={handleAddPhotoFromDevice}
+            className="absolute right-3 bottom-3 z-30 lg:right-4 lg:bottom-4"
+          />
         </CardContent>
       </Card>
     </>
