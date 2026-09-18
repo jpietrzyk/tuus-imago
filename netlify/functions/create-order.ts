@@ -1,6 +1,25 @@
 import { createClient } from "@supabase/supabase-js";
 import { SHIPPING_COUNTRIES } from "../../src/lib/checkout-constants";
 import { CANVAS_PRINT_UNIT_PRICE } from "../../src/lib/pricing";
+import { toLambdaEvent, toWebResponse } from "./_shared/v2-adapter";
+
+// Netlify inline function config: keeps the existing route and throttles the
+// unauthenticated checkout endpoint per client to limit order/coupon abuse.
+// Netlify only reads this config for v2 (default-export) functions, hence the
+// adapter at the bottom of this file.
+export const config = {
+  path: "/.netlify/functions/create-order",
+  rateLimit: {
+    windowLimit: 10,
+    windowSize: 60,
+    aggregateBy: ["ip", "domain"],
+  },
+};
+
+export default async (request: Request): Promise<Response> => {
+  const result = await createOrder(await toLambdaEvent(request));
+  return toWebResponse(result);
+};
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -59,8 +78,6 @@ const DEFAULT_SHIPPING_METHOD = "inpost_courier";
 const DEFAULT_SHIPPING_COST = 14.99;
 const DEFAULT_SHIPMENT_STATUS = "pending_fulfillment";
 
-let hasLoggedSupabaseKeyMode = false;
-
 function isValidEmail(email: string): boolean {
   return /.+@.+\..+/.test(email.trim());
 }
@@ -114,7 +131,7 @@ function validateSlots(slots: UploadedSlotInput[]): string | null {
   return null;
 }
 
-export const handler = async (event: NetlifyEvent) => {
+export const createOrder = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -123,7 +140,6 @@ export const handler = async (event: NetlifyEvent) => {
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
-  const hasSecretKey = typeof process.env.SUPABASE_SECRET_KEY === "string";
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
@@ -134,13 +150,6 @@ export const handler = async (event: NetlifyEvent) => {
           "Missing SUPABASE_URL or SUPABASE_SECRET_KEY in environment.",
       }),
     };
-  }
-
-  if (!hasLoggedSupabaseKeyMode) {
-    const keyMode = hasSecretKey ? "secret" : "missing";
-
-    console.info(`[create-order] Supabase key mode: ${keyMode}`);
-    hasLoggedSupabaseKeyMode = true;
   }
 
   let parsedBody: CreateOrderPayload;

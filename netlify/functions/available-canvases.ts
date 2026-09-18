@@ -29,9 +29,10 @@ export const handler = async (event: NetlifyEvent) => {
   try {
     supabase = createServiceClient();
   } catch (e) {
+    console.error("[available-canvases] client init failed:", e);
     return {
       statusCode: 500,
-      body: JSON.stringify({ canvases: [], error: "Supabase client init failed", detail: e instanceof Error ? e.message : String(e) }),
+      body: JSON.stringify({ canvases: [], error: "Supabase client init failed" }),
     };
   }
 
@@ -43,9 +44,10 @@ export const handler = async (event: NetlifyEvent) => {
     .order("created_at", { ascending: true });
 
   if (fetchError) {
+    console.error("[available-canvases] query failed:", fetchError.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ canvases: [], error: "Query failed", detail: fetchError.message }),
+      body: JSON.stringify({ canvases: [], error: "Query failed" }),
     };
   }
 

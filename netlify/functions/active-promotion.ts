@@ -30,20 +30,10 @@ export const handler = async (event: NetlifyEvent) => {
   try {
     supabase = createServiceClient();
   } catch (e) {
+    console.error("[active-promotion] client init failed:", e);
     return {
       statusCode: 500,
-      body: JSON.stringify({ active: false, error: "Supabase client init failed", detail: e instanceof Error ? e.message : String(e) }),
-    };
-  }
-
-  const { data: allPromotions, error: listError } = await supabase
-    .from("promotions")
-    .select("id, name, is_active");
-
-  if (listError) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ active: false, error: "List query failed", detail: listError.message }),
+      body: JSON.stringify({ active: false, error: "Supabase client init failed" }),
     };
   }
 
@@ -54,20 +44,17 @@ export const handler = async (event: NetlifyEvent) => {
     .maybeSingle();
 
   if (fetchError) {
+    console.error("[active-promotion] query failed:", fetchError.message);
     return {
       statusCode: 500,
-      body: JSON.stringify({ active: false, error: "Query failed", detail: fetchError.message }),
+      body: JSON.stringify({ active: false, error: "Query failed" }),
     };
   }
 
   if (!promotion) {
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        active: false,
-        reason: "no active promotion found",
-        debug_allPromotions: allPromotions,
-      }),
+      body: JSON.stringify({ active: false }),
     };
   }
 

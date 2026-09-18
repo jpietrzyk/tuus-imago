@@ -10,3 +10,21 @@
 # Build identity for the running client; must never be cached.
 /version.json
   Cache-Control: no-cache
+
+# Security headers for every response.
+#
+# - script-src 'self': Vite emits only external hashed modules, no inline JS.
+# - style-src 'unsafe-inline': React sets style attributes (wall background),
+#   which CSP treats as inline style.
+# - img/connect include Cloudinary (uploads + transformations) and Supabase
+#   (REST + realtime websocket). blob:/data: cover camera previews and canvas.
+# - camera=(self) is required for the in-browser camera capture flow.
+# - frame-ancestors 'none' + X-Frame-Options: DENY prevent clickjacking.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(self), usb=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://res.cloudinary.com https://*.supabase.co; font-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.cloudinary.com https://res.cloudinary.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://secure.przelewy24.pl https://sandbox.przelewy24.pl; frame-ancestors 'none'; upgrade-insecure-requests

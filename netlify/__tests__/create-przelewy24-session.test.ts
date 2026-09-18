@@ -24,6 +24,7 @@ describe("create-przelewy24-session handler", () => {
     process.env.P24_API_KEY = "api-key";
     process.env.P24_API_BASE_URL = "https://sandbox.przelewy24.pl/api/v1";
     process.env.SITE_URL = "https://tuusimago.test";
+    process.env.P24_ALLOW_SANDBOX = "true";
     delete process.env.P24_STATUS_URL;
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
@@ -38,6 +39,7 @@ describe("create-przelewy24-session handler", () => {
     delete process.env.P24_API_KEY;
     delete process.env.P24_API_BASE_URL;
     delete process.env.SITE_URL;
+    delete process.env.P24_ALLOW_SANDBOX;
     delete process.env.P24_STATUS_URL;
     vi.unstubAllGlobals();
   });

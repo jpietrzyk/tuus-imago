@@ -2190,7 +2190,7 @@ describe("admin-api handler", () => {
       });
 
       expect(response.statusCode).toBe(500);
-      expect(readBody(response).error).toBe("DB error");
+      expect(readBody(response).error).toBe("Internal server error.");
     });
   });
 
