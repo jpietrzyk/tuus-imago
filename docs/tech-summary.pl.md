@@ -94,7 +94,7 @@ src/
   locales/                    # i18n dictionaries (en.json, pl.json)
   assets/                     # Backgrounds, favicons
 netlify/functions/            # Backend endpoints + _shared helpers
-supabase/migrations/          # 34 SQL migrations (schema is defined ONLY here)
+supabase/migrations/          # 35 SQL migrations (schema is defined ONLY here)
 scripts/                      # supabase-migrate.sh, apply-migrations.mjs
 public/                       # manifest.webmanifest, _headers (CSP), _redirects, icons, sw
 docs/                         # This doc + regression notes
@@ -243,9 +243,9 @@ Wspólne helpery (`_shared/`):
 - `supabase-auth.ts` — `getAuthenticatedUser()` (weryfikuje JWT kluczem publishable) oraz `createServiceClient()` (service role).
 - `przelewy24.ts` — podpisywanie, jednostki minor, nagłówek auth i **fail-closed** guard konfiguracji.
 - `v2-adapter.ts` — mostek między handlerami w stylu Lambda a Netlify v2 `Request`/`Response`, aby limity szybkości działały.
-- `order-access.ts` — generuje/weryfikuje token dostępu do zamówienia (porównanie odporne na atak czasowy) używany przez publiczne endpointy płatności/statusu.
+- `order-access.ts` — generuje/weryfikuje token dostępu do zamówienia; weryfikacja jest odporna na atak czasowy, a zamówienia utworzone przed wprowadzeniem tokenu dostają ograniczony 7-dniowy fallback tylko, gdy są nieopłacone (`pending`/`registered`).
 - `rate-limit.ts` — helper limitu opartego o bazę (`check_rate_limit`), kluczowany po IP, dla endpointów bez natywnej reguły Netlify.
-- `fetch-all.ts` — stronicuje odczyty PostgREST przez `.range()`, aby agregaty/eksporty CSV admina nie ucinały się na limicie 1000 wierszy.
+- `fetch-all.ts` — stronicuje pozostałe odczyty admina (przychód w czasie, statystyki partnerów, eksporty CSV oraz agregaty zamówień `sum`/`count`) przez `.range()`, aby nie ucinały się na limicie 1000 wierszy; `customer_list` i miesięczny przychód korzystają teraz z RPC SQL.
 
 **Zarządzanie zasobami:** `admin-api` prowadzi allowlistę zasobów (`orders`, `order_items`, `order_status_history`, `coupons`, `coupon_usages`, `profiles`, `partners`, `partner_refs`, `promotions`, `picture_frames`, `picture_canvases`, `shipping_methods`, `app_settings`, `content_pages`, `complaints`). Każdy inny zasób → `400`, z wyjątkiem `customers` (używanego wyłącznie do eksportu CSV). Kolumny w `select`/filtrach/sortowaniu/`groupBy`/`sum` są walidowane względem allowlisty per zasób, a `pageSize` jest ograniczany do 1–1000.
 
@@ -293,7 +293,7 @@ Logowanie obsługuje e-mail/hasło oraz Google OAuth. Brak samodzielnej rejestra
 
 ## 11. Baza danych (Supabase / Postgres)
 
-Schemat jest zdefiniowany **wyłącznie** przez 34 pliki SQL w `supabase/migrations/`. Nie ma natywnych enumów — wszystkie „enumy" to `text` + `CHECK`. `pgcrypto` dostarcza `gen_random_uuid()`.
+Schemat jest zdefiniowany **wyłącznie** przez 35 pliki SQL w `supabase/migrations/`. Nie ma natywnych enumów — wszystkie „enumy" to `text` + `CHECK`. `pgcrypto` dostarcza `gen_random_uuid()`.
 
 ### Tabele
 
@@ -326,7 +326,8 @@ Niezmienniki pojedynczej domyślnej wartości istnieją dla `picture_frames`, `p
 - `link_guest_orders()` — przypisuje zamówienia gości po e-mailu po rejestracji (ustawia `orders.user_id`).
 - `increment_coupon_used_count(uuid)` — RPC SECURITY DEFINER wywoływane przez `create-order`.
 - `prevent_profile_admin_self_update()` — blokuje samodzielną eskalację użytkownika do admina.
-- `check_rate_limit(key, limit, window_seconds)` — SECURITY DEFINER; limit szybkości w bazie dla publicznych endpointów bez natywnej reguły Netlify.
+- `check_rate_limit(key, limit, window_seconds)` — SECURITY DEFINER; limit szybkości w bazie dla publicznych endpointów bez natywnej reguły Netlify; przy każdym wywołaniu usuwa też wpisy `rate_limit_hits` starsze niż jeden dzień.
+- `admin_customer_list()` / `admin_revenue_by_month()` — SECURITY DEFINER, agregujące helpery tylko dla adminów (EXECUTE odebrane anon/authenticated/public), które grupują całą tabelę `orders` w SQL, dzięki czemu agregaty dashboardu/klientów nie stronicują całej tabeli do funkcji.
 - Triggery `updated_at` per tabela.
 - `202608080002_function_security_hardening.sql` przypiął `search_path` i odebrał EXECUTE funkcjom SECURITY DEFINER; `202609190004_pin_trigger_search_path.sql` przypina trzy późniejsze funkcje triggerowe (`handle_picture_frame_updated_at`, `handle_picture_canvas_updated_at`, `handle_shipping_method_updated_at`). Test-strażnik pilnuje teraz, aby żadna funkcja SQL nie została utworzona bez przypiętego `search_path`.
 
@@ -350,7 +351,7 @@ Skrypt najpierw próbuje Supabase CLI; jeśli `supabase link` zawiedzie (znany b
 3. **Dostępność checkout** — dropup w stopce wymienia sloty możliwe do zamówienia (drukowalne) z checkboxami. Niedrukowalne slotu są wymuszenie odznaczone i wyłączone; checkout wymaga ≥1 drukowalnego slotu.
 4. **Checkout** (`/checkout`) — wybór ramy + płótna per slot, metoda dostawy, formularz adresu, kupon, aktywna promocja i sumy. Cały stan UI jest oparty na sessionStorage, więc przeładowania/rundy OAuth nie gubią zamówienia.
 5. **Utworzenie zamówienia** — `create-order` przelicza wszystko po stronie serwera (nigdy nie ufa cenom klienta), wstawia zamówienie/pozycje/historię, stosuje użycie kuponu i promocję, rozwiązuje dostawę.
-6. **Płatność** — `create-przelewy24-session` rejestruje transakcję i zwraca URL przekierowania P24. Po płatności P24 wraca do `/checkout?payment=return&orderId=…`; checkout odpytuje `order-status` co 5 s (do 5 min). Asynchroniczny `przelewy24-webhook` weryfikuje i oznacza zamówienie jako opłacone.
+6. **Płatność** — `create-przelewy24-session` rejestruje transakcję i zwraca URL przekierowania P24. Po płatności P24 wraca do `/checkout?payment=return&orderId=…`; checkout odpytuje `order-status` co 5 s (do 5 min), wysyłając token dostępu trzymany w sessionStorage przez nagłówek `X-Order-Token`, ponieważ URL powrotny P24 nie niesie już tokenu. Asynchroniczny `przelewy24-webhook` weryfikuje i oznacza zamówienie jako opłacone.
 7. **Konto (opcjonalne)** — `/account/*` (chronione): profil, zamówienia (z plakietkami statusu/płatności, śledzeniem, miniaturami pozycji), zapisane adresy (pełny CRUD), lista płatności. Zamówienia gości są przypisywane do konta przy rejestracji przez dopasowanie e-maila.
 
 **Model cenowy** (`src/lib/pricing.ts`): każda jednostka wydruku na płótnie = **200 PLN** (`CANVAS_PRINT_UNIT_PRICE`), plus cena ramy + cena płótna per slot, minus rabat kuponu i aktywnej promocji, plus dostawa. Koszt dostawy jest darmowy powyżej `free_shipping_threshold` metody (oceniane na sumie przed rabatem).
@@ -381,7 +382,7 @@ Skrypt najpierw próbuje Supabase CLI; jeśli `supabase link` zawiedzie (znany b
 
 ## 15. Przepływ danych backendu dla zamówień (logika autorytatywna)
 
-`create-order.ts` jest jedynym źródłem prawdy o pieniądzach. Waliduje klienta, allowlistę krajów, wymagane zgody, liczbę/klucze slotów, wczytuje aktywne ramy/płótna z DB, przelicza ceny jednostki + ramy + płótna, ponownie waliduje kupon, stosuje aktywną promocję, rozwiązuje dostawę po stronie serwera, następnie wstawia `orders`, `order_items` i dwa wiersze `order_status_history` oraz inkrementuje użycie kuponu. Jest idempotentny przez unikalny `idempotency_key` (duplikat → zwraca istniejące zamówienie) i limitowany do 10 żądań/60 s per IP+domena. `user_id` pochodzi wyłącznie z zweryfikowanego Bearer JWT (nieprawidłowy token → 401; brak tokenu → zamówienie gościa); `userId` przekazane przez klienta jest ignorowane. Każde zamówienie otrzymuje też losowy `order_access_token`, zwracany klientowi i wymagany przez `create-przelewy24-session`/`order-status` dla zamówień z tokenem (starsze zamówienia działają awaryjnie po samym UUID).
+`create-order.ts` jest jedynym źródłem prawdy o pieniądzach. Waliduje klienta, allowlistę krajów, wymagane zgody, liczbę/klucze slotów, wczytuje aktywne ramy/płótna z DB, przelicza ceny jednostki + ramy + płótna, ponownie waliduje kupon, stosuje aktywną promocję, rozwiązuje dostawę po stronie serwera, następnie wstawia `orders`, `order_items` i dwa wiersze `order_status_history` oraz inkrementuje użycie kuponu. Jest idempotentny przez unikalny `idempotency_key` (duplikat → zwraca istniejące zamówienie) i limitowany do 10 żądań/60 s per IP+domena. `user_id` pochodzi wyłącznie z zweryfikowanego Bearer JWT (nieprawidłowy token → 401; brak tokenu → zamówienie gościa); `userId` przekazane przez klienta jest ignorowane. Każde zamówienie otrzymuje też losowy `order_access_token`, zwracany klientowi i wymagany przez `create-przelewy24-session`/`order-status` dla zamówień z tokenem; zamówienia sprzed wprowadzenia tokenu dostają ograniczony 7-dniowy fallback tylko dla nieopłaconych, w przeciwnym razie dostęp jest odmawiany.
 
 Statusy cyklu życia zamówienia (wymuszane w aplikacji, nie przez ograniczenia DB):
 - `status`: `pending_payment → paid → cancelled/refunded`
@@ -427,7 +428,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Przeliczanie cen po stronie serwera i idempotentność zamówień.
 - Zapytania z zakresem użytkownika w `customer-orders` / `customer-addresses` (obrona przed IDOR).
 - Ogólne błędy serwera w `admin-api` (bez wycieku szczegółów DB).
-- Token dostępu do zamówienia (`order_access_token`) wiąże publiczne endpointy płatności (utworzenie sesji) i statusu zamówienia z kupującym; `orders.user_id` jest ustawiane wyłącznie ze zweryfikowanego JWT.
+- Token dostępu do zamówienia (`order_access_token`) wiąże publiczne endpointy płatności (utworzenie sesji) i statusu zamówienia z kupującym; jest wysyłany przez nagłówek `X-Order-Token` (nigdy w URL-u powrotnym P24), fallback legacy jest ograniczony do 7 dni i nieopłaconych zamówień, a `orders.user_id` jest ustawiane wyłącznie ze zweryfikowanego JWT.
 - Limity szybkości oparte o bazę (`check_rate_limit`) na `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral` i `submit-complaint`, obok natywnych reguł Netlify dla `create-order`/`cloudinary-signature`.
 - `admin-api` waliduje każdą kolumnę `select`/filtra/sortowania/`groupBy`/`sum` podaną przez wywołującego względem allowlisty per zasób i ogranicza `pageSize` do 1–1000.
 
@@ -441,22 +442,23 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - ✅ Nieweryfikowane `orders.user_id` z ciała żądania → wyłącznie zweryfikowany JWT.
 - ✅ Nieuwalidowane nazwy kolumn w `admin-api` → allowlista per zasób + ograniczenie `pageSize`.
 - ✅ `search_path` nieprzypięty w trzech funkcjach triggerów → przypięty przez `202609190004`, wymuszany testem-strażnikiem.
-- ✅ Eksport CSV klientów (`400`) i ucinanie agregatów/eksportów do 1000 wierszy → zasób tylko do eksportu + stronicowane odczyty.
+- ✅ Eksport CSV klientów (`400`) i ucinanie agregatów/eksportów do 1000 wierszy → zasób tylko do eksportu + stronicowane odczyty / RPC SQL.
+- ✅ Token dostępu ujawniony w URL-u powrotnym P24 → wysyłany teraz przez nagłówek `X-Order-Token` (przestarzały fallback zapytania `?token=` jest nadal akceptowany dla starych klientów).
 
 ### Otwarte / szczątkowe ryzyka (zob. §21)
 - Brak monitoringu błędów / alertów.
 - Weryfikacja używa klucza publishable, ale te funkcje następnie odpytują z service role — bezpieczeństwo zależy od jawnego zakresu, który obecnie jest obecny.
-- Token dostępu do zamówienia jest przenoszony w query stringu URL powrotnego P24, więc może pojawić się w historii przeglądarki/logach (jest ograniczony do jednego zamówienia).
+- Przestarzały fallback zapytania `?token=` w `order-status` pozostaje dla starych klientów i powinien zostać usunięty, gdy stare bundle znikną.
 - Zdjęcia reklamacji nie są jeszcze zbierane/walidowane (pole istnieje, ale nie jest przesyłane).
 
 ---
 
 ## 20. Testy i bramki jakości
 
-- **165 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1562 testy). Testy współlokowane działają jako dokumentacja zachowania.
+- **165 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1572 testy). Testy współlokowane działają jako dokumentacja zachowania.
 - Polecenia: `npx vitest run <file>` (wybiórczo), `npx vitest run` (pełne), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania (w tym strażnik przypięcia `search_path`).
-- Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST) nie są pokryte end-to-end.
+- Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST oraz RPC `admin_customer_list`/`admin_revenue_by_month`) nie są pokryte end-to-end.
 
 ---
 
@@ -472,6 +474,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Starsze tekstowe pola dostawy współistnieją z nowymi opartymi na FK; `202609190005_backfill_order_shipping_method.sql` uzupełnia `shipping_method_id`/czas dostawy dla historycznych zamówień, ale stare kolumny nadal istnieją.
 - Zduplikowane funkcje triggerów `updated_at` między tabelami.
 - CRUD admina opiera się niemal w całości na bramce service-role (RLS jest omijane) z allowlistą kolumn per zasób; bramka pozostaje całą granicą bezpieczeństwa.
+- `admin_customer_list`/`admin_revenue_by_month` przeniosły ciężką agregację admina do SQL; pozostałe odczyty `fetch-all` są ograniczone przez chunk/`maxPages`.
 
 **Operacyjne**
 - Brak monitoringu błędów i alertów o dostępności. (Zalecenie: Sentry za `VITE_SENTRY_DSN`/`SENTRY_DSN` albo endpoint `/health` + zewnętrzny monitor dostępności.)
@@ -520,8 +523,9 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Przekaż lokalny `.env` bezpiecznie; potwierdź, że żadne sekrety nie są zacommitowane (obecnie czysto).
 - [ ] Utwórz/potwierdź **build hook** Netlify i ustaw `NETLIFY_BUILD_HOOK_URL`.
 - [ ] Zweryfikuj, że webhook P24 jest osiągalny i zwraca sukces z żywej domeny.
-- [ ] Potwierdź zastosowanie nowych migracji: `complaints`, `rate_limit_hits`, `orders.order_access_token`, backfill `shipping_method_id` oraz przypięcie `search_path`.
-- [ ] Wykonaj smoke test checkoutu w sandbox: zamówienie utworzone, `create-przelewy24-session` akceptuje zwrócony token dostępu, powrót P24 niesie `token`, a odpytywanie statusu działa.
+- [ ] Potwierdź zastosowanie nowych migracji: `complaints`, `rate_limit_hits`, `orders.order_access_token`, backfill `shipping_method_id`, przypięcie `search_path` oraz RPC `admin_customer_list`/`admin_revenue_by_month`.
+- [ ] Wykonaj smoke test checkoutu w sandbox: zamówienie utworzone, `create-przelewy24-session` akceptuje zwrócony token dostępu, odpytywanie statusu wysyła nagłówek `X-Order-Token` (URL powrotny nie niesie już tokenu), a odpytywanie statusu działa.
+- [ ] Potwierdź, że agregaty klientów i miesięcznego przychodu zwracają poprawne sumy na zbiorze >1000 zamówień.
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.
 - [ ] Przejrzyj otwarte pozycje z §21 i zdecyduj o własności/priorytecie.
 - [ ] Skonfiguruj monitoring błędów (obecnie nieobecny).
