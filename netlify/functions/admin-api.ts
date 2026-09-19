@@ -847,58 +847,32 @@ async function handleAggregation(
   return jsonResponse(400, { error: "Unsupported aggregation." });
 }
 
+type CustomerListRow = {
+  customer_email: string;
+  customer_name: string | null;
+  order_count: number | string;
+  total_revenue: number | string;
+  last_order_date: string;
+  marketing_consent: boolean | null;
+};
+
 async function handleCustomerList(
   supabase: ReturnType<typeof createClient>,
 ) {
-  const { data, error } = await fetchAllRows((from, to) =>
-    supabase
-      .from("orders")
-      .select("customer_email, customer_name, total_price, marketing_consent, created_at")
-      .order("id", { ascending: true })
-      .range(from, to),
-  );
+  const { data, error } = await supabase.rpc("admin_customer_list");
 
   if (error) {
     return serverError("request failed", error);
   }
 
-  const customerMap = new Map<string, {
-    customer_email: string;
-    customer_name: string;
-    order_count: number;
-    total_revenue: number;
-    last_order_date: string;
-    marketing_consent: boolean;
-  }>();
-
-  for (const row of data ?? []) {
-    const email = row.customer_email;
-    const existing = customerMap.get(email);
-    if (existing) {
-      existing.order_count += 1;
-      existing.total_revenue += Number(row.total_price) || 0;
-      if (new Date(row.created_at) > new Date(existing.last_order_date)) {
-        existing.last_order_date = row.created_at;
-        existing.customer_name = row.customer_name;
-      }
-      if (row.marketing_consent) {
-        existing.marketing_consent = true;
-      }
-    } else {
-      customerMap.set(email, {
-        customer_email: email,
-        customer_name: row.customer_name,
-        order_count: 1,
-        total_revenue: Number(row.total_price) || 0,
-        last_order_date: row.created_at,
-        marketing_consent: row.marketing_consent ?? false,
-      });
-    }
-  }
-
-  const customers = Array.from(customerMap.values()).sort(
-    (a, b) => new Date(b.last_order_date).getTime() - new Date(a.last_order_date).getTime(),
-  );
+  const customers = ((data ?? []) as CustomerListRow[]).map((row) => ({
+    customer_email: row.customer_email,
+    customer_name: row.customer_name,
+    order_count: Number(row.order_count),
+    total_revenue: Number(row.total_revenue),
+    last_order_date: row.last_order_date,
+    marketing_consent: row.marketing_consent ?? false,
+  }));
 
   return jsonResponse(200, { data: customers });
 }
@@ -942,33 +916,26 @@ async function handleRevenueOverTime(
   return jsonResponse(200, { data: result });
 }
 
+type RevenueByMonthRow = {
+  month: string;
+  revenue: number | string;
+  count: number | string;
+};
+
 async function handleRevenueByMonth(
   supabase: ReturnType<typeof createClient>,
 ) {
-  const { data, error } = await fetchAllRows((from, to) =>
-    supabase
-      .from("orders")
-      .select("created_at, total_price")
-      .order("id", { ascending: true })
-      .range(from, to),
-  );
+  const { data, error } = await supabase.rpc("admin_revenue_by_month");
 
   if (error) {
     return serverError("request failed", error);
   }
 
-  const monthMap = new Map<string, { month: string; revenue: number; count: number }>();
-  for (const row of data ?? []) {
-    const month = (row.created_at as string).slice(0, 7);
-    const existing = monthMap.get(month) ?? { month, revenue: 0, count: 0 };
-    existing.revenue += Number(row.total_price) || 0;
-    existing.count += 1;
-    monthMap.set(month, existing);
-  }
-
-  const result = Array.from(monthMap.values())
-    .sort((a, b) => a.month.localeCompare(b.month))
-    .slice(-12);
+  const result = ((data ?? []) as RevenueByMonthRow[]).map((row) => ({
+    month: row.month,
+    revenue: Number(row.revenue),
+    count: Number(row.count),
+  }));
 
   return jsonResponse(200, { data: result });
 }
@@ -1321,21 +1288,31 @@ async function handleUserList(
     if (users.length < perPage) {
       break;
     }
+
+    if (!(page < (authData?.lastPage ?? page))) {
+      break;
+    }
   }
 
-  const { data: profiles, error: profilesError } = await fetchAllRows((from, to) =>
-    supabase
+  const authUserIds = allUsers.map((u) => u.id);
+  const profiles: Array<Record<string, unknown>> = [];
+  const chunkSize = 500;
+
+  for (let i = 0; i < authUserIds.length; i += chunkSize) {
+    const chunk = authUserIds.slice(i, i + chunkSize);
+    const { data: chunkProfiles, error: profileError } = await supabase
       .from("profiles")
       .select("id, full_name, phone, is_admin, created_at, updated_at")
-      .order("id", { ascending: true })
-      .range(from, to),
-  );
+      .in("id", chunk);
 
-  if (profilesError) {
-    return serverError("profiles query failed", profilesError);
+    if (profileError) {
+      return serverError("profiles query failed", profileError);
+    }
+
+    profiles.push(...(chunkProfiles ?? []));
   }
 
-  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+  const profileMap = new Map(profiles.map((p) => [p.id as string, p]));
 
   const users = allUsers.map((u) => {
     const profile = profileMap.get(u.id);

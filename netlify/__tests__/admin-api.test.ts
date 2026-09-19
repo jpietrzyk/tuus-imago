@@ -34,6 +34,7 @@ function mockFetchForAuthFailure() {
 function setupClient(
   tables: Record<string, Record<string, unknown>>,
   auth?: { admin?: { listUsers?: unknown } },
+  rpcResult?: { data?: unknown; error?: unknown },
 ) {
   const from = vi.fn((table: string) => {
     if (!(table in tables)) {
@@ -42,8 +43,11 @@ function setupClient(
     return tables[table] as never;
   });
 
+  const rpc = vi.fn().mockResolvedValue(rpcResult ?? { data: [], error: null });
+
   const client = {
     from,
+    rpc,
     auth: {
       admin: {
         listUsers: vi.fn().mockResolvedValue(
@@ -54,7 +58,7 @@ function setupClient(
   };
 
   createClientMock.mockReturnValue(client as never);
-  return { client, from };
+  return { client, from, rpc };
 }
 
 function readBody(response: { body: string }) {
@@ -571,6 +575,7 @@ describe("admin-api handler", () => {
                   { id: "u1", email: "alice@test.com", created_at: "2026-01-01T00:00:00Z", last_sign_in_at: "2026-04-01T00:00:00Z" },
                   { id: "u2", email: "bob@test.com", created_at: "2026-02-01T00:00:00Z", last_sign_in_at: null },
                 ],
+                lastPage: 1,
               },
               error: null,
             },
@@ -579,6 +584,7 @@ describe("admin-api handler", () => {
       );
 
       const fromSpy = client.from;
+      let profilesInCall: ReturnType<typeof vi.fn> | undefined;
       fromSpy.mockImplementation((table: string) => {
         if (table === "profiles") {
           profilesCallCount++;
@@ -588,8 +594,9 @@ describe("admin-api handler", () => {
             const select = vi.fn().mockReturnValue({ eq });
             return { select } as never;
           }
-          // Second call: full profile data fetch in handleUserList
-          return paged({ data: profilesData, error: null });
+          // Second call: chunked profile fetch scoped to the auth user ids.
+          profilesInCall = vi.fn().mockResolvedValue({ data: profilesData, error: null });
+          return { select: vi.fn().mockReturnValue({ in: profilesInCall }) } as never;
         }
         throw new Error(`Unexpected table: ${table}`);
       });
@@ -616,6 +623,7 @@ describe("admin-api handler", () => {
         full_name: "Alice",
         is_admin: false,
       });
+      expect(profilesInCall).toHaveBeenCalledWith("id", ["u1", "u2"]);
     });
   });
 
@@ -691,21 +699,35 @@ describe("admin-api handler", () => {
   });
 
   describe("aggregation: customer_list", () => {
-    it("merges multiple orders per customer and sorts by last_order_date", async () => {
+    it("maps the admin_customer_list RPC rows through unchanged", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
       const authCheck = makeAdminAuthCheck();
 
-      const ordersData = [
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 50, marketing_consent: false, created_at: "2026-01-10T00:00:00Z" },
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 30, marketing_consent: false, created_at: "2026-03-15T00:00:00Z" },
-        { customer_email: "b@t.com", customer_name: "Bob", total_price: 100, marketing_consent: false, created_at: "2026-02-01T00:00:00Z" },
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 20, marketing_consent: false, created_at: "2026-02-20T00:00:00Z" },
-      ];
-
-      setupClient({
-        profiles: authCheck,
-        orders: paged({ data: ordersData, error: null }),
-      });
+      const { rpc } = setupClient(
+        { profiles: authCheck },
+        undefined,
+        {
+          data: [
+            {
+              customer_email: "a@t.com",
+              customer_name: "Alice",
+              order_count: 3,
+              total_revenue: 597,
+              last_order_date: "2026-03-15T00:00:00Z",
+              marketing_consent: true,
+            },
+            {
+              customer_email: "b@t.com",
+              customer_name: "Bob",
+              order_count: 1,
+              total_revenue: 100,
+              last_order_date: "2026-02-01T00:00:00Z",
+              marketing_consent: false,
+            },
+          ],
+          error: null,
+        },
+      );
 
       const response = await handler({
         httpMethod: "POST",
@@ -717,40 +739,49 @@ describe("admin-api handler", () => {
       });
 
       expect(response.statusCode).toBe(200);
+      expect(rpc).toHaveBeenCalledWith("admin_customer_list");
       const body = readBody(response);
-      expect(body.data).toHaveLength(2);
-      expect(body.data[0]).toMatchObject({
-        customer_email: "a@t.com",
-        customer_name: "Alice",
-        order_count: 3,
-        total_revenue: 100,
-        last_order_date: "2026-03-15T00:00:00Z",
-        marketing_consent: false,
-      });
-      expect(body.data[1]).toMatchObject({
-        customer_email: "b@t.com",
-        customer_name: "Bob",
-        order_count: 1,
-        total_revenue: 100,
-        last_order_date: "2026-02-01T00:00:00Z",
-        marketing_consent: false,
-      });
+      expect(body.data).toEqual([
+        {
+          customer_email: "a@t.com",
+          customer_name: "Alice",
+          order_count: 3,
+          total_revenue: 597,
+          last_order_date: "2026-03-15T00:00:00Z",
+          marketing_consent: true,
+        },
+        {
+          customer_email: "b@t.com",
+          customer_name: "Bob",
+          order_count: 1,
+          total_revenue: 100,
+          last_order_date: "2026-02-01T00:00:00Z",
+          marketing_consent: false,
+        },
+      ]);
     });
 
-    it("propagates marketing consent from any order", async () => {
+    it("coerces numeric fields and defaults marketing_consent to false", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
       const authCheck = makeAdminAuthCheck();
 
-      const ordersData = [
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 50, marketing_consent: false, created_at: "2026-01-01T00:00:00Z" },
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 30, marketing_consent: true, created_at: "2026-02-01T00:00:00Z" },
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 20, marketing_consent: false, created_at: "2026-03-01T00:00:00Z" },
-      ];
-
-      setupClient({
-        profiles: authCheck,
-        orders: paged({ data: ordersData, error: null }),
-      });
+      setupClient(
+        { profiles: authCheck },
+        undefined,
+        {
+          data: [
+            {
+              customer_email: "a@t.com",
+              customer_name: null,
+              order_count: "3",
+              total_revenue: "100.50",
+              last_order_date: "2026-03-01T00:00:00Z",
+              marketing_consent: null,
+            },
+          ],
+          error: null,
+        },
+      );
 
       const response = await handler({
         httpMethod: "POST",
@@ -763,11 +794,39 @@ describe("admin-api handler", () => {
 
       expect(response.statusCode).toBe(200);
       const body = readBody(response);
-      expect(body.data).toHaveLength(1);
-      expect(body.data[0].marketing_consent).toBe(true);
-      expect(body.data[0].order_count).toBe(3);
-      expect(body.data[0].total_revenue).toBe(100);
-      expect(body.data[0].last_order_date).toBe("2026-03-01T00:00:00Z");
+      expect(body.data).toEqual([
+        {
+          customer_email: "a@t.com",
+          customer_name: null,
+          order_count: 3,
+          total_revenue: 100.5,
+          last_order_date: "2026-03-01T00:00:00Z",
+          marketing_consent: false,
+        },
+      ]);
+    });
+
+    it("returns 500 without DB detail when the RPC fails", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      const authCheck = makeAdminAuthCheck();
+
+      setupClient(
+        { profiles: authCheck },
+        undefined,
+        { data: null, error: { message: "permission denied for table orders" } },
+      );
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { aggregateFunction: "customer_list" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(readBody(response).error).toBe("Internal server error.");
     });
   });
 
@@ -833,22 +892,22 @@ describe("admin-api handler", () => {
   });
 
   describe("aggregation: revenue_by_month", () => {
-    it("buckets revenue by month and slices last 12", async () => {
+    it("maps the admin_revenue_by_month RPC rows in ascending order", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
       const authCheck = makeAdminAuthCheck();
 
-      const ordersData: Array<{ created_at: string; total_price: number }> = [];
-      for (let i = 0; i < 15; i++) {
-        const year = 2025 + Math.floor(i / 12);
-        const month = (i % 12) + 1;
-        const mm = String(month).padStart(2, "0");
-        ordersData.push({ created_at: `${year}-${mm}-15T00:00:00Z`, total_price: 100 });
-      }
-
-      setupClient({
-        profiles: authCheck,
-        orders: paged({ data: ordersData, error: null }),
-      });
+      const { rpc } = setupClient(
+        { profiles: authCheck },
+        undefined,
+        {
+          data: [
+            { month: "2025-04", revenue: "100", count: "2" },
+            { month: "2025-05", revenue: 250, count: 1 },
+            { month: "2026-03", revenue: "75.50", count: "3" },
+          ],
+          error: null,
+        },
+      );
 
       const response = await handler({
         httpMethod: "POST",
@@ -860,13 +919,13 @@ describe("admin-api handler", () => {
       });
 
       expect(response.statusCode).toBe(200);
+      expect(rpc).toHaveBeenCalledWith("admin_revenue_by_month");
       const body = readBody(response);
-      expect(body.data).toHaveLength(12);
-      expect(body.data[0].month).toBe("2025-04");
-      expect(body.data[11].month).toBe("2026-03");
-      for (const bucket of body.data) {
-        expect(bucket).toMatchObject({ revenue: 100, count: 1 });
-      }
+      expect(body.data).toEqual([
+        { month: "2025-04", revenue: 100, count: 2 },
+        { month: "2025-05", revenue: 250, count: 1 },
+        { month: "2026-03", revenue: 75.5, count: 3 },
+      ]);
     });
   });
 
@@ -2159,14 +2218,15 @@ describe("admin-api handler", () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
       const authCheck = makeAdminAuthCheck();
 
-      const ordersData = [
-        { customer_email: "a@t.com", customer_name: "Alice", total_price: 50, marketing_consent: true, created_at: "2026-01-10T00:00:00Z" },
+      const customersData = [
+        { customer_email: "a@t.com", customer_name: "Alice", order_count: 2, total_revenue: 50, last_order_date: "2026-01-10T00:00:00Z", marketing_consent: true },
       ];
 
-      setupClient({
-        profiles: authCheck,
-        orders: paged({ data: ordersData, error: null }),
-      });
+      setupClient(
+        { profiles: authCheck },
+        undefined,
+        { data: customersData, error: null },
+      );
 
       const response = await handler({
         httpMethod: "POST",

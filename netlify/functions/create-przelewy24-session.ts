@@ -118,23 +118,28 @@ export const handler = async (event: NetlifyEvent) => {
     },
   });
 
-  if (
-    await isRateLimitExceeded(supabase, event, {
-      scope: "create-przelewy24-session",
-      limit: 10,
-      windowSeconds: 60,
-    })
-  ) {
-    return rateLimitResponse(60);
-  }
-
-  const { data: order, error: orderError } = await supabase
+  const orderQuery = supabase
     .from("orders")
     .select(
       "id, order_number, status, customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_postal_code, shipping_country, currency, total_price, shipping_cost, payment_session_id, payment_token, payment_status, order_access_token, created_at",
     )
     .eq("id", orderId)
     .maybeSingle<OrderRow>();
+
+  const [limitExceeded, orderResult] = await Promise.all([
+    isRateLimitExceeded(supabase, event, {
+      scope: "create-przelewy24-session",
+      limit: 10,
+      windowSeconds: 60,
+    }),
+    orderQuery,
+  ]);
+
+  if (limitExceeded) {
+    return rateLimitResponse(60);
+  }
+
+  const { data: order, error: orderError } = orderResult;
 
   if (orderError) {
     console.error("[create-przelewy24-session] Order load error:", orderError.message);

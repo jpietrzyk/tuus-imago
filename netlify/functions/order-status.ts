@@ -50,21 +50,26 @@ export const handler = async (event: NetlifyEvent) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  if (
-    await isRateLimitExceeded(supabase, event, {
-      scope: "order-status",
-      limit: 60,
-      windowSeconds: 60,
-    })
-  ) {
-    return rateLimitResponse(60);
-  }
-
-  const { data: order, error } = await supabase
+  const orderQuery = supabase
     .from("orders")
     .select("id, order_number, status, payment_status, payment_session_id, order_access_token, created_at")
     .eq("id", orderId)
     .maybeSingle<OrderStatusRow>();
+
+  const [limitExceeded, orderResult] = await Promise.all([
+    isRateLimitExceeded(supabase, event, {
+      scope: "order-status",
+      limit: 60,
+      windowSeconds: 60,
+    }),
+    orderQuery,
+  ]);
+
+  if (limitExceeded) {
+    return rateLimitResponse(60);
+  }
+
+  const { data: order, error } = orderResult;
 
   if (error || !order) {
     return {
