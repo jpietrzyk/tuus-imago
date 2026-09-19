@@ -31,6 +31,14 @@ export function AdminApp({ children }: { children: ReactNode }) {
           meta: { label: "Coupons" },
         },
         {
+          name: "promotions",
+          list: "/admin/promotions",
+          create: "/admin/promotions/new",
+          edit: "/admin/promotions/:id/edit",
+          show: "/admin/promotions/:id",
+          meta: { label: "Promotions" },
+        },
+        {
           name: "partner_refs",
           list: "/admin/refs",
           show: "/admin/refs/:id",
@@ -74,6 +82,12 @@ export function AdminApp({ children }: { children: ReactNode }) {
           list: "/admin/customers",
           show: "/admin/customers/:email",
           meta: { label: "Customers" },
+        },
+        {
+          name: "complaints",
+          list: "/admin/complaints",
+          show: "/admin/complaints/:id",
+          meta: { label: "Complaints" },
         },
         {
           name: "users",

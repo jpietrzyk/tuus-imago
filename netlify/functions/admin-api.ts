@@ -1,4 +1,5 @@
 import { createClient, type User } from "@supabase/supabase-js";
+import { fetchAllRows } from "./_shared/fetch-all";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -53,7 +54,186 @@ const ALLOWED_RESOURCES = new Set([
   "shipping_methods",
   "app_settings",
   "content_pages",
+  "complaints",
 ]);
+
+/**
+ * Pseudo-resources that have no table of their own and are only valid for CSV
+ * export. `customers` is an aggregate over `orders`.
+ */
+const EXPORT_ONLY_RESOURCES = new Set(["customers"]);
+
+/**
+ * Per-resource allowlist of columns that may appear in `select`, filter and
+ * sort clauses. Caller-supplied identifiers must never reach PostgREST
+ * unvalidated. Derived from the create-table migrations.
+ */
+const RESOURCE_COLUMNS: Record<string, Set<string>> = {
+  orders: new Set([
+    "id", "order_number", "status", "customer_name", "customer_email",
+    "customer_phone", "shipping_address", "shipping_city", "shipping_postal_code",
+    "shipping_country", "terms_accepted", "privacy_accepted", "marketing_consent",
+    "currency", "items_count", "unit_price", "total_price", "created_at",
+    "updated_at", "shipping_method", "shipping_cost", "shipment_status",
+    "tracking_number", "coupon_id", "coupon_code", "discount_amount", "user_id",
+    "ref_code", "promotion_id", "promotion_discount_amount", "payment_provider",
+    "payment_status", "payment_session_id", "payment_token", "payment_order_id",
+    "payment_method_id", "payment_registered_at", "payment_paid_at",
+    "payment_verified_at", "payment_error", "shipping_method_id",
+    "shipping_delivery_time", "order_access_token",
+  ]),
+  order_items: new Set([
+    "id", "order_id", "slot_index", "slot_key", "transformed_url", "public_id",
+    "secure_url", "transformations", "ai_adjustments", "created_at", "frame_id",
+    "frame_name", "frame_price", "canvas_id", "canvas_name", "canvas_price",
+  ]),
+  order_status_history: new Set([
+    "id", "order_id", "status_type", "status", "note", "created_at",
+  ]),
+  coupons: new Set([
+    "id", "code", "description", "discount_type", "discount_value", "currency",
+    "min_order_amount", "max_uses", "used_count", "valid_from", "valid_until",
+    "is_active", "created_at", "partner_id",
+  ]),
+  coupon_usages: new Set([
+    "id", "coupon_id", "user_id", "order_id", "used_at",
+  ]),
+  profiles: new Set([
+    "id", "full_name", "phone", "created_at", "updated_at", "is_admin",
+  ]),
+  partners: new Set([
+    "id", "company_name", "contact_name", "nip", "contact_email", "phone",
+    "city", "address", "notes", "is_active", "created_at", "updated_at",
+  ]),
+  partner_refs: new Set([
+    "id", "partner_id", "ref_code", "label", "is_active", "created_at",
+    "updated_at",
+  ]),
+  promotions: new Set([
+    "id", "name", "slogan", "discount_type", "discount_value", "currency",
+    "min_order_amount", "min_slots", "valid_from", "valid_until", "is_active",
+    "created_at", "updated_at",
+  ]),
+  picture_frames: new Set([
+    "id", "name", "description", "price", "currency", "image_url", "color",
+    "material", "is_active", "is_default", "sort_order", "created_at",
+    "updated_at",
+  ]),
+  picture_canvases: new Set([
+    "id", "name", "description", "price", "currency", "image_url", "color",
+    "material", "is_active", "is_default", "sort_order", "created_at",
+    "updated_at",
+  ]),
+  shipping_methods: new Set([
+    "id", "name", "description", "price", "currency", "delivery_time",
+    "free_shipping_threshold", "is_active", "is_default", "sort_order",
+    "created_at", "updated_at",
+  ]),
+  app_settings: new Set([
+    "id", "key", "value", "data_type", "description", "created_at",
+    "updated_at",
+  ]),
+  content_pages: new Set([
+    "id", "slug", "title", "subtitle", "icon", "menu_section", "menu_order",
+    "last_updated", "body", "lang", "is_published", "created_at", "updated_at",
+  ]),
+  complaints: new Set([
+    "id", "name", "email", "phone", "address", "order_number", "order_date",
+    "product", "complaint_type", "description", "resolution", "status",
+    "admin_notes", "created_at", "updated_at",
+  ]),
+};
+
+/** Columns accepted as `groupBy` for the orders `count`/`sum` aggregates. */
+const ORDER_GROUP_COLUMNS = new Set([
+  "status",
+  "shipment_status",
+  "payment_status",
+]);
+
+/** Numeric orders columns accepted as the `sum` aggregate field. */
+const ORDER_SUM_FIELDS = new Set([
+  "total_price",
+  "discount_amount",
+  "promotion_discount_amount",
+  "shipping_cost",
+  "unit_price",
+]);
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function selectColumnsAreValid(
+  resource: string,
+  select: unknown,
+): boolean {
+  if (typeof select !== "string") return false;
+  const allowed = RESOURCE_COLUMNS[resource];
+  if (!allowed) return false;
+
+  const columns = select
+    .split(",")
+    .map((column) => column.trim())
+    .filter(Boolean);
+
+  if (columns.length === 0) return false;
+  return columns.every((column) => column === "*" || allowed.has(column));
+}
+
+/**
+ * Rejects caller-supplied select/filter/sort/group/sum identifiers that are
+ * not part of the resource's allowlist. Returns an error message or null.
+ */
+function validateMetaColumns(
+  resource: string,
+  meta: AdminApiRequest["meta"],
+): string | null {
+  if (!meta) return null;
+
+  const allowed = RESOURCE_COLUMNS[resource];
+  if (!allowed) return null;
+
+  if (meta.select !== undefined && !selectColumnsAreValid(resource, meta.select)) {
+    return "Invalid select fields.";
+  }
+
+  for (const filter of meta.filters ?? []) {
+    if (!allowed.has(filter.field)) {
+      return `Invalid filter column: ${filter.field}.`;
+    }
+  }
+
+  for (const sorter of meta.sorters ?? []) {
+    if (!allowed.has(sorter.field)) {
+      return `Invalid sort column: ${sorter.field}.`;
+    }
+  }
+
+  if (meta.groupBy) {
+    if (meta.aggregateFunction === "partner_stats") {
+      if (!UUID_PATTERN.test(meta.groupBy)) {
+        return "Invalid partner id.";
+      }
+    } else if (
+      meta.aggregateFunction === "count" ||
+      meta.aggregateFunction === "sum"
+    ) {
+      if (!ORDER_GROUP_COLUMNS.has(meta.groupBy)) {
+        return `Invalid group column: ${meta.groupBy}.`;
+      }
+    }
+  }
+
+  if (
+    meta.aggregateFunction === "sum" &&
+    meta.aggregate &&
+    !ORDER_SUM_FIELDS.has(meta.aggregate)
+  ) {
+    return `Invalid sum field: ${meta.aggregate}.`;
+  }
+
+  return null;
+}
 
 /**
  * Resources that support a single checkout default and can be deactivated.
@@ -306,10 +486,20 @@ export const handler = async (event: NetlifyEvent) => {
   const { resource, id, meta } = requestPayload;
   let data = requestPayload.data;
 
-  if (!resource || !ALLOWED_RESOURCES.has(resource)) {
+  const isAllowedResource =
+    !!resource &&
+    (ALLOWED_RESOURCES.has(resource) ||
+      (meta?.export === true && EXPORT_ONLY_RESOURCES.has(resource)));
+
+  if (!resource || !isAllowedResource) {
     return jsonResponse(400, {
       error: `Invalid resource. Allowed: ${[...ALLOWED_RESOURCES].join(", ")}.`,
     });
+  }
+
+  const metaColumnError = validateMetaColumns(resource, meta);
+  if (metaColumnError) {
+    return jsonResponse(400, { error: metaColumnError });
   }
 
   try {
@@ -320,8 +510,10 @@ export const handler = async (event: NetlifyEvent) => {
         }
 
         const selectFields = meta?.select ?? "*";
-        const pageSize = meta?.pagination?.pageSize ?? 25;
-        const currentPage = meta?.pagination?.current ?? 1;
+        const requestedPageSize = Math.trunc(Number(meta?.pagination?.pageSize) || 25);
+        const pageSize = Math.min(Math.max(requestedPageSize, 1), 1000);
+        const requestedPage = Math.trunc(Number(meta?.pagination?.current) || 1);
+        const currentPage = Math.max(requestedPage, 1);
         const offset = (currentPage - 1) * pageSize;
 
         if (id) {
@@ -632,9 +824,13 @@ async function handleAggregation(
 async function handleCustomerList(
   supabase: ReturnType<typeof createClient>,
 ) {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("customer_email, customer_name, total_price, marketing_consent, created_at");
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("orders")
+      .select("customer_email, customer_name, total_price, marketing_consent, created_at")
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (error) {
     return serverError("request failed", error);
@@ -685,14 +881,22 @@ async function handleRevenueOverTime(
   supabase: ReturnType<typeof createClient>,
   meta: NonNullable<AdminApiRequest["meta"]>,
 ) {
-  const days = typeof meta.aggregate === "string" ? parseInt(meta.aggregate, 10) : 30;
+  const rawDays =
+    typeof meta.aggregate === "string" ? parseInt(meta.aggregate, 10) : 30;
+  const days = Number.isFinite(rawDays)
+    ? Math.min(Math.max(rawDays, 1), 365)
+    : 30;
   const since = new Date();
   since.setDate(since.getDate() - days);
 
-  const { data, error } = await supabase
-    .from("orders")
-    .select("created_at, total_price")
-    .gte("created_at", since.toISOString());
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("orders")
+      .select("created_at, total_price")
+      .gte("created_at", since.toISOString())
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (error) {
     return serverError("request failed", error);
@@ -715,9 +919,13 @@ async function handleRevenueOverTime(
 async function handleRevenueByMonth(
   supabase: ReturnType<typeof createClient>,
 ) {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("created_at, total_price");
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("orders")
+      .select("created_at, total_price")
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (error) {
     return serverError("request failed", error);
@@ -746,19 +954,27 @@ async function handlePartnerStats(
   const partnerId = meta.groupBy as string | undefined;
 
   if (partnerId) {
-    const { data: coupons, error: couponsError } = await supabase
-      .from("coupons")
-      .select("id, code, discount_type, discount_value, used_count, is_active")
-      .eq("partner_id", partnerId);
+    const { data: coupons, error: couponsError } = await fetchAllRows((from, to) =>
+      supabase
+        .from("coupons")
+        .select("id, code, discount_type, discount_value, used_count, is_active")
+        .eq("partner_id", partnerId)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (couponsError) {
       return serverError("coupons query failed", couponsError);
     }
 
-    const { data: refs, error: refsError } = await supabase
-      .from("partner_refs")
-      .select("id, ref_code, label, is_active, created_at")
-      .eq("partner_id", partnerId);
+    const { data: refs, error: refsError } = await fetchAllRows((from, to) =>
+      supabase
+        .from("partner_refs")
+        .select("id, ref_code, label, is_active, created_at")
+        .eq("partner_id", partnerId)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (refsError) {
       return serverError("partner refs query failed", refsError);
@@ -769,10 +985,14 @@ async function handlePartnerStats(
     const couponOrderIds = new Set<string>();
 
     if (couponIds.length > 0) {
-      const { data: usages, error: usagesError } = await supabase
-        .from("coupon_usages")
-        .select("order_id")
-        .in("coupon_id", couponIds);
+      const { data: usages, error: usagesError } = await fetchAllRows((from, to) =>
+        supabase
+          .from("coupon_usages")
+          .select("order_id")
+          .in("coupon_id", couponIds)
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
 
       if (usagesError) {
         return serverError("coupon usages query failed", usagesError);
@@ -788,10 +1008,14 @@ async function handlePartnerStats(
     const refOrderIds = new Set<string>();
 
     if (refCodes.length > 0) {
-      const { data: refOrders, error: refOrdersError } = await supabase
-        .from("orders")
-        .select("id")
-        .in("ref_code", refCodes);
+      const { data: refOrders, error: refOrdersError } = await fetchAllRows((from, to) =>
+        supabase
+          .from("orders")
+          .select("id")
+          .in("ref_code", refCodes)
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
 
       if (refOrdersError) {
         return serverError("referral orders query failed", refOrdersError);
@@ -810,10 +1034,14 @@ async function handlePartnerStats(
     let lastOrderDate: string | null = null;
 
     if (allOrderIds.length > 0) {
-      const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select("id, total_price, created_at")
-        .in("id", allOrderIds);
+      const { data: orders, error: ordersError } = await fetchAllRows((from, to) =>
+        supabase
+          .from("orders")
+          .select("id, total_price, created_at")
+          .in("id", allOrderIds)
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
 
       if (ordersError) {
         return serverError("orders query failed", ordersError);
@@ -835,10 +1063,14 @@ async function handlePartnerStats(
     const refEventCounts = new Map<string, number>();
 
     if (refIds.length > 0) {
-      const { data: refEvents, error: refEventsError } = await supabase
-        .from("referral_events")
-        .select("partner_ref_id")
-        .in("partner_ref_id", refIds);
+      const { data: refEvents, error: refEventsError } = await fetchAllRows((from, to) =>
+        supabase
+          .from("referral_events")
+          .select("partner_ref_id")
+          .in("partner_ref_id", refIds)
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
 
       if (refEventsError) {
         return serverError("referral events query failed", refEventsError);
@@ -870,25 +1102,37 @@ async function handlePartnerStats(
     });
   }
 
-  const { data: partners, error: partnersError } = await supabase
-    .from("partners")
-    .select("id, company_name, is_active, created_at");
+  const { data: partners, error: partnersError } = await fetchAllRows((from, to) =>
+    supabase
+      .from("partners")
+      .select("id, company_name, is_active, created_at")
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (partnersError) {
     return serverError("partners query failed", partnersError);
   }
 
-  const { data: allCoupons, error: allCouponsError } = await supabase
-    .from("coupons")
-    .select("id, partner_id");
+  const { data: allCoupons, error: allCouponsError } = await fetchAllRows((from, to) =>
+    supabase
+      .from("coupons")
+      .select("id, partner_id")
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (allCouponsError) {
     return serverError("coupon list query failed", allCouponsError);
   }
 
-  const { data: allRefs, error: allRefsError } = await supabase
-    .from("partner_refs")
-    .select("id, partner_id, ref_code");
+  const { data: allRefs, error: allRefsError } = await fetchAllRows((from, to) =>
+    supabase
+      .from("partner_refs")
+      .select("id, partner_id, ref_code")
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (allRefsError) {
     return serverError("partner refs list query failed", allRefsError);
@@ -915,10 +1159,14 @@ async function handlePartnerStats(
   // Collect order IDs from coupon usages
   const allCouponIds = (allCoupons ?? []).map((c) => c.id);
 
-  const { data: allUsages, error: usagesError } = await supabase
-    .from("coupon_usages")
-    .select("coupon_id, order_id")
-    .in("coupon_id", allCouponIds.length > 0 ? allCouponIds : ["00000000-0000-0000-0000-000000000000"]);
+  const { data: allUsages, error: usagesError } = await fetchAllRows((from, to) =>
+    supabase
+      .from("coupon_usages")
+      .select("coupon_id, order_id")
+      .in("coupon_id", allCouponIds.length > 0 ? allCouponIds : ["00000000-0000-0000-0000-000000000000"])
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (usagesError) {
     return serverError("coupon usages query failed", usagesError);
@@ -946,10 +1194,14 @@ async function handlePartnerStats(
   // Collect order IDs from referral codes
   const allRefCodes = [...refCodePartnerMap.keys()];
   if (allRefCodes.length > 0) {
-    const { data: refOrders, error: refOrdersError } = await supabase
-      .from("orders")
-      .select("id, ref_code")
-      .in("ref_code", allRefCodes);
+    const { data: refOrders, error: refOrdersError } = await fetchAllRows((from, to) =>
+      supabase
+        .from("orders")
+        .select("id, ref_code")
+        .in("ref_code", allRefCodes)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (refOrdersError) {
       return serverError("referral orders query failed", refOrdersError);
@@ -972,10 +1224,14 @@ async function handlePartnerStats(
 
   const orderRevenueMap = new Map<string, { total_price: number; created_at: string }>();
   if (allOrderIds.size > 0) {
-    const { data: orderData, error: orderError } = await supabase
-      .from("orders")
-      .select("id, total_price, created_at")
-      .in("id", [...allOrderIds]);
+    const { data: orderData, error: orderError } = await fetchAllRows((from, to) =>
+      supabase
+        .from("orders")
+        .select("id, total_price, created_at")
+        .in("id", [...allOrderIds])
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (orderError) {
       return serverError("order query failed", orderError);
@@ -1023,14 +1279,31 @@ async function handlePartnerStats(
 async function handleUserList(
   supabase: ReturnType<typeof createClient>,
 ) {
-  const { data: authData, error: authError } = await supabase.auth.admin.listUsers({ pageSize: 1000 });
-  if (authError) {
-    return serverError("auth lookup failed", authError);
+  const allUsers: User[] = [];
+  const perPage = 1000;
+
+  for (let page = 1; page <= 50; page += 1) {
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.listUsers({ page, perPage });
+    if (authError) {
+      return serverError("auth lookup failed", authError);
+    }
+
+    const users = authData?.users ?? [];
+    allUsers.push(...users);
+
+    if (users.length < perPage) {
+      break;
+    }
   }
 
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, full_name, phone, is_admin, created_at, updated_at");
+  const { data: profiles, error: profilesError } = await fetchAllRows((from, to) =>
+    supabase
+      .from("profiles")
+      .select("id, full_name, phone, is_admin, created_at, updated_at")
+      .order("id", { ascending: true })
+      .range(from, to),
+  );
 
   if (profilesError) {
     return serverError("profiles query failed", profilesError);
@@ -1038,7 +1311,7 @@ async function handleUserList(
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-  const users = (authData?.users ?? []).map((u) => {
+  const users = allUsers.map((u) => {
     const profile = profileMap.get(u.id);
     return {
       id: u.id,
@@ -1313,21 +1586,23 @@ async function handleExport(
   meta: NonNullable<AdminApiRequest["meta"]>,
 ) {
   if (resource === "orders") {
-    let query = supabase
-      .from("orders")
-      .select("order_number,status,customer_name,customer_email,customer_phone,total_price,discount_amount,coupon_code,payment_status,shipment_status,tracking_number,created_at");
+    const { data, error } = await fetchAllRows((from, to) => {
+      let query = supabase
+        .from("orders")
+        .select("order_number,status,customer_name,customer_email,customer_phone,total_price,discount_amount,coupon_code,payment_status,shipment_status,tracking_number,created_at");
 
-    query = applyFilters(query, meta.filters);
+      query = applyFilters(query, meta.filters);
 
-    if (meta.sorters?.length) {
-      for (const sorter of meta.sorters) {
-        query = query.order(sorter.field, { ascending: sorter.order === "asc" });
+      if (meta.sorters?.length) {
+        for (const sorter of meta.sorters) {
+          query = query.order(sorter.field, { ascending: sorter.order === "asc" });
+        }
+      } else {
+        query = query.order("created_at", { ascending: false });
       }
-    } else {
-      query = query.order("created_at", { ascending: false });
-    }
 
-    const { data, error } = await query;
+      return query.order("id", { ascending: true }).range(from, to);
+    });
 
     if (error) {
       return serverError("request failed", error);
@@ -1349,10 +1624,14 @@ async function handleExport(
   }
 
   if (resource === "coupons") {
-    const { data, error } = await supabase
-      .from("coupons")
-      .select("code,description,discount_type,discount_value,currency,min_order_amount,max_uses,used_count,is_active,valid_from,valid_until,created_at")
-      .order("created_at", { ascending: false });
+    const { data, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from("coupons")
+        .select("code,description,discount_type,discount_value,currency,min_order_amount,max_uses,used_count,is_active,valid_from,valid_until,created_at")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (error) {
       return serverError("request failed", error);
@@ -1390,10 +1669,14 @@ async function handleExport(
   }
 
   if (resource === "partners") {
-    const { data, error } = await supabase
-      .from("partners")
-      .select("company_name,contact_name,nip,contact_email,phone,city,address,notes,is_active,created_at")
-      .order("created_at", { ascending: false });
+    const { data, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from("partners")
+        .select("company_name,contact_name,nip,contact_email,phone,city,address,notes,is_active,created_at")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (error) {
       return serverError("request failed", error);

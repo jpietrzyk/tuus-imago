@@ -1,8 +1,10 @@
 import { createServiceClient } from "./_shared/supabase-auth";
+import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
 
 type NetlifyEvent = {
   httpMethod?: string;
   body?: string | null;
+  headers?: Record<string, string | undefined>;
 };
 
 type ValidateCouponPayload = {
@@ -70,6 +72,16 @@ export const handler = async (event: NetlifyEvent) => {
   }
 
   const supabase = createServiceClient();
+
+  if (
+    await isRateLimitExceeded(supabase, event, {
+      scope: "validate-coupon",
+      limit: 20,
+      windowSeconds: 60,
+    })
+  ) {
+    return rateLimitResponse(60);
+  }
 
   const { data: coupon, error: fetchError } = await supabase
     .from("coupons")

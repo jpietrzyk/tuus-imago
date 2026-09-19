@@ -64,6 +64,39 @@ describe("production readiness guards", () => {
     }
   });
 
+  it("pins search_path on every SQL function", () => {
+    const migrations = readdirSync(MIGRATIONS_DIR)
+      .filter((file) => file.endsWith(".sql"))
+      .sort()
+      .map((file) => readFileSync(resolve(MIGRATIONS_DIR, file), "utf8"))
+      .join("\n");
+
+    const names = [
+      ...migrations.matchAll(
+        /create\s+(?:or\s+replace\s+)?function\s+public\.([a-z0-9_]+)\s*\(/gi,
+      ),
+    ].map((match) => match[1]);
+
+    expect(names.length).toBeGreaterThan(0);
+
+    for (const name of new Set(names)) {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const inline = new RegExp(
+        `create\\s+(?:or\\s+replace\\s+)?function\\s+public\\.${escaped}\\s*\\([\\s\\S]{0,800}?set\\s+search_path\\s*=`,
+        "i",
+      );
+      const alter = new RegExp(
+        `alter\\s+function\\s+public\\.${escaped}\\s*\\(\\s*\\)\\s+set\\s+search_path`,
+        "i",
+      );
+
+      expect(
+        inline.test(migrations) || alter.test(migrations),
+        `SQL function ${name} does not pin search_path`,
+      ).toBe(true);
+    }
+  });
+
   it("rate limits the unauthenticated write endpoints", () => {
     // Netlify allows only two code-based rules on the lowest plans, so only the
     // two resource-creating endpoints are protected here.

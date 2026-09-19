@@ -1,8 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
+import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { verifyOrderAccess } from "./_shared/order-access";
 
 type NetlifyEvent = {
   httpMethod?: string;
   queryStringParameters?: Record<string, string | undefined>;
+  headers?: Record<string, string | undefined>;
 };
 
 type OrderStatusRow = {
@@ -11,6 +14,7 @@ type OrderStatusRow = {
   status: string;
   payment_status: string;
   payment_session_id: string | null;
+  order_access_token: string | null;
 };
 
 export const handler = async (event: NetlifyEvent) => {
@@ -32,6 +36,7 @@ export const handler = async (event: NetlifyEvent) => {
   }
 
   const orderId = event.queryStringParameters?.["orderId"]?.trim();
+  const orderAccessToken = event.queryStringParameters?.["token"]?.trim();
 
   if (!orderId) {
     return {
@@ -44,9 +49,19 @@ export const handler = async (event: NetlifyEvent) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  if (
+    await isRateLimitExceeded(supabase, event, {
+      scope: "order-status",
+      limit: 60,
+      windowSeconds: 60,
+    })
+  ) {
+    return rateLimitResponse(60);
+  }
+
   const { data: order, error } = await supabase
     .from("orders")
-    .select("id, order_number, status, payment_status, payment_session_id")
+    .select("id, order_number, status, payment_status, payment_session_id, order_access_token")
     .eq("id", orderId)
     .maybeSingle<OrderStatusRow>();
 
@@ -54,6 +69,13 @@ export const handler = async (event: NetlifyEvent) => {
     return {
       statusCode: 404,
       body: JSON.stringify({ error: "Order not found." }),
+    };
+  }
+
+  if (!verifyOrderAccess(order.order_access_token, orderAccessToken)) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({ error: "Not authorized for this order." }),
     };
   }
 

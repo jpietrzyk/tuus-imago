@@ -35,6 +35,11 @@ export function tuusContentPlugin(mode: string): Plugin {
   async function fetchContent(isBuild: boolean): Promise<ContentPageRow[]> {
     if (cached) return cached;
 
+    // CI-only escape hatch: the CI build has no Supabase credentials, so it
+    // validates compilation/bundling with empty content. Production builds must
+    // never set this and still fail loudly on a missing/unreachable content DB.
+    const allowEmpty = process.env.VITE_CONTENT_ALLOW_EMPTY === "true";
+
     // Use the publishable (anon) key + the VITE_-prefixed URL: these are present in
     // every deploy context (incl. CI and deploy previews), whereas SUPABASE_SECRET_KEY
     // is often scoped to the production context only. content_pages has a public-read
@@ -48,7 +53,7 @@ export function tuusContentPlugin(mode: string): Plugin {
     if (!supabaseUrl || !apiKey) {
       const msg =
         "[tuus-content] Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY for build-time content fetch.";
-      if (isBuild) {
+      if (isBuild && !allowEmpty) {
         throw new Error(msg);
       }
       console.warn(msg);
@@ -79,7 +84,7 @@ export function tuusContentPlugin(mode: string): Plugin {
       cached = (await response.json()) as ContentPageRow[];
       return cached;
     } catch (err) {
-      if (isBuild) {
+      if (isBuild && !allowEmpty) {
         throw err;
       }
       console.warn("[tuus-content] Content fetch failed, serving empty content:", String(err));

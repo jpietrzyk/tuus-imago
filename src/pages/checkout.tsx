@@ -91,6 +91,7 @@ type FormTouched = Partial<Record<keyof FormData, boolean>>;
 
 const ORDER_SUBMISSION_KEY_STORAGE = "checkout-order-submission-key";
 const PENDING_ORDER_ID_STORAGE = "checkout-pending-order-id";
+const PENDING_ORDER_ACCESS_TOKEN_STORAGE = "checkout-order-access-token";
 const CHECKOUT_SLOTS_STORAGE = "checkout-uploaded-slots";
 const CHECKOUT_COUPON_CODE_STORAGE = "checkout-coupon-code";
 const CHECKOUT_COUPON_RESULT_STORAGE = "checkout-coupon-result";
@@ -804,6 +805,13 @@ export function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [orderAccessToken, setOrderAccessToken] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(PENDING_ORDER_ACCESS_TOKEN_STORAGE);
+    } catch {
+      return null;
+    }
+  });
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [p24Error, setP24Error] = useState<string | null>(null);
   const [genericError, setGenericError] = useState<string | null>(null);
@@ -812,6 +820,20 @@ export function CheckoutPage() {
   const paymentReturn = searchParams.get("payment") === "return";
   const returnOrderId = searchParams.get("orderId");
   const returnOrderNumber = searchParams.get("orderNumber");
+  const returnOrderAccessToken = searchParams.get("token");
+
+  useEffect(() => {
+    const token = returnOrderAccessToken ?? orderAccessToken;
+    if (!token) return;
+    try {
+      sessionStorage.setItem(PENDING_ORDER_ACCESS_TOKEN_STORAGE, token);
+    } catch {
+      // ignore unavailable storage
+    }
+    if (returnOrderAccessToken && returnOrderAccessToken !== orderAccessToken) {
+      setOrderAccessToken(returnOrderAccessToken);
+    }
+  }, [returnOrderAccessToken, orderAccessToken]);
 
   const [couponCode, setCouponCode] = useState<string>(() => {
     try {
@@ -935,7 +957,10 @@ export function CheckoutPage() {
       }
 
       try {
-        const result = await getOrderStatus(returnOrderId);
+        const result = await getOrderStatus(
+          returnOrderId,
+          returnOrderAccessToken ?? orderAccessToken,
+        );
 
         if (result.status === "paid" || result.payment_status === "verified") {
           setPaymentPollStatus("paid");
@@ -957,7 +982,7 @@ export function CheckoutPage() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [paymentReturn, returnOrderId]);
+  }, [paymentReturn, returnOrderId, returnOrderAccessToken, orderAccessToken]);
 
   const discountAmount = couponResult?.valid && couponResult.discountAmount
     ? couponResult.discountAmount
@@ -1100,22 +1125,28 @@ export function CheckoutPage() {
         idempotencyKey: submissionKey,
         couponCode: couponResult?.valid ? couponResult.code : undefined,
         refCode: getReferralCookie() ?? undefined,
-        userId: user?.id,
         shippingMethodId: selectedShippingMethodId,
       });
+
+      const accessToken = orderResponse.orderAccessToken ?? null;
 
       sessionStorage.setItem(
         PENDING_ORDER_ID_STORAGE,
         orderResponse.orderId,
       );
+      if (accessToken) {
+        sessionStorage.setItem(PENDING_ORDER_ACCESS_TOKEN_STORAGE, accessToken);
+      }
       setOrderNumber(orderResponse.orderNumber);
       setPendingOrderId(orderResponse.orderId);
+      setOrderAccessToken(accessToken);
 
       try {
         setIsRedirecting(true);
         const p24Response = await createP24Session({
           orderId: orderResponse.orderId,
           language: getCurrentLanguage(),
+          orderAccessToken: accessToken,
         });
 
         sessionStorage.removeItem("checkout-form-draft");
@@ -1162,6 +1193,7 @@ export function CheckoutPage() {
       const p24Response = await createP24Session({
         orderId: pendingOrderId,
         language: getCurrentLanguage(),
+        orderAccessToken,
       });
         sessionStorage.removeItem("checkout-form-draft");
         sessionStorage.removeItem(ORDER_SUBMISSION_KEY_STORAGE);
@@ -1193,6 +1225,7 @@ export function CheckoutPage() {
       const p24Response = await createP24Session({
         orderId: returnOrderId,
         language: getCurrentLanguage(),
+        orderAccessToken: returnOrderAccessToken ?? orderAccessToken,
       });
       clearPersistedUploadWork();
       window.location.href = p24Response.redirectUrl;

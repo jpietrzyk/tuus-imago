@@ -306,7 +306,7 @@ export function OrderListPage() {
 
   const { result: thumbnailsResult } = useList<OrderItemThumbnail>({
     resource: "order_items",
-    pagination: { pageSize: 100 },
+    pagination: { pageSize: Math.max(100, effectiveOrderIds.length * 3) },
     filters: [{ field: "order_id", operator: "in", value: effectiveOrderIds }],
     meta: { select: "order_id,transformed_url,slot_index" },
     queryOptions: { enabled: effectiveOrderIds.length > 0 },

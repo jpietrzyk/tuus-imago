@@ -61,6 +61,26 @@ function readBody(response: { body: string }) {
   return JSON.parse(response.body);
 }
 
+/**
+ * Chainable stand-in for a PostgREST query builder. Aggregates/exports now page
+ * via `.order().range()`, so the terminal `.range()` resolves the fixture.
+ */
+function paged(result: { data?: unknown; error?: unknown }) {
+  const builder: Record<string, unknown> = {};
+  const self = () => builder;
+  builder.select = vi.fn(self);
+  builder.order = vi.fn(self);
+  builder.eq = vi.fn(self);
+  builder.in = vi.fn(self);
+  builder.gte = vi.fn(self);
+  builder.lte = vi.fn(self);
+  builder.limit = vi.fn(self);
+  builder.range = vi.fn().mockResolvedValue(result);
+  builder.single = vi.fn().mockResolvedValue(result);
+  builder.maybeSingle = vi.fn().mockResolvedValue(result);
+  return builder as never;
+}
+
 function makeAdminAuthCheck() {
   const single = vi.fn().mockResolvedValue({ data: { is_admin: true }, error: null });
   const eq = vi.fn().mockReturnValue({ single });
@@ -161,6 +181,76 @@ describe("admin-api handler", () => {
 
       expect(response.statusCode).toBe(400);
       expect(readBody(response).error).toContain("Invalid resource");
+    });
+  });
+
+  describe("meta column validation", () => {
+    it("rejects an unknown filter column", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { filters: [{ field: "password", operator: "eq", value: "x" }] },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid filter column");
+    });
+
+    it("rejects an unknown select field", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { select: "id, secret_column" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid select fields");
+    });
+
+    it("rejects an unknown groupBy column", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { aggregateFunction: "count", groupBy: "customer_email" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid group column");
+    });
+
+    it("rejects an unknown sum field", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { aggregateFunction: "sum", aggregate: "customer_email" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid sum field");
     });
   });
 
@@ -448,7 +538,7 @@ describe("admin-api handler", () => {
             return { select } as never;
           }
           // Second call: full profile data fetch in handleUserList
-          return { select: vi.fn().mockResolvedValue({ data: profilesData, error: null }) } as never;
+          return paged({ data: profilesData, error: null });
         }
         throw new Error(`Unexpected table: ${table}`);
       });
@@ -507,37 +597,21 @@ describe("admin-api handler", () => {
             const select = vi.fn().mockReturnValue({ eq });
             return { select } as never;
           }
-          case "coupons": {
-            const couponsEq = vi.fn().mockResolvedValue({ data: couponsData, error: null });
-            const couponsSelect = vi.fn().mockReturnValue({ eq: couponsEq });
-            return { select: couponsSelect } as never;
-          }
-          case "coupon_usages": {
-            const usagesIn = vi.fn().mockResolvedValue({ data: usagesData, error: null });
-            const usagesSelect = vi.fn().mockReturnValue({ in: usagesIn });
-            return { select: usagesSelect } as never;
-          }
+          case "coupons":
+            return paged({ data: couponsData, error: null });
+          case "coupon_usages":
+            return paged({ data: usagesData, error: null });
           case "orders": {
             ordersCallCount++;
             if (ordersCallCount === 1) {
-              const ordersIn = vi.fn().mockResolvedValue({ data: refOrdersData, error: null });
-              const ordersSelect = vi.fn().mockReturnValue({ in: ordersIn });
-              return { select: ordersSelect } as never;
+              return paged({ data: refOrdersData, error: null });
             }
-            const ordersIn = vi.fn().mockResolvedValue({ data: allOrdersData, error: null });
-            const ordersSelect = vi.fn().mockReturnValue({ in: ordersIn });
-            return { select: ordersSelect } as never;
+            return paged({ data: allOrdersData, error: null });
           }
-          case "partner_refs": {
-            const refsEq = vi.fn().mockResolvedValue({ data: refsData, error: null });
-            const refsSelect = vi.fn().mockReturnValue({ eq: refsEq });
-            return { select: refsSelect } as never;
-          }
-          case "referral_events": {
-            const eventsIn = vi.fn().mockResolvedValue({ data: [], error: null });
-            const eventsSelect = vi.fn().mockReturnValue({ in: eventsIn });
-            return { select: eventsSelect } as never;
-          }
+          case "partner_refs":
+            return paged({ data: refsData, error: null });
+          case "referral_events":
+            return paged({ data: [], error: null });
           default:
             throw new Error(`Unexpected table: ${table}`);
         }
@@ -548,7 +622,10 @@ describe("admin-api handler", () => {
         headers: { authorization: "Bearer valid-token" },
         body: JSON.stringify({
           resource: "orders",
-          meta: { aggregateFunction: "partner_stats", groupBy: "partner-1" },
+          meta: {
+            aggregateFunction: "partner_stats",
+            groupBy: "11111111-1111-1111-1111-111111111111",
+          },
         }),
       });
 
@@ -576,7 +653,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -621,7 +698,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -657,11 +734,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: {
-          select: vi.fn().mockReturnValue({
-            gte: vi.fn().mockResolvedValue({ data: ordersData, error: null }),
-          }),
-        },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -691,11 +764,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: {
-          select: vi.fn().mockReturnValue({
-            gte: vi.fn().mockResolvedValue({ data: ordersData, error: null }),
-          }),
-        },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -727,7 +796,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -793,23 +862,19 @@ describe("admin-api handler", () => {
             return { select } as never;
           }
           case "partners":
-            return { select: vi.fn().mockResolvedValue({ data: partnersData, error: null }) } as never;
+            return paged({ data: partnersData, error: null });
           case "coupons":
-            return { select: vi.fn().mockResolvedValue({ data: allCouponsData, error: null }) } as never;
+            return paged({ data: allCouponsData, error: null });
           case "partner_refs":
-            return { select: vi.fn().mockResolvedValue({ data: allRefsData, error: null }) } as never;
-          case "coupon_usages": {
-            const usagesIn = vi.fn().mockResolvedValue({ data: usagesData, error: null });
-            return { select: vi.fn().mockReturnValue({ in: usagesIn }) } as never;
-          }
+            return paged({ data: allRefsData, error: null });
+          case "coupon_usages":
+            return paged({ data: usagesData, error: null });
           case "orders": {
             ordersCallCount++;
             if (ordersCallCount === 1) {
-              const ordersIn = vi.fn().mockResolvedValue({ data: refOrdersData, error: null });
-              return { select: vi.fn().mockReturnValue({ in: ordersIn }) } as never;
+              return paged({ data: refOrdersData, error: null });
             }
-            const ordersIn = vi.fn().mockResolvedValue({ data: allOrdersData, error: null });
-            return { select: vi.fn().mockReturnValue({ in: ordersIn }) } as never;
+            return paged({ data: allOrdersData, error: null });
           }
           default:
             throw new Error(`Unexpected table: ${table}`);
@@ -1907,10 +1972,8 @@ describe("admin-api handler", () => {
       const partnersData = [
         { company_name: "Partner A", contact_name: "Alice", nip: "123", contact_email: "a@t.com", phone: "+48123", city: "Warsaw", address: "St 1", notes: "", is_active: true, created_at: "2026-01-01" },
       ];
-      const order = vi.fn().mockResolvedValue({ data: partnersData, error: null });
-      const select = vi.fn().mockReturnValue({ order });
 
-      setupClient({ profiles: authCheck, partners: { select } });
+      setupClient({ profiles: authCheck, partners: paged({ data: partnersData, error: null }) });
 
       const response = await handler({
         httpMethod: "POST",
@@ -1948,11 +2011,8 @@ describe("admin-api handler", () => {
             const select = vi.fn().mockReturnValue({ eq });
             return { select } as never;
           }
-          case "orders": {
-            const orderMock = vi.fn().mockResolvedValue({ data: ordersData, error: null });
-            const select = vi.fn().mockReturnValue({ order: orderMock });
-            return { select } as never;
-          }
+          case "orders":
+            return paged({ data: ordersData, error: null });
           default:
             throw new Error(`Unexpected table: ${table}`);
         }
@@ -1977,8 +2037,6 @@ describe("admin-api handler", () => {
       const couponsData = [
         { code: "SAVE10", description: "Save 10%", discount_type: "percentage", discount_value: 10, currency: "PLN", min_order_amount: null, max_uses: 100, used_count: 5, is_active: true, valid_from: null, valid_until: null, created_at: "2026-01-01" },
       ];
-      const order = vi.fn().mockResolvedValue({ data: couponsData, error: null });
-      const select = vi.fn().mockReturnValue({ order });
 
       const { client } = setupClient({});
       client.from.mockImplementation((table: string) => {
@@ -1990,7 +2048,7 @@ describe("admin-api handler", () => {
             return { select: s } as never;
           }
           case "coupons":
-            return { select } as never;
+            return paged({ data: couponsData, error: null });
           default:
             throw new Error(`Unexpected table: ${table}`);
         }
@@ -2007,10 +2065,18 @@ describe("admin-api handler", () => {
       expect(response.body).toContain("SAVE10");
     });
 
-    it("rejects customers export because resource is not in allowed list", async () => {
+    it("exports customers CSV through the export-only resource", async () => {
       mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
       const authCheck = makeAdminAuthCheck();
-      setupClient({ profiles: authCheck });
+
+      const ordersData = [
+        { customer_email: "a@t.com", customer_name: "Alice", total_price: 50, marketing_consent: true, created_at: "2026-01-10T00:00:00Z" },
+      ];
+
+      setupClient({
+        profiles: authCheck,
+        orders: paged({ data: ordersData, error: null }),
+      });
 
       const response = await handler({
         httpMethod: "POST",
@@ -2018,8 +2084,10 @@ describe("admin-api handler", () => {
         body: JSON.stringify({ resource: "customers", meta: { export: true } }),
       });
 
-      expect(response.statusCode).toBe(400);
-      expect(readBody(response).error).toContain("Invalid resource");
+      expect(response.statusCode).toBe(200);
+      expect(response.headers["Content-Type"]).toBe("text/csv");
+      expect(response.headers["Content-Disposition"]).toContain("customers-export-");
+      expect(response.body).toContain("a@t.com");
     });
 
     it("returns 400 for unsupported export resource", async () => {
@@ -2043,10 +2111,15 @@ describe("admin-api handler", () => {
       const ordersData = [
         { order_number: "ORD-001", status: "paid", customer_name: "Alice", customer_email: "a@t.com", customer_phone: null, total_price: 100, discount_amount: 0, coupon_code: null, payment_status: "completed", shipment_status: "pending_fulfillment", tracking_number: null, created_at: "2026-04-01" },
       ];
-      const eqMock = vi.fn().mockReturnThis();
-      const orderMock = vi.fn().mockResolvedValue({ data: ordersData, error: null });
-      const chainable = { eq: eqMock, order: orderMock };
-      const selectMock = vi.fn().mockReturnValue(chainable);
+      const eqMock = vi.fn();
+      const builder: Record<string, unknown> = {};
+      const self = () => builder;
+      eqMock.mockImplementation(self);
+      builder.eq = eqMock;
+      builder.order = vi.fn(self);
+      builder.range = vi.fn().mockResolvedValue({ data: ordersData, error: null });
+      const selectMock = vi.fn(self);
+      builder.select = selectMock;
 
       const { client } = setupClient({});
       client.from.mockImplementation((table: string) => {
@@ -2058,7 +2131,7 @@ describe("admin-api handler", () => {
             return { select } as never;
           }
           case "orders":
-            return { select: selectMock } as never;
+            return builder as never;
           default:
             throw new Error(`Unexpected table: ${table}`);
         }

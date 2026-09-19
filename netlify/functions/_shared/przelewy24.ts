@@ -154,12 +154,20 @@ export function buildNotificationSign(args: Omit<P24NotificationPayload, "sign">
   });
 }
 
-export function buildReturnUrl(siteUrl: string, orderId: string, orderNumber?: string) {
+export function buildReturnUrl(
+  siteUrl: string,
+  orderId: string,
+  orderNumber?: string,
+  accessToken?: string | null,
+) {
   const url = new URL("/checkout", siteUrl);
   url.searchParams.set("payment", "return");
   url.searchParams.set("orderId", orderId);
   if (orderNumber) {
     url.searchParams.set("orderNumber", orderNumber);
+  }
+  if (accessToken) {
+    url.searchParams.set("token", accessToken);
   }
   return url.toString();
 }

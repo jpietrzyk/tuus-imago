@@ -27,7 +27,7 @@ flowchart LR
   end
   subgraph Netlify
     CDN["Static CDN (dist/)\nSPA + PWA service worker"]
-    FN["Netlify Functions\n(16 endpoints)"]
+    FN["Netlify Functions\n(17 endpoints)"]
   end
   subgraph Supabase
     PG["Postgres + RLS"]
@@ -68,7 +68,7 @@ flowchart LR
 | Płatności | Przelewy24 (P24 REST API, sandbox + produkcja) |
 | i18n | Własne i18n słownikowe (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testy | Vitest 4, Testing Library, jsdom (162 pliki testów) |
+| Testy | Vitest 4, Testing Library, jsdom (165 plików testów) |
 | Lintowanie | ESLint 9 flat config, typescript-eslint |
 | Menedżer pakietów | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI przypina 22.20.0) |
@@ -94,7 +94,7 @@ src/
   locales/                    # i18n dictionaries (en.json, pl.json)
   assets/                     # Backgrounds, favicons
 netlify/functions/            # Backend endpoints + _shared helpers
-supabase/migrations/          # 29 SQL migrations (schema is defined ONLY here)
+supabase/migrations/          # 34 SQL migrations (schema is defined ONLY here)
 scripts/                      # supabase-migrate.sh, apply-migrations.mjs
 public/                       # manifest.webmanifest, _headers (CSP), _redirects, icons, sw
 docs/                         # This doc + regression notes
@@ -232,7 +232,8 @@ Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma nies
 | `available-canvases` | GET | Publiczna | Katalog aktywnych płócien |
 | `available-shipping` | GET | Publiczna | Aktywne metody dostawy + progi darmowej dostawy |
 | `cloudinary-signature` | POST | Publiczna | Zwraca podpis podpisanego wgrywania; **limit 20/60 s** |
-| `track-referral` | POST | Publiczna | Zapisuje zdarzenie kliknięcia referencyjnego |
+| `track-referral` | POST | Publiczna | Zapisuje zdarzenie kliknięcia referencyjnego; limit przez limiter DB |
+| `submit-complaint` | POST | Publiczna | Waliduje + zapisuje reklamację z `/complaint`; limit przez limiter DB |
 | `customer-orders` | GET | **Bearer JWT** | Zamówienia uwierzytelnionego użytkownika (zakres przez `user_id` z tokenu) |
 | `customer-addresses` | GET/POST/PATCH/DELETE | **Bearer JWT** | CRUD adresów uwierzytelnionego użytkownika (zakres przez token) |
 | `admin-api` | GET/POST/PATCH/PUT/DELETE | **Bearer JWT + `is_admin`** | Bramka administracyjna service-role (CRUD, agregaty, masowe statusy, eksport CSV) |
@@ -242,8 +243,11 @@ Wspólne helpery (`_shared/`):
 - `supabase-auth.ts` — `getAuthenticatedUser()` (weryfikuje JWT kluczem publishable) oraz `createServiceClient()` (service role).
 - `przelewy24.ts` — podpisywanie, jednostki minor, nagłówek auth i **fail-closed** guard konfiguracji.
 - `v2-adapter.ts` — mostek między handlerami w stylu Lambda a Netlify v2 `Request`/`Response`, aby limity szybkości działały.
+- `order-access.ts` — generuje/weryfikuje token dostępu do zamówienia (porównanie odporne na atak czasowy) używany przez publiczne endpointy płatności/statusu.
+- `rate-limit.ts` — helper limitu opartego o bazę (`check_rate_limit`), kluczowany po IP, dla endpointów bez natywnej reguły Netlify.
+- `fetch-all.ts` — stronicuje odczyty PostgREST przez `.range()`, aby agregaty/eksporty CSV admina nie ucinały się na limicie 1000 wierszy.
 
-**Zarządzanie zasobami:** `admin-api` prowadzi allowlistę zasobów (`orders`, `order_items`, `order_status_history`, `coupons`, `coupon_usages`, `profiles`, `partners`, `partner_refs`, `promotions`, `picture_frames`, `picture_canvases`, `shipping_methods`, `app_settings`, `content_pages`). Każdy inny zasób → `400`.
+**Zarządzanie zasobami:** `admin-api` prowadzi allowlistę zasobów (`orders`, `order_items`, `order_status_history`, `coupons`, `coupon_usages`, `profiles`, `partners`, `partner_refs`, `promotions`, `picture_frames`, `picture_canvases`, `shipping_methods`, `app_settings`, `content_pages`, `complaints`). Każdy inny zasób → `400`, z wyjątkiem `customers` (używanego wyłącznie do eksportu CSV). Kolumny w `select`/filtrach/sortowaniu/`groupBy`/`sum` są walidowane względem allowlisty per zasób, a `pageSize` jest ograniczany do 1–1000.
 
 ---
 
@@ -272,16 +276,16 @@ Logowanie obsługuje e-mail/hasło oraz Google OAuth. Brak samodzielnej rejestra
 | Canvases | `/admin/canvases` | `picture_canvases` | To samo co ramy |
 | Shipping | `/admin/shipping` | `shipping_methods` | CRUD, cena, czas dostawy, próg darmowej dostawy, przełącznik domyślności |
 | Customers | `/admin/customers` | agregat `orders` | Lista/szczegóły klienta (liczba zamówień, przychód, zgody, adres) |
+| Complaints | `/admin/complaints` | `complaints` | Przegląd zgłoszeń z `/complaint`; zmiana statusu (new/in review/resolved/rejected) i notatek wewnętrznych |
 | Users | `/admin/users` | `profiles` + Supabase Auth | Lista nie-adminów, edycja profilu, **nadawanie/odbieranie admina** |
 | Admins | `/admin/admins` | `profiles` + Supabase Auth | To samo, filtrowane do adminów |
 | Settings | `/admin/settings` | `app_settings` | DPI guard wł./wył. + progi jakości (excellent/good/acceptable) |
 | Content | `/admin/content` | `content_pages` | Edycja stron CMS (Markdown) i **wywołanie przebudowy** witryny przez build hook |
 
 ### Znane ograniczenia panelu admina (pełna lista w §21)
-- **Eksport CSV klientów jest zepsuty**: `customer-list.tsx` wywołuje `admin-api` z `resource:"customers"`, którego nie ma na allowliście → `400`. (Eksporty zamówień/kuponów/partnerów działają.)
-- `promotions` ma trasy/strony/nawigację, ale **nie jest zarejestrowane** jako zasób Refine.
-- `users` / `admins` nie są prawdziwymi zasobami backendu; te strony używają agregatów względem `orders`/`profiles`.
-- Listowanie użytkowników ogranicza się do 1000 użytkowników auth.
+- `promotions` jest teraz zarejestrowane jako zasób Refine (list/create/edit/show); `users` / `admins` pozostają pseudo-zasobami korzystającymi z agregatów `orders`/`profiles`.
+- Listowanie użytkowników przechodzi przez wszystkich użytkowników auth (już nie ogranicza się do 1000).
+- Załączniki zdjęciowe reklamacji nie są jeszcze zbierane (pole formularza istnieje, ale zdjęcia nie są przesyłane; zob. §21).
 - Brak UI usuwania dla większości encji (tylko kody referencyjne).
 - Zmiany statusów / eksporty powodują pełne przeładowanie strony, `alert()`, `confirm()`.
 
@@ -289,7 +293,7 @@ Logowanie obsługuje e-mail/hasło oraz Google OAuth. Brak samodzielnej rejestra
 
 ## 11. Baza danych (Supabase / Postgres)
 
-Schemat jest zdefiniowany **wyłącznie** przez 29 plików SQL w `supabase/migrations/`. Nie ma natywnych enumów — wszystkie „enumy" to `text` + `CHECK`. `pgcrypto` dostarcza `gen_random_uuid()`.
+Schemat jest zdefiniowany **wyłącznie** przez 34 pliki SQL w `supabase/migrations/`. Nie ma natywnych enumów — wszystkie „enumy" to `text` + `CHECK`. `pgcrypto` dostarcza `gen_random_uuid()`.
 
 ### Tabele
 
@@ -308,6 +312,8 @@ Schemat jest zdefiniowany **wyłącznie** przez 29 plików SQL w `supabase/migra
 | `promotions` | Rabaty kampanii (pojedyncza aktywna) | Publiczny odczyt `is_active = true` |
 | `app_settings` | Ustawienia runtime klucz/wartość (ziarna DPI) | tylko service-role; konsumowane przez funkcję `app-settings` |
 | `content_pages` | Strony CMS/prawne wbudowywane w bundle przy buildzie | Publiczny odczyt `is_published = true` |
+| `complaints` | Zgłoszenia reklamacji z `/complaint` (status + notatki admina) | tylko service-role |
+| `rate_limit_hits` | Kubły limitu szybkości opartego o bazę dla publicznych endpointów | tylko service-role |
 | `picture_frames` | Katalog ram | Publiczny odczyt `is_active = true` |
 | `picture_canvases` | Katalog materiałów płótna | Publiczny odczyt `is_active = true` |
 | `shipping_methods` | Opcje dostawy + próg darmowej dostawy | Publiczny odczyt `is_active = true` |
@@ -320,8 +326,9 @@ Niezmienniki pojedynczej domyślnej wartości istnieją dla `picture_frames`, `p
 - `link_guest_orders()` — przypisuje zamówienia gości po e-mailu po rejestracji (ustawia `orders.user_id`).
 - `increment_coupon_used_count(uuid)` — RPC SECURITY DEFINER wywoływane przez `create-order`.
 - `prevent_profile_admin_self_update()` — blokuje samodzielną eskalację użytkownika do admina.
+- `check_rate_limit(key, limit, window_seconds)` — SECURITY DEFINER; limit szybkości w bazie dla publicznych endpointów bez natywnej reguły Netlify.
 - Triggery `updated_at` per tabela.
-- `202608080002_function_security_hardening.sql` przypiął `search_path` i odebrał EXECUTE funkcjom SECURITY DEFINER. **Uwaga:** trzy późniejsze funkcje (`handle_picture_frame_updated_at`, `handle_picture_canvas_updated_at`, `handle_shipping_method_updated_at`) zostały utworzone po tym i **nie przypinają `search_path`** (ostrzeżenia lintera wracają).
+- `202608080002_function_security_hardening.sql` przypiął `search_path` i odebrał EXECUTE funkcjom SECURITY DEFINER; `202609190004_pin_trigger_search_path.sql` przypina trzy późniejsze funkcje triggerowe (`handle_picture_frame_updated_at`, `handle_picture_canvas_updated_at`, `handle_shipping_method_updated_at`). Test-strażnik pilnuje teraz, aby żadna funkcja SQL nie została utworzona bez przypiętego `search_path`.
 
 ### Migracje
 
@@ -374,7 +381,7 @@ Skrypt najpierw próbuje Supabase CLI; jeśli `supabase link` zawiedzie (znany b
 
 ## 15. Przepływ danych backendu dla zamówień (logika autorytatywna)
 
-`create-order.ts` jest jedynym źródłem prawdy o pieniądzach. Waliduje klienta, allowlistę krajów, wymagane zgody, liczbę/klucze slotów, wczytuje aktywne ramy/płótna z DB, przelicza ceny jednostki + ramy + płótna, ponownie waliduje kupon, stosuje aktywną promocję, rozwiązuje dostawę po stronie serwera, następnie wstawia `orders`, `order_items` i dwa wiersze `order_status_history` oraz inkrementuje użycie kuponu. Jest idempotentny przez unikalny `idempotency_key` (duplikat → zwraca istniejące zamówienie) i limitowany do 10 żądań/60 s per IP+domena. Klienckie `userId`/`refCode` są zapisywane tak, jak podano (bez weryfikacji własności).
+`create-order.ts` jest jedynym źródłem prawdy o pieniądzach. Waliduje klienta, allowlistę krajów, wymagane zgody, liczbę/klucze slotów, wczytuje aktywne ramy/płótna z DB, przelicza ceny jednostki + ramy + płótna, ponownie waliduje kupon, stosuje aktywną promocję, rozwiązuje dostawę po stronie serwera, następnie wstawia `orders`, `order_items` i dwa wiersze `order_status_history` oraz inkrementuje użycie kuponu. Jest idempotentny przez unikalny `idempotency_key` (duplikat → zwraca istniejące zamówienie) i limitowany do 10 żądań/60 s per IP+domena. `user_id` pochodzi wyłącznie z zweryfikowanego Bearer JWT (nieprawidłowy token → 401; brak tokenu → zamówienie gościa); `userId` przekazane przez klienta jest ignorowane. Każde zamówienie otrzymuje też losowy `order_access_token`, zwracany klientowi i wymagany przez `create-przelewy24-session`/`order-status` dla zamówień z tokenem (starsze zamówienia działają awaryjnie po samym UUID).
 
 Statusy cyklu życia zamówienia (wymuszane w aplikacji, nie przez ograniczenia DB):
 - `status`: `pending_payment → paid → cancelled/refunded`
@@ -420,63 +427,65 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Przeliczanie cen po stronie serwera i idempotentność zamówień.
 - Zapytania z zakresem użytkownika w `customer-orders` / `customer-addresses` (obrona przed IDOR).
 - Ogólne błędy serwera w `admin-api` (bez wycieku szczegółów DB).
+- Token dostępu do zamówienia (`order_access_token`) wiąże publiczne endpointy płatności (utworzenie sesji) i statusu zamówienia z kupującym; `orders.user_id` jest ustawiane wyłącznie ze zweryfikowanego JWT.
+- Limity szybkości oparte o bazę (`check_rate_limit`) na `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral` i `submit-complaint`, obok natywnych reguł Netlify dla `create-order`/`cloudinary-signature`.
+- `admin-api` waliduje każdą kolumnę `select`/filtra/sortowania/`groupBy`/`sum` podaną przez wywołującego względem allowlisty per zasób i ogranicza `pageSize` do 1–1000.
 
 ### Wcześniej zgłoszone, obecnie naprawione
 - ✅ Eskalacja uprawnień `profiles.is_admin` → naprawiona przez `202609180001_harden_profiles_is_admin.sql`.
 - ✅ Ryzyko fallbacku do sandbox P24 → fail-closed guard + asercja builda.
 - ✅ Brakujące nagłówki CSP/bezpieczeństwa → dodane w `public/_headers`.
 - ✅ Wyciek debugowania/surowych błędów → usunięty, chroniony testami.
-- ✅ Limity szybkości → dodane dla `create-order` i `cloudinary-signature`.
+- ✅ Limity szybkości → natywne reguły dla `create-order`/`cloudinary-signature` plus limiter DB dla pozostałych publicznych endpointów.
+- ✅ Publiczne endpointy płatności/statusu chronione samym UUID → token dostępu do zamówienia.
+- ✅ Nieweryfikowane `orders.user_id` z ciała żądania → wyłącznie zweryfikowany JWT.
+- ✅ Nieuwalidowane nazwy kolumn w `admin-api` → allowlista per zasób + ograniczenie `pageSize`.
+- ✅ `search_path` nieprzypięty w trzech funkcjach triggerów → przypięty przez `202609190004`, wymuszany testem-strażnikiem.
+- ✅ Eksport CSV klientów (`400`) i ucinanie agregatów/eksportów do 1000 wierszy → zasób tylko do eksportu + stronicowane odczyty.
 
 ### Otwarte / szczątkowe ryzyka (zob. §21)
-- Kilka publicznych endpointów jest nieuwierzytelnionych i **nie** ma limitów szybkości (`validate-coupon`, `create-przelewy24-session`, `track-referral`, `order-status`). `track-referral` przyjmuje nieograniczone publiczne wstawienia.
-- `order-status` i `create-przelewy24-session` są chronione wyłącznie znajomością UUID zamówienia (`create-przelewy24-session` nie ma kontroli własności i może rozpocząć sesję płatności dla dowolnego UUID zamówienia).
-- `admin-api` prowadzi allowlistę zasobów, ale **nazwy kolumn** filtrów/sortowania/agregacji podane przez wywołującego przechodzą przez nie.
-- `search_path` nieprzypięty w trzech nowszych funkcjach triggerów.
 - Brak monitoringu błędów / alertów.
 - Weryfikacja używa klucza publishable, ale te funkcje następnie odpytują z service role — bezpieczeństwo zależy od jawnego zakresu, który obecnie jest obecny.
+- Token dostępu do zamówienia jest przenoszony w query stringu URL powrotnego P24, więc może pojawić się w historii przeglądarki/logach (jest ograniczony do jednego zamówienia).
+- Zdjęcia reklamacji nie są jeszcze zbierane/walidowane (pole istnieje, ale nie jest przesyłane).
 
 ---
 
 ## 20. Testy i bramki jakości
 
-- **162 pliki testów** w `src/`, `netlify/functions/__tests__/` oraz testach na poziomie stron. Testy współlokowane działają jako dokumentacja zachowania.
+- **165 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1562 testy). Testy współlokowane działają jako dokumentacja zachowania.
 - Polecenia: `npx vitest run <file>` (wybiórczo), `npx vitest run` (pełne), `pnpm test`, `pnpm lint`, `npx tsc -b`.
-- Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania.
-- Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. zepsuty eksport CSV klientów) nie są pokryte.
+- Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania (w tym strażnik przypięcia `search_path`).
+- Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST) nie są pokryte end-to-end.
 
 ---
 
 ## 21. Znane problemy, dług techniczny i rekomendacje
 
 **Błędy**
-- Eksport CSV klientów w adminie zwraca `400` (`customers` nie jest zasobem na allowliście `admin-api`).
-- Formularz strony reklamacji jest **statyczny i nie wysyła** — zgłoszenia donikąd nie trafiają (tylko strona treści).
-- CSV klientów i niektóre miniatury zamówień mogą być niekompletne przy dużych zbiorach (`order_items` ograniczone do 100).
+- Zdjęcia w formularzu reklamacji nie są przesyłane (pole pliku istnieje, ale jest wykluczone z payloadu) — faza 2.
+- Zgłoszenia reklamacji nie mają powiadomień e-mail; personel musi sprawdzać Admin → Complaints.
 
 **Architektura / utrzymywalność**
 - `create-order.ts` (~600 linii), `checkout.tsx` (~2000 linii), `admin-api.ts` (~1400 linii) i `App.tsx` (~1100 linii) to duże punkty zapalne.
-- `promotions` niezarejestrowane jako zasób Refine; `users`/`admins` to pseudo-zasoby.
-- Starsze tekstowe pola dostawy współistnieją z nowymi opartymi na FK; historyczne zamówienia nie są uzupełniane `shipping_method_id`.
+- `users`/`admins` to pseudo-zasoby (agregaty), nie prawdziwe zasoby backendu.
+- Starsze tekstowe pola dostawy współistnieją z nowymi opartymi na FK; `202609190005_backfill_order_shipping_method.sql` uzupełnia `shipping_method_id`/czas dostawy dla historycznych zamówień, ale stare kolumny nadal istnieją.
 - Zduplikowane funkcje triggerów `updated_at` między tabelami.
-- CRUD admina opiera się niemal w całości na bramce service-role (RLS jest omijane), więc bramka jest całą granicą bezpieczeństwa.
+- CRUD admina opiera się niemal w całości na bramce service-role (RLS jest omijane) z allowlistą kolumn per zasób; bramka pozostaje całą granicą bezpieczeństwa.
 
 **Operacyjne**
-- Brak monitoringu błędów i alertów o dostępności.
+- Brak monitoringu błędów i alertów o dostępności. (Zalecenie: Sentry za `VITE_SENTRY_DSN`/`SENTRY_DSN` albo endpoint `/health` + zewnętrzny monitor dostępności.)
 - Powierzchnie debugowania trafiają do bundle'a produkcyjnego (celowo, bramkowane parametrem) — zdecyduj, czy je zachować.
-- Higiena zależności: audyt zależności (`pnpm audit`) nie jest częścią CI; rozważ dodanie.
-- CI nie uruchamia `pnpm build`; rozważ dodanie.
+- Audyt zależności (`pnpm audit`) i `pnpm build` są teraz w zadaniu CI `lint`; krok audytu ma `continue-on-error` do czasu uporania się z advisory.
 - Zweryfikuj `P24_STATUS_URL` / `SITE_URL` i osiągalność webhooka po każdej zmianie domeny.
-- Zsynchronizuj `.env` / env Netlify / README, jeśli zmienne są wycofywane.
+- Zsynchronizuj `.env` / env Netlify / README, jeśli zmienne są wycofywane. Tylko-CI `VITE_CONTENT_ALLOW_EMPTY=true` pozwala buildowi CI wbudować puste treści bez poświadczeń Supabase; nigdy nie ustawiaj tego w buildzie wdrożeniowym.
 
 **Sugerowany priorytet, jeśli utwardzanie będzie kontynuowane**
-1. Uwierzytelnij/autoryzuj `create-przelewy24-session` (powiąż z tworzącą sesją lub dodaj własność) albo traktuj UUID jako sekret i udokumentuj to.
-2. Dodaj limity szybkości do pozostałych publicznych endpointów zapisu; rozważ ochronę przed botami dla `track-referral`.
-3. Ogranicz kolumny filtrów/sortowania/group-by w `admin-api`.
-4. Przypnij `search_path` w trzech nowszych funkcjach; dodaj krok lintowania migracji.
-5. Napraw/usuń eksport CSV klientów; zarejestruj `promotions` jako zasób.
-6. Dodaj monitoring błędów.
-7. Dodaj `pnpm build` + audyt zależności do CI.
+1. Dodaj monitoring błędów / alerty dostępności.
+2. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
+3. Rozważ ochronę przed botami (np. honeypot/Turnstile) dla `track-referral` i `submit-complaint` poza limitem po IP.
+4. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
+5. Zmień audyt zależności w blokującą bramkę CI, gdy bieżące advisory zostaną wyczyszczone.
 
 ---
 
@@ -491,6 +500,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 | Przeprowadzenie kampanii | Admin → Promotions; aktywuj jedną (dezaktywuje pozostałe) |
 | Tworzenie kodów referencyjnych / QR partnerów | Admin → Partners → Add ref, lub Admin → Referral Codes |
 | Obsługa zamówień / wysyłki | Admin → Orders → szczegóły; ustaw status zamówienia i status dostawy + numer śledzenia |
+| Przegląd reklamacji | Admin → Complaints → otwórz zgłoszenie, ustaw status + notatki wewnętrzne, zapisz |
 | Nadanie dostępu admina | Admin → Users → Grant admin (lub lista Admins) |
 | Zastosowanie migracji DB | Merge do `main` ze zmienionym `supabase/migrations/**` (CI) lub uruchom `pnpm db:migrate:dev` |
 | Wdrożenie nowego builda | Merge/push do `main` → Netlify buduje; klienci aktualizują się automatycznie przez `/version.json` + SW |
@@ -510,6 +520,8 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Przekaż lokalny `.env` bezpiecznie; potwierdź, że żadne sekrety nie są zacommitowane (obecnie czysto).
 - [ ] Utwórz/potwierdź **build hook** Netlify i ustaw `NETLIFY_BUILD_HOOK_URL`.
 - [ ] Zweryfikuj, że webhook P24 jest osiągalny i zwraca sukces z żywej domeny.
+- [ ] Potwierdź zastosowanie nowych migracji: `complaints`, `rate_limit_hits`, `orders.order_access_token`, backfill `shipping_method_id` oraz przypięcie `search_path`.
+- [ ] Wykonaj smoke test checkoutu w sandbox: zamówienie utworzone, `create-przelewy24-session` akceptuje zwrócony token dostępu, powrót P24 niesie `token`, a odpytywanie statusu działa.
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.
 - [ ] Przejrzyj otwarte pozycje z §21 i zdecyduj o własności/priorytecie.
 - [ ] Skonfiguruj monitoring błędów (obecnie nieobecny).

@@ -63,6 +63,7 @@ describe("create-przelewy24-session handler", () => {
         payment_session_id: "order-order-1",
         payment_token: "existing-token",
         payment_status: "registered",
+        order_access_token: "access-1",
       },
       error: null,
     });
@@ -75,7 +76,7 @@ describe("create-przelewy24-session handler", () => {
 
     const response = await handler({
       httpMethod: "POST",
-      body: JSON.stringify({ orderId: "order-1" }),
+      body: JSON.stringify({ orderId: "order-1", orderAccessToken: "access-1" }),
     });
 
     expect(response.statusCode).toBe(200);
@@ -206,6 +207,84 @@ describe("create-przelewy24-session handler", () => {
     expect(readBody<{ error: string }>(response)).toEqual({
       error: "Order is already paid.",
     });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a request without the order access token", async () => {
+    const { select } = createSelectEqMaybeSingle({
+      data: {
+        id: "order-1",
+        order_number: "TI-2026-000001",
+        status: "pending_payment",
+        customer_name: "Jane Doe",
+        customer_email: "jane@example.com",
+        customer_phone: null,
+        shipping_address: "Main 1",
+        shipping_city: "Warsaw",
+        shipping_postal_code: "00-001",
+        shipping_country: "PL",
+        currency: "PLN",
+        total_price: 200,
+        shipping_cost: 14.99,
+        payment_session_id: null,
+        payment_token: null,
+        payment_status: "pending",
+        order_access_token: "access-1",
+      },
+      error: null,
+    });
+
+    mockSupabaseClient(createClientMock, {
+      orders: {
+        select,
+      },
+    });
+
+    const response = await handler({
+      httpMethod: "POST",
+      body: JSON.stringify({ orderId: "order-1" }),
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("rejects a request with a mismatched order access token", async () => {
+    const { select } = createSelectEqMaybeSingle({
+      data: {
+        id: "order-1",
+        order_number: "TI-2026-000001",
+        status: "pending_payment",
+        customer_name: "Jane Doe",
+        customer_email: "jane@example.com",
+        customer_phone: null,
+        shipping_address: "Main 1",
+        shipping_city: "Warsaw",
+        shipping_postal_code: "00-001",
+        shipping_country: "PL",
+        currency: "PLN",
+        total_price: 200,
+        shipping_cost: 14.99,
+        payment_session_id: null,
+        payment_token: null,
+        payment_status: "pending",
+        order_access_token: "access-1",
+      },
+      error: null,
+    });
+
+    mockSupabaseClient(createClientMock, {
+      orders: {
+        select,
+      },
+    });
+
+    const response = await handler({
+      httpMethod: "POST",
+      body: JSON.stringify({ orderId: "order-1", orderAccessToken: "wrong" }),
+    });
+
+    expect(response.statusCode).toBe(403);
     expect(fetch).not.toHaveBeenCalled();
   });
 });
