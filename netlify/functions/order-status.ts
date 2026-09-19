@@ -37,7 +37,10 @@ export const handler = async (event: NetlifyEvent) => {
   }
 
   const orderId = event.queryStringParameters?.["orderId"]?.trim();
-  const orderAccessToken = event.queryStringParameters?.["token"]?.trim();
+  const headerToken = event.headers?.["x-order-token"]?.trim();
+  // deprecated: query-string token fallback for stale clients / already-issued return URLs.
+  const queryToken = event.queryStringParameters?.["token"]?.trim();
+  const orderAccessToken = headerToken || queryToken;
 
   if (!orderId) {
     return {

@@ -820,20 +820,6 @@ export function CheckoutPage() {
   const paymentReturn = searchParams.get("payment") === "return";
   const returnOrderId = searchParams.get("orderId");
   const returnOrderNumber = searchParams.get("orderNumber");
-  const returnOrderAccessToken = searchParams.get("token");
-
-  useEffect(() => {
-    const token = returnOrderAccessToken ?? orderAccessToken;
-    if (!token) return;
-    try {
-      sessionStorage.setItem(PENDING_ORDER_ACCESS_TOKEN_STORAGE, token);
-    } catch {
-      // ignore unavailable storage
-    }
-    if (returnOrderAccessToken && returnOrderAccessToken !== orderAccessToken) {
-      setOrderAccessToken(returnOrderAccessToken);
-    }
-  }, [returnOrderAccessToken, orderAccessToken]);
 
   const [couponCode, setCouponCode] = useState<string>(() => {
     try {
@@ -967,7 +953,7 @@ export function CheckoutPage() {
       try {
         const result = await getOrderStatus(
           returnOrderId,
-          returnOrderAccessToken ?? orderAccessToken,
+          orderAccessToken,
         );
 
         if (result.status === "paid" || result.payment_status === "verified") {
@@ -992,7 +978,7 @@ export function CheckoutPage() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [paymentReturn, returnOrderId, returnOrderAccessToken, orderAccessToken]);
+  }, [paymentReturn, returnOrderId, orderAccessToken]);
 
   const discountAmount = couponResult?.valid && couponResult.discountAmount
     ? couponResult.discountAmount
@@ -1235,7 +1221,7 @@ export function CheckoutPage() {
       const p24Response = await createP24Session({
         orderId: returnOrderId,
         language: getCurrentLanguage(),
-        orderAccessToken: returnOrderAccessToken ?? orderAccessToken,
+        orderAccessToken: orderAccessToken,
       });
       clearPersistedUploadWork();
       window.location.href = p24Response.redirectUrl;

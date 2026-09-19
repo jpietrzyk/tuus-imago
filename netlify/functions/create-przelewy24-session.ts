@@ -207,12 +207,7 @@ export const handler = async (event: NetlifyEvent) => {
     country: order.shipping_country,
     phone: order.customer_phone?.replace(/\s+/g, "") || undefined,
     language: normalizeLanguage(parsedBody.language),
-    urlReturn: buildReturnUrl(
-      config.siteUrl,
-      order.id,
-      order.order_number,
-      order.order_access_token,
-    ),
+    urlReturn: buildReturnUrl(config.siteUrl, order.id, order.order_number),
     urlStatus: config.statusUrl,
     waitForResult: false,
     regulationAccept: false,

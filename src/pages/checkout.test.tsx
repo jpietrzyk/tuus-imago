@@ -1001,6 +1001,21 @@ describe("CheckoutPage", () => {
       ).toBeInTheDocument();
     });
 
+    const orderStatusCall = (
+      fetch as ReturnType<typeof vi.fn>
+    ).mock.calls.find(
+      (call) =>
+        typeof call[0] === "string" && call[0].includes("order-status"),
+    );
+    expect(orderStatusCall?.[0]).not.toContain("token");
+    expect(orderStatusCall?.[1]).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "X-Order-Token": "access-token-1",
+        }),
+      }),
+    );
+
     await waitFor(() => {
       expect(
         sessionStorage.getItem("checkout-order-access-token"),

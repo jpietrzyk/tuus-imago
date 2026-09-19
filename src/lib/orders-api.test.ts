@@ -171,8 +171,27 @@ describe("orders-api", () => {
 
       const result = await getOrderStatus("order-123");
       expect(result).toEqual(response);
-      expect(fetch).toHaveBeenCalledWith(
-        "/.netlify/functions/order-status?orderId=order-123",
+      const [url, options] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(url).toBe("/.netlify/functions/order-status?orderId=order-123");
+      expect(url).not.toContain("token=");
+      expect(options).toEqual(expect.objectContaining({ headers: expect.any(Object) }));
+    });
+
+    it("sends access token via X-Order-Token header and not the URL", async () => {
+      const response = {
+        status: "pending",
+        payment_status: "paid",
+        order_number: "ORD-001",
+      };
+      mockFetchSuccess(response);
+
+      await getOrderStatus("order-123", "secret-token");
+
+      const [url, options] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      expect(url).toBe("/.netlify/functions/order-status?orderId=order-123");
+      expect(url).not.toContain("token");
+      expect(options.headers).toEqual(
+        expect.objectContaining({ "X-Order-Token": "secret-token" }),
       );
     });
 

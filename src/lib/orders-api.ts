@@ -250,12 +250,14 @@ export async function getOrderStatus(
   accessToken?: string | null,
 ): Promise<OrderStatusResponse> {
   const params = new URLSearchParams({ orderId });
+  const headers: Record<string, string> = {};
   if (accessToken) {
-    params.set("token", accessToken);
+    headers["X-Order-Token"] = accessToken;
   }
 
   const response = await fetch(
     `/.netlify/functions/order-status?${params.toString()}`,
+    { headers },
   );
 
   const data = await parseJsonResponse<OrderStatusResponse | ErrorResponse>(response);
