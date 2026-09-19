@@ -137,6 +137,7 @@ Wszystkie zmienne są udokumentowane w `.env.example`. Rzeczywisty plik `.env` i
 | `VITE_CLOUDINARY_UPLOAD_PRESET` | Tak | Nazwa podpisanego upload presetu |
 | `VITE_CLOUDINARY_AI_TEMPLATE` | Nie | Nazwana transformacja Cloudinary dla podglądu AI (bez prefiksu `t_`) |
 | `VITE_SHOW_UPLOADER_DEBUG` | Nie | Panel debugowania; w produkcji musi być `false`/nieustawiony |
+| `VITE_SHOW_DEBUG_PANEL` | Nie | Pasek debugowania Cloudinary na stronie wgrywania; musi być `false`/nieustawione w produkcji |
 | `VITE_UPLOAD_DRAFT_MAX_AGE_HOURS` | Nie | Liczba godzin przechowywania szkicu (domyślnie 168 = 7 dni) |
 | `VITE_SUPABASE_URL` | Tak | URL projektu Supabase |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Tak | Klucz anon/publishable Supabase |
@@ -163,6 +164,7 @@ Wszystkie zmienne są udokumentowane w `.env.example`. Rzeczywisty plik `.env` i
 | `SUPABASE_ACCESS_TOKEN` | Sekret GitHub | Token osobisty `sbp_…` do migracji |
 | `SUPABASE_DB_PASSWORD` | Sekret GitHub | Hasło Postgres dla `supabase db push` |
 | `SUPABASE_PROJECT_REF` | Zmienna (lub sekret) repo GitHub | ID projektu Supabase |
+| `CONTENT_ALLOW_EMPTY` | Env builda CI (GitHub Actions) | Pozwala buildowi CI `pnpm build` wbudować puste strony treści bez poświadczeń Supabase; ignorowane, gdy Netlify ustawia `CONTEXT=production`. |
 | `COMMIT_REF` / `GITHUB_SHA` | Automatycznie Netlify/CI | Wbudowywane w `__APP_VERSION__` |
 
 **Zabezpieczenia przed błędną konfiguracją, już obecne:**
@@ -205,7 +207,7 @@ Testy używają jsdom z polyfillami (`vitest.setup.ts`) dla ResizeObserver, kont
 ### GitHub Actions (`.github/workflows/run-checks.yml`)
 Uruchamiane przy każdym pushu, trzy sekwencyjne zadania:
 1. **test** — `pnpm install --frozen-lockfile` → `pnpm test`
-2. **lint** — `pnpm lint` → `npx tsc -b`
+2. **lint** — `pnpm lint` → `npx tsc -b` → `pnpm build` (z `CONTENT_ALLOW_EMPTY=true`) → `pnpm audit --audit-level=high` (nieblokujące)
 3. **migrate** — tylko na `main` **i** gdy zmieniło się `supabase/migrations/**` → `pnpm db:migrate:deploy` (środowisko GitHub `production`)
 
 ### Tożsamość i wersja build
@@ -222,9 +224,9 @@ Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma nies
 | Funkcja | Metoda | Auth | Cel |
 |---|---|---|---|
 | `create-order` | POST | Publiczna (guest checkout) | Waliduje + wycenia zamówienie po stronie serwera, wstawia zamówienie/pozycje/historię, stosuje kupon + promocję + dostawę; **limit 10/60 s**; idempotentna przez `idempotency_key` |
-| `create-przelewy24-session` | POST | Publiczna | Rejestruje/ponownie używa transakcji P24 dla zamówienia, zwraca URL przekierowania; zapisuje pola sesji płatności |
+| `create-przelewy24-session` | POST | Publiczna (token dostępu do zamówienia) | Rejestruje/ponownie używa transakcji P24 dla zamówienia, zwraca URL przekierowania; zapisuje pola sesji płatności; **limit przez limiter DB** |
 | `przelewy24-webhook` | POST | Podpis P24 | Weryfikuje podpis powiadomienia + kwotę/walutę, wywołuje P24 `transaction/verify`, oznacza zamówienie jako opłacone (idempotentnie) |
-| `order-status` | GET | Publiczna (UUID) | Odpytywana przez checkout po powrocie z płatności |
+| `order-status` | GET | Publiczna (token dostępu przez `X-Order-Token`) | Odpytywana przez checkout po powrocie z płatności; **limit przez limiter DB** |
 | `validate-coupon` | POST | Publiczna | Podgląd walidacji kuponu tylko do odczytu |
 | `active-promotion` | GET | Publiczna | Bieżąca aktywna promocja dla nagłówka/checkout |
 | `app-settings` | GET | Publiczna | Progi DPI guard (cache 60 s) |
@@ -299,7 +301,7 @@ Schemat jest zdefiniowany **wyłącznie** przez 35 pliki SQL w `supabase/migrati
 
 | Tabela | Cel | RLS |
 |---|---|---|
-| `orders` | Zamówienia (klient, dostawa, sumy, kupon/promocja, pola płatności P24, wysyłka, `user_id`, `ref_code`, `shipping_method_id`) | Włączone, brak polityk → tylko service-role |
+| `orders` | Zamówienia (klient, dostawa, sumy, kupon/promocja, pola płatności P24, wysyłka, `user_id`, `ref_code`, `shipping_method_id`, `order_access_token`) | Włączone, brak polityk → tylko service-role |
 | `order_items` | Pozycje (maks. 3, sloty left/center/right), URL-e/transformacje obrazów, snapshoty ramy + płótna | tylko service-role |
 | `order_status_history` | Ścieżka audytu (`order`/`shipment`/`payment`) | tylko service-role |
 | `profiles` | Po jednym na użytkownika auth (`full_name`, `phone`, `is_admin`) | Odczyt własnego wiersza; zapis własnego wiersza (is_admin blokowany triggerem) |
