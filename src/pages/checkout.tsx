@@ -948,6 +948,14 @@ export function CheckoutPage() {
     let cancelled = false;
     const startedAt = Date.now();
 
+    const clearPendingAccessToken = () => {
+      try {
+        sessionStorage.removeItem(PENDING_ORDER_ACCESS_TOKEN_STORAGE);
+      } catch {
+        // ignore unavailable storage
+      }
+    };
+
     const poll = async () => {
       if (cancelled) return;
 
@@ -963,10 +971,12 @@ export function CheckoutPage() {
         );
 
         if (result.status === "paid" || result.payment_status === "verified") {
+          clearPendingAccessToken();
           setPaymentPollStatus("paid");
           return;
         }
         if (result.payment_status === "failed") {
+          clearPendingAccessToken();
           setPaymentPollStatus("failed");
           return;
         }

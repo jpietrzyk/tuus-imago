@@ -197,13 +197,27 @@ function validateMetaColumns(
     return "Invalid select fields.";
   }
 
+  if (meta.filters !== undefined && !Array.isArray(meta.filters)) {
+    return "Invalid filters.";
+  }
+
   for (const filter of meta.filters ?? []) {
+    if (!filter || typeof filter.field !== "string") {
+      return "Invalid filter column.";
+    }
     if (!allowed.has(filter.field)) {
       return `Invalid filter column: ${filter.field}.`;
     }
   }
 
+  if (meta.sorters !== undefined && !Array.isArray(meta.sorters)) {
+    return "Invalid sorters.";
+  }
+
   for (const sorter of meta.sorters ?? []) {
+    if (!sorter || typeof sorter.field !== "string") {
+      return "Invalid sort column.";
+    }
     if (!allowed.has(sorter.field)) {
       return `Invalid sort column: ${sorter.field}.`;
     }
@@ -742,9 +756,13 @@ async function handleAggregation(
   }
 
   if (aggregateFunction === "count" && groupBy) {
-    const { data, error } = await supabase
-      .from("orders")
-      .select(groupBy);
+    const { data, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from("orders")
+        .select(groupBy)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (error) {
       return serverError("request failed", error);
@@ -766,9 +784,13 @@ async function handleAggregation(
 
   if (aggregateFunction === "sum" && groupBy) {
     const sumField = meta.aggregate ?? "total_price";
-    const { data, error } = await supabase
-      .from("orders")
-      .select(`${groupBy}, ${sumField}`);
+    const { data, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from("orders")
+        .select(`${groupBy}, ${sumField}`)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (error) {
       return serverError("request failed", error);
@@ -805,9 +827,13 @@ async function handleAggregation(
 
   if (aggregateFunction === "sum") {
     const sumField = meta.aggregate ?? "total_price";
-    const { data, error } = await supabase
-      .from("orders")
-      .select(sumField);
+    const { data, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from("orders")
+        .select(sumField)
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
 
     if (error) {
       return serverError("request failed", error);

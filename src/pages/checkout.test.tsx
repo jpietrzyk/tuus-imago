@@ -916,6 +916,7 @@ describe("CheckoutPage", () => {
       "checkout-uploaded-slots",
       JSON.stringify([paidSlot]),
     );
+    sessionStorage.setItem("checkout-order-access-token", "access-token-1");
 
     const jsonResponse = (body: unknown) =>
       Promise.resolve(
@@ -998,6 +999,12 @@ describe("CheckoutPage", () => {
       expect(
         screen.getByText(tr("checkout.paymentSuccessTitle")),
       ).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(
+        sessionStorage.getItem("checkout-order-access-token"),
+      ).toBeNull();
     });
 
     // The summary keeps showing the ordered configuration as plain values.

@@ -15,6 +15,7 @@ type OrderStatusRow = {
   payment_status: string;
   payment_session_id: string | null;
   order_access_token: string | null;
+  created_at: string | null;
 };
 
 export const handler = async (event: NetlifyEvent) => {
@@ -61,7 +62,7 @@ export const handler = async (event: NetlifyEvent) => {
 
   const { data: order, error } = await supabase
     .from("orders")
-    .select("id, order_number, status, payment_status, payment_session_id, order_access_token")
+    .select("id, order_number, status, payment_status, payment_session_id, order_access_token, created_at")
     .eq("id", orderId)
     .maybeSingle<OrderStatusRow>();
 
@@ -72,7 +73,12 @@ export const handler = async (event: NetlifyEvent) => {
     };
   }
 
-  if (!verifyOrderAccess(order.order_access_token, orderAccessToken)) {
+  if (
+    !verifyOrderAccess(order.order_access_token, orderAccessToken, {
+      createdAt: order.created_at,
+      paymentStatus: order.payment_status,
+    })
+  ) {
     return {
       statusCode: 403,
       body: JSON.stringify({ error: "Not authorized for this order." }),

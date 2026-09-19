@@ -252,6 +252,57 @@ describe("admin-api handler", () => {
       expect(response.statusCode).toBe(400);
       expect(readBody(response).error).toContain("Invalid sum field");
     });
+
+    it("rejects non-array filters", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { filters: {} },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid filters");
+    });
+
+    it("rejects a null filter entry", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { filters: [null] },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid filter column");
+    });
+
+    it("rejects non-array sorters", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      setupClient({ profiles: makeAdminAuthCheck() });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { sorters: "status" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(readBody(response).error).toContain("Invalid sorters");
+    });
   });
 
   describe("GET", () => {
@@ -949,7 +1000,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -986,7 +1037,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -1013,7 +1064,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -1041,7 +1092,7 @@ describe("admin-api handler", () => {
 
       setupClient({
         profiles: authCheck,
-        orders: { select: vi.fn().mockResolvedValue({ data: ordersData, error: null }) },
+        orders: paged({ data: ordersData, error: null }),
       });
 
       const response = await handler({
@@ -1060,6 +1111,45 @@ describe("admin-api handler", () => {
       const shipped = body.data.find((r: { status: string }) => r.status === "shipped");
       expect(paid).toMatchObject({ total_price: 300, count: 2 });
       expect(shipped).toMatchObject({ total_price: 50, count: 1 });
+    });
+
+    it("pages through more than 1000 rows when summing", async () => {
+      mockFetchForAuth({ id: "admin-1", email: "admin@test.com" });
+      const authCheck = makeAdminAuthCheck();
+
+      const firstPage = Array.from({ length: 1000 }, () => ({ total_price: 1 }));
+      const secondPage = [
+        { total_price: 1 },
+        { total_price: 1 },
+        { total_price: 1 },
+      ];
+
+      const range = vi
+        .fn()
+        .mockResolvedValueOnce({ data: firstPage, error: null })
+        .mockResolvedValueOnce({ data: secondPage, error: null });
+      const order = vi.fn().mockReturnValue({ range });
+      const select = vi.fn().mockReturnValue({ order });
+
+      setupClient({
+        profiles: authCheck,
+        orders: { select },
+      });
+
+      const response = await handler({
+        httpMethod: "POST",
+        headers: { authorization: "Bearer valid-token" },
+        body: JSON.stringify({
+          resource: "orders",
+          meta: { aggregateFunction: "sum" },
+        }),
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(readBody(response).data).toEqual({ total_price: 1003 });
+      expect(range).toHaveBeenCalledTimes(2);
+      expect(range).toHaveBeenNthCalledWith(1, 0, 999);
+      expect(range).toHaveBeenNthCalledWith(2, 1000, 1999);
     });
   });
 

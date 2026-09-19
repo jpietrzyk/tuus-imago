@@ -73,7 +73,6 @@ type CreateOrderPayload = {
   idempotencyKey?: string;
   couponCode?: string;
   refCode?: string;
-  userId?: string;
   shippingMethodId?: string;
 };
 

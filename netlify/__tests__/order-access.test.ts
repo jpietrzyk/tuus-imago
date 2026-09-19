@@ -26,8 +26,36 @@ describe("order-access", () => {
     expect(verifyOrderAccess(token, "some-other-token")).toBe(false);
   });
 
-  it("keeps the legacy UUID-only behavior for orders without a token", () => {
-    expect(verifyOrderAccess(null, undefined)).toBe(true);
-    expect(verifyOrderAccess(undefined, undefined)).toBe(true);
+  it("rejects a null token without legacy context", () => {
+    expect(verifyOrderAccess(null, undefined)).toBe(false);
+    expect(verifyOrderAccess(undefined, undefined)).toBe(false);
+  });
+
+  it("allows the legacy fallback for a recent unpaid order", () => {
+    expect(
+      verifyOrderAccess(null, undefined, {
+        createdAt: new Date().toISOString(),
+        paymentStatus: "pending",
+      }),
+    ).toBe(true);
+  });
+
+  it("rejects the legacy fallback outside the time window", () => {
+    const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+    expect(
+      verifyOrderAccess(null, null, {
+        createdAt: eightDaysAgo,
+        paymentStatus: "pending",
+      }),
+    ).toBe(false);
+  });
+
+  it("rejects the legacy fallback for a non-pending order", () => {
+    expect(
+      verifyOrderAccess(null, undefined, {
+        createdAt: new Date().toISOString(),
+        paymentStatus: "verified",
+      }),
+    ).toBe(false);
   });
 });
