@@ -479,7 +479,7 @@ Deliberately shipped, gated by query param or env:
 - Debug surfaces ship in the production bundle (intentional, param-gated) — decide whether to keep.
 - Dependency auditing (`pnpm audit`) and `pnpm build` are now in the `lint` CI job; the audit step is `continue-on-error` until advisories are triaged.
 - Verify `P24_STATUS_URL` / `SITE_URL` and webhook reachability after any domain change.
-- Reconcile `.env` / Netlify env / README if variables are retired. CI-only `VITE_CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; never set it in a deploy build.
+- Reconcile `.env` / Netlify env / README if variables are retired. CI-only `CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; it is ignored when Netlify sets `CONTEXT=production`, so it cannot weaken a deploy build.
 
 **Suggested priority if hardening continues**
 1. Add error monitoring / uptime alerting.

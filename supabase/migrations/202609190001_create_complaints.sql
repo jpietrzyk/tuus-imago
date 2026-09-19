@@ -28,6 +28,8 @@ alter table public.complaints enable row level security;
 create index if not exists complaints_status_created_idx
   on public.complaints (status, created_at desc);
 
+drop trigger if exists complaints_updated_at_trigger on public.complaints;
+
 create trigger complaints_updated_at_trigger
   before update on public.complaints
   for each row

@@ -38,7 +38,11 @@ export function tuusContentPlugin(mode: string): Plugin {
     // CI-only escape hatch: the CI build has no Supabase credentials, so it
     // validates compilation/bundling with empty content. Production builds must
     // never set this and still fail loudly on a missing/unreachable content DB.
-    const allowEmpty = process.env.VITE_CONTENT_ALLOW_EMPTY === "true";
+    // CI-only escape hatch. Netlify sets CONTEXT=production for production
+    // builds, so this can never disable the fail-loud path there.
+    const allowEmpty =
+      process.env.CONTEXT !== "production" &&
+      process.env.CONTENT_ALLOW_EMPTY === "true";
 
     // Use the publishable (anon) key + the VITE_-prefixed URL: these are present in
     // every deploy context (incl. CI and deploy previews), whereas SUPABASE_SECRET_KEY

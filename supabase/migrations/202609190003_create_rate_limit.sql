@@ -12,6 +12,9 @@ alter table public.rate_limit_hits enable row level security;
 create index if not exists rate_limit_hits_key_created_idx
   on public.rate_limit_hits (key, created_at desc);
 
+create index if not exists rate_limit_hits_created_idx
+  on public.rate_limit_hits (created_at);
+
 create or replace function public.check_rate_limit(
   p_key text,
   p_limit integer,
@@ -33,6 +36,9 @@ begin
     or p_window_seconds <= 0 then
     return true;
   end if;
+
+  delete from public.rate_limit_hits
+  where created_at < now() - interval '1 day';
 
   delete from public.rate_limit_hits
   where key = p_key

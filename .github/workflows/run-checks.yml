@@ -41,7 +41,7 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          VITE_CONTENT_ALLOW_EMPTY: "true"
+          CONTENT_ALLOW_EMPTY: "true"
       - name: Audit dependencies (high severity)
         run: pnpm audit --audit-level=high
         continue-on-error: true
