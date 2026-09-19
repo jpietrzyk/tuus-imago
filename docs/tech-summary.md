@@ -137,6 +137,7 @@ All variables are documented in `.env.example`. A real `.env` exists locally and
 | `VITE_CLOUDINARY_UPLOAD_PRESET` | Yes | Signed upload preset name |
 | `VITE_CLOUDINARY_AI_TEMPLATE` | No | Named Cloudinary transformation for AI preview (without `t_` prefix) |
 | `VITE_SHOW_UPLOADER_DEBUG` | No | Debug panel; must be `false`/unset in production |
+| `VITE_SHOW_DEBUG_PANEL` | No | Cloudinary debug strip on the upload page; must be `false`/unset in production |
 | `VITE_UPLOAD_DRAFT_MAX_AGE_HOURS` | No | Draft retention hours (default 168 = 7 days) |
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase anon/publishable key |
@@ -163,6 +164,7 @@ All variables are documented in `.env.example`. A real `.env` exists locally and
 | `SUPABASE_ACCESS_TOKEN` | GitHub secret | `sbp_…` personal access token for migrations |
 | `SUPABASE_DB_PASSWORD` | GitHub secret | Postgres password for `supabase db push` |
 | `SUPABASE_PROJECT_REF` | GitHub repo variable (or secret) | Supabase project ID |
+| `CONTENT_ALLOW_EMPTY` | CI build env (GitHub Actions) | Lets the CI `pnpm build` bake empty content pages without Supabase credentials; ignored when Netlify sets `CONTEXT=production`. |
 | `COMMIT_REF` / `GITHUB_SHA` | Netlify/CI auto | Baked into `__APP_VERSION__` |
 
 **Misconfiguration guards already in place:**
@@ -205,7 +207,7 @@ Tests use jsdom with polyfills (`vitest.setup.ts`) for ResizeObserver, canvas 2D
 ### GitHub Actions (`.github/workflows/run-checks.yml`)
 Runs on every push, three sequential jobs:
 1. **test** — `pnpm install --frozen-lockfile` → `pnpm test`
-2. **lint** — `pnpm lint` → `npx tsc -b`
+2. **lint** — `pnpm lint` → `npx tsc -b` → `pnpm build` (with `CONTENT_ALLOW_EMPTY=true`) → `pnpm audit --audit-level=high` (non-blocking)
 3. **migrate** — only on `main` **and** when `supabase/migrations/**` changed → `pnpm db:migrate:deploy` (GitHub `production` environment)
 
 ### Build identity & version
@@ -222,9 +224,9 @@ All endpoints are under `/.netlify/functions/<name>`. There are no custom routes
 | Function | Method | Auth | Purpose |
 |---|---|---|---|
 | `create-order` | POST | Public (guest checkout) | Validates + server-side prices the order, inserts order/items/history, applies coupon + promotion + shipping; **rate-limited 10/60s**; idempotent via `idempotency_key` |
-| `create-przelewy24-session` | POST | Public | Registers/reuses a P24 transaction for an order, returns redirect URL; persists payment session fields |
+| `create-przelewy24-session` | POST | Public (order access token) | Registers/reuses a P24 transaction for an order, returns redirect URL; persists payment session fields; **rate-limited via DB limiter** |
 | `przelewy24-webhook` | POST | P24 signature | Verifies notification sign + amount/currency, calls P24 `transaction/verify`, marks order paid (idempotent) |
-| `order-status` | GET | Public (UUID) | Polled by checkout after payment return |
+| `order-status` | GET | Public (order access token via `X-Order-Token`) | Polled by checkout after payment return; **rate-limited via DB limiter** |
 | `validate-coupon` | POST | Public | Read-only coupon validation preview |
 | `active-promotion` | GET | Public | Current active promotion for header/checkout |
 | `app-settings` | GET | Public | DPI guard thresholds (60s cache) |
@@ -247,7 +249,7 @@ Shared helpers (`_shared/`):
 - `rate-limit.ts` — IP-keyed DB-backed throttle helper (`check_rate_limit`) for endpoints that cannot use a native Netlify rule.
 - `fetch-all.ts` — pages the remaining admin reads (revenue-over-time, partner stats, CSV exports, and the `sum`/`count` order aggregates) with `.range()` so they don't truncate at the 1000-row cap; `customer_list` and monthly revenue now use the SQL RPCs instead.
 
-**Resource governance:** `admin-api` allowlists resources (`orders`, `order_items`, `order_status_history`, `coupons`, `coupon_usages`, `profiles`, `partners`, `partner_refs`, `promotions`, `picture_frames`, `picture_canvases`, `shipping_methods`, `app_settings`, `content_pages`). Any other resource → `400`.
+**Resource governance:** `admin-api` allowlists resources (`orders`, `order_items`, `order_status_history`, `coupons`, `coupon_usages`, `profiles`, `partners`, `partner_refs`, `promotions`, `picture_frames`, `picture_canvases`, `shipping_methods`, `app_settings`, `content_pages`, `complaints`). Any other resource → `400`, except `customers` (export-only CSV). Columns in `select`/filters/sorters/`groupBy`/`sum` are validated against a per-resource allowlist, and `pageSize` is clamped to 1–1000.
 
 ---
 
@@ -299,7 +301,7 @@ The schema is defined **only** by the 35 SQL files in `supabase/migrations/`. Th
 
 | Table | Purpose | RLS |
 |---|---|---|
-| `orders` | Orders (customer, shipping, totals, coupon/promotion, P24 payment fields, shipment, `user_id`, `ref_code`, `shipping_method_id`) | Enabled, no policies → service-role only |
+| `orders` | Orders (customer, shipping, totals, coupon/promotion, P24 payment fields, shipment, `user_id`, `ref_code`, `shipping_method_id`, `order_access_token`) | Enabled, no policies → service-role only |
 | `order_items` | Line items (max 3, slots left/center/right), image URLs/transformations, frame + canvas snapshots | service-role only |
 | `order_status_history` | Audit trail (`order`/`shipment`/`payment`) | service-role only |
 | `profiles` | One per auth user (`full_name`, `phone`, `is_admin`) | Own-row read; own-row update (is_admin blocked by trigger) |
