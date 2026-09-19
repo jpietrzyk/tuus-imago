@@ -524,11 +524,15 @@ export interface Translations {
         title: string;
         description: string;
         upload: string;
+        note: string;
       };
       consent: {
         label: string;
       };
       submit: string;
+      submitting: string;
+      success: string;
+      error: string;
     };
     contact: {
       title: string;

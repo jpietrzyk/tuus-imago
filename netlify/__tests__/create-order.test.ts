@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import { createOrder as handler } from "../functions/create-order";
+import { getAuthenticatedUser } from "../functions/_shared/supabase-auth";
 import {
   createDeleteEq,
   createInsertSelectSingle,
@@ -13,7 +14,12 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("../functions/_shared/supabase-auth", () => ({
+  getAuthenticatedUser: vi.fn(),
+}));
+
 const createClientMock = vi.mocked(createClient);
+const getAuthenticatedUserMock = vi.mocked(getAuthenticatedUser);
 
 function buildCustomer() {
   return {
@@ -42,6 +48,7 @@ describe("create-order handler", () => {
     process.env.SUPABASE_URL = "https://example.supabase.co";
     process.env.SUPABASE_SECRET_KEY = "sb_secret_test";
     vi.clearAllMocks();
+    getAuthenticatedUserMock.mockReset();
   });
 
   afterEach(() => {
@@ -149,6 +156,7 @@ describe("create-order handler", () => {
       orderId: "order-1",
       orderNumber: "TI-2026-000001",
       status: "pending_payment",
+      orderAccessToken: expect.any(String),
     });
     expect(orderInsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -158,6 +166,7 @@ describe("create-order handler", () => {
         shipping_method: "inpost_courier",
         shipment_status: "pending_fulfillment",
         items_count: 1,
+        order_access_token: expect.any(String),
       }),
     );
     expect(orderItemsInsert).toHaveBeenCalledWith([
@@ -179,6 +188,70 @@ describe("create-order handler", () => {
         status: "pending_fulfillment",
       }),
     ]);
+  });
+
+  it("stores the verified token user id and ignores a body userId", async () => {
+    getAuthenticatedUserMock.mockResolvedValue({
+      user: { id: "user-verified" },
+    } as never);
+
+    const { insert: orderInsert } = createInsertSelectSingle({
+      data: {
+        id: "order-1",
+        order_number: "TI-2026-000001",
+        status: "pending_payment",
+      },
+      error: null,
+    });
+
+    mockSupabaseClient(createClientMock, {
+      orders: {
+        insert: orderInsert,
+        select: vi.fn(),
+        delete: vi.fn(),
+      },
+      order_items: { insert: vi.fn().mockResolvedValue({ error: null }) },
+      order_status_history: { insert: vi.fn().mockResolvedValue({ error: null }) },
+      promotions: createPromotionsNoActiveMock(),
+    });
+
+    const response = await handler({
+      httpMethod: "POST",
+      headers: { authorization: "Bearer test-token" },
+      body: JSON.stringify({
+        customer: buildCustomer(),
+        uploadedSlots: [],
+        idempotencyKey: "checkout-submit-1",
+        userId: "attacker-supplied",
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(orderInsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "user-verified" }),
+    );
+  });
+
+  it("returns 401 when the bearer token is invalid", async () => {
+    getAuthenticatedUserMock.mockResolvedValue({
+      error: {
+        statusCode: 401,
+        body: JSON.stringify({ error: "Invalid or expired token." }),
+      },
+    } as never);
+
+    const response = await handler({
+      httpMethod: "POST",
+      headers: { authorization: "Bearer bad-token" },
+      body: JSON.stringify({
+        customer: buildCustomer(),
+        uploadedSlots: [],
+        idempotencyKey: "checkout-submit-1",
+      }),
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(createClientMock).not.toHaveBeenCalled();
   });
 
   it("returns the existing order for an idempotent retry", async () => {
@@ -235,8 +308,11 @@ describe("create-order handler", () => {
       orderId: "order-existing",
       orderNumber: "TI-2026-000123",
       status: "pending_payment",
+      orderAccessToken: null,
     });
-    expect(ordersSelect).toHaveBeenCalledWith("id, order_number, status");
+    expect(ordersSelect).toHaveBeenCalledWith(
+      "id, order_number, status, order_access_token",
+    );
     expect(eq).toHaveBeenCalledWith("idempotency_key", "checkout-submit-1");
   });
 

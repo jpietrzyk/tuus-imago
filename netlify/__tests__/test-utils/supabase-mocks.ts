@@ -11,6 +11,7 @@ export function readBody<T>(response: { body: string }) {
 export function mockSupabaseClient(
   createClientMock: CreateClientMock,
   tables: Record<string, unknown>,
+  options?: { rpcResult?: unknown },
 ) {
   const from = vi.fn((table: string) => {
     if (!(table in tables)) {
@@ -20,9 +21,13 @@ export function mockSupabaseClient(
     return tables[table] as never;
   });
 
-  createClientMock.mockReturnValue({ from } as never);
+  const rpc = vi
+    .fn()
+    .mockResolvedValue(options?.rpcResult ?? { data: true, error: null });
 
-  return { from };
+  createClientMock.mockReturnValue({ from, rpc } as never);
+
+  return { from, rpc };
 }
 
 export function createInsertSelectSingle<T>(result: T) {

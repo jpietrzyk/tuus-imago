@@ -542,12 +542,16 @@
       "photos": {
         "title": "Product Photos",
         "description": "Attach clear photos showing the damage or defect. Maximum 5 photos, up to 5 MB each.",
-        "upload": "Select photos"
+        "upload": "Select photos",
+        "note": "Photo attachments are not sent through this form yet. We will contact you about providing them."
       },
       "consent": {
         "label": "I agree to the processing of my personal data for complaint processing in accordance with the Privacy Policy. *"
       },
-      "submit": "Submit Complaint"
+      "submit": "Submit Complaint",
+      "submitting": "Sending...",
+      "success": "Your complaint has been submitted. We will contact you soon.",
+      "error": "Could not submit the complaint. Please try again."
     },
     "contact": {
       "title": "Complaint Contact",
@@ -577,6 +581,7 @@
       "referralCodes": "Referral Codes",
       "partners": "Partners",
       "customers": "Customers",
+      "complaints": "Complaints",
       "users": "Users",
       "admins": "Admins",
       "frames": "Frames",
@@ -767,6 +772,29 @@
       "customerPayment": "Payment",
       "customerShipment": "Shipment",
       "customerDate": "Date",
+      "complaintOrderNumber": "Order #",
+      "complaintName": "Customer",
+      "complaintEmail": "Email",
+      "complaintType": "Type",
+      "complaintStatus": "Status",
+      "complaintCreated": "Submitted",
+      "complaintSearch": "Search complaints...",
+      "complaintNoComplaints": "No complaints found",
+      "complaintDetails": "Complaint Details",
+      "complaintDescription": "Problem Description",
+      "complaintResolution": "Expected Resolution",
+      "complaintAdminNotes": "Internal Notes",
+      "complaintSave": "Save",
+      "complaintSaved": "Complaint updated.",
+      "complaintBack": "Back to Complaints",
+      "complaintProduct": "Product",
+      "complaintOrderDate": "Order Date",
+      "complaintAddress": "Address",
+      "complaintPhone": "Phone",
+      "complaintStatusNew": "New",
+      "complaintStatusInReview": "In review",
+      "complaintStatusResolved": "Resolved",
+      "complaintStatusRejected": "Rejected",
       "userAccounts": "User Accounts",
       "users": "users",
       "admins": "admins",

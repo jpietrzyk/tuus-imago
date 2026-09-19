@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { AlertCircle, Upload } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { ContentPageShell } from "@/components/content-page-shell"
@@ -8,8 +9,76 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { t } from "@/locales/i18n"
 
+const INITIAL_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  orderNumber: "",
+  orderDate: "",
+  product: "",
+  complaintType: "",
+  description: "",
+  resolution: "",
+  consent: false,
+}
+
+type FormState = typeof INITIAL_FORM
+
 export function ComplaintPage() {
   const page = getPageBySlug("complaint")
+  const [form, setForm] = useState<FormState>(INITIAL_FORM)
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">(
+    "idle",
+  )
+
+  const updateField =
+    (field: keyof FormState) =>
+    (
+      event: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) => {
+      const value =
+        event.target instanceof HTMLInputElement &&
+        event.target.type === "checkbox"
+          ? event.target.checked
+          : event.target.value
+      setForm((previous) => ({ ...previous, [field]: value }))
+    }
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setStatus("submitting")
+
+    try {
+      const response = await fetch("/.netlify/functions/submit-complaint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone || undefined,
+          address: form.address || undefined,
+          orderNumber: form.orderNumber,
+          orderDate: form.orderDate || undefined,
+          product: form.product || undefined,
+          complaintType: form.complaintType,
+          description: form.description,
+          resolution: form.resolution || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(t("complaint.form.error"))
+      }
+
+      setForm(INITIAL_FORM)
+      setStatus("success")
+    } catch {
+      setStatus("error")
+    }
+  }
 
   return (
     <ContentPageShell page={page}>
@@ -18,7 +87,7 @@ export function ComplaintPage() {
           <AlertCircle className="h-5 w-5 text-blue-600" />
           <h2 className="text-xl font-semibold">{t("complaint.form.title")}</h2>
         </div>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-900">
               {t("complaint.form.customerInfo.title")}
@@ -32,6 +101,8 @@ export function ComplaintPage() {
                   id="name"
                   type="text"
                   placeholder={t("complaint.form.name.placeholder")}
+                  value={form.name}
+                  onChange={updateField("name")}
                   required
                 />
               </div>
@@ -43,6 +114,8 @@ export function ComplaintPage() {
                   id="email"
                   type="email"
                   placeholder={t("complaint.form.email.placeholder")}
+                  value={form.email}
+                  onChange={updateField("email")}
                   required
                 />
               </div>
@@ -54,6 +127,8 @@ export function ComplaintPage() {
                   id="phone"
                   type="tel"
                   placeholder={t("complaint.form.phone.placeholder")}
+                  value={form.phone}
+                  onChange={updateField("phone")}
                 />
               </div>
               <div className="space-y-2">
@@ -64,6 +139,8 @@ export function ComplaintPage() {
                   id="address"
                   type="text"
                   placeholder={t("complaint.form.address.placeholder")}
+                  value={form.address}
+                  onChange={updateField("address")}
                 />
               </div>
             </div>
@@ -84,6 +161,8 @@ export function ComplaintPage() {
                   id="orderNumber"
                   type="text"
                   placeholder={t("complaint.form.orderNumber.placeholder")}
+                  value={form.orderNumber}
+                  onChange={updateField("orderNumber")}
                   required
                 />
               </div>
@@ -91,7 +170,12 @@ export function ComplaintPage() {
                 <Label htmlFor="orderDate">
                   {t("complaint.form.orderDate.label")}
                 </Label>
-                <Input id="orderDate" type="date" />
+                <Input
+                  id="orderDate"
+                  type="date"
+                  value={form.orderDate}
+                  onChange={updateField("orderDate")}
+                />
               </div>
             </div>
           </div>
@@ -110,6 +194,8 @@ export function ComplaintPage() {
                 id="product"
                 type="text"
                 placeholder={t("complaint.form.product.placeholder")}
+                value={form.product}
+                onChange={updateField("product")}
               />
             </div>
           </div>
@@ -127,6 +213,8 @@ export function ComplaintPage() {
               <select
                 id="complaintType"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={form.complaintType}
+                onChange={updateField("complaintType")}
                 required
               >
                 <option value="">
@@ -160,6 +248,8 @@ export function ComplaintPage() {
                 id="description"
                 placeholder={t("complaint.form.description.placeholder")}
                 rows={5}
+                value={form.description}
+                onChange={updateField("description")}
                 required
               />
             </div>
@@ -171,6 +261,8 @@ export function ComplaintPage() {
                 id="resolution"
                 placeholder={t("complaint.form.resolution.placeholder")}
                 rows={3}
+                value={form.resolution}
+                onChange={updateField("resolution")}
               />
             </div>
           </div>
@@ -199,20 +291,43 @@ export function ComplaintPage() {
                   />
                 </label>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                {t("complaint.form.photos.note")}
+              </p>
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="flex items-start gap-2">
-              <input type="checkbox" required className="mt-1" />
+              <input
+                type="checkbox"
+                required
+                className="mt-1"
+                checked={form.consent}
+                onChange={updateField("consent")}
+              />
               <span className="text-sm text-gray-700">
                 {t("complaint.form.consent.label")}
               </span>
             </label>
           </div>
 
-          <Button type="submit" className="w-full">
-            {t("complaint.form.submit")}
+          {status === "success" && (
+            <p role="status" className="text-sm text-green-700">
+              {t("complaint.form.success")}
+            </p>
+          )}
+
+          {status === "error" && (
+            <p role="alert" className="text-sm text-red-700">
+              {t("complaint.form.error")}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={status === "submitting"}>
+            {status === "submitting"
+              ? t("complaint.form.submitting")
+              : t("complaint.form.submit")}
           </Button>
         </form>
       </section>

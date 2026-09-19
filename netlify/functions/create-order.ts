@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { SHIPPING_COUNTRIES } from "../../src/lib/checkout-constants";
 import { CANVAS_PRINT_UNIT_PRICE } from "../../src/lib/pricing";
 import { toLambdaEvent, toWebResponse } from "./_shared/v2-adapter";
+import { getAuthenticatedUser } from "./_shared/supabase-auth";
+import { generateOrderAccessToken } from "./_shared/order-access";
 
 // Netlify inline function config: keeps the existing route and throttles the
 // unauthenticated checkout endpoint per client to limit order/coupon abuse.
@@ -24,6 +26,7 @@ export default async (request: Request): Promise<Response> => {
 type NetlifyEvent = {
   httpMethod?: string;
   body?: string | null;
+  headers?: Record<string, string | undefined>;
 };
 
 type CustomerInput = {
@@ -70,7 +73,6 @@ type CreateOrderPayload = {
   idempotencyKey?: string;
   couponCode?: string;
   refCode?: string;
-  userId?: string;
   shippingMethodId?: string;
 };
 
@@ -203,6 +205,18 @@ export const createOrder = async (event: NetlifyEvent) => {
       statusCode: 400,
       body: JSON.stringify({ error: slotsValidationError }),
     };
+  }
+
+  // Order ownership is derived from the bearer token when the buyer is signed
+  // in. A client-supplied userId is never trusted; without a valid token the
+  // order is stored as a guest order.
+  let authenticatedUserId: string | null = null;
+  if (event.headers?.["authorization"]) {
+    const authResult = await getAuthenticatedUser(event);
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+    authenticatedUserId = authResult.user.id;
   }
 
   const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -432,6 +446,8 @@ export const createOrder = async (event: NetlifyEvent) => {
   // behavior for API callers that do not send a method.
   const totalPrice = shippingChosen ? goodsTotal + shippingCost : goodsTotal;
 
+  const orderAccessToken = generateOrderAccessToken();
+
   const orderInsert: Record<string, unknown> = {
     customer_name: parsedBody.customer.name.trim(),
     customer_email: parsedBody.customer.email.trim(),
@@ -449,6 +465,7 @@ export const createOrder = async (event: NetlifyEvent) => {
     shipment_status: DEFAULT_SHIPMENT_STATUS,
     currency: "PLN",
     idempotency_key: idempotencyKey,
+    order_access_token: orderAccessToken,
     items_count: itemCount,
     unit_price: CANVAS_PRINT_UNIT_PRICE,
     total_price: totalPrice,
@@ -475,7 +492,7 @@ export const createOrder = async (event: NetlifyEvent) => {
     orderInsert.ref_code = refCodeInput;
   }
 
-  const userIdInput = parsedBody.userId?.trim();
+  const userIdInput = authenticatedUserId;
   if (userIdInput) {
     orderInsert.user_id = userIdInput;
   }
@@ -489,7 +506,7 @@ export const createOrder = async (event: NetlifyEvent) => {
   if (orderInsertError?.code === "23505") {
     const { data: existingOrder, error: existingOrderError } = await supabase
       .from("orders")
-      .select("id, order_number, status")
+      .select("id, order_number, status, order_access_token")
       .eq("idempotency_key", idempotencyKey)
       .maybeSingle();
 
@@ -500,6 +517,7 @@ export const createOrder = async (event: NetlifyEvent) => {
           orderId: existingOrder.id,
           orderNumber: existingOrder.order_number,
           status: existingOrder.status,
+          orderAccessToken: existingOrder.order_access_token ?? null,
         }),
       };
     }
@@ -593,6 +611,7 @@ export const createOrder = async (event: NetlifyEvent) => {
       orderId: order.id,
       orderNumber: order.order_number,
       status: order.status,
+      orderAccessToken,
     }),
   };
 };

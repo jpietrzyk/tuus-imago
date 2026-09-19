@@ -38,6 +38,13 @@ jobs:
         run: pnpm lint
       - name: Typecheck
         run: npx tsc -b
+      - name: Build
+        run: pnpm build
+        env:
+          CONTENT_ALLOW_EMPTY: "true"
+      - name: Audit dependencies (high severity)
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
 
   migrate:
     runs-on: ubuntu-latest

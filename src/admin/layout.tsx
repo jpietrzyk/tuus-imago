@@ -17,6 +17,7 @@ import {
   Frame,
   Image as ImageIcon,
   Truck,
+  MessageSquareWarning,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -79,6 +80,11 @@ const NAV_ITEMS: NavItem[] = [
     label: t("admin.navigation.customers"),
     icon: <Users className="h-5 w-5" />,
     path: "/admin/customers",
+  },
+  {
+    label: t("admin.navigation.complaints"),
+    icon: <MessageSquareWarning className="h-5 w-5" />,
+    path: "/admin/complaints",
   },
   {
     label: t("admin.navigation.users"),

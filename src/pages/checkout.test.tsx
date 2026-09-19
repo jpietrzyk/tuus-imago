@@ -64,6 +64,9 @@ vi.mock("@/lib/supabase-client", () => ({
     return {
       auth: {
         getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
+        refreshSession: vi.fn(() =>
+          Promise.resolve({ data: { session: null } }),
+        ),
         onAuthStateChange: vi.fn(() => ({
           data: { subscription: { unsubscribe: vi.fn() } },
         })),
@@ -92,6 +95,7 @@ const ORDER_RESPONSE = {
   orderId: "order-1",
   orderNumber: "TI-2026-000001",
   status: "pending_payment",
+  orderAccessToken: "access-token-1",
 };
 
 const P24_SESSION_RESPONSE = {
@@ -674,6 +678,49 @@ describe("CheckoutPage", () => {
     });
   });
 
+  it("persists the order access token and forwards it to the payment session", async () => {
+    const fetchMock = createFetchMock();
+    vi.stubGlobal("fetch", fetchMock);
+    stubLocationHref();
+    seedDraft({});
+    renderWithRouter();
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText(tr("checkout.fullName")) as HTMLInputElement)
+          .value,
+      ).toBe("Jane Doe");
+    });
+
+    const termsCheckbox = document.getElementById(
+      "termsAccepted",
+    ) as HTMLInputElement;
+    const privacyCheckbox = document.getElementById(
+      "privacyAccepted",
+    ) as HTMLInputElement;
+    if (termsCheckbox) await userEvent.click(termsCheckbox);
+    if (privacyCheckbox) await userEvent.click(privacyCheckbox);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: tr("checkout.placeOrder") }),
+    );
+
+    await waitFor(
+      () => {
+        expect(
+          sessionStorage.getItem("checkout-order-access-token"),
+        ).toBe("access-token-1");
+      },
+      { timeout: 3000 },
+    );
+
+    const sessionCall = fetchMock.mock.calls.find(([url]: [string]) =>
+      url.includes("create-przelewy24-session"),
+    ) as unknown as [string, RequestInit];
+    const payload = JSON.parse(sessionCall[1].body as string);
+    expect(payload.orderAccessToken).toBe("access-token-1");
+  });
+
   it("clears sessionStorage draft after successful P24 session creation", async () => {
     stubLocationHref();
     seedDraft({});
@@ -869,6 +916,7 @@ describe("CheckoutPage", () => {
       "checkout-uploaded-slots",
       JSON.stringify([paidSlot]),
     );
+    sessionStorage.setItem("checkout-order-access-token", "access-token-1");
 
     const jsonResponse = (body: unknown) =>
       Promise.resolve(
@@ -951,6 +999,27 @@ describe("CheckoutPage", () => {
       expect(
         screen.getByText(tr("checkout.paymentSuccessTitle")),
       ).toBeInTheDocument();
+    });
+
+    const orderStatusCall = (
+      fetch as ReturnType<typeof vi.fn>
+    ).mock.calls.find(
+      (call) =>
+        typeof call[0] === "string" && call[0].includes("order-status"),
+    );
+    expect(orderStatusCall?.[0]).not.toContain("token");
+    expect(orderStatusCall?.[1]).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "X-Order-Token": "access-token-1",
+        }),
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        sessionStorage.getItem("checkout-order-access-token"),
+      ).toBeNull();
     });
 
     // The summary keeps showing the ordered configuration as plain values.

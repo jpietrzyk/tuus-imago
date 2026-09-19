@@ -32,7 +32,6 @@ export interface CreateOrderRequest {
   idempotencyKey: string;
   couponCode?: string;
   refCode?: string;
-  userId?: string;
   shippingMethodId?: string | null;
 }
 
@@ -40,6 +39,7 @@ export interface CreateOrderResponse {
   orderId: string;
   orderNumber: string;
   status: string;
+  orderAccessToken?: string | null;
 }
 
 type ErrorResponse = {
@@ -222,10 +222,13 @@ export async function createOrder(
   payload: CreateOrderRequest,
   signal?: AbortSignal,
 ): Promise<CreateOrderResponse> {
+  const authHeaders = await getAuthHeaders();
+
   const response = await fetch("/.netlify/functions/create-order", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
     },
     body: JSON.stringify(payload),
     signal,
@@ -242,9 +245,19 @@ export async function createOrder(
   return data as CreateOrderResponse;
 }
 
-export async function getOrderStatus(orderId: string): Promise<OrderStatusResponse> {
+export async function getOrderStatus(
+  orderId: string,
+  accessToken?: string | null,
+): Promise<OrderStatusResponse> {
+  const params = new URLSearchParams({ orderId });
+  const headers: Record<string, string> = {};
+  if (accessToken) {
+    headers["X-Order-Token"] = accessToken;
+  }
+
   const response = await fetch(
-    `/.netlify/functions/order-status?orderId=${encodeURIComponent(orderId)}`,
+    `/.netlify/functions/order-status?${params.toString()}`,
+    { headers },
   );
 
   const data = await parseJsonResponse<OrderStatusResponse | ErrorResponse>(response);
@@ -257,7 +270,7 @@ export async function getOrderStatus(orderId: string): Promise<OrderStatusRespon
 }
 
 export async function createP24Session(
-  payload: { orderId: string; language?: string },
+  payload: { orderId: string; language?: string; orderAccessToken?: string | null },
   signal?: AbortSignal,
 ): Promise<CreateP24SessionResponse> {
   const response = await fetch(

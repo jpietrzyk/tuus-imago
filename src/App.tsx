@@ -143,6 +143,16 @@ const CustomerShowPage = lazy(() =>
     default: m.CustomerShowPage,
   })),
 );
+const ComplaintListPage = lazy(() =>
+  import("./admin/pages/complaint-list").then((m) => ({
+    default: m.ComplaintListPage,
+  })),
+);
+const ComplaintShowPage = lazy(() =>
+  import("./admin/pages/complaint-show").then((m) => ({
+    default: m.ComplaintShowPage,
+  })),
+);
 const AdminUsersPage = lazy(() =>
   import("./admin/pages/admin-users-list").then((m) => ({
     default: m.AdminUsersPage,
@@ -434,6 +444,22 @@ export function App() {
               element={
                 <Suspense fallback={<AdminPageLoader />}>
                   <CustomerShowPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="complaints"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ComplaintListPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="complaints/:id"
+              element={
+                <Suspense fallback={<AdminPageLoader />}>
+                  <ComplaintShowPage />
                 </Suspense>
               }
             />

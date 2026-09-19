@@ -154,7 +154,11 @@ export function buildNotificationSign(args: Omit<P24NotificationPayload, "sign">
   });
 }
 
-export function buildReturnUrl(siteUrl: string, orderId: string, orderNumber?: string) {
+export function buildReturnUrl(
+  siteUrl: string,
+  orderId: string,
+  orderNumber?: string,
+) {
   const url = new URL("/checkout", siteUrl);
   url.searchParams.set("payment", "return");
   url.searchParams.set("orderId", orderId);

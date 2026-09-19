@@ -19,8 +19,9 @@ function setupSupabaseMock() {
     if (table === "referral_events") return { insert };
     throw new Error(`Unexpected table: ${table}`);
   });
+  const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
 
-  mockCreateServiceClient.mockReturnValue({ from } as never);
+  mockCreateServiceClient.mockReturnValue({ from, rpc } as never);
 
   return { insert };
 }

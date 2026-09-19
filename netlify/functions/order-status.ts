@@ -1,8 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
+import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { verifyOrderAccess } from "./_shared/order-access";
 
 type NetlifyEvent = {
   httpMethod?: string;
   queryStringParameters?: Record<string, string | undefined>;
+  headers?: Record<string, string | undefined>;
 };
 
 type OrderStatusRow = {
@@ -11,6 +14,8 @@ type OrderStatusRow = {
   status: string;
   payment_status: string;
   payment_session_id: string | null;
+  order_access_token: string | null;
+  created_at: string | null;
 };
 
 export const handler = async (event: NetlifyEvent) => {
@@ -32,6 +37,10 @@ export const handler = async (event: NetlifyEvent) => {
   }
 
   const orderId = event.queryStringParameters?.["orderId"]?.trim();
+  const headerToken = event.headers?.["x-order-token"]?.trim();
+  // deprecated: query-string token fallback for stale clients / already-issued return URLs.
+  const queryToken = event.queryStringParameters?.["token"]?.trim();
+  const orderAccessToken = headerToken || queryToken;
 
   if (!orderId) {
     return {
@@ -44,16 +53,43 @@ export const handler = async (event: NetlifyEvent) => {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: order, error } = await supabase
+  const orderQuery = supabase
     .from("orders")
-    .select("id, order_number, status, payment_status, payment_session_id")
+    .select("id, order_number, status, payment_status, payment_session_id, order_access_token, created_at")
     .eq("id", orderId)
     .maybeSingle<OrderStatusRow>();
+
+  const [limitExceeded, orderResult] = await Promise.all([
+    isRateLimitExceeded(supabase, event, {
+      scope: "order-status",
+      limit: 60,
+      windowSeconds: 60,
+    }),
+    orderQuery,
+  ]);
+
+  if (limitExceeded) {
+    return rateLimitResponse(60);
+  }
+
+  const { data: order, error } = orderResult;
 
   if (error || !order) {
     return {
       statusCode: 404,
       body: JSON.stringify({ error: "Order not found." }),
+    };
+  }
+
+  if (
+    !verifyOrderAccess(order.order_access_token, orderAccessToken, {
+      createdAt: order.created_at,
+      paymentStatus: order.payment_status,
+    })
+  ) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({ error: "Not authorized for this order." }),
     };
   }
 

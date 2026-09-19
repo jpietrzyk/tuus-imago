@@ -8,15 +8,19 @@ import {
   parseRequestJson,
   toMinorUnits,
 } from "./_shared/przelewy24";
+import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { verifyOrderAccess } from "./_shared/order-access";
 
 type NetlifyEvent = {
   httpMethod?: string;
   body?: string | null;
+  headers?: Record<string, string | undefined>;
 };
 
 type CreatePaymentSessionPayload = {
   orderId?: string;
   language?: string;
+  orderAccessToken?: string;
 };
 
 type OrderRow = {
@@ -36,6 +40,8 @@ type OrderRow = {
   payment_session_id: string | null;
   payment_token: string | null;
   payment_status: string;
+  order_access_token: string | null;
+  created_at: string | null;
 };
 
 type P24RegisterResponse = {
@@ -96,6 +102,7 @@ export const handler = async (event: NetlifyEvent) => {
   }
 
   const orderId = parsedBody.orderId?.trim();
+  const orderAccessToken = parsedBody.orderAccessToken?.trim();
 
   if (!orderId) {
     return {
@@ -111,13 +118,28 @@ export const handler = async (event: NetlifyEvent) => {
     },
   });
 
-  const { data: order, error: orderError } = await supabase
+  const orderQuery = supabase
     .from("orders")
     .select(
-      "id, order_number, status, customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_postal_code, shipping_country, currency, total_price, shipping_cost, payment_session_id, payment_token, payment_status",
+      "id, order_number, status, customer_name, customer_email, customer_phone, shipping_address, shipping_city, shipping_postal_code, shipping_country, currency, total_price, shipping_cost, payment_session_id, payment_token, payment_status, order_access_token, created_at",
     )
     .eq("id", orderId)
     .maybeSingle<OrderRow>();
+
+  const [limitExceeded, orderResult] = await Promise.all([
+    isRateLimitExceeded(supabase, event, {
+      scope: "create-przelewy24-session",
+      limit: 10,
+      windowSeconds: 60,
+    }),
+    orderQuery,
+  ]);
+
+  if (limitExceeded) {
+    return rateLimitResponse(60);
+  }
+
+  const { data: order, error: orderError } = orderResult;
 
   if (orderError) {
     console.error("[create-przelewy24-session] Order load error:", orderError.message);
@@ -131,6 +153,18 @@ export const handler = async (event: NetlifyEvent) => {
     return {
       statusCode: 404,
       body: JSON.stringify({ error: "Order not found." }),
+    };
+  }
+
+  if (
+    !verifyOrderAccess(order.order_access_token, orderAccessToken, {
+      createdAt: order.created_at,
+      paymentStatus: order.payment_status,
+    })
+  ) {
+    return {
+      statusCode: 403,
+      body: JSON.stringify({ error: "Not authorized for this order." }),
     };
   }
 

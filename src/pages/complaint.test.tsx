@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ComplaintPage } from "./complaint";
 import { tr } from "@/test/i18n-test";
@@ -137,5 +137,94 @@ describe("ComplaintPage Component", () => {
       name: tr("complaint.form.submit"),
     });
     expect(submitButton).toBeInTheDocument();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function fillRequiredFields() {
+    fireEvent.change(document.getElementById("name") as HTMLInputElement, {
+      target: { value: "Jane Doe" },
+    });
+    fireEvent.change(document.getElementById("email") as HTMLInputElement, {
+      target: { value: "jane@example.com" },
+    });
+    fireEvent.change(
+      document.getElementById("orderNumber") as HTMLInputElement,
+      { target: { value: "TI-2026-000001" } },
+    );
+    fireEvent.change(
+      document.getElementById("complaintType") as HTMLSelectElement,
+      { target: { value: "damaged" } },
+    );
+    fireEvent.change(
+      document.getElementById("description") as HTMLTextAreaElement,
+      { target: { value: "The frame arrived cracked." } },
+    );
+  }
+
+  it("submits the complaint and shows a success message", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <MemoryRouter>
+        <ComplaintPage />
+      </MemoryRouter>,
+    );
+
+    fillRequiredFields();
+    fireEvent.submit(document.querySelector("form") as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(tr("complaint.form.success")),
+      ).toBeInTheDocument();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/.netlify/functions/submit-complaint",
+      expect.objectContaining({ method: "POST" }),
+    );
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body).toMatchObject({
+      name: "Jane Doe",
+      email: "jane@example.com",
+      orderNumber: "TI-2026-000001",
+      complaintType: "damaged",
+    });
+  });
+
+  it("shows an error message when the submission fails", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ error: "nope" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <MemoryRouter>
+        <ComplaintPage />
+      </MemoryRouter>,
+    );
+
+    fillRequiredFields();
+    fireEvent.submit(document.querySelector("form") as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(tr("complaint.form.error")),
+      ).toBeInTheDocument();
+    });
   });
 });

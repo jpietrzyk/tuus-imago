@@ -27,7 +27,7 @@ flowchart LR
   end
   subgraph Netlify
     CDN["Static CDN (dist/)\nSPA + PWA service worker"]
-    FN["Netlify Functions\n(16 endpoints)"]
+    FN["Netlify Functions\n(17 endpoints)"]
   end
   subgraph Supabase
     PG["Postgres + RLS"]
@@ -68,7 +68,7 @@ flowchart LR
 | Payments | Przelewy24 (P24 REST API, sandbox + production) |
 | i18n | Custom dictionary-based i18n (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testing | Vitest 4, Testing Library, jsdom (162 test files) |
+| Testing | Vitest 4, Testing Library, jsdom (165 test files) |
 | Linting | ESLint 9 flat config, typescript-eslint |
 | Package manager | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI pins 22.20.0) |
@@ -94,7 +94,7 @@ src/
   locales/                    # i18n dictionaries (en.json, pl.json)
   assets/                     # Backgrounds, favicons
 netlify/functions/            # Backend endpoints + _shared helpers
-supabase/migrations/          # 29 SQL migrations (schema is defined ONLY here)
+supabase/migrations/          # 35 SQL migrations (schema is defined ONLY here)
 scripts/                      # supabase-migrate.sh, apply-migrations.mjs
 public/                       # manifest.webmanifest, _headers (CSP), _redirects, icons, sw
 docs/                         # This doc + regression notes
@@ -232,7 +232,8 @@ All endpoints are under `/.netlify/functions/<name>`. There are no custom routes
 | `available-canvases` | GET | Public | Active canvas catalog |
 | `available-shipping` | GET | Public | Active shipping methods + free-shipping thresholds |
 | `cloudinary-signature` | POST | Public | Returns signed-upload signature; **rate-limited 20/60s** |
-| `track-referral` | POST | Public | Records referral click event |
+| `track-referral` | POST | Public | Records referral click event; rate-limited via DB limiter |
+| `submit-complaint` | POST | Public | Validates + stores a complaint from `/complaint`; rate-limited via DB limiter |
 | `customer-orders` | GET | **Bearer JWT** | Authenticated user's orders (scoped by token `user_id`) |
 | `customer-addresses` | GET/POST/PATCH/DELETE | **Bearer JWT** | Authenticated user's addresses CRUD (scoped by token) |
 | `admin-api` | GET/POST/PATCH/PUT/DELETE | **Bearer JWT + `is_admin`** | Service-role admin gateway (CRUD, aggregates, bulk status, CSV export) |
@@ -242,6 +243,9 @@ Shared helpers (`_shared/`):
 - `supabase-auth.ts` — `getAuthenticatedUser()` (verifies JWT with publishable key) and `createServiceClient()` (service role).
 - `przelewy24.ts` — signing, minor units, auth header, and the **fail-closed** config guard.
 - `v2-adapter.ts` — bridges Lambda-style handlers to Netlify v2 `Request`/`Response` so rate limits work.
+- `order-access.ts` — generates/verifies the per-order access token; verification is timing-safe, and orders created before the token existed get a bounded 7-day fallback only while unpaid (`pending`/`registered`).
+- `rate-limit.ts` — IP-keyed DB-backed throttle helper (`check_rate_limit`) for endpoints that cannot use a native Netlify rule.
+- `fetch-all.ts` — pages the remaining admin reads (revenue-over-time, partner stats, CSV exports, and the `sum`/`count` order aggregates) with `.range()` so they don't truncate at the 1000-row cap; `customer_list` and monthly revenue now use the SQL RPCs instead.
 
 **Resource governance:** `admin-api` allowlists resources (`orders`, `order_items`, `order_status_history`, `coupons`, `coupon_usages`, `profiles`, `partners`, `partner_refs`, `promotions`, `picture_frames`, `picture_canvases`, `shipping_methods`, `app_settings`, `content_pages`). Any other resource → `400`.
 
@@ -272,16 +276,16 @@ Login supports email/password and Google OAuth. No self-signup for admins.
 | Canvases | `/admin/canvases` | `picture_canvases` | Same as frames |
 | Shipping | `/admin/shipping` | `shipping_methods` | CRUD, price, delivery time, free-shipping threshold, default toggle |
 | Customers | `/admin/customers` | aggregate of `orders` | Customer list/detail (order count, revenue, consent, address) |
+| Complaints | `/admin/complaints` | `complaints` | Review submissions from `/complaint`; change status (new/in review/resolved/rejected) and internal notes |
 | Users | `/admin/users` | `profiles` + Supabase Auth | List non-admins, edit profile, **grant/revoke admin** |
 | Admins | `/admin/admins` | `profiles` + Supabase Auth | Same, filtered to admins |
 | Settings | `/admin/settings` | `app_settings` | DPI guard on/off + quality thresholds (excellent/good/acceptable) |
 | Content | `/admin/content` | `content_pages` | Edit CMS pages (Markdown) and **trigger a site rebuild** via build hook |
 
 ### Admin known limitations (see §21 for the full list)
-- The **Customers CSV export is broken**: `customer-list.tsx` calls `admin-api` with `resource:"customers"`, which is not in the allowlist → `400`. (Orders/Coupons/Partners exports work.)
-- `promotions` has routes/pages/nav but is **not registered** as a Refine resource.
-- `users` / `admins` are not real backend resources; those pages use aggregates against `orders`/`profiles`.
-- User listing caps at 1000 auth users.
+- `promotions` is now a registered Refine resource (list/create/edit/show); `users` / `admins` remain pseudo-resources that use aggregates against `orders`/`profiles`.
+- User listing pages through all auth users (no longer capped at 1000).
+- Complaint photo attachments are not collected yet (form field is present but the photos are not transmitted; see §21).
 - No delete UI for most entities (only referral codes).
 - Status updates / exports use full-page reloads, `alert()`, `confirm()`.
 
@@ -289,7 +293,7 @@ Login supports email/password and Google OAuth. No self-signup for admins.
 
 ## 11. Database (Supabase / Postgres)
 
-The schema is defined **only** by the 29 SQL files in `supabase/migrations/`. There are no native enums — all "enums" are `text` + `CHECK`. `pgcrypto` provides `gen_random_uuid()`.
+The schema is defined **only** by the 35 SQL files in `supabase/migrations/`. There are no native enums — all "enums" are `text` + `CHECK`. `pgcrypto` provides `gen_random_uuid()`.
 
 ### Tables
 
@@ -308,6 +312,8 @@ The schema is defined **only** by the 29 SQL files in `supabase/migrations/`. Th
 | `promotions` | Campaign discounts (single active) | Public read `is_active = true` |
 | `app_settings` | Key/value runtime settings (DPI seeds) | service-role only; consumed via `app-settings` function |
 | `content_pages` | CMS/legal pages baked into the bundle at build | Public read `is_published = true` |
+| `complaints` | Complaint submissions from `/complaint` (status + admin notes) | service-role only |
+| `rate_limit_hits` | DB-backed throttle buckets for public endpoints | service-role only |
 | `picture_frames` | Frame catalog | Public read `is_active = true` |
 | `picture_canvases` | Canvas material catalog | Public read `is_active = true` |
 | `shipping_methods` | Shipping options + free-shipping threshold | Public read `is_active = true` |
@@ -320,8 +326,10 @@ Single-default invariants exist on `picture_frames`, `picture_canvases`, `shippi
 - `link_guest_orders()` — claims guest orders by email after signup (sets `orders.user_id`).
 - `increment_coupon_used_count(uuid)` — SECURITY DEFINER RPC called by `create-order`.
 - `prevent_profile_admin_self_update()` — blocks user self-elevation to admin.
+- `check_rate_limit(key, limit, window_seconds)` — SECURITY DEFINER DB throttle used by the public endpoints without a native Netlify rule; it also purges `rate_limit_hits` older than one day on each call.
+- `admin_customer_list()` / `admin_revenue_by_month()` — SECURITY DEFINER, admin-only aggregate helpers (EXECUTE revoked from anon/authenticated/public) that group the whole `orders` table in SQL so the dashboard/customer aggregates no longer page the entire table into the function.
 - Per-table `updated_at` triggers.
-- `202608080002_function_security_hardening.sql` pinned `search_path` and revoked EXECUTE on SECURITY DEFINER functions. **Note:** three later functions (`handle_picture_frame_updated_at`, `handle_picture_canvas_updated_at`, `handle_shipping_method_updated_at`) were created after this and do **not** pin `search_path` (linter warnings return).
+- `202608080002_function_security_hardening.sql` pinned `search_path` and revoked EXECUTE on SECURITY DEFINER functions; `202609190004_pin_trigger_search_path.sql` pins the three later trigger functions (`handle_picture_frame_updated_at`, `handle_picture_canvas_updated_at`, `handle_shipping_method_updated_at`). A guard test now fails if any SQL function is created without a pinned `search_path`.
 
 ### Migrations
 
@@ -343,7 +351,7 @@ The script first tries the Supabase CLI; if `supabase link` fails (known typed-k
 3. **Checkout availability** — the footer checkout dropup lists orderable (printable) slots with checkboxes. Unprintable slots are force-unchecked and disabled; checkout requires ≥1 printable slot.
 4. **Checkout** (`/checkout`) — frame + canvas selection per slot, shipping method, address form, coupon, active promotion, and totals. All UI state is sessionStorage-backed so reloads/OAuth round-trips don't lose the order.
 5. **Order creation** — `create-order` recomputes everything server-side (never trusts client prices), inserts order/items/history, applies coupon usage and promotion, resolves shipping.
-6. **Payment** — `create-przelewy24-session` registers the transaction and returns a P24 redirect URL. After payment, P24 returns to `/checkout?payment=return&orderId=…`; checkout polls `order-status` every 5s (up to 5 min). The asynchronous `przelewy24-webhook` verifies and marks the order paid.
+6. **Payment** — `create-przelewy24-session` registers the transaction and returns a P24 redirect URL. After payment, P24 returns to `/checkout?payment=return&orderId=…`; checkout polls `order-status` every 5s (up to 5 min), sending the access token kept in sessionStorage via the `X-Order-Token` header because the P24 return URL no longer carries the token. The asynchronous `przelewy24-webhook` verifies and marks the order paid.
 7. **Account (optional)** — `/account/*` (protected): profile, orders (with status/payment badges, tracking, item thumbnails), saved addresses (full CRUD), payments list. Guest orders are linked to an account on signup by matching email.
 
 **Pricing model** (`src/lib/pricing.ts`): each canvas print unit = **200 PLN** (`CANVAS_PRINT_UNIT_PRICE`), plus per-slot frame price + canvas price, minus coupon and active-promotion discounts, plus shipping. Shipping cost is free above a method's `free_shipping_threshold` (evaluated on pre-discount subtotal).
@@ -374,7 +382,7 @@ The script first tries the Supabase CLI; if `supabase link` fails (known typed-k
 
 ## 15. Backend data flow for orders (authoritative logic)
 
-`create-order.ts` is the single source of truth for money. It validates the customer, country allowlist, required consents, slot count/keys, loads active frames/canvases from the DB, recomputes unit + frame + canvas prices, re-validates the coupon, applies the active promotion, resolves shipping server-side, then inserts `orders`, `order_items`, and two `order_status_history` rows, and increments coupon usage. It is idempotent through a unique `idempotency_key` (duplicate → returns the existing order) and rate-limited to 10 requests/60s per IP+domain. The client `userId`/`refCode` are stored as provided (not ownership-verified).
+`create-order.ts` is the single source of truth for money. It validates the customer, country allowlist, required consents, slot count/keys, loads active frames/canvases from the DB, recomputes unit + frame + canvas prices, re-validates the coupon, applies the active promotion, resolves shipping server-side, then inserts `orders`, `order_items`, and two `order_status_history` rows, and increments coupon usage. It is idempotent through a unique `idempotency_key` (duplicate → returns the existing order) and rate-limited to 10 requests/60s per IP+domain. `user_id` is taken only from a verified Bearer JWT (invalid token → 401; no token → guest order); a client-supplied `userId` is ignored. Each order also gets a random `order_access_token`, returned to the client and required by `create-przelewy24-session`/`order-status` for token-bearing orders; pre-token orders get a bounded 7-day, unpaid-only fallback, and otherwise access is denied.
 
 Order lifecycle statuses (application-enforced, not DB constraints):
 - `status`: `pending_payment → paid → cancelled/refunded`
@@ -420,63 +428,68 @@ Deliberately shipped, gated by query param or env:
 - Server-side price recomputation and order idempotency.
 - User-scoped queries in `customer-orders` / `customer-addresses` (IDOR defense).
 - Generic server errors in `admin-api` (no DB detail leakage).
+- Per-order `order_access_token` binds the guest payment (create session) and order-status endpoints to the buyer; it is sent via the `X-Order-Token` header (never in the P24 return URL), the legacy fallback is bounded to 7 days and unpaid orders only, and `orders.user_id` is only set from a verified JWT.
+- DB-backed rate limiting (`check_rate_limit`) on `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral`, and `submit-complaint`, in addition to the native Netlify rules on `create-order`/`cloudinary-signature`.
+- `admin-api` validates every caller-supplied select/filter/sort/group/sum column against a per-resource allowlist and clamps `pageSize` to 1–1000.
 
 ### Previously reported, now remediated
 - ✅ `profiles.is_admin` privilege escalation → fixed by `202609180001_harden_profiles_is_admin.sql`.
 - ✅ P24 sandbox fallback risk → fail-closed guard + build assertion.
 - ✅ Missing CSP/security headers → added in `public/_headers`.
 - ✅ Debug/raw error leakage → stripped, guarded by tests.
-- ✅ Rate limiting → added on `create-order` and `cloudinary-signature`.
+- ✅ Rate limiting → native rules on `create-order`/`cloudinary-signature`, plus the DB limiter on the remaining public endpoints.
+- ✅ Guest payment/status endpoints gated by order UUID → per-order access token.
+- ✅ Unverified `orders.user_id` from the request body → verified JWT only.
+- ✅ `admin-api` unvalidated column names → per-resource allowlist + `pageSize` clamp.
+- ✅ `search_path` not pinned on three trigger functions → pinned by `202609190004`, enforced by a guard test.
+- ✅ Customers CSV export `400` and 1000-row truncation in admin aggregates/exports → export-only resource + paginated reads / SQL RPCs.
+- ✅ Access token exposed in the P24 return URL → now sent via the `X-Order-Token` header (deprecated `?token=` query fallback still accepted for stale clients).
 
 ### Open / residual risks (see §21)
-- Several public endpoints are unauthenticated and **not** rate-limited (`validate-coupon`, `create-przelewy24-session`, `track-referral`, `order-status`). `track-referral` accepts unthrottled public inserts.
-- `order-status` and `create-przelewy24-session` are gated only by knowing an order UUID (`create-przelewy24-session` has no ownership check and can start a payment session for any order UUID).
-- `admin-api` allowlists resources but caller-supplied filter/sort/aggregation **column names** pass through.
-- `search_path` not pinned on three newer trigger functions.
 - No error monitoring / alerting.
 - Verification uses the publishable key, but those functions then query with the service role — safety depends on explicit scoping, which is present today.
+- The deprecated `?token=` query fallback on `order-status` remains for stale clients and should be removed once old bundles are gone.
+- Complaint photos are not collected/validated yet (field is present but not transmitted).
+
 
 ---
 
 ## 20. Testing & quality gates
 
-- **162 test files** across `src/`, `netlify/functions/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
+- **165 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
 - Commands: `npx vitest run <file>` (targeted), `npx vitest run` (full), `pnpm test`, `pnpm lint`, `npx tsc -b`.
-- Guard tests are important: they fail the suite when security/caching/versioning invariants regress.
-- Caveat: many admin/backend tests mock `fetch` and Refine hooks, so backend integration gaps (e.g. the broken customers CSV export) are not covered.
+- Guard tests are important: they fail the suite when security/caching/versioning invariants regress (including a `search_path`-pinning guard).
+- Caveat: many admin/backend tests mock `fetch` and Refine hooks, so backend integration gaps (e.g. real PostgREST pagination behavior and the `admin_customer_list`/`admin_revenue_by_month` RPCs) are not covered end-to-end.
 
 ---
 
 ## 21. Known issues, tech debt & recommendations
 
 **Bugs**
-- Customers CSV export in admin returns `400` (`customers` not an allowlisted `admin-api` resource).
-- Complaint page form is **static and non-submitting** — submissions go nowhere (content page only).
-- Customers CSV and some order thumbnails can be incomplete on large datasets (`order_items` limited to 100).
+- Complaint page photos are not submitted (the file input is present but excluded from the payload) — phase 2.
+- Complaint submissions have no e-mail notification; staff must check Admin → Complaints.
 
 **Architecture / maintainability**
 - `create-order.ts` (~600 lines), `checkout.tsx` (~2000 lines), `admin-api.ts` (~1400 lines), and `App.tsx` (~1100 lines) are large hotspots.
-- `promotions` not registered as a Refine resource; `users`/`admins` are pseudo-resources.
-- Legacy text shipping fields coexist with new FK-based ones; historical orders not backfilled with `shipping_method_id`.
+- `users`/`admins` are pseudo-resources (aggregates), not real backend resources.
+- Legacy text shipping fields coexist with new FK-based ones; `202609190005_backfill_order_shipping_method.sql` backfills `shipping_method_id`/delivery time for historical orders, but the legacy columns are still present.
 - Duplicated `updated_at` trigger functions across tables.
-- Admin CRUD relies almost entirely on the service-role gateway (RLS is bypassed), so the gateway is the whole security boundary.
+- Admin CRUD relies almost entirely on the service-role gateway (RLS is bypassed) with per-resource column allowlisting; the gateway remains the whole security boundary.
+- `admin_customer_list`/`admin_revenue_by_month` moved heavy admin aggregation to SQL; the remaining `fetch-all` reads are bounded by chunk/`maxPages`.
 
 **Operational**
-- No error monitoring or uptime alerting.
+- No error monitoring or uptime alerting. (Recommended: add Sentry behind `VITE_SENTRY_DSN`/`SENTRY_DSN`, or a `/health` endpoint plus an external uptime checker.)
 - Debug surfaces ship in the production bundle (intentional, param-gated) — decide whether to keep.
-- Dependency hygiene: dependency auditing (`pnpm audit`) is not part of CI; consider adding it.
-- CI does not run `pnpm build`; consider adding it.
+- Dependency auditing (`pnpm audit`) and `pnpm build` are now in the `lint` CI job; the audit step is `continue-on-error` until advisories are triaged.
 - Verify `P24_STATUS_URL` / `SITE_URL` and webhook reachability after any domain change.
-- Reconcile `.env` / Netlify env / README if variables are retired.
+- Reconcile `.env` / Netlify env / README if variables are retired. CI-only `CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; it is ignored when Netlify sets `CONTEXT=production`, so it cannot weaken a deploy build.
 
 **Suggested priority if hardening continues**
-1. Authenticate/authorize `create-przelewy24-session` (bind to the creating session or add ownership), or treat UUID as secret and document it.
-2. Add rate limiting to remaining public write endpoints; consider bot protection on `track-referral`.
-3. Constrain `admin-api` filter/sort/group-by columns.
-4. Pin `search_path` on the three newer functions; add a migration-lint step.
-5. Fix/remove the customers CSV export; register `promotions` as a resource.
-6. Add error monitoring.
-7. Add `pnpm build` + dependency audit to CI.
+1. Add error monitoring / uptime alerting.
+2. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
+3. Consider bot protection (e.g. honeypot/Turnstile) on `track-referral` and `submit-complaint` beyond IP throttling.
+4. Reduce the large hotspot files in follow-up refactors.
+5. Turn the dependency audit into a blocking CI gate once current advisories are cleared.
 
 ---
 
@@ -491,6 +504,7 @@ Deliberately shipped, gated by query param or env:
 | Run a campaign | Admin → Promotions; activate one (deactivates others) |
 | Create partner referral codes / QR | Admin → Partners → Add ref, or Admin → Referral Codes |
 | Process orders / shipping | Admin → Orders → detail; set order status and shipment status + tracking number |
+| Review complaints | Admin → Complaints → open a submission, set status + internal notes, save |
 | Grant admin access | Admin → Users → Grant admin (or Admins list) |
 | Apply DB migrations | Merge to `main` with changed `supabase/migrations/**` (CI), or run `pnpm db:migrate:dev` |
 | Roll out a new build | Merge/push to `main` → Netlify builds; clients auto-update via `/version.json` + SW |
@@ -510,6 +524,9 @@ Deliberately shipped, gated by query param or env:
 - [ ] Transfer the local `.env` securely; confirm no secrets are committed (currently clean).
 - [ ] Create/confirm the Netlify **build hook** and set `NETLIFY_BUILD_HOOK_URL`.
 - [ ] Verify the P24 webhook is reachable and returns success from the live domain.
+- [ ] Confirm the new migrations applied: `complaints`, `rate_limit_hits`, `orders.order_access_token`, `shipping_method_id` backfill, pinned `search_path`, and the `admin_customer_list`/`admin_revenue_by_month` RPCs.
+- [ ] Smoke-test a sandbox checkout: order created, `create-przelewy24-session` accepts the returned access token, the status poll sends the `X-Order-Token` header (the return URL no longer carries the token), and the status poll succeeds.
+- [ ] Confirm customer and monthly-revenue aggregates return correct totals on a >1000-order dataset.
 - [ ] Run `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` on a clean clone to confirm the new owner's environment.
 - [ ] Review the open items in §21 and decide ownership/priority.
 - [ ] Set up error monitoring (not currently present).

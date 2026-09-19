@@ -542,12 +542,16 @@
       "photos": {
         "title": "Zdjęcia produktu",
         "description": "Dołącz wyraźne zdjęcia pokazujące uszkodzenie lub wadę. Maksymalnie 5 zdjęć, do 5 MB każde.",
-        "upload": "Wybierz zdjęcia"
+        "upload": "Wybierz zdjęcia",
+        "note": "Załączniki zdjęciowe nie są jeszcze przesyłane przez formularz. Skontaktujemy się z Tobą w sprawie ich przekazania."
       },
       "consent": {
         "label": "Zgadzam się na przetwarzanie moich danych osobowych w celu rozpatrzenia reklamacji zgodnie z Polityką Prywatności. *"
       },
-      "submit": "Wyślij reklamację"
+      "submit": "Wyślij reklamację",
+      "submitting": "Wysyłanie...",
+      "success": "Reklamacja została wysłana. Skontaktujemy się z Tobą wkrótce.",
+      "error": "Nie udało się wysłać reklamacji. Spróbuj ponownie."
     },
     "contact": {
       "title": "Kontakt w sprawie reklamacji",
@@ -577,6 +581,7 @@
       "referralCodes": "Kody poleceń",
       "partners": "Partnerzy",
       "customers": "Klienci",
+      "complaints": "Reklamacje",
       "users": "Użytkownicy",
       "admins": "Administratorzy",
       "frames": "Ramki",
@@ -767,6 +772,29 @@
       "customerPayment": "Płatność",
       "customerShipment": "Wysyłka",
       "customerDate": "Data",
+      "complaintOrderNumber": "Zamówienie #",
+      "complaintName": "Klient",
+      "complaintEmail": "Email",
+      "complaintType": "Typ",
+      "complaintStatus": "Status",
+      "complaintCreated": "Zgłoszono",
+      "complaintSearch": "Szukaj reklamacji...",
+      "complaintNoComplaints": "Brak reklamacji",
+      "complaintDetails": "Szczegóły reklamacji",
+      "complaintDescription": "Opis problemu",
+      "complaintResolution": "Oczekiwane rozwiązanie",
+      "complaintAdminNotes": "Notatki wewnętrzne",
+      "complaintSave": "Zapisz",
+      "complaintSaved": "Reklamacja została zaktualizowana.",
+      "complaintBack": "Powrót do reklamacji",
+      "complaintProduct": "Produkt",
+      "complaintOrderDate": "Data zamówienia",
+      "complaintAddress": "Adres",
+      "complaintPhone": "Telefon",
+      "complaintStatusNew": "Nowa",
+      "complaintStatusInReview": "W trakcie",
+      "complaintStatusResolved": "Rozpatrzona",
+      "complaintStatusRejected": "Odrzucona",
       "userAccounts": "Konta użytkowników",
       "users": "użytkowników",
       "admins": "administratorów",

@@ -1,4 +1,5 @@
 import { createServiceClient } from "./_shared/supabase-auth";
+import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -53,6 +54,16 @@ export const handler = async (event: NetlifyEvent) => {
       statusCode: 500,
       body: JSON.stringify({ error: "Tracking is unavailable." }),
     };
+  }
+
+  if (
+    await isRateLimitExceeded(supabase, event, {
+      scope: "track-referral",
+      limit: 30,
+      windowSeconds: 60,
+    })
+  ) {
+    return rateLimitResponse(60);
   }
 
   const { data: refRow, error: refError } = await supabase
