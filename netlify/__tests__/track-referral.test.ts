@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../functions/track-referral";
 import { createServiceClient } from "../functions/_shared/supabase-auth";
+import { HONEYPOT_FIELD_A } from "../../src/lib/honeypot-fields";
 
 vi.mock("../functions/_shared/supabase-auth", () => ({
   createServiceClient: vi.fn(),
@@ -69,5 +70,27 @@ describe("track-referral handler", () => {
     };
     expect(payload.path).toHaveLength(500);
     expect(payload.user_agent).toHaveLength(500);
+  });
+
+  it("drops a honeypot submission without inserting an event", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { insert } = setupSupabaseMock();
+
+    const response = await handler({
+      httpMethod: "POST",
+      body: JSON.stringify({
+        ref_code: "ABC123",
+        [HONEYPOT_FIELD_A]: "spam",
+      }),
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(JSON.parse(response.body)).toEqual({ ok: true, tracked: false });
+    expect(insert).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("track-referral"),
+    );
+
+    warn.mockRestore();
   });
 });

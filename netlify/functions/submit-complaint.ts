@@ -1,5 +1,6 @@
 import { createServiceClient } from "./_shared/supabase-auth";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { filledHoneypotField, trackBotDetection } from "./_shared/bot-detection";
 import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
@@ -58,6 +59,11 @@ const handlerImpl = async (event: NetlifyEvent) => {
     return jsonResponse(400, { error: "Invalid request payload." });
   }
 
+  // Honeypot: real users never fill these hidden fields. Inspect them here,
+  // but only act after the rate limiter so bot hits cannot bypass the throttle
+  // while generating Sentry/log events.
+  const honeypot = filledHoneypotField(parsed as Record<string, unknown>);
+
   const name = clean(parsed.name, 200);
   const email = clean(parsed.email, 320);
   const phone = clean(parsed.phone, 40) || null;
@@ -97,6 +103,12 @@ const handlerImpl = async (event: NetlifyEvent) => {
     })
   ) {
     return rateLimitResponse(600);
+  }
+
+  // Silently drop honeypot hits with a fake success so bots learn nothing.
+  if (honeypot) {
+    trackBotDetection("submit-complaint", honeypot);
+    return jsonResponse(200, { ok: true });
   }
 
   const { error: insertError } = await supabase.from("complaints").insert({

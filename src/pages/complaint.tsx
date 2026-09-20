@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { AlertCircle, Upload } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { ContentPageShell } from "@/components/content-page-shell"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { HONEYPOT_FIELD_A, HONEYPOT_FIELD_B } from "@/lib/honeypot-fields"
 import { t } from "@/locales/i18n"
 
 const INITIAL_FORM = {
@@ -31,6 +32,8 @@ export function ComplaintPage() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">(
     "idle",
   )
+  const honeypotARef = useRef<HTMLInputElement>(null)
+  const honeypotBRef = useRef<HTMLInputElement>(null)
 
   const updateField =
     (field: keyof FormState) =>
@@ -51,6 +54,12 @@ export function ComplaintPage() {
     event.preventDefault()
     setStatus("submitting")
 
+    // Read the honeypot inputs from the DOM (not React state) so values that
+    // bot scripts inject are still submitted to the server for inspection.
+    const honeypotData = new FormData(event.currentTarget)
+    if (honeypotARef.current) honeypotARef.current.value = ""
+    if (honeypotBRef.current) honeypotBRef.current.value = ""
+
     try {
       const response = await fetch("/.netlify/functions/submit-complaint", {
         method: "POST",
@@ -66,6 +75,8 @@ export function ComplaintPage() {
           complaintType: form.complaintType,
           description: form.description,
           resolution: form.resolution || undefined,
+          [HONEYPOT_FIELD_A]: String(honeypotData.get(HONEYPOT_FIELD_A) ?? ""),
+          [HONEYPOT_FIELD_B]: String(honeypotData.get(HONEYPOT_FIELD_B) ?? ""),
         }),
       })
 
@@ -323,6 +334,42 @@ export function ComplaintPage() {
               {t("complaint.form.error")}
             </p>
           )}
+
+          {/* Honeypot: off-screen with opaque names so browser/password-manager
+              autofill ignores them, while bots that fill every input trip it. */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: "-9999px",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+            }}
+          >
+            <input
+              ref={honeypotARef}
+              id={HONEYPOT_FIELD_A}
+              name={HONEYPOT_FIELD_A}
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              data-lpignore="true"
+              data-form-type="other"
+              defaultValue=""
+            />
+            <input
+              ref={honeypotBRef}
+              id={HONEYPOT_FIELD_B}
+              name={HONEYPOT_FIELD_B}
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              data-lpignore="true"
+              data-form-type="other"
+              defaultValue=""
+            />
+          </div>
 
           <Button type="submit" className="w-full" disabled={status === "submitting"}>
             {status === "submitting"

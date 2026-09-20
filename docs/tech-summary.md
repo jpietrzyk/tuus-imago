@@ -68,7 +68,7 @@ flowchart LR
 | Payments | Przelewy24 (P24 REST API, sandbox + production) |
 | i18n | Custom dictionary-based i18n (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testing | Vitest 4, Testing Library, jsdom (167 test files) |
+| Testing | Vitest 4, Testing Library, jsdom (169 test files) |
 | Linting | ESLint 9 flat config, typescript-eslint |
 | Package manager | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI pins 22.20.0) |
@@ -240,8 +240,8 @@ All endpoints are under `/.netlify/functions/<name>`. There are no custom routes
 | `available-canvases` | GET | Public | Active canvas catalog |
 | `available-shipping` | GET | Public | Active shipping methods + free-shipping thresholds |
 | `cloudinary-signature` | POST | Public | Returns signed-upload signature; **rate-limited 20/60s** |
-| `track-referral` | POST | Public | Records referral click event; rate-limited via DB limiter |
-| `submit-complaint` | POST | Public | Validates + stores a complaint from `/complaint`; rate-limited via DB limiter |
+| `track-referral` | POST | Public | Records referral click event; rate-limited via DB limiter + honeypot bot check |
+| `submit-complaint` | POST | Public | Validates + stores a complaint from `/complaint`; rate-limited via DB limiter + honeypot bot check |
 | `customer-orders` | GET | **Bearer JWT** | Authenticated user's orders (scoped by token `user_id`) |
 | `customer-addresses` | GET/POST/PATCH/DELETE | **Bearer JWT** | Authenticated user's addresses CRUD (scoped by token) |
 | `admin-api` | GET/POST/PATCH/PUT/DELETE | **Bearer JWT + `is_admin`** | Service-role admin gateway (CRUD, aggregates, bulk status, CSV export) |
@@ -440,6 +440,7 @@ Deliberately shipped, gated by query param or env:
 - Generic server errors in `admin-api` (no DB detail leakage).
 - Per-order `order_access_token` binds the guest payment (create session) and order-status endpoints to the buyer; it is sent via the `X-Order-Token` header (never in the P24 return URL), the legacy fallback is bounded to 7 days and unpaid orders only, and `orders.user_id` is only set from a verified JWT.
 - DB-backed rate limiting (`check_rate_limit`) on `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral`, and `submit-complaint`, in addition to the native Netlify rules on `create-order`/`cloudinary-signature`.
+- Honeypot bot checks on the public `submit-complaint` and `track-referral` endpoints: hidden off-screen fields with opaque names shared by the client and functions (`src/lib/honeypot-fields.ts`, evaluated by `_shared/bot-detection.ts`) that real users never fill. Honeypot hits are still rate-limited, then dropped with a fake success and no DB write, and reported to Sentry as a warning event.
 - `admin-api` validates every caller-supplied select/filter/sort/group/sum column against a per-resource allowlist and clamps `pageSize` to 1–1000.
 - Sentry runs with `sendDefaultPii: false`; cookies, auth headers and credential-bearing query params are stripped from events and breadcrumbs before sending, and the Sentry ingest host is the only addition to the CSP `connect-src`.
 - External uptime monitoring: UptimeRobot polls `https://<domain>/health` (keyword `"status":"ok"`) and `https://<domain>/`, alerting when either is down; the probe is unauthenticated but reveals no PII or raw errors.
@@ -468,7 +469,7 @@ Deliberately shipped, gated by query param or env:
 
 ## 20. Testing & quality gates
 
-- **167 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
+- **169 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
 - Commands: `npx vitest run <file>` (targeted), `npx vitest run` (full), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Guard tests are important: they fail the suite when security/caching/versioning invariants regress (including a `search_path`-pinning guard).
 - Caveat: many admin/backend tests mock `fetch` and Refine hooks, so backend integration gaps (e.g. real PostgREST pagination behavior and the `admin_customer_list`/`admin_revenue_by_month` RPCs) are not covered end-to-end.
@@ -498,9 +499,10 @@ Deliberately shipped, gated by query param or env:
 
 **Suggested priority if hardening continues**
 1. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
-2. Consider bot protection (e.g. honeypot/Turnstile) on `track-referral` and `submit-complaint` beyond IP throttling.
-3. Reduce the large hotspot files in follow-up refactors.
-4. Turn the dependency audit into a blocking CI gate once current advisories are cleared.
+2. Reduce the large hotspot files in follow-up refactors.
+3. Turn the dependency audit into a blocking CI gate once current advisories are cleared.
+
+If honeypot detection turns out too weak against targeted abuse, the next step is a challenge (e.g. Turnstile) on `track-referral` and `submit-complaint`.
 
 ---
 

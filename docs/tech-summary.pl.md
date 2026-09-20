@@ -68,7 +68,7 @@ flowchart LR
 | Płatności | Przelewy24 (P24 REST API, sandbox + produkcja) |
 | i18n | Własne i18n słownikowe (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testy | Vitest 4, Testing Library, jsdom (167 plików testów) |
+| Testy | Vitest 4, Testing Library, jsdom (169 plików testów) |
 | Lintowanie | ESLint 9 flat config, typescript-eslint |
 | Menedżer pakietów | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI przypina 22.20.0) |
@@ -240,8 +240,8 @@ Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma nies
 | `available-canvases` | GET | Publiczna | Katalog aktywnych płócien |
 | `available-shipping` | GET | Publiczna | Aktywne metody dostawy + progi darmowej dostawy |
 | `cloudinary-signature` | POST | Publiczna | Zwraca podpis podpisanego wgrywania; **limit 20/60 s** |
-| `track-referral` | POST | Publiczna | Zapisuje zdarzenie kliknięcia referencyjnego; limit przez limiter DB |
-| `submit-complaint` | POST | Publiczna | Waliduje + zapisuje reklamację z `/complaint`; limit przez limiter DB |
+| `track-referral` | POST | Publiczna | Zapisuje zdarzenie kliknięcia referencyjnego; limit przez limiter DB + kontrola honeypot |
+| `submit-complaint` | POST | Publiczna | Waliduje + zapisuje reklamację z `/complaint`; limit przez limiter DB + kontrola honeypot |
 | `customer-orders` | GET | **Bearer JWT** | Zamówienia uwierzytelnionego użytkownika (zakres przez `user_id` z tokenu) |
 | `customer-addresses` | GET/POST/PATCH/DELETE | **Bearer JWT** | CRUD adresów uwierzytelnionego użytkownika (zakres przez token) |
 | `admin-api` | GET/POST/PATCH/PUT/DELETE | **Bearer JWT + `is_admin`** | Bramka administracyjna service-role (CRUD, agregaty, masowe statusy, eksport CSV) |
@@ -440,6 +440,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Ogólne błędy serwera w `admin-api` (bez wycieku szczegółów DB).
 - Token dostępu do zamówienia (`order_access_token`) wiąże publiczne endpointy płatności (utworzenie sesji) i statusu zamówienia z kupującym; jest wysyłany przez nagłówek `X-Order-Token` (nigdy w URL-u powrotnym P24), fallback legacy jest ograniczony do 7 dni i nieopłaconych zamówień, a `orders.user_id` jest ustawiane wyłącznie ze zweryfikowanego JWT.
 - Limity szybkości oparte o bazę (`check_rate_limit`) na `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral` i `submit-complaint`, obok natywnych reguł Netlify dla `create-order`/`cloudinary-signature`.
+- Kontrole honeypot na publicznych endpointach `submit-complaint` i `track-referral`: ukryte pola poza ekranem o nieoczywistych nazwach, współdzielone przez klienta i funkcje (`src/lib/honeypot-fields.ts`, sprawdzane przez `_shared/bot-detection.ts`), których prawdziwi użytkownicy nigdy nie wypełniają. Trafienia honeypot nadal podlegają limitowi szybkości, a następnie są odrzucane fałszywym sukcesem, bez zapisu do bazy, i raportowane do Sentry jako zdarzenie ostrzegawcze.
 - `admin-api` waliduje każdą kolumnę `select`/filtra/sortowania/`groupBy`/`sum` podaną przez wywołującego względem allowlisty per zasób i ogranicza `pageSize` do 1–1000.
 - Sentry działa z `sendDefaultPii: false`, a ciasteczka, nagłówki autoryzacji i wrażliwe parametry zapytania są usuwane z zdarzeń i breadcrumbów przed wysłaniem; host ingest Sentry jest jedynym nowym wpisem w CSP `connect-src`.
 - Zewnętrzny monitoring uptime: UptimeRobot odpytuje `https://<domain>/health` (Keyword `"status":"ok"`) oraz `https://<domain>/`, alarmując, gdy którykolwiek jest niedostępny; sonda jest nieuwierzytelniona, ale nie ujawnia PII ani surowych błędów.
@@ -467,7 +468,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 
 ## 20. Testy i bramki jakości
 
-- **167 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1587 testów). Testy współlokowane działają jako dokumentacja zachowania.
+- **169 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1601 testów). Testy współlokowane działają jako dokumentacja zachowania.
 - Polecenia: `npx vitest run <file>` (wybiórczo), `npx vitest run` (pełne), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania (w tym strażnik przypięcia `search_path`).
 - Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST oraz RPC `admin_customer_list`/`admin_revenue_by_month`) nie są pokryte end-to-end.
@@ -497,9 +498,10 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 
 **Sugerowany priorytet, jeśli utwardzanie będzie kontynuowane**
 1. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
-2. Rozważ ochronę przed botami (np. honeypot/Turnstile) dla `track-referral` i `submit-complaint` poza limitem po IP.
-3. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
-4. Zmień audyt zależności w blokującą bramkę CI, gdy bieżące advisory zostaną wyczyszczone.
+2. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
+3. Zmień audyt zależności w blokującą bramkę CI, gdy bieżące advisory zostaną wyczyszczone.
+
+Jeśli detekcja honeypot okaże się zbyt słaba wobec ukierunkowanych nadużyć, kolejnym krokiem jest wyzwanie (np. Turnstile) dla `track-referral` i `submit-complaint`.
 
 ---
 

@@ -142,6 +142,37 @@ export async function captureServerError(
 }
 
 /**
+ * Reports a non-error signal (e.g. a bot-detection hit) with context so it can
+ * be watched in Sentry without being mistaken for a crash. Best-effort: inert
+ * without a DSN and never throws.
+ */
+export async function captureServerMessage(
+  message: string,
+  context: Record<string, ServerContextValue> = {},
+): Promise<void> {
+  if (!initSentry()) {
+    return;
+  }
+
+  try {
+    Sentry.withScope((scope) => {
+      scope.setLevel("warning");
+      scope.setTag("runtime", "netlify-function");
+      for (const [key, value] of Object.entries(context)) {
+        if (value !== undefined && value !== null) {
+          scope.setExtra(key, value);
+        }
+      }
+      Sentry.captureMessage(message);
+    });
+
+    await Sentry.flush(2000);
+  } catch {
+    // Never let reporting failure surface to the caller.
+  }
+}
+
+/**
  * Wraps a classic Lambda-style handler. Returned 5xx results are captured using
  * the response body's `error` message; thrown errors are captured and converted
  * to a generic 500 so Netlify never returns a raw error page.

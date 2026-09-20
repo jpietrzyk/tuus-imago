@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { getReferralCookie } from "./referral-cookie";
+import { HONEYPOT_FIELD_A, HONEYPOT_FIELD_B } from "./honeypot-fields";
 
 export function useReferralTracking() {
   const location = useLocation();
@@ -16,7 +17,14 @@ export function useReferralTracking() {
     fetch("/.netlify/functions/track-referral", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ref_code: ref, path: location.pathname }),
+      // Honeypot fields: the real client always leaves them empty, so a filled
+      // value marks an automated submission server-side.
+      body: JSON.stringify({
+        ref_code: ref,
+        path: location.pathname,
+        [HONEYPOT_FIELD_A]: "",
+        [HONEYPOT_FIELD_B]: "",
+      }),
     }).catch(() => {});
   }, [location.pathname]);
 }
