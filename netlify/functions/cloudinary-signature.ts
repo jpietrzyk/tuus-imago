@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { toLambdaEvent, toWebResponse } from "./_shared/v2-adapter";
+import { withSentryV2 } from "./_shared/sentry";
 
 // Netlify inline function config: the endpoint is unauthenticated (guest
 // checkout uploads) and every call signs an upload against the paid Cloudinary
@@ -15,7 +16,7 @@ export const config = {
   },
 };
 
-export default async (request: Request): Promise<Response> => {
+const handlerImpl = async (request: Request): Promise<Response> => {
   const result = await signCloudinaryUpload(await toLambdaEvent(request));
   return toWebResponse(result);
 };
@@ -91,3 +92,5 @@ const signCloudinaryUpload = async (event: NetlifyEvent) => {
     };
   }
 };
+
+export default withSentryV2("cloudinary-signature", handlerImpl);

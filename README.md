@@ -76,6 +76,7 @@ All variables are documented in `.env.example`. Copy it to `.env` and fill in va
 | `VITE_UPLOAD_DRAFT_MAX_AGE_HOURS` | No | Retention for an in-progress upload draft before it is discarded (default `168` = 7 days) |
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable (anon) key |
+| `VITE_SENTRY_DSN` | No | Browser Sentry DSN; monitoring is disabled when empty |
 | `CONTENT_ALLOW_EMPTY` | No | **CI-only**: lets `vite build` bake empty content pages when Supabase credentials are unavailable. Honored only when `CONTEXT !== "production"`, so it cannot weaken a deploy build. |
 
 ### Netlify Functions (server-side — no `VITE_` prefix)
@@ -87,6 +88,8 @@ All variables are documented in `.env.example`. Copy it to `.env` and fill in va
 | `SUPABASE_URL` | Yes | Supabase project URL (server-side) |
 | `SUPABASE_SECRET_KEY` | Yes | Supabase service role key |
 | `SITE_URL` | Yes | Public site URL (used for P24 return URLs) |
+| `SENTRY_DSN` | No | Server Sentry DSN (may equal `VITE_SENTRY_DSN`); monitoring is disabled when empty |
+| `SENTRY_TRACES_SAMPLE_RATE` | No | Trace sample rate `0`–`1` (defaults to `0.1` in production, `1` elsewhere) |
 
 ### Przelewy24
 
@@ -195,6 +198,14 @@ Required GitHub configuration:
 - Przelewy24 integration via two Netlify Functions:
   - `create-przelewy24-session` — registers transaction, returns payment URL
   - `przelewy24-webhook` — receives async notifications, verifies and marks orders as paid
+
+### Error Monitoring
+
+- **Sentry** (`@sentry/react` + `@sentry/node`), enabled only when the DSN env var is set.
+- The browser SDK is initialized in `src/main.tsx`; a top-level `ErrorBoundary` reports render errors, and the persistent `?diag` journal is attached to each event for correlation.
+- Every Netlify function is wrapped by `netlify/functions/_shared/sentry.ts`, which reports thrown errors and returned 5xx responses.
+- PII is scrubbed before sending: `sendDefaultPii` is off and cookies, auth headers and credential-bearing query params are removed from events and breadcrumbs.
+- The Sentry ingest host must stay in the CSP `connect-src` in `public/_headers`.
 
 ## Legal Pages
 

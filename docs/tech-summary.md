@@ -68,7 +68,7 @@ flowchart LR
 | Payments | Przelewy24 (P24 REST API, sandbox + production) |
 | i18n | Custom dictionary-based i18n (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testing | Vitest 4, Testing Library, jsdom (165 test files) |
+| Testing | Vitest 4, Testing Library, jsdom (166 test files) |
 | Linting | ESLint 9 flat config, typescript-eslint |
 | Package manager | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI pins 22.20.0) |
@@ -116,12 +116,13 @@ Transfer/own these accounts. Each is a single point of failure; the new owner mu
 | **Supabase** | Postgres, Auth, RLS | Project ownership/billing, API keys, DB password, Auth providers | See §11 |
 | **Cloudinary** | Image storage + transformations + AI | Account, cloud name, API key/secret, upload preset, named AI template | `VITE_CLOUDINARY_AI_TEMPLATE` optional |
 | **Przelewy24** | Payments | Merchant account, merchant/POS IDs, CRC, API key | Production API base `https://secure.przelewy24.pl/api/v1` |
+| **Sentry** | Error monitoring (browser + functions) | Org/project ownership, DSNs, auth token if source maps are added | Optional; inert when the DSN is unset |
 | **Domain + DNS** | Public URL | Registrar/DNS | Required for `SITE_URL`, P24 return/status URLs, Netlify domain |
 | **Google / Facebook** | OAuth login (via Supabase) | OAuth app credentials configured inside Supabase Auth | Optional; can be disabled |
 | **Email delivery** | Supabase auth emails (confirmation, magic link, reset) | SMTP if custom; else Supabase default | Supabase Auth setting |
 | **InPost** | ⚠️ **Not an integration** | — | "InPost Kurier" is only a seeded shipping-method label/price; no API connection |
 
-There is **no external CRM, analytics, or error-monitoring service** currently wired. (HubSpot was removed in migration `202604090001_remove_hubspot_fields.sql`.)
+There is **no external CRM or analytics** currently wired. Error monitoring runs through Sentry (see §18); uptime alerting is not configured yet. (HubSpot was removed in migration `202604090001_remove_hubspot_fields.sql`.)
 
 ---
 
@@ -141,6 +142,7 @@ All variables are documented in `.env.example`. A real `.env` exists locally and
 | `VITE_UPLOAD_DRAFT_MAX_AGE_HOURS` | No | Draft retention hours (default 168 = 7 days) |
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase anon/publishable key |
+| `VITE_SENTRY_DSN` | No | Browser Sentry DSN; monitoring is disabled when empty |
 
 ### Server-side (Netlify Functions — never expose)
 
@@ -151,6 +153,8 @@ All variables are documented in `.env.example`. A real `.env` exists locally and
 | `SUPABASE_URL` | Yes | Service-role client |
 | `SUPABASE_SECRET_KEY` | Yes | Supabase service-role key |
 | `SITE_URL` | Yes | Public site URL (P24 return/status URLs) |
+| `SENTRY_DSN` | No | Server Sentry DSN (may equal `VITE_SENTRY_DSN`); monitoring is disabled when empty |
+| `SENTRY_TRACES_SAMPLE_RATE` | No | Trace sample rate `0`–`1` (defaults to `0.1` in production, `1` otherwise) |
 | `P24_MERCHANT_ID` / `P24_POS_ID` / `P24_CRC` / `P24_API_KEY` | Yes | Przelewy24 credentials |
 | `P24_API_BASE_URL` | Yes (non-local) | `https://secure.przelewy24.pl/api/v1` in production |
 | `P24_ALLOW_SANDBOX` | No | Must be `false`/unset in production |
@@ -413,9 +417,10 @@ Order lifecycle statuses (application-enforced, not DB constraints):
 Deliberately shipped, gated by query param or env:
 - `?diag` / `?debug` → PII-sanitized ring-buffer journal (`src/lib/diagnostics-log.ts`, 300 entries, `tuus-imago:diagnostics-log`) with copy/clear UI. Sensitive query keys are redacted.
 - `?build` (or `?version`) → running-vs-deployed build badge (`BuildVersionBadge`).
+- Sentry error monitoring (`src/lib/sentry.ts` for the browser, `netlify/functions/_shared/sentry.ts` for the functions), gated by `VITE_SENTRY_DSN`/`SENTRY_DSN`. The last `?diag` journal entries are attached to events and PII is scrubbed before sending.
 - `VITE_SHOW_UPLOADER_DEBUG=true` → uploader debug panel (`ImageDebugPanel`).
 - `VITE_SHOW_DEBUG_PANEL=true` → Cloudinary debug strip on upload.
-- `src/production-readiness.guard.test.ts` and `src/pwa.guard.test.ts` enforce config guarantees (no debug leakage, rate limits, v2 exports, no dead env vars, PWA setup).
+- `src/production-readiness.guard.test.ts`, `src/pwa.guard.test.ts` and `src/sentry.guard.test.ts` enforce config guarantees (no debug leakage, rate limits, v2 exports, no dead env vars, PWA setup, every function wrapped for Sentry).
 
 ---
 
@@ -433,6 +438,7 @@ Deliberately shipped, gated by query param or env:
 - Per-order `order_access_token` binds the guest payment (create session) and order-status endpoints to the buyer; it is sent via the `X-Order-Token` header (never in the P24 return URL), the legacy fallback is bounded to 7 days and unpaid orders only, and `orders.user_id` is only set from a verified JWT.
 - DB-backed rate limiting (`check_rate_limit`) on `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral`, and `submit-complaint`, in addition to the native Netlify rules on `create-order`/`cloudinary-signature`.
 - `admin-api` validates every caller-supplied select/filter/sort/group/sum column against a per-resource allowlist and clamps `pageSize` to 1–1000.
+- Sentry runs with `sendDefaultPii: false`; cookies, auth headers and credential-bearing query params are stripped from events and breadcrumbs before sending, and the Sentry ingest host is the only addition to the CSP `connect-src`.
 
 ### Previously reported, now remediated
 - ✅ `profiles.is_admin` privilege escalation → fixed by `202609180001_harden_profiles_is_admin.sql`.
@@ -448,7 +454,7 @@ Deliberately shipped, gated by query param or env:
 - ✅ Access token exposed in the P24 return URL → now sent via the `X-Order-Token` header (deprecated `?token=` query fallback still accepted for stale clients).
 
 ### Open / residual risks (see §21)
-- No error monitoring / alerting.
+- No uptime alerting (application errors are reported to Sentry, but there is no uptime monitor).
 - Verification uses the publishable key, but those functions then query with the service role — safety depends on explicit scoping, which is present today.
 - The deprecated `?token=` query fallback on `order-status` remains for stale clients and should be removed once old bundles are gone.
 - Complaint photos are not collected/validated yet (field is present but not transmitted).
@@ -458,7 +464,7 @@ Deliberately shipped, gated by query param or env:
 
 ## 20. Testing & quality gates
 
-- **165 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
+- **166 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
 - Commands: `npx vitest run <file>` (targeted), `npx vitest run` (full), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Guard tests are important: they fail the suite when security/caching/versioning invariants regress (including a `search_path`-pinning guard).
 - Caveat: many admin/backend tests mock `fetch` and Refine hooks, so backend integration gaps (e.g. real PostgREST pagination behavior and the `admin_customer_list`/`admin_revenue_by_month` RPCs) are not covered end-to-end.
@@ -480,14 +486,14 @@ Deliberately shipped, gated by query param or env:
 - `admin_customer_list`/`admin_revenue_by_month` moved heavy admin aggregation to SQL; the remaining `fetch-all` reads are bounded by chunk/`maxPages`.
 
 **Operational**
-- No error monitoring or uptime alerting. (Recommended: add Sentry behind `VITE_SENTRY_DSN`/`SENTRY_DSN`, or a `/health` endpoint plus an external uptime checker.)
+- Error monitoring is wired (Sentry, see §5/§18), but there is no uptime/availability alerting. (Recommended: a `/health` endpoint plus an external uptime checker.)
 - Debug surfaces ship in the production bundle (intentional, param-gated) — decide whether to keep.
 - Dependency auditing (`pnpm audit`) and `pnpm build` are now in the `lint` CI job; the audit step is `continue-on-error` until advisories are triaged.
 - Verify `P24_STATUS_URL` / `SITE_URL` and webhook reachability after any domain change.
 - Reconcile `.env` / Netlify env / README if variables are retired. CI-only `CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; it is ignored when Netlify sets `CONTEXT=production`, so it cannot weaken a deploy build.
 
 **Suggested priority if hardening continues**
-1. Add error monitoring / uptime alerting.
+1. Add uptime/availability alerting (Sentry error monitoring is already wired).
 2. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
 3. Consider bot protection (e.g. honeypot/Turnstile) on `track-referral` and `submit-complaint` beyond IP throttling.
 4. Reduce the large hotspot files in follow-up refactors.
@@ -521,6 +527,7 @@ Deliberately shipped, gated by query param or env:
 - [ ] Transfer **Netlify** site (or invite as owner) and copy all production env vars via a secure channel.
 - [ ] Transfer **Supabase** project (owner/billing) and rotate keys if they were shared; store the DB password, service-role key, and confirm Auth providers (Google/Facebook, email/SMTP).
 - [ ] Transfer **Cloudinary** account; confirm cloud name, signed upload preset, API key/secret, and the named AI template.
+- [ ] Transfer the **Sentry** org/project; set `VITE_SENTRY_DSN` (and `SENTRY_DSN`) in Netlify and verify events arrive from both the browser and the functions (optionally add an auth token and source maps).
 - [ ] Transfer **Przelewy24** merchant account; confirm production credentials and that `P24_API_BASE_URL` points at production with `P24_ALLOW_SANDBOX` false.
 - [ ] Transfer **domain + DNS**; update `SITE_URL`, `P24_STATUS_URL`, Netlify domain, and Supabase Auth redirect URLs.
 - [ ] Transfer the local `.env` securely; confirm no secrets are committed (currently clean).
@@ -531,7 +538,8 @@ Deliberately shipped, gated by query param or env:
 - [ ] Confirm customer and monthly-revenue aggregates return correct totals on a >1000-order dataset.
 - [ ] Run `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` on a clean clone to confirm the new owner's environment.
 - [ ] Review the open items in §21 and decide ownership/priority.
-- [ ] Set up error monitoring (not currently present).
+- [ ] Verify Sentry receives a test event from the browser and from at least one Netlify function, and that monitoring is inert without the DSN.
+- [ ] Set up external uptime alerting (Sentry does not cover uptime on the free plan).
 
 ---
 

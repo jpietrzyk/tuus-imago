@@ -4,6 +4,7 @@ import { CANVAS_PRINT_UNIT_PRICE } from "../../src/lib/pricing";
 import { toLambdaEvent, toWebResponse } from "./_shared/v2-adapter";
 import { getAuthenticatedUser } from "./_shared/supabase-auth";
 import { generateOrderAccessToken } from "./_shared/order-access";
+import { withSentryV2 } from "./_shared/sentry";
 
 // Netlify inline function config: keeps the existing route and throttles the
 // unauthenticated checkout endpoint per client to limit order/coupon abuse.
@@ -18,7 +19,7 @@ export const config = {
   },
 };
 
-export default async (request: Request): Promise<Response> => {
+const handlerImpl = async (request: Request): Promise<Response> => {
   const result = await createOrder(await toLambdaEvent(request));
   return toWebResponse(result);
 };
@@ -615,3 +616,5 @@ export const createOrder = async (event: NetlifyEvent) => {
     }),
   };
 };
+
+export default withSentryV2("create-order", handlerImpl);

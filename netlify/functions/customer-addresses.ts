@@ -1,4 +1,5 @@
 import { getAuthenticatedUser, createServiceClient } from "./_shared/supabase-auth";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -27,7 +28,7 @@ function validateAddress(input: AddressInput): string | null {
   return null;
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   const authResult = await getAuthenticatedUser(event);
   if ("error" in authResult) return authResult.error;
 
@@ -201,3 +202,5 @@ export const handler = async (event: NetlifyEvent) => {
     body: JSON.stringify({ error: "Method Not Allowed" }),
   };
 };
+
+export const handler = withSentry("customer-addresses", handlerImpl);

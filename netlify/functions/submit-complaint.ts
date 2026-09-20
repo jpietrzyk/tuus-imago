@@ -1,5 +1,6 @@
 import { createServiceClient } from "./_shared/supabase-auth";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -45,7 +46,7 @@ function jsonResponse(statusCode: number, body: unknown) {
   };
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { error: "Method Not Allowed" });
   }
@@ -118,3 +119,5 @@ export const handler = async (event: NetlifyEvent) => {
 
   return jsonResponse(200, { ok: true });
 };
+
+export const handler = withSentry("submit-complaint", handlerImpl);

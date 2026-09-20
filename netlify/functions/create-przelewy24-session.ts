@@ -10,6 +10,7 @@ import {
 } from "./_shared/przelewy24";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
 import { verifyOrderAccess } from "./_shared/order-access";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -56,7 +57,7 @@ function normalizeLanguage(language?: string) {
   return language?.toLowerCase() === "en" ? "en" : "pl";
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -310,3 +311,5 @@ export const handler = async (event: NetlifyEvent) => {
     }),
   };
 };
+
+export const handler = withSentry("create-przelewy24-session", handlerImpl);

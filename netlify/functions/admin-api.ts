@@ -1,5 +1,6 @@
 import { createClient, type User } from "@supabase/supabase-js";
 import { fetchAllRows } from "./_shared/fetch-all";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -416,7 +417,7 @@ function toCsvRow(fields: unknown[]): string {
   return fields.map(escapeCsvField).join(",");
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   const token = getAuthHeader(event);
 
   if (!token) {
@@ -1701,3 +1702,5 @@ async function handleExport(
 
   return jsonResponse(400, { error: "Export not supported for this resource." });
 }
+
+export const handler = withSentry("admin-api", handlerImpl);

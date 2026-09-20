@@ -1,4 +1,5 @@
 import { createServiceClient } from "./_shared/supabase-auth";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -16,7 +17,7 @@ type ShippingMethodRow = {
   sort_order: number;
 };
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,
@@ -77,3 +78,5 @@ export const handler = async (event: NetlifyEvent) => {
     }),
   };
 };
+
+export const handler = withSentry("available-shipping", handlerImpl);
