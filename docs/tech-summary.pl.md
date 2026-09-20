@@ -68,7 +68,7 @@ flowchart LR
 | Płatności | Przelewy24 (P24 REST API, sandbox + produkcja) |
 | i18n | Własne i18n słownikowe (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testy | Vitest 4, Testing Library, jsdom (169 plików testów) |
+| Testy | Vitest 4, Testing Library, jsdom (170 plików testów) |
 | Lintowanie | ESLint 9 flat config, typescript-eslint |
 | Menedżer pakietów | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI przypina 22.20.0) |
@@ -94,7 +94,7 @@ src/
   locales/                    # i18n dictionaries (en.json, pl.json)
   assets/                     # Backgrounds, favicons
 netlify/functions/            # Backend endpoints + _shared helpers
-supabase/migrations/          # 35 SQL migrations (schema is defined ONLY here)
+supabase/migrations/          # 36 migracji SQL (schemat jest zdefiniowany WYŁĄCZNIE tutaj)
 scripts/                      # supabase-migrate.sh, apply-migrations.mjs
 public/                       # manifest.webmanifest, _headers (CSP), _redirects, icons, sw
 docs/                         # This doc + regression notes
@@ -241,7 +241,7 @@ Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma nies
 | `available-shipping` | GET | Publiczna | Aktywne metody dostawy + progi darmowej dostawy |
 | `cloudinary-signature` | POST | Publiczna | Zwraca podpis podpisanego wgrywania; **limit 20/60 s** |
 | `track-referral` | POST | Publiczna | Zapisuje zdarzenie kliknięcia referencyjnego; limit przez limiter DB + kontrola honeypot |
-| `submit-complaint` | POST | Publiczna | Waliduje + zapisuje reklamację z `/complaint`; limit przez limiter DB + kontrola honeypot |
+| `submit-complaint` | POST | Publiczna | Waliduje + zapisuje reklamację z `/complaint`, w tym zwalidowane URL-e zdjęć Cloudinary; limit przez limiter DB + kontrola honeypot |
 | `customer-orders` | GET | **Bearer JWT** | Zamówienia uwierzytelnionego użytkownika (zakres przez `user_id` z tokenu) |
 | `customer-addresses` | GET/POST/PATCH/DELETE | **Bearer JWT** | CRUD adresów uwierzytelnionego użytkownika (zakres przez token) |
 | `admin-api` | GET/POST/PATCH/PUT/DELETE | **Bearer JWT + `is_admin`** | Bramka administracyjna service-role (CRUD, agregaty, masowe statusy, eksport CSV) |
@@ -284,7 +284,7 @@ Logowanie obsługuje e-mail/hasło oraz Google OAuth. Brak samodzielnej rejestra
 | Canvases | `/admin/canvases` | `picture_canvases` | To samo co ramy |
 | Shipping | `/admin/shipping` | `shipping_methods` | CRUD, cena, czas dostawy, próg darmowej dostawy, przełącznik domyślności |
 | Customers | `/admin/customers` | agregat `orders` | Lista/szczegóły klienta (liczba zamówień, przychód, zgody, adres) |
-| Complaints | `/admin/complaints` | `complaints` | Przegląd zgłoszeń z `/complaint`; zmiana statusu (new/in review/resolved/rejected) i notatek wewnętrznych |
+| Complaints | `/admin/complaints` | `complaints` | Przegląd zgłoszeń z `/complaint` (wraz z załącznikami zdjęciowymi); zmiana statusu (new/in review/resolved/rejected) i notatek wewnętrznych |
 | Users | `/admin/users` | `profiles` + Supabase Auth | Lista nie-adminów, edycja profilu, **nadawanie/odbieranie admina** |
 | Admins | `/admin/admins` | `profiles` + Supabase Auth | To samo, filtrowane do adminów |
 | Settings | `/admin/settings` | `app_settings` | DPI guard wł./wył. + progi jakości (excellent/good/acceptable) |
@@ -293,7 +293,6 @@ Logowanie obsługuje e-mail/hasło oraz Google OAuth. Brak samodzielnej rejestra
 ### Znane ograniczenia panelu admina (pełna lista w §21)
 - `promotions` jest teraz zarejestrowane jako zasób Refine (list/create/edit/show); `users` / `admins` pozostają pseudo-zasobami korzystającymi z agregatów `orders`/`profiles`.
 - Listowanie użytkowników przechodzi przez wszystkich użytkowników auth (już nie ogranicza się do 1000).
-- Załączniki zdjęciowe reklamacji nie są jeszcze zbierane (pole formularza istnieje, ale zdjęcia nie są przesyłane; zob. §21).
 - Brak UI usuwania dla większości encji (tylko kody referencyjne).
 - Zmiany statusów / eksporty powodują pełne przeładowanie strony, `alert()`, `confirm()`.
 
@@ -301,7 +300,7 @@ Logowanie obsługuje e-mail/hasło oraz Google OAuth. Brak samodzielnej rejestra
 
 ## 11. Baza danych (Supabase / Postgres)
 
-Schemat jest zdefiniowany **wyłącznie** przez 35 pliki SQL w `supabase/migrations/`. Nie ma natywnych enumów — wszystkie „enumy" to `text` + `CHECK`. `pgcrypto` dostarcza `gen_random_uuid()`.
+Schemat jest zdefiniowany **wyłącznie** przez 36 pliki SQL w `supabase/migrations/`. Nie ma natywnych enumów — wszystkie „enumy" to `text` + `CHECK`. `pgcrypto` dostarcza `gen_random_uuid()`.
 
 ### Tabele
 
@@ -320,7 +319,7 @@ Schemat jest zdefiniowany **wyłącznie** przez 35 pliki SQL w `supabase/migrati
 | `promotions` | Rabaty kampanii (pojedyncza aktywna) | Publiczny odczyt `is_active = true` |
 | `app_settings` | Ustawienia runtime klucz/wartość (ziarna DPI) | tylko service-role; konsumowane przez funkcję `app-settings` |
 | `content_pages` | Strony CMS/prawne wbudowywane w bundle przy buildzie | Publiczny odczyt `is_published = true` |
-| `complaints` | Zgłoszenia reklamacji z `/complaint` (status + notatki admina) | tylko service-role |
+| `complaints` | Zgłoszenia reklamacji z `/complaint` (status, notatki admina, załączniki zdjęciowe Cloudinary) | tylko service-role |
 | `rate_limit_hits` | Kubły limitu szybkości opartego o bazę dla publicznych endpointów | tylko service-role |
 | `picture_frames` | Katalog ram | Publiczny odczyt `is_active = true` |
 | `picture_canvases` | Katalog materiałów płótna | Publiczny odczyt `is_active = true` |
@@ -462,13 +461,12 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 ### Otwarte / szczątkowe ryzyka (zob. §21)
 - Weryfikacja używa klucza publishable, ale te funkcje następnie odpytują z service role — bezpieczeństwo zależy od jawnego zakresu, który obecnie jest obecny.
 - Przestarzały fallback zapytania `?token=` w `order-status` pozostaje dla starych klientów i powinien zostać usunięty, gdy stare bundle znikną.
-- Zdjęcia reklamacji nie są jeszcze zbierane/walidowane (pole istnieje, ale nie jest przesyłane).
 
 ---
 
 ## 20. Testy i bramki jakości
 
-- **169 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1601 testów). Testy współlokowane działają jako dokumentacja zachowania.
+- **170 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1616 testów). Testy współlokowane działają jako dokumentacja zachowania.
 - Polecenia: `npx vitest run <file>` (wybiórczo), `npx vitest run` (pełne), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania (w tym strażnik przypięcia `search_path`).
 - Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST oraz RPC `admin_customer_list`/`admin_revenue_by_month`) nie są pokryte end-to-end.
@@ -478,7 +476,6 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 ## 21. Znane problemy, dług techniczny i rekomendacje
 
 **Błędy**
-- Zdjęcia w formularzu reklamacji nie są przesyłane (pole pliku istnieje, ale jest wykluczone z payloadu) — faza 2.
 - Zgłoszenia reklamacji nie mają powiadomień e-mail; personel musi sprawdzać Admin → Complaints.
 
 **Architektura / utrzymywalność**
@@ -497,7 +494,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Zsynchronizuj `.env` / env Netlify / README, jeśli zmienne są wycofywane. Tylko-CI `CONTENT_ALLOW_EMPTY=true` pozwala buildowi CI wbudować puste treści bez poświadczeń Supabase; jest ignorowane, gdy Netlify ustawia `CONTEXT=production`, więc nie może osłabić builda wdrożeniowego.
 
 **Sugerowany priorytet, jeśli utwardzanie będzie kontynuowane**
-1. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
+1. Dodaj powiadomienia e-mail dla reklamacji.
 2. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
 3. Zmień audyt zależności w blokującą bramkę CI, gdy bieżące advisory zostaną wyczyszczone.
 
@@ -538,7 +535,7 @@ Jeśli detekcja honeypot okaże się zbyt słaba wobec ukierunkowanych nadużyć
 - [ ] Przekaż lokalny `.env` bezpiecznie; potwierdź, że żadne sekrety nie są zacommitowane (obecnie czysto).
 - [ ] Utwórz/potwierdź **build hook** Netlify i ustaw `NETLIFY_BUILD_HOOK_URL`.
 - [ ] Zweryfikuj, że webhook P24 jest osiągalny i zwraca sukces z żywej domeny.
-- [ ] Potwierdź zastosowanie nowych migracji: `complaints`, `rate_limit_hits`, `orders.order_access_token`, backfill `shipping_method_id`, przypięcie `search_path` oraz RPC `admin_customer_list`/`admin_revenue_by_month`.
+- [ ] Potwierdź zastosowanie nowych migracji: `complaints`, `complaints.photos`, `rate_limit_hits`, `orders.order_access_token`, backfill `shipping_method_id`, przypięcie `search_path` oraz RPC `admin_customer_list`/`admin_revenue_by_month`.
 - [ ] Wykonaj smoke test checkoutu w sandbox: zamówienie utworzone, `create-przelewy24-session` akceptuje zwrócony token dostępu, odpytywanie statusu wysyła nagłówek `X-Order-Token` (URL powrotny nie niesie już tokenu), a odpytywanie statusu działa.
 - [ ] Potwierdź, że agregaty klientów i miesięcznego przychodu zwracają poprawne sumy na zbiorze >1000 zamówień.
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.

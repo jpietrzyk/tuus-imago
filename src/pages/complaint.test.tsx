@@ -3,6 +3,7 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ComplaintPage } from "./complaint";
 import { HONEYPOT_FIELD_A, HONEYPOT_FIELD_B } from "@/lib/honeypot-fields";
+import { COMPLAINT_PHOTO_MAX_BYTES } from "@/lib/complaint-photos";
 import { tr } from "@/test/i18n-test";
 
 vi.mock("@/lib/content-loader", () => ({
@@ -138,6 +139,69 @@ describe("ComplaintPage Component", () => {
       name: tr("complaint.form.submit"),
     });
     expect(submitButton).toBeInTheDocument();
+  });
+
+  it("rejects an oversized photo attachment before uploading", () => {
+    render(
+      <MemoryRouter>
+        <ComplaintPage />
+      </MemoryRouter>,
+    );
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const oversized = new File(
+      [new Uint8Array(COMPLAINT_PHOTO_MAX_BYTES + 1)],
+      "big.jpg",
+      { type: "image/jpeg" },
+    );
+
+    fireEvent.change(fileInput, { target: { files: [oversized] } });
+
+    expect(
+      screen.getByText(tr("complaint.form.photos.tooLarge")),
+    ).toBeInTheDocument();
+  });
+
+  it("shows a local preview for a selected photo and revokes it on remove", () => {
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:preview-1");
+    const revokeObjectURL = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
+
+    render(
+      <MemoryRouter>
+        <ComplaintPage />
+      </MemoryRouter>,
+    );
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const photo = new File(["data"], "damage.jpg", { type: "image/jpeg" });
+    fireEvent.change(fileInput, { target: { files: [photo] } });
+
+    expect(createObjectURL).toHaveBeenCalledWith(photo);
+    expect(
+      document.querySelector('img[src="blob:preview-1"]'),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: tr("complaint.form.photos.remove"),
+      }),
+    );
+
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:preview-1");
+    expect(
+      document.querySelector('img[src="blob:preview-1"]'),
+    ).not.toBeInTheDocument();
+
+    createObjectURL.mockRestore();
+    revokeObjectURL.mockRestore();
   });
 
   afterEach(() => {

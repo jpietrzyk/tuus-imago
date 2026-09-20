@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
 import { adminFetch } from "@/admin/lib/admin-fetch";
+import { getComplaintPhotoThumbnailUrl } from "@/lib/complaint-photos";
 import { t } from "@/locales/i18n";
 
 type ComplaintDetail = {
@@ -26,6 +27,7 @@ type ComplaintDetail = {
   resolution: string | null;
   status: string;
   admin_notes: string | null;
+  photos: { url: string; public_id: string }[] | null;
   created_at: string;
 };
 
@@ -187,6 +189,35 @@ export function ComplaintShowPage() {
           </CardContent>
         </Card>
       </div>
+
+      {(complaint.photos?.length ?? 0) > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("admin.labels.complaintPhotos")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="flex flex-wrap gap-4">
+              {complaint.photos?.map((photo, index) => (
+                <li key={photo.public_id || photo.url}>
+                  <a
+                    href={photo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <img
+                      src={getComplaintPhotoThumbnailUrl(photo.url, 256)}
+                      alt={`${t("admin.labels.complaintPhotos")} ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-32 w-32 rounded-md border border-border object-cover"
+                    />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

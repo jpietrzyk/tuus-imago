@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handler } from "../functions/submit-complaint";
 import { createServiceClient } from "../functions/_shared/supabase-auth";
 import {
@@ -40,6 +40,11 @@ function post(body: unknown) {
 describe("submit-complaint handler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("VITE_CLOUDINARY_CLOUD_NAME", "test-cloud");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("returns 405 for non-POST methods", async () => {
@@ -82,6 +87,121 @@ describe("submit-complaint handler", () => {
       description: "The frame arrived cracked.",
       resolution: null,
     });
+  });
+
+  it("omits the photos column when no attachments are sent", async () => {
+    const { insert } = setupSupabaseMock();
+
+    const response = await post(VALID_PAYLOAD);
+
+    expect(response.statusCode).toBe(200);
+    expect(insert).toHaveBeenCalledWith(
+      expect.not.objectContaining({ photos: expect.anything() }),
+    );
+  });
+
+  it("stores validated Cloudinary photo attachments", async () => {
+    const { insert } = setupSupabaseMock();
+
+    const response = await post({
+      ...VALID_PAYLOAD,
+      photos: [
+        {
+          url: "https://res.cloudinary.com/test-cloud/image/upload/v1/complaints/a.jpg",
+          public_id: "tuus-imago/complaints/a",
+        },
+      ],
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        photos: [
+          {
+            url: "https://res.cloudinary.com/test-cloud/image/upload/v1/complaints/a.jpg",
+            public_id: "tuus-imago/complaints/a",
+          },
+        ],
+      }),
+    );
+  });
+
+  it("rejects photo attachments from an untrusted host", async () => {
+    setupSupabaseMock();
+
+    const response = await post({
+      ...VALID_PAYLOAD,
+      photos: [
+        { url: "https://evil.example/tracker.gif", public_id: "x" },
+      ],
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("rejects Cloudinary URLs from a different cloud", async () => {
+    setupSupabaseMock();
+
+    const response = await post({
+      ...VALID_PAYLOAD,
+      photos: [
+        {
+          url: "https://res.cloudinary.com/other-cloud/image/upload/v1/a.jpg",
+          public_id: "a",
+        },
+      ],
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("rejects lookalike URLs that merely contain the configured cloud path", async () => {
+    setupSupabaseMock();
+
+    const response = await post({
+      ...VALID_PAYLOAD,
+      photos: [
+        {
+          url: "https://res.cloudinary.com/evil/image/upload/res.cloudinary.com/test-cloud/a.jpg",
+          public_id: "a",
+        },
+      ],
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("rejects photos when the cloud name is not configured", async () => {
+    vi.stubEnv("VITE_CLOUDINARY_CLOUD_NAME", "");
+    setupSupabaseMock();
+
+    const response = await post({
+      ...VALID_PAYLOAD,
+      photos: [
+        {
+          url: "https://res.cloudinary.com/test-cloud/image/upload/v1/a.jpg",
+          public_id: "a",
+        },
+      ],
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("rejects more than five photo attachments", async () => {
+    setupSupabaseMock();
+
+    const photo = {
+      url: "https://res.cloudinary.com/test-cloud/image/upload/v1/a.jpg",
+      public_id: "a",
+    };
+
+    const response = await post({
+      ...VALID_PAYLOAD,
+      photos: Array.from({ length: 6 }, () => ({ ...photo })),
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 
   it("drops a honeypot submission with a fake success and no insert", async () => {

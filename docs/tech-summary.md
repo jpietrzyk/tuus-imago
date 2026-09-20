@@ -68,7 +68,7 @@ flowchart LR
 | Payments | Przelewy24 (P24 REST API, sandbox + production) |
 | i18n | Custom dictionary-based i18n (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testing | Vitest 4, Testing Library, jsdom (169 test files) |
+| Testing | Vitest 4, Testing Library, jsdom (170 test files) |
 | Linting | ESLint 9 flat config, typescript-eslint |
 | Package manager | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI pins 22.20.0) |
@@ -94,7 +94,7 @@ src/
   locales/                    # i18n dictionaries (en.json, pl.json)
   assets/                     # Backgrounds, favicons
 netlify/functions/            # Backend endpoints + _shared helpers
-supabase/migrations/          # 35 SQL migrations (schema is defined ONLY here)
+supabase/migrations/          # 36 SQL migrations (schema is defined ONLY here)
 scripts/                      # supabase-migrate.sh, apply-migrations.mjs
 public/                       # manifest.webmanifest, _headers (CSP), _redirects, icons, sw
 docs/                         # This doc + regression notes
@@ -241,7 +241,7 @@ All endpoints are under `/.netlify/functions/<name>`. There are no custom routes
 | `available-shipping` | GET | Public | Active shipping methods + free-shipping thresholds |
 | `cloudinary-signature` | POST | Public | Returns signed-upload signature; **rate-limited 20/60s** |
 | `track-referral` | POST | Public | Records referral click event; rate-limited via DB limiter + honeypot bot check |
-| `submit-complaint` | POST | Public | Validates + stores a complaint from `/complaint`; rate-limited via DB limiter + honeypot bot check |
+| `submit-complaint` | POST | Public | Validates + stores a complaint from `/complaint`, including validated Cloudinary photo URLs; rate-limited via DB limiter + honeypot bot check |
 | `customer-orders` | GET | **Bearer JWT** | Authenticated user's orders (scoped by token `user_id`) |
 | `customer-addresses` | GET/POST/PATCH/DELETE | **Bearer JWT** | Authenticated user's addresses CRUD (scoped by token) |
 | `admin-api` | GET/POST/PATCH/PUT/DELETE | **Bearer JWT + `is_admin`** | Service-role admin gateway (CRUD, aggregates, bulk status, CSV export) |
@@ -284,7 +284,7 @@ Login supports email/password and Google OAuth. No self-signup for admins.
 | Canvases | `/admin/canvases` | `picture_canvases` | Same as frames |
 | Shipping | `/admin/shipping` | `shipping_methods` | CRUD, price, delivery time, free-shipping threshold, default toggle |
 | Customers | `/admin/customers` | aggregate of `orders` | Customer list/detail (order count, revenue, consent, address) |
-| Complaints | `/admin/complaints` | `complaints` | Review submissions from `/complaint`; change status (new/in review/resolved/rejected) and internal notes |
+| Complaints | `/admin/complaints` | `complaints` | Review submissions from `/complaint` (including photo attachments); change status (new/in review/resolved/rejected) and internal notes |
 | Users | `/admin/users` | `profiles` + Supabase Auth | List non-admins, edit profile, **grant/revoke admin** |
 | Admins | `/admin/admins` | `profiles` + Supabase Auth | Same, filtered to admins |
 | Settings | `/admin/settings` | `app_settings` | DPI guard on/off + quality thresholds (excellent/good/acceptable) |
@@ -293,7 +293,6 @@ Login supports email/password and Google OAuth. No self-signup for admins.
 ### Admin known limitations (see §21 for the full list)
 - `promotions` is now a registered Refine resource (list/create/edit/show); `users` / `admins` remain pseudo-resources that use aggregates against `orders`/`profiles`.
 - User listing pages through all auth users (no longer capped at 1000).
-- Complaint photo attachments are not collected yet (form field is present but the photos are not transmitted; see §21).
 - No delete UI for most entities (only referral codes).
 - Status updates / exports use full-page reloads, `alert()`, `confirm()`.
 
@@ -301,7 +300,7 @@ Login supports email/password and Google OAuth. No self-signup for admins.
 
 ## 11. Database (Supabase / Postgres)
 
-The schema is defined **only** by the 35 SQL files in `supabase/migrations/`. There are no native enums — all "enums" are `text` + `CHECK`. `pgcrypto` provides `gen_random_uuid()`.
+The schema is defined **only** by the 36 SQL files in `supabase/migrations/`. There are no native enums — all "enums" are `text` + `CHECK`. `pgcrypto` provides `gen_random_uuid()`.
 
 ### Tables
 
@@ -320,7 +319,7 @@ The schema is defined **only** by the 35 SQL files in `supabase/migrations/`. Th
 | `promotions` | Campaign discounts (single active) | Public read `is_active = true` |
 | `app_settings` | Key/value runtime settings (DPI seeds) | service-role only; consumed via `app-settings` function |
 | `content_pages` | CMS/legal pages baked into the bundle at build | Public read `is_published = true` |
-| `complaints` | Complaint submissions from `/complaint` (status + admin notes) | service-role only |
+| `complaints` | Complaint submissions from `/complaint` (status, admin notes, Cloudinary photo attachments) | service-role only |
 | `rate_limit_hits` | DB-backed throttle buckets for public endpoints | service-role only |
 | `picture_frames` | Frame catalog | Public read `is_active = true` |
 | `picture_canvases` | Canvas material catalog | Public read `is_active = true` |
@@ -462,14 +461,13 @@ Deliberately shipped, gated by query param or env:
 ### Open / residual risks (see §21)
 - Verification uses the publishable key, but those functions then query with the service role — safety depends on explicit scoping, which is present today.
 - The deprecated `?token=` query fallback on `order-status` remains for stale clients and should be removed once old bundles are gone.
-- Complaint photos are not collected/validated yet (field is present but not transmitted).
 
 
 ---
 
 ## 20. Testing & quality gates
 
-- **169 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
+- **170 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
 - Commands: `npx vitest run <file>` (targeted), `npx vitest run` (full), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Guard tests are important: they fail the suite when security/caching/versioning invariants regress (including a `search_path`-pinning guard).
 - Caveat: many admin/backend tests mock `fetch` and Refine hooks, so backend integration gaps (e.g. real PostgREST pagination behavior and the `admin_customer_list`/`admin_revenue_by_month` RPCs) are not covered end-to-end.
@@ -479,7 +477,6 @@ Deliberately shipped, gated by query param or env:
 ## 21. Known issues, tech debt & recommendations
 
 **Bugs**
-- Complaint page photos are not submitted (the file input is present but excluded from the payload) — phase 2.
 - Complaint submissions have no e-mail notification; staff must check Admin → Complaints.
 
 **Architecture / maintainability**
@@ -498,7 +495,7 @@ Deliberately shipped, gated by query param or env:
 - Reconcile `.env` / Netlify env / README if variables are retired. CI-only `CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; it is ignored when Netlify sets `CONTEXT=production`, so it cannot weaken a deploy build.
 
 **Suggested priority if hardening continues**
-1. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
+1. Add complaint e-mail notifications.
 2. Reduce the large hotspot files in follow-up refactors.
 3. Turn the dependency audit into a blocking CI gate once current advisories are cleared.
 
@@ -539,7 +536,7 @@ If honeypot detection turns out too weak against targeted abuse, the next step i
 - [ ] Transfer the local `.env` securely; confirm no secrets are committed (currently clean).
 - [ ] Create/confirm the Netlify **build hook** and set `NETLIFY_BUILD_HOOK_URL`.
 - [ ] Verify the P24 webhook is reachable and returns success from the live domain.
-- [ ] Confirm the new migrations applied: `complaints`, `rate_limit_hits`, `orders.order_access_token`, `shipping_method_id` backfill, pinned `search_path`, and the `admin_customer_list`/`admin_revenue_by_month` RPCs.
+- [ ] Confirm the new migrations applied: `complaints`, `complaints.photos`, `rate_limit_hits`, `orders.order_access_token`, `shipping_method_id` backfill, pinned `search_path`, and the `admin_customer_list`/`admin_revenue_by_month` RPCs.
 - [ ] Smoke-test a sandbox checkout: order created, `create-przelewy24-session` accepts the returned access token, the status poll sends the `X-Order-Token` header (the return URL no longer carries the token), and the status poll succeeds.
 - [ ] Confirm customer and monthly-revenue aggregates return correct totals on a >1000-order dataset.
 - [ ] Run `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` on a clean clone to confirm the new owner's environment.

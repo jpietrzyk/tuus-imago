@@ -28,6 +28,14 @@ export interface CloudinaryUploadedAsset {
   context?: string;
 }
 
+export interface CloudinaryAssetUploadInput {
+  file: File;
+  folder?: string;
+  context?: string;
+  signal?: AbortSignal;
+  onUploadProgress?: (fraction: number) => void;
+}
+
 export interface CloudinaryDirectUploadInput {
   file: File;
   transformations: ImageTransformations;
@@ -76,15 +84,13 @@ async function requestUploadSignature(
   return data;
 }
 
-export async function uploadImageToCloudinary({
+export async function uploadFileToCloudinary({
   file,
-  transformations,
-  customCoordinates,
-  aiAdjustments,
+  folder = CLOUDINARY_UPLOAD_FOLDER,
   context,
   signal,
   onUploadProgress,
-}: CloudinaryDirectUploadInput): Promise<CloudinaryDirectUploadResult> {
+}: CloudinaryAssetUploadInput): Promise<CloudinaryUploadedAsset> {
   const configError = getCloudinaryUploadConfigError();
 
   if (configError) {
@@ -92,7 +98,7 @@ export async function uploadImageToCloudinary({
   }
 
   const paramsToSign: Record<string, string> = {
-    folder: CLOUDINARY_UPLOAD_FOLDER,
+    folder,
     upload_preset: cloudinaryConfig.uploadPreset,
   };
 
@@ -110,7 +116,7 @@ export async function uploadImageToCloudinary({
   formData.append("api_key", apiKey);
   formData.append("timestamp", String(timestamp));
   formData.append("signature", signature);
-  formData.append("folder", CLOUDINARY_UPLOAD_FOLDER);
+  formData.append("folder", folder);
   formData.append("upload_preset", cloudinaryConfig.uploadPreset);
 
   if (context) {
@@ -202,10 +208,30 @@ export async function uploadImageToCloudinary({
     );
   }
 
+  return data;
+}
+
+export async function uploadImageToCloudinary({
+  file,
+  transformations,
+  customCoordinates,
+  aiAdjustments,
+  context,
+  signal,
+  onUploadProgress,
+}: CloudinaryDirectUploadInput): Promise<CloudinaryDirectUploadResult> {
+  const asset = await uploadFileToCloudinary({
+    file,
+    folder: CLOUDINARY_UPLOAD_FOLDER,
+    context,
+    signal,
+    onUploadProgress,
+  });
+
   return {
-    asset: data,
+    asset,
     transformedUrl: getTransformedPreviewUrl(
-      data.secure_url,
+      asset.secure_url,
       transformations,
       customCoordinates,
       aiAdjustments,
