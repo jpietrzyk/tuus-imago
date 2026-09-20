@@ -1,5 +1,6 @@
 import { createServiceClient } from "./_shared/supabase-auth";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -36,7 +37,7 @@ function computeDiscount(
   return Math.min(coupon.discount_value, orderTotal);
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -145,3 +146,5 @@ export const handler = async (event: NetlifyEvent) => {
     }),
   };
 };
+
+export const handler = withSentry("validate-coupon", handlerImpl);

@@ -1,4 +1,5 @@
 import { getAuthenticatedUser, createServiceClient } from "./_shared/supabase-auth";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -51,7 +52,7 @@ type OrderWithItems = OrderRow & {
   items: OrderItemRow[];
 };
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,
@@ -137,3 +138,5 @@ export const handler = async (event: NetlifyEvent) => {
     body: JSON.stringify({ orders: ordersWithItems }),
   };
 };
+
+export const handler = withSentry("customer-orders", handlerImpl);

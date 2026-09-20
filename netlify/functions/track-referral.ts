@@ -1,5 +1,6 @@
 import { createServiceClient } from "./_shared/supabase-auth";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -12,7 +13,7 @@ type TrackReferralPayload = {
   path?: string;
 };
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -104,3 +105,5 @@ export const handler = async (event: NetlifyEvent) => {
     body: JSON.stringify({ ok: true, tracked: true }),
   };
 };
+
+export const handler = withSentry("track-referral", handlerImpl);

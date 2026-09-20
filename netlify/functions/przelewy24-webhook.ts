@@ -9,6 +9,7 @@ import {
   toMinorUnits,
   type P24NotificationPayload,
 } from "./_shared/przelewy24";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -45,7 +46,7 @@ function isValidNotificationPayload(payload: Record<string, unknown>): payload i
     && Number.isInteger(payload.methodId);
 }
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -248,3 +249,5 @@ export const handler = async (event: NetlifyEvent) => {
     body: JSON.stringify({ status: "verified" }),
   };
 };
+
+export const handler = withSentry("przelewy24-webhook", handlerImpl);

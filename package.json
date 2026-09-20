@@ -25,6 +25,8 @@
     "@refinedev/react-router": "^2.0.4",
     "@refinedev/react-table": "^6.0.1",
     "@refinedev/supabase": "^6.0.2",
+    "@sentry/node": "^10.75.0",
+    "@sentry/react": "^10.75.0",
     "@supabase/supabase-js": "^2.100.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.1.17",

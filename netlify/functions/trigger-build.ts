@@ -1,4 +1,5 @@
 import { createClient, type User } from "@supabase/supabase-js";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -19,7 +20,7 @@ function jsonResponse(statusCode: number, body: unknown) {
  * a fresh deploy. Holds the build hook URL server-side so it never reaches the
  * browser.
  */
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if ((event.httpMethod ?? "GET").toUpperCase() !== "POST") {
     return jsonResponse(405, { error: "Method Not Allowed" });
   }
@@ -96,3 +97,5 @@ export const handler = async (event: NetlifyEvent) => {
 
   return jsonResponse(200, { ok: true });
 };
+
+export const handler = withSentry("trigger-build", handlerImpl);

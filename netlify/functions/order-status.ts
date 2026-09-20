@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
 import { verifyOrderAccess } from "./_shared/order-access";
+import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -18,7 +19,7 @@ type OrderStatusRow = {
   created_at: string | null;
 };
 
-export const handler = async (event: NetlifyEvent) => {
+const handlerImpl = async (event: NetlifyEvent) => {
   if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,
@@ -109,3 +110,5 @@ export const handler = async (event: NetlifyEvent) => {
     }),
   };
 };
+
+export const handler = withSentry("order-status", handlerImpl);

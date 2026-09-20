@@ -1,4 +1,5 @@
 import { createServiceClient } from "./_shared/supabase-auth";
+import { withSentry } from "./_shared/sentry";
 
 // Canonical defaults for the DPI settings. Keep in sync with:
 //  - supabase/migrations/202608030001_create_app_settings.sql (seed values)
@@ -47,7 +48,7 @@ function readInteger(
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export const handler = async (event: { httpMethod?: string }) => {
+const handlerImpl = async (event: { httpMethod?: string }) => {
   if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,
@@ -103,3 +104,5 @@ export const handler = async (event: { httpMethod?: string }) => {
     ),
   });
 };
+
+export const handler = withSentry("app-settings", handlerImpl);

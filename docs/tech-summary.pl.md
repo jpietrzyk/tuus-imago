@@ -68,7 +68,7 @@ flowchart LR
 | Płatności | Przelewy24 (P24 REST API, sandbox + produkcja) |
 | i18n | Własne i18n słownikowe (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testy | Vitest 4, Testing Library, jsdom (165 plików testów) |
+| Testy | Vitest 4, Testing Library, jsdom (166 plików testów) |
 | Lintowanie | ESLint 9 flat config, typescript-eslint |
 | Menedżer pakietów | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI przypina 22.20.0) |
@@ -116,12 +116,13 @@ Przekaż/posiadaj te konta. Każde jest pojedynczym punktem awarii; nowy właśc
 | **Supabase** | Postgres, Auth, RLS | Własność/rozliczenia projektu, klucze API, hasło DB, dostawcy Auth | Zob. §11 |
 | **Cloudinary** | Przechowywanie obrazów + transformacje + AI | Konto, cloud name, klucz/sekret API, upload preset, nazwany szablon AI | `VITE_CLOUDINARY_AI_TEMPLATE` opcjonalne |
 | **Przelewy24** | Płatności | Konto merchant, ID merchant/POS, CRC, klucz API | Bazowy URL API produkcyjnego: `https://secure.przelewy24.pl/api/v1` |
+| **Sentry** | Monitoring błędów (przeglądarka + funkcje) | Własność organizacji/projektu, DSN-y, token auth (jeśli dodane source mapy) | Opcjonalny; wyłączony, gdy DSN nieustawiony |
 | **Domena + DNS** | Publiczny URL | Rejestrator/DNS | Wymagane dla `SITE_URL`, URL-i zwrotu/statusu P24, domeny Netlify |
 | **Google / Facebook** | Logowanie OAuth (przez Supabase) | Poświadczenia aplikacji OAuth skonfigurowane w Supabase Auth | Opcjonalne; można wyłączyć |
 | **Dostarczanie e-maili** | E-maile auth Supabase (potwierdzenie, magic link, reset) | SMTP, jeśli własny; inaczej domyślny Supabase | Ustawienie Supabase Auth |
 | **InPost** | ⚠️ **Brak integracji** | — | „InPost Kurier" to jedynie zasiana etykieta/metoda dostawy; brak połączenia API |
 
-Obecnie **nie ma podłączonego zewnętrznego CRM, analityki ani monitoringu błędów**. (HubSpot został usunięty w migracji `202604090001_remove_hubspot_fields.sql`.)
+Obecnie **nie ma podłączonego zewnętrznego CRM ani analityki**. Monitoring błędów realizuje Sentry (zob. §18); alerty o dostępności nie są jeszcze skonfigurowane. (HubSpot został usunięty w migracji `202604090001_remove_hubspot_fields.sql`.)
 
 ---
 
@@ -141,6 +142,7 @@ Wszystkie zmienne są udokumentowane w `.env.example`. Rzeczywisty plik `.env` i
 | `VITE_UPLOAD_DRAFT_MAX_AGE_HOURS` | Nie | Liczba godzin przechowywania szkicu (domyślnie 168 = 7 dni) |
 | `VITE_SUPABASE_URL` | Tak | URL projektu Supabase |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Tak | Klucz anon/publishable Supabase |
+| `VITE_SENTRY_DSN` | Nie | DSN Sentry dla przeglądarki; monitoring wyłączony, gdy pusty |
 
 ### Po stronie serwera (Netlify Functions — nigdy nie ujawniać)
 
@@ -151,6 +153,8 @@ Wszystkie zmienne są udokumentowane w `.env.example`. Rzeczywisty plik `.env` i
 | `SUPABASE_URL` | Tak | Klient service-role |
 | `SUPABASE_SECRET_KEY` | Tak | Klucz service-role Supabase |
 | `SITE_URL` | Tak | Publiczny URL strony (URL-e zwrotu/statusu P24) |
+| `SENTRY_DSN` | Nie | DSN Sentry dla funkcji (może być ten sam co `VITE_SENTRY_DSN`); monitoring wyłączony, gdy pusty |
+| `SENTRY_TRACES_SAMPLE_RATE` | Nie | Próbkowanie trace `0`–`1` (domyślnie `0.1` w produkcji, `1` poza nią) |
 | `P24_MERCHANT_ID` / `P24_POS_ID` / `P24_CRC` / `P24_API_KEY` | Tak | Poświadczenia Przelewy24 |
 | `P24_API_BASE_URL` | Tak (poza lokalnym) | `https://secure.przelewy24.pl/api/v1` w produkcji |
 | `P24_ALLOW_SANDBOX` | Nie | W produkcji musi być `false`/nieustawiony |
@@ -413,9 +417,10 @@ Statusy cyklu życia zamówienia (wymuszane w aplikacji, nie przez ograniczenia 
 Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - `?diag` / `?debug` → dziennik pierścieniowy oczyszczony z PII (`src/lib/diagnostics-log.ts`, 300 pozycji, `tuus-imago:diagnostics-log`) z UI kopiowania/czyszczenia. Wrażliwe klucze zapytań są redagowane.
 - `?build` (lub `?version`) → plakietka builda uruchomionego vs wdrożonego (`BuildVersionBadge`).
+- Monitoring błędów Sentry (`src/lib/sentry.ts` dla przeglądarki, `netlify/functions/_shared/sentry.ts` dla funkcji), bramkowany przez `VITE_SENTRY_DSN`/`SENTRY_DSN`. Ostatnie wpisy dziennika `?diag` są dołączane do zdarzeń, a dane wrażliwe są usuwane przed wysłaniem.
 - `VITE_SHOW_UPLOADER_DEBUG=true` → panel debugowania uploadera (`ImageDebugPanel`).
 - `VITE_SHOW_DEBUG_PANEL=true` → pasek debugowania Cloudinary przy wgrywaniu.
-- `src/production-readiness.guard.test.ts` i `src/pwa.guard.test.ts` wymuszają gwarancje konfiguracji (brak wycieku debugowania, limity szybkości, eksporty v2, brak martwych zmiennych env, konfiguracja PWA).
+- `src/production-readiness.guard.test.ts`, `src/pwa.guard.test.ts` i `src/sentry.guard.test.ts` wymuszają gwarancje konfiguracji (brak wycieku debugowania, limity szybkości, eksporty v2, brak martwych zmiennych env, konfiguracja PWA, opakowanie funkcji przez Sentry).
 
 ---
 
@@ -433,6 +438,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Token dostępu do zamówienia (`order_access_token`) wiąże publiczne endpointy płatności (utworzenie sesji) i statusu zamówienia z kupującym; jest wysyłany przez nagłówek `X-Order-Token` (nigdy w URL-u powrotnym P24), fallback legacy jest ograniczony do 7 dni i nieopłaconych zamówień, a `orders.user_id` jest ustawiane wyłącznie ze zweryfikowanego JWT.
 - Limity szybkości oparte o bazę (`check_rate_limit`) na `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral` i `submit-complaint`, obok natywnych reguł Netlify dla `create-order`/`cloudinary-signature`.
 - `admin-api` waliduje każdą kolumnę `select`/filtra/sortowania/`groupBy`/`sum` podaną przez wywołującego względem allowlisty per zasób i ogranicza `pageSize` do 1–1000.
+- Sentry działa z `sendDefaultPii: false`, a ciasteczka, nagłówki autoryzacji i wrażliwe parametry zapytania są usuwane z zdarzeń i breadcrumbów przed wysłaniem; host ingest Sentry jest jedynym nowym wpisem w CSP `connect-src`.
 
 ### Wcześniej zgłoszone, obecnie naprawione
 - ✅ Eskalacja uprawnień `profiles.is_admin` → naprawiona przez `202609180001_harden_profiles_is_admin.sql`.
@@ -448,7 +454,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - ✅ Token dostępu ujawniony w URL-u powrotnym P24 → wysyłany teraz przez nagłówek `X-Order-Token` (przestarzały fallback zapytania `?token=` jest nadal akceptowany dla starych klientów).
 
 ### Otwarte / szczątkowe ryzyka (zob. §21)
-- Brak monitoringu błędów / alertów.
+- Brak alertów o dostępności (błędy aplikacji są raportowane do Sentry, ale nie ma monitoringu uptime).
 - Weryfikacja używa klucza publishable, ale te funkcje następnie odpytują z service role — bezpieczeństwo zależy od jawnego zakresu, który obecnie jest obecny.
 - Przestarzały fallback zapytania `?token=` w `order-status` pozostaje dla starych klientów i powinien zostać usunięty, gdy stare bundle znikną.
 - Zdjęcia reklamacji nie są jeszcze zbierane/walidowane (pole istnieje, ale nie jest przesyłane).
@@ -457,7 +463,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 
 ## 20. Testy i bramki jakości
 
-- **165 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1572 testy). Testy współlokowane działają jako dokumentacja zachowania.
+- **166 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1577 testy). Testy współlokowane działają jako dokumentacja zachowania.
 - Polecenia: `npx vitest run <file>` (wybiórczo), `npx vitest run` (pełne), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania (w tym strażnik przypięcia `search_path`).
 - Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST oraz RPC `admin_customer_list`/`admin_revenue_by_month`) nie są pokryte end-to-end.
@@ -479,14 +485,14 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - `admin_customer_list`/`admin_revenue_by_month` przeniosły ciężką agregację admina do SQL; pozostałe odczyty `fetch-all` są ograniczone przez chunk/`maxPages`.
 
 **Operacyjne**
-- Brak monitoringu błędów i alertów o dostępności. (Zalecenie: Sentry za `VITE_SENTRY_DSN`/`SENTRY_DSN` albo endpoint `/health` + zewnętrzny monitor dostępności.)
+- Monitoring błędów jest podłączony (Sentry, zob. §5/§18), ale brak alertów o dostępności/uptime. (Zalecenie: endpoint `/health` + zewnętrzny monitor dostępności.)
 - Powierzchnie debugowania trafiają do bundle'a produkcyjnego (celowo, bramkowane parametrem) — zdecyduj, czy je zachować.
 - Audyt zależności (`pnpm audit`) i `pnpm build` są teraz w zadaniu CI `lint`; krok audytu ma `continue-on-error` do czasu uporania się z advisory.
 - Zweryfikuj `P24_STATUS_URL` / `SITE_URL` i osiągalność webhooka po każdej zmianie domeny.
 - Zsynchronizuj `.env` / env Netlify / README, jeśli zmienne są wycofywane. Tylko-CI `CONTENT_ALLOW_EMPTY=true` pozwala buildowi CI wbudować puste treści bez poświadczeń Supabase; jest ignorowane, gdy Netlify ustawia `CONTEXT=production`, więc nie może osłabić builda wdrożeniowego.
 
 **Sugerowany priorytet, jeśli utwardzanie będzie kontynuowane**
-1. Dodaj monitoring błędów / alerty dostępności.
+1. Dodaj alerty dostępności/uptime (monitoring błędów Sentry jest już podłączony).
 2. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
 3. Rozważ ochronę przed botami (np. honeypot/Turnstile) dla `track-referral` i `submit-complaint` poza limitem po IP.
 4. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
@@ -520,6 +526,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Przekaż **witryny Netlify** (lub zaproś jako właściciela) i skopiuj wszystkie produkcyjne zmienne env bezpiecznym kanałem.
 - [ ] Przekaż **projekt Supabase** (właściciel/rozliczenia) i obróć klucze, jeśli były udostępniane; zapisz hasło DB, klucz service-role i potwierdź dostawców Auth (Google/Facebook, e-mail/SMTP).
 - [ ] Przekaż **konto Cloudinary**; potwierdź cloud name, podpisany upload preset, klucz/sekret API i nazwany szablon AI.
+- [ ] Przekaż **organizację/projekt Sentry**; ustaw `VITE_SENTRY_DSN` (i `SENTRY_DSN`) w Netlify i zweryfikuj, że zdarzenia z przeglądarki oraz funkcji docierają (opcjonalnie dodaj token auth i source mapy).
 - [ ] Przekaż **konto merchant Przelewy24**; potwierdź poświadczenia produkcyjne i że `P24_API_BASE_URL` wskazuje produkcję z `P24_ALLOW_SANDBOX` false.
 - [ ] Przekaż **domenę + DNS**; zaktualizuj `SITE_URL`, `P24_STATUS_URL`, domenę Netlify i URL-e przekierowań Supabase Auth.
 - [ ] Przekaż lokalny `.env` bezpiecznie; potwierdź, że żadne sekrety nie są zacommitowane (obecnie czysto).
@@ -530,7 +537,8 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Potwierdź, że agregaty klientów i miesięcznego przychodu zwracają poprawne sumy na zbiorze >1000 zamówień.
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.
 - [ ] Przejrzyj otwarte pozycje z §21 i zdecyduj o własności/priorytecie.
-- [ ] Skonfiguruj monitoring błędów (obecnie nieobecny).
+- [ ] Zweryfikuj, że Sentry otrzymuje zdarzenia testowe z przeglądarki i z co najmniej jednej funkcji Netlify, oraz że monitoring jest wyłączony bez DSN.
+- [ ] Skonfiguruj zewnętrzne alerty dostępności (Sentry nie obejmuje uptime na darmowym planie).
 
 ---
 
