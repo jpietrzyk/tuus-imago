@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { ComplaintPage } from "./complaint";
+import { HONEYPOT_FIELD_A, HONEYPOT_FIELD_B } from "@/lib/honeypot-fields";
 import { tr } from "@/test/i18n-test";
 
 vi.mock("@/lib/content-loader", () => ({
@@ -200,7 +201,42 @@ describe("ComplaintPage Component", () => {
       email: "jane@example.com",
       orderNumber: "TI-2026-000001",
       complaintType: "damaged",
+      [HONEYPOT_FIELD_A]: "",
+      [HONEYPOT_FIELD_B]: "",
     });
+  });
+
+  it("submits honeypot values so the server can drop bot submissions", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <MemoryRouter>
+        <ComplaintPage />
+      </MemoryRouter>,
+    );
+
+    fillRequiredFields();
+    fireEvent.change(
+      document.getElementById(HONEYPOT_FIELD_A) as HTMLInputElement,
+      {
+        target: { value: "https://spam.example" },
+      },
+    );
+    fireEvent.submit(document.querySelector("form") as HTMLFormElement);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body[HONEYPOT_FIELD_A]).toBe("https://spam.example");
   });
 
   it("shows an error message when the submission fails", async () => {

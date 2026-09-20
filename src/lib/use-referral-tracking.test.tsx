@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useReferralTracking } from "./use-referral-tracking";
+import { HONEYPOT_FIELD_A, HONEYPOT_FIELD_B } from "./honeypot-fields";
 import { MemoryRouter } from "react-router-dom";
 
 vi.mock("./referral-cookie", () => ({
@@ -50,7 +51,12 @@ describe("use-referral-tracking", () => {
         "/.netlify/functions/track-referral",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ ref_code: "ABC123", path: "/upload" }),
+          body: JSON.stringify({
+            ref_code: "ABC123",
+            path: "/upload",
+            [HONEYPOT_FIELD_A]: "",
+            [HONEYPOT_FIELD_B]: "",
+          }),
         }),
       );
     });

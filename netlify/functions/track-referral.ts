@@ -1,5 +1,6 @@
 import { createServiceClient } from "./_shared/supabase-auth";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
+import { filledHoneypotField, trackBotDetection } from "./_shared/bot-detection";
 import { withSentry } from "./_shared/sentry";
 
 type NetlifyEvent = {
@@ -30,6 +31,11 @@ const handlerImpl = async (event: NetlifyEvent) => {
       body: JSON.stringify({ error: "Invalid JSON body." }),
     };
   }
+
+  // Honeypot: the real client never fills these hidden fields, so a filled
+  // value signals an automated submission. Inspected here, acted on after the
+  // rate limiter below so bot hits cannot bypass the throttle.
+  const honeypot = filledHoneypotField(parsed as Record<string, unknown>);
 
   const refCode = parsed.ref_code?.trim();
   if (!refCode) {
@@ -65,6 +71,15 @@ const handlerImpl = async (event: NetlifyEvent) => {
     })
   ) {
     return rateLimitResponse(60);
+  }
+
+  // Silently drop honeypot hits (fake success) so bots learn nothing.
+  if (honeypot) {
+    trackBotDetection("track-referral", honeypot);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, tracked: false }),
+    };
   }
 
   const { data: refRow, error: refError } = await supabase
