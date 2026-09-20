@@ -2,4 +2,8 @@
 # This file ensures all routes are handled by index.html
 # allowing React Router to manage client-side routing
 
+# Uptime monitor endpoint: served by the `health` Netlify function so external
+# checkers can hit the stable /health path. Must precede the SPA catch-all.
+/health     /.netlify/functions/health   200
+/health/    /.netlify/functions/health   200
 /*    /index.html   200

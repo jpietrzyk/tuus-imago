@@ -31,7 +31,8 @@ function readTraceSampleRate(): number {
   return process.env.CONTEXT === "production" ? 0.1 : 1;
 }
 
-function readRelease(): string | undefined {
+/** Build/release identifier shared by Sentry events and the /health probe. */
+export function getRelease(): string | undefined {
   const sha = (process.env.COMMIT_REF ?? process.env.GITHUB_SHA)?.slice(0, 7);
   if (!sha) {
     return undefined;
@@ -66,7 +67,7 @@ export function initSentry(): boolean {
     Sentry.init({
       dsn,
       environment: process.env.CONTEXT ?? process.env.NODE_ENV ?? "development",
-      release: readRelease(),
+      release: getRelease(),
       tracesSampleRate: readTraceSampleRate(),
       sendDefaultPii: false,
       beforeSend(event) {
