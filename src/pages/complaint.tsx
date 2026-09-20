@@ -1,5 +1,5 @@
-import { useRef, useState } from "react"
-import { AlertCircle, Upload } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { AlertCircle, Upload, X } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { ContentPageShell } from "@/components/content-page-shell"
 import { getPageBySlug } from "@/lib/content-loader"
@@ -8,6 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { HONEYPOT_FIELD_A, HONEYPOT_FIELD_B } from "@/lib/honeypot-fields"
+import {
+  uploadComplaintPhoto,
+  validateComplaintPhoto,
+  type ComplaintPhoto,
+} from "@/lib/complaint-photos"
 import { t } from "@/locales/i18n"
 
 const INITIAL_FORM = {
@@ -26,6 +31,11 @@ const INITIAL_FORM = {
 
 type FormState = typeof INITIAL_FORM
 
+type PendingComplaintPhoto = {
+  file: File
+  previewUrl: string
+}
+
 export function ComplaintPage() {
   const page = getPageBySlug("complaint")
   const [form, setForm] = useState<FormState>(INITIAL_FORM)
@@ -34,6 +44,22 @@ export function ComplaintPage() {
   )
   const honeypotARef = useRef<HTMLInputElement>(null)
   const honeypotBRef = useRef<HTMLInputElement>(null)
+  const [pendingPhotos, setPendingPhotos] = useState<PendingComplaintPhoto[]>([])
+  const [photoError, setPhotoError] = useState<string | null>(null)
+  const pendingPhotosRef = useRef<PendingComplaintPhoto[]>([])
+
+  useEffect(() => {
+    pendingPhotosRef.current = pendingPhotos
+  }, [pendingPhotos])
+
+  useEffect(
+    () => () => {
+      pendingPhotosRef.current.forEach((photo) =>
+        URL.revokeObjectURL(photo.previewUrl),
+      )
+    },
+    [],
+  )
 
   const updateField =
     (field: keyof FormState) =>
@@ -50,15 +76,62 @@ export function ComplaintPage() {
       setForm((previous) => ({ ...previous, [field]: value }))
     }
 
+  const photoErrorMessage = (error: string) =>
+    t(`complaint.form.photos.${error}`)
+
+  const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(event.target.files ?? [])
+    event.target.value = ""
+    if (selected.length === 0) return
+
+    setPhotoError(null)
+    const accepted: PendingComplaintPhoto[] = []
+
+    for (const file of selected) {
+      const error = validateComplaintPhoto(
+        file,
+        pendingPhotos.length + accepted.length,
+      )
+      if (error) {
+        setPhotoError(photoErrorMessage(error))
+        continue
+      }
+      accepted.push({ file, previewUrl: URL.createObjectURL(file) })
+    }
+
+    if (accepted.length === 0) return
+
+    setPendingPhotos((previous) => [...previous, ...accepted])
+  }
+
+  const handleRemovePhoto = (index: number) => {
+    const target = pendingPhotos[index]
+    if (target) URL.revokeObjectURL(target.previewUrl)
+    setPendingPhotos((previous) => previous.filter((_, i) => i !== index))
+    setPhotoError(null)
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setStatus("submitting")
+    setPhotoError(null)
 
     // Read the honeypot inputs from the DOM (not React state) so values that
     // bot scripts inject are still submitted to the server for inspection.
     const honeypotData = new FormData(event.currentTarget)
     if (honeypotARef.current) honeypotARef.current.value = ""
     if (honeypotBRef.current) honeypotBRef.current.value = ""
+
+    let uploadedPhotos: ComplaintPhoto[]
+    try {
+      uploadedPhotos = await Promise.all(
+        pendingPhotos.map(({ file }) => uploadComplaintPhoto(file)),
+      )
+    } catch {
+      setPhotoError(t("complaint.form.photos.uploadError"))
+      setStatus("error")
+      return
+    }
 
     try {
       const response = await fetch("/.netlify/functions/submit-complaint", {
@@ -75,6 +148,10 @@ export function ComplaintPage() {
           complaintType: form.complaintType,
           description: form.description,
           resolution: form.resolution || undefined,
+          photos: uploadedPhotos.map((photo) => ({
+            url: photo.url,
+            public_id: photo.publicId,
+          })),
           [HONEYPOT_FIELD_A]: String(honeypotData.get(HONEYPOT_FIELD_A) ?? ""),
           [HONEYPOT_FIELD_B]: String(honeypotData.get(HONEYPOT_FIELD_B) ?? ""),
         }),
@@ -84,7 +161,12 @@ export function ComplaintPage() {
         throw new Error(t("complaint.form.error"))
       }
 
+      pendingPhotos.forEach(({ previewUrl }) =>
+        URL.revokeObjectURL(previewUrl),
+      )
+      setPendingPhotos([])
       setForm(INITIAL_FORM)
+      setPhotoError(null)
       setStatus("success")
     } catch {
       setStatus("error")
@@ -284,25 +366,58 @@ export function ComplaintPage() {
             <h3 className="font-semibold text-gray-900">
               {t("complaint.form.photos.title")}
             </h3>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-700 mb-3">
+            <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+              <p className="text-sm text-gray-700">
                 {t("complaint.form.photos.description")}
               </p>
               <div className="flex items-center gap-2">
                 <Upload className="h-4 w-4 text-gray-500" />
                 <label className="cursor-pointer">
                   <span className="text-sm text-blue-600 hover:text-blue-800">
-                    {t("complaint.form.photos.upload")}
+                    {status === "submitting"
+                      ? t("complaint.form.photos.uploading")
+                      : t("complaint.form.photos.upload")}
                   </span>
                   <input
                     type="file"
                     accept="image/*"
                     multiple
                     className="hidden"
+                    onChange={handlePhotoSelect}
+                    disabled={status === "submitting"}
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
+
+              {pendingPhotos.length > 0 && (
+                <ul className="flex flex-wrap gap-3">
+                  {pendingPhotos.map((photo, index) => (
+                    <li key={photo.previewUrl} className="relative">
+                      <img
+                        src={photo.previewUrl}
+                        alt={`${t("complaint.form.photos.title")} ${index + 1}`}
+                        className="h-20 w-20 rounded-md object-cover border border-gray-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhoto(index)}
+                        aria-label={t("complaint.form.photos.remove")}
+                        className="absolute -right-2 -top-2 rounded-full bg-white border border-gray-300 p-0.5 text-gray-600 hover:text-red-600"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {photoError && (
+                <p role="alert" className="text-sm text-red-700">
+                  {photoError}
+                </p>
+              )}
+
+              <p className="text-xs text-gray-500">
                 {t("complaint.form.photos.note")}
               </p>
             </div>
@@ -371,7 +486,11 @@ export function ComplaintPage() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={status === "submitting"}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={status === "submitting"}
+          >
             {status === "submitting"
               ? t("complaint.form.submitting")
               : t("complaint.form.submit")}

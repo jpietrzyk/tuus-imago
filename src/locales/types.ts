@@ -524,6 +524,12 @@ export interface Translations {
         title: string;
         description: string;
         upload: string;
+        uploading: string;
+        uploadError: string;
+        remove: string;
+        tooMany: string;
+        tooLarge: string;
+        invalidType: string;
         note: string;
       };
       consent: {

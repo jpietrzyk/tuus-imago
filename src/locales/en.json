@@ -543,7 +543,13 @@
         "title": "Product Photos",
         "description": "Attach clear photos showing the damage or defect. Maximum 5 photos, up to 5 MB each.",
         "upload": "Select photos",
-        "note": "Photo attachments are not sent through this form yet. We will contact you about providing them."
+        "uploading": "Uploading...",
+        "uploadError": "Could not upload a photo. Please try again.",
+        "remove": "Remove photo",
+        "tooMany": "You can attach at most 5 photos.",
+        "tooLarge": "Each photo must be at most 5 MB.",
+        "invalidType": "Only image files can be attached.",
+        "note": "Optional — photos help us process your complaint faster."
       },
       "consent": {
         "label": "I agree to the processing of my personal data for complaint processing in accordance with the Privacy Policy. *"
@@ -781,6 +787,7 @@
       "complaintSearch": "Search complaints...",
       "complaintNoComplaints": "No complaints found",
       "complaintDetails": "Complaint Details",
+      "complaintPhotos": "Photos",
       "complaintDescription": "Problem Description",
       "complaintResolution": "Expected Resolution",
       "complaintAdminNotes": "Internal Notes",

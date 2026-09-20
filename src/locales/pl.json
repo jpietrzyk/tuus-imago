@@ -543,7 +543,13 @@
         "title": "Zdjęcia produktu",
         "description": "Dołącz wyraźne zdjęcia pokazujące uszkodzenie lub wadę. Maksymalnie 5 zdjęć, do 5 MB każde.",
         "upload": "Wybierz zdjęcia",
-        "note": "Załączniki zdjęciowe nie są jeszcze przesyłane przez formularz. Skontaktujemy się z Tobą w sprawie ich przekazania."
+        "uploading": "Wysyłanie...",
+        "uploadError": "Nie udało się wysłać zdjęcia. Spróbuj ponownie.",
+        "remove": "Usuń zdjęcie",
+        "tooMany": "Możesz dołączyć maksymalnie 5 zdjęć.",
+        "tooLarge": "Każde zdjęcie może mieć maksymalnie 5 MB.",
+        "invalidType": "Można dołączać tylko pliki graficzne.",
+        "note": "Opcjonalnie — zdjęcia pomagają nam szybciej rozpatrzyć reklamację."
       },
       "consent": {
         "label": "Zgadzam się na przetwarzanie moich danych osobowych w celu rozpatrzenia reklamacji zgodnie z Polityką Prywatności. *"
@@ -781,6 +787,7 @@
       "complaintSearch": "Szukaj reklamacji...",
       "complaintNoComplaints": "Brak reklamacji",
       "complaintDetails": "Szczegóły reklamacji",
+      "complaintPhotos": "Zdjęcia",
       "complaintDescription": "Opis problemu",
       "complaintResolution": "Oczekiwane rozwiązanie",
       "complaintAdminNotes": "Notatki wewnętrzne",

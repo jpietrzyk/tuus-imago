@@ -141,7 +141,7 @@ const RESOURCE_COLUMNS: Record<string, Set<string>> = {
   complaints: new Set([
     "id", "name", "email", "phone", "address", "order_number", "order_date",
     "product", "complaint_type", "description", "resolution", "status",
-    "admin_notes", "created_at", "updated_at",
+    "admin_notes", "photos", "created_at", "updated_at",
   ]),
 };
 

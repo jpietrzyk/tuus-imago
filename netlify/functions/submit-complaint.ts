@@ -2,6 +2,7 @@ import { createServiceClient } from "./_shared/supabase-auth";
 import { isRateLimitExceeded, rateLimitResponse } from "./_shared/rate-limit";
 import { filledHoneypotField, trackBotDetection } from "./_shared/bot-detection";
 import { withSentry } from "./_shared/sentry";
+import { COMPLAINT_PHOTO_MAX_COUNT } from "../../src/lib/complaint-limits";
 
 type NetlifyEvent = {
   httpMethod?: string;
@@ -20,6 +21,7 @@ type SubmitComplaintPayload = {
   complaintType?: string;
   description?: string;
   resolution?: string;
+  photos?: unknown;
 };
 
 const ALLOWED_TYPES = new Set([
@@ -31,12 +33,60 @@ const ALLOWED_TYPES = new Set([
   "other",
 ]);
 
+const MAX_COMPLAINT_PHOTOS = COMPLAINT_PHOTO_MAX_COUNT;
+
 function clean(value: unknown, maxLength: number): string {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
 function isValidEmail(email: string): boolean {
   return /.+@.+\..+/.test(email);
+}
+
+/**
+ * Photos are uploaded straight to Cloudinary from the browser, so the function
+ * never sees the bytes. Accept only a small list of Cloudinary image URLs from
+ * the configured cloud (fail closed when that cloud is unknown) and re-validate
+ * before persisting, so a forged request cannot store arbitrary URLs or
+ * unbounded payloads.
+ */
+function sanitizePhotos(
+  value: unknown,
+): { url: string; public_id: string }[] | null {
+  if (value === undefined || value === null) return [];
+
+  if (!Array.isArray(value) || value.length > MAX_COMPLAINT_PHOTOS) {
+    return null;
+  }
+
+  const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME;
+  if (value.length > 0 && !cloudName) return null;
+
+  const photos: { url: string; public_id: string }[] = [];
+
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object") return null;
+
+    const url = clean((entry as { url?: unknown }).url, 500);
+    const publicId = clean((entry as { public_id?: unknown }).public_id, 300);
+
+    if (!url || !publicId) return null;
+
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return null;
+    }
+
+    if (parsed.protocol !== "https:") return null;
+    if (parsed.hostname !== "res.cloudinary.com") return null;
+    if (!parsed.pathname.startsWith(`/${cloudName}/image/upload/`)) return null;
+
+    photos.push({ url, public_id: publicId });
+  }
+
+  return photos;
 }
 
 function jsonResponse(statusCode: number, body: unknown) {
@@ -74,6 +124,7 @@ const handlerImpl = async (event: NetlifyEvent) => {
   const complaintType = clean(parsed.complaintType, 40);
   const description = clean(parsed.description, 5000);
   const resolution = clean(parsed.resolution, 5000) || null;
+  const photos = sanitizePhotos(parsed.photos);
 
   if (!name || !email || !orderNumber || !complaintType || !description) {
     return jsonResponse(400, { error: "Missing required complaint fields." });
@@ -85,6 +136,10 @@ const handlerImpl = async (event: NetlifyEvent) => {
 
   if (!ALLOWED_TYPES.has(complaintType)) {
     return jsonResponse(400, { error: "Invalid complaint type." });
+  }
+
+  if (photos === null) {
+    return jsonResponse(400, { error: "Invalid complaint photos." });
   }
 
   let supabase;
@@ -111,7 +166,7 @@ const handlerImpl = async (event: NetlifyEvent) => {
     return jsonResponse(200, { ok: true });
   }
 
-  const { error: insertError } = await supabase.from("complaints").insert({
+  const insertPayload: Record<string, unknown> = {
     name,
     email,
     phone,
@@ -122,7 +177,17 @@ const handlerImpl = async (event: NetlifyEvent) => {
     complaint_type: complaintType,
     description,
     resolution,
-  });
+  };
+
+  // Omit `photos` when empty so a submission made before migration
+  // 202609200001 is applied still succeeds without the new column.
+  if (photos.length > 0) {
+    insertPayload.photos = photos;
+  }
+
+  const { error: insertError } = await supabase
+    .from("complaints")
+    .insert(insertPayload);
 
   if (insertError) {
     console.error("[submit-complaint] insert failed:", insertError.message);
