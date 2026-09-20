@@ -520,7 +520,7 @@ Deliberately shipped, gated by query param or env:
 | Roll out a new build | Merge/push to `main` → Netlify builds; clients auto-update via `/version.json` + SW |
 | Diagnose a stuck client | Open `?build` to compare versions; `?diag` for the journal; if an old pre-fix bundle, clear storage/reinstall the PWA |
 | Check deploy build identity | `?build` badge or `/version.json` |
-| Set up uptime monitoring | Point a free external monitor (UptimeRobot, Better Stack, cron-job.org) at `https://<domain>/health`; expect `200 {"status":"ok"}`, alert on non-2xx (503 = Supabase unreachable) |
+| Set up uptime monitoring | UptimeRobot (free): a Keyword monitor on `https://<domain>/health` with keyword `"status":"ok"` (5-min interval) plus an HTTP(s) monitor on `https://<domain>/`; alert on non-2xx or a missing keyword. Point monitors at production only. |
 
 ---
 
@@ -542,7 +542,7 @@ Deliberately shipped, gated by query param or env:
 - [ ] Run `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` on a clean clone to confirm the new owner's environment.
 - [ ] Review the open items in §21 and decide ownership/priority.
 - [ ] Verify Sentry receives a test event from the browser and from at least one Netlify function, and that monitoring is inert without the DSN.
-- [ ] Point an external uptime monitor at `https://<domain>/health` and confirm it returns `200 {"status":"ok"}` (Sentry does not cover uptime on the free plan).
+- [ ] Set up an external uptime monitor (e.g. UptimeRobot: Keyword monitor `"status":"ok"` on `https://<domain>/health` plus an HTTP(s) monitor on `https://<domain>/`) and confirm `200 {"status":"ok"}` (Sentry does not cover uptime on the free plan).
 
 ---
 

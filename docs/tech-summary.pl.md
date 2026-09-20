@@ -519,7 +519,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 | Wdrożenie nowego builda | Merge/push do `main` → Netlify buduje; klienci aktualizują się automatycznie przez `/version.json` + SW |
 | Diagnoza zablokowanego klienta | Otwórz `?build`, aby porównać wersje; `?diag` dla dziennika; jeśli stary bundle sprzed poprawki, wyczyść pamięć/ponownie zainstaluj PWA |
 | Sprawdzenie tożsamości builda wdrożenia | Plakietka `?build` lub `/version.json` |
-| Konfiguracja monitoringu uptime | Skieruj darmowy zewnętrzny monitor (UptimeRobot, Better Stack, cron-job.org) na `https://<domain>/health`; oczekuj `200 {"status":"ok"}`, alarmuj przy nie-2xx (503 = Supabase nieosiągalny) |
+| Konfiguracja monitoringu uptime | UptimeRobot (darmowy): monitor Keyword na `https://<domain>/health` ze słowem `"status":"ok"` (interwał 5 min) oraz monitor HTTP(s) na `https://<domain>/`; alarmuj przy nie-2xx lub braku słowa. Kieruj monitory wyłącznie na produkcję. |
 
 ---
 
@@ -541,7 +541,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.
 - [ ] Przejrzyj otwarte pozycje z §21 i zdecyduj o własności/priorytecie.
 - [ ] Zweryfikuj, że Sentry otrzymuje zdarzenia testowe z przeglądarki i z co najmniej jednej funkcji Netlify, oraz że monitoring jest wyłączony bez DSN.
-- [ ] Skieruj zewnętrzny monitor uptime na `https://<domain>/health` i potwierdź, że zwraca `200 {"status":"ok"}` (Sentry nie obejmuje uptime na darmowym planie).
+- [ ] Skonfiguruj zewnętrzny monitor uptime (np. UptimeRobot: monitor Keyword `"status":"ok"` na `https://<domain>/health` oraz monitor HTTP(s) na `https://<domain>/`) i potwierdź `200 {"status":"ok"}` (Sentry nie obejmuje uptime na darmowym planie).
 
 ---
 

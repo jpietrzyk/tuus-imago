@@ -210,8 +210,12 @@ Required GitHub configuration:
 ### Uptime Monitoring
 
 - `GET /health` is served by the `health` Netlify function (rewritten from the stable `/health` path in `public/_redirects`). It returns `200 {"status":"ok"}` when the app can reach Supabase and `503 {"status":"degraded"}` otherwise.
-- The probe is unauthenticated by design (external checkers hold no credentials), returns no PII or raw driver errors, and is `Cache-Control: no-store`.
-- Point a free external monitor (UptimeRobot, Better Stack, cron-job.org, etc.) at `https://<your-domain>/health`, check every 1–5 minutes, and alert on non-2xx or missing `"status":"ok"`.
+- The probe is unauthenticated by design (external checkers hold no credentials), returns no PII or raw driver errors, and is `Cache-Control: no-store`. The function memoizes the DB probe for ~10s, so monitor frequency cannot add database load.
+- Recommended [UptimeRobot](https://uptimerobot.com) setup (free tier: 50 monitors, 5-minute checks, email alerts):
+  - **Keyword monitor** on `https://<your-domain>/health` with keyword `"status":"ok"`. Use keyword monitoring, not a plain HTTP status check: if the function or the `_redirects` rule is missing, the SPA catch-all can answer `200` with `index.html`, and only the keyword check catches that.
+  - **HTTP(s) monitor** on `https://<your-domain>/` as a CDN/storefront liveness check.
+  - Alert on non-2xx or a missing keyword. Point monitors at the production domain only, never a deploy preview.
+  - The free plan checks every 5 minutes and has no maintenance windows, so a planned outage can page; Netlify deploys are atomic, so this is rarely an issue.
 - Sentry reports errors, not availability; the external monitor is the uptime alert channel.
 
 ## Legal Pages
