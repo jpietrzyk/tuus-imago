@@ -97,6 +97,22 @@ describe("production readiness guards", () => {
     }
   });
 
+  it("exposes an unauthenticated /health uptime endpoint", () => {
+    const redirects = read("public/_redirects");
+
+    expect(redirects).toMatch(
+      /^\/health\s+\/\.netlify\/functions\/health\s+200$/m,
+    );
+
+    const source = read("netlify/functions/health.ts");
+
+    expect(source).toContain('withSentry("health"');
+    // The probe is consumed by monitors that cannot authenticate, so it must
+    // never require a bearer token and must keep its response uncached.
+    expect(source).not.toContain("getAuthenticatedUser");
+    expect(source).toContain("no-store");
+  });
+
   it("rate limits the unauthenticated write endpoints", () => {
     // Netlify allows only two code-based rules on the lowest plans, so only the
     // two resource-creating endpoints are protected here.

@@ -207,6 +207,13 @@ Required GitHub configuration:
 - PII is scrubbed before sending: `sendDefaultPii` is off and cookies, auth headers and credential-bearing query params are removed from events and breadcrumbs.
 - The Sentry ingest host must stay in the CSP `connect-src` in `public/_headers`.
 
+### Uptime Monitoring
+
+- `GET /health` is served by the `health` Netlify function (rewritten from the stable `/health` path in `public/_redirects`). It returns `200 {"status":"ok"}` when the app can reach Supabase and `503 {"status":"degraded"}` otherwise.
+- The probe is unauthenticated by design (external checkers hold no credentials), returns no PII or raw driver errors, and is `Cache-Control: no-store`.
+- Point a free external monitor (UptimeRobot, Better Stack, cron-job.org, etc.) at `https://<your-domain>/health`, check every 1–5 minutes, and alert on non-2xx or missing `"status":"ok"`.
+- Sentry reports errors, not availability; the external monitor is the uptime alert channel.
+
 ## Legal Pages
 
 Legal pages live in the Supabase `content_pages` table and are baked into the bundle at build time by the Vite content plugin (`virtual:tuus-content`). They are edited via the admin "Content" section, which triggers a rebuild through `NETLIFY_BUILD_HOOK_URL`.

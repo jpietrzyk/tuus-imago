@@ -27,7 +27,7 @@ flowchart LR
   end
   subgraph Netlify
     CDN["Static CDN (dist/)\nSPA + PWA service worker"]
-    FN["Netlify Functions\n(17 endpoints)"]
+    FN["Netlify Functions\n(18 endpoints)"]
   end
   subgraph Supabase
     PG["Postgres + RLS"]
@@ -68,7 +68,7 @@ flowchart LR
 | Payments | Przelewy24 (P24 REST API, sandbox + production) |
 | i18n | Custom dictionary-based i18n (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testing | Vitest 4, Testing Library, jsdom (166 test files) |
+| Testing | Vitest 4, Testing Library, jsdom (167 test files) |
 | Linting | ESLint 9 flat config, typescript-eslint |
 | Package manager | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI pins 22.20.0) |
@@ -122,7 +122,7 @@ Transfer/own these accounts. Each is a single point of failure; the new owner mu
 | **Email delivery** | Supabase auth emails (confirmation, magic link, reset) | SMTP if custom; else Supabase default | Supabase Auth setting |
 | **InPost** | ⚠️ **Not an integration** | — | "InPost Kurier" is only a seeded shipping-method label/price; no API connection |
 
-There is **no external CRM or analytics** currently wired. Error monitoring runs through Sentry (see §18); uptime alerting is not configured yet. (HubSpot was removed in migration `202604090001_remove_hubspot_fields.sql`.)
+There is **no external CRM or analytics** currently wired. Error monitoring runs through Sentry (see §18) and availability is exposed by the unauthenticated `/health` endpoint (see §9/§21). (HubSpot was removed in migration `202604090001_remove_hubspot_fields.sql`.)
 
 ---
 
@@ -223,7 +223,7 @@ Runs on every push, three sequential jobs:
 
 ## 9. Backend — Netlify Functions
 
-All endpoints are under `/.netlify/functions/<name>`. There are no custom routes except the two that opt into Netlify v2 `config` (for rate limits): `create-order` and `cloudinary-signature`.
+All endpoints are under `/.netlify/functions/<name>`. There are no custom routes except the two that opt into Netlify v2 `config` (for rate limits): `create-order` and `cloudinary-signature`. The `health` function is additionally published at the stable `/health` path via `public/_redirects`.
 
 | Function | Method | Auth | Purpose |
 |---|---|---|---|
@@ -234,6 +234,7 @@ All endpoints are under `/.netlify/functions/<name>`. There are no custom routes
 | `validate-coupon` | POST | Public | Read-only coupon validation preview |
 | `active-promotion` | GET | Public | Current active promotion for header/checkout |
 | `app-settings` | GET | Public | DPI guard thresholds (60s cache) |
+| `health` | GET/HEAD | Public | Uptime probe (also at `/health`): `200 {status:"ok"}` when Supabase is reachable, else `503 {status:"degraded"}`; `no-store`, no PII |
 | `available-frames` | GET | Public | Active frame catalog |
 | `available-canvases` | GET | Public | Active canvas catalog |
 | `available-shipping` | GET | Public | Active shipping methods + free-shipping thresholds |
@@ -418,6 +419,7 @@ Deliberately shipped, gated by query param or env:
 - `?diag` / `?debug` → PII-sanitized ring-buffer journal (`src/lib/diagnostics-log.ts`, 300 entries, `tuus-imago:diagnostics-log`) with copy/clear UI. Sensitive query keys are redacted.
 - `?build` (or `?version`) → running-vs-deployed build badge (`BuildVersionBadge`).
 - Sentry error monitoring (`src/lib/sentry.ts` for the browser, `netlify/functions/_shared/sentry.ts` for the functions), gated by `VITE_SENTRY_DSN`/`SENTRY_DSN`. The last `?diag` journal entries are attached to events and PII is scrubbed before sending.
+- `GET /health` (rewritten to the `health` function) → unauthenticated uptime probe for external availability monitors: `200` when the function can reach Supabase, `503` otherwise, `Cache-Control: no-store`, no PII or raw driver errors.
 - `VITE_SHOW_UPLOADER_DEBUG=true` → uploader debug panel (`ImageDebugPanel`).
 - `VITE_SHOW_DEBUG_PANEL=true` → Cloudinary debug strip on upload.
 - `src/production-readiness.guard.test.ts`, `src/pwa.guard.test.ts` and `src/sentry.guard.test.ts` enforce config guarantees (no debug leakage, rate limits, v2 exports, no dead env vars, PWA setup, every function wrapped for Sentry).
@@ -454,7 +456,7 @@ Deliberately shipped, gated by query param or env:
 - ✅ Access token exposed in the P24 return URL → now sent via the `X-Order-Token` header (deprecated `?token=` query fallback still accepted for stale clients).
 
 ### Open / residual risks (see §21)
-- No uptime alerting (application errors are reported to Sentry, but there is no uptime monitor).
+- Uptime alerting depends on the operator wiring an external monitor to `/health`; the endpoint is implemented, but no monitor is provisioned from the repo.
 - Verification uses the publishable key, but those functions then query with the service role — safety depends on explicit scoping, which is present today.
 - The deprecated `?token=` query fallback on `order-status` remains for stale clients and should be removed once old bundles are gone.
 - Complaint photos are not collected/validated yet (field is present but not transmitted).
@@ -464,7 +466,7 @@ Deliberately shipped, gated by query param or env:
 
 ## 20. Testing & quality gates
 
-- **166 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
+- **167 test files** across `src/`, `netlify/__tests__/`, and page-level tests. Co-located tests act as behavioral documentation.
 - Commands: `npx vitest run <file>` (targeted), `npx vitest run` (full), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Guard tests are important: they fail the suite when security/caching/versioning invariants regress (including a `search_path`-pinning guard).
 - Caveat: many admin/backend tests mock `fetch` and Refine hooks, so backend integration gaps (e.g. real PostgREST pagination behavior and the `admin_customer_list`/`admin_revenue_by_month` RPCs) are not covered end-to-end.
@@ -486,14 +488,14 @@ Deliberately shipped, gated by query param or env:
 - `admin_customer_list`/`admin_revenue_by_month` moved heavy admin aggregation to SQL; the remaining `fetch-all` reads are bounded by chunk/`maxPages`.
 
 **Operational**
-- Error monitoring is wired (Sentry, see §5/§18), but there is no uptime/availability alerting. (Recommended: a `/health` endpoint plus an external uptime checker.)
+- Error monitoring is wired (Sentry, see §5/§18) and the unauthenticated `/health` uptime endpoint is available; the external availability monitor still has to be provisioned by the operator (see §22).
 - Debug surfaces ship in the production bundle (intentional, param-gated) — decide whether to keep.
 - Dependency auditing (`pnpm audit`) and `pnpm build` are now in the `lint` CI job; the audit step is `continue-on-error` until advisories are triaged.
 - Verify `P24_STATUS_URL` / `SITE_URL` and webhook reachability after any domain change.
 - Reconcile `.env` / Netlify env / README if variables are retired. CI-only `CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; it is ignored when Netlify sets `CONTEXT=production`, so it cannot weaken a deploy build.
 
 **Suggested priority if hardening continues**
-1. Add uptime/availability alerting (Sentry error monitoring is already wired).
+1. Provision external uptime alerting against `/health` (the endpoint is implemented; Sentry error monitoring is already wired).
 2. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
 3. Consider bot protection (e.g. honeypot/Turnstile) on `track-referral` and `submit-complaint` beyond IP throttling.
 4. Reduce the large hotspot files in follow-up refactors.
@@ -518,6 +520,7 @@ Deliberately shipped, gated by query param or env:
 | Roll out a new build | Merge/push to `main` → Netlify builds; clients auto-update via `/version.json` + SW |
 | Diagnose a stuck client | Open `?build` to compare versions; `?diag` for the journal; if an old pre-fix bundle, clear storage/reinstall the PWA |
 | Check deploy build identity | `?build` badge or `/version.json` |
+| Set up uptime monitoring | Point a free external monitor (UptimeRobot, Better Stack, cron-job.org) at `https://<domain>/health`; expect `200 {"status":"ok"}`, alert on non-2xx (503 = Supabase unreachable) |
 
 ---
 
@@ -539,7 +542,7 @@ Deliberately shipped, gated by query param or env:
 - [ ] Run `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` on a clean clone to confirm the new owner's environment.
 - [ ] Review the open items in §21 and decide ownership/priority.
 - [ ] Verify Sentry receives a test event from the browser and from at least one Netlify function, and that monitoring is inert without the DSN.
-- [ ] Set up external uptime alerting (Sentry does not cover uptime on the free plan).
+- [ ] Point an external uptime monitor at `https://<domain>/health` and confirm it returns `200 {"status":"ok"}` (Sentry does not cover uptime on the free plan).
 
 ---
 

@@ -27,7 +27,7 @@ flowchart LR
   end
   subgraph Netlify
     CDN["Static CDN (dist/)\nSPA + PWA service worker"]
-    FN["Netlify Functions\n(17 endpoints)"]
+    FN["Netlify Functions\n(18 endpointów)"]
   end
   subgraph Supabase
     PG["Postgres + RLS"]
@@ -68,7 +68,7 @@ flowchart LR
 | Płatności | Przelewy24 (P24 REST API, sandbox + produkcja) |
 | i18n | Własne i18n słownikowe (`en.json` / `pl.json`) |
 | PWA | vite-plugin-pwa / Workbox 7 |
-| Testy | Vitest 4, Testing Library, jsdom (166 plików testów) |
+| Testy | Vitest 4, Testing Library, jsdom (167 plików testów) |
 | Lintowanie | ESLint 9 flat config, typescript-eslint |
 | Menedżer pakietów | pnpm 11 (`pnpm-lock.yaml`) |
 | Node | 22+ (CI przypina 22.20.0) |
@@ -122,7 +122,7 @@ Przekaż/posiadaj te konta. Każde jest pojedynczym punktem awarii; nowy właśc
 | **Dostarczanie e-maili** | E-maile auth Supabase (potwierdzenie, magic link, reset) | SMTP, jeśli własny; inaczej domyślny Supabase | Ustawienie Supabase Auth |
 | **InPost** | ⚠️ **Brak integracji** | — | „InPost Kurier" to jedynie zasiana etykieta/metoda dostawy; brak połączenia API |
 
-Obecnie **nie ma podłączonego zewnętrznego CRM ani analityki**. Monitoring błędów realizuje Sentry (zob. §18); alerty o dostępności nie są jeszcze skonfigurowane. (HubSpot został usunięty w migracji `202604090001_remove_hubspot_fields.sql`.)
+Obecnie **nie ma podłączonego zewnętrznego CRM ani analityki**. Monitoring błędów realizuje Sentry (zob. §18), a dostępność udostępnia nieuwierzytelniony endpoint `/health` (zob. §9/§21). (HubSpot został usunięty w migracji `202604090001_remove_hubspot_fields.sql`.)
 
 ---
 
@@ -223,7 +223,7 @@ Uruchamiane przy każdym pushu, trzy sekwencyjne zadania:
 
 ## 9. Backend — Netlify Functions
 
-Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma niestandardowych tras poza dwiema, które włączają Netlify v2 `config` (dla limitów szybkości): `create-order` i `cloudinary-signature`.
+Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma niestandardowych tras poza dwiema, które włączają Netlify v2 `config` (dla limitów szybkości): `create-order` i `cloudinary-signature`. Funkcja `health` jest dodatkowo publikowana pod stabilną ścieżką `/health` przez `public/_redirects`.
 
 | Funkcja | Metoda | Auth | Cel |
 |---|---|---|---|
@@ -234,6 +234,7 @@ Wszystkie endpointy znajdują się pod `/.netlify/functions/<name>`. Nie ma nies
 | `validate-coupon` | POST | Publiczna | Podgląd walidacji kuponu tylko do odczytu |
 | `active-promotion` | GET | Publiczna | Bieżąca aktywna promocja dla nagłówka/checkout |
 | `app-settings` | GET | Publiczna | Progi DPI guard (cache 60 s) |
+| `health` | GET/HEAD | Publiczna | Sonda uptime (także pod `/health`): `200 {status:"ok"}`, gdy Supabase jest osiągalny, inaczej `503 {status:"degraded"}`; `no-store`, bez PII |
 | `available-frames` | GET | Publiczna | Katalog aktywnych ram |
 | `available-canvases` | GET | Publiczna | Katalog aktywnych płócien |
 | `available-shipping` | GET | Publiczna | Aktywne metody dostawy + progi darmowej dostawy |
@@ -418,6 +419,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - `?diag` / `?debug` → dziennik pierścieniowy oczyszczony z PII (`src/lib/diagnostics-log.ts`, 300 pozycji, `tuus-imago:diagnostics-log`) z UI kopiowania/czyszczenia. Wrażliwe klucze zapytań są redagowane.
 - `?build` (lub `?version`) → plakietka builda uruchomionego vs wdrożonego (`BuildVersionBadge`).
 - Monitoring błędów Sentry (`src/lib/sentry.ts` dla przeglądarki, `netlify/functions/_shared/sentry.ts` dla funkcji), bramkowany przez `VITE_SENTRY_DSN`/`SENTRY_DSN`. Ostatnie wpisy dziennika `?diag` są dołączane do zdarzeń, a dane wrażliwe są usuwane przed wysłaniem.
+- `GET /health` (przepisany na funkcję `health`) → nieuwierzytelniona sonda uptime dla zewnętrznych monitorów dostępności: `200`, gdy funkcja może połączyć się z Supabase, inaczej `503`, `Cache-Control: no-store`, bez PII i surowych błędów sterownika.
 - `VITE_SHOW_UPLOADER_DEBUG=true` → panel debugowania uploadera (`ImageDebugPanel`).
 - `VITE_SHOW_DEBUG_PANEL=true` → pasek debugowania Cloudinary przy wgrywaniu.
 - `src/production-readiness.guard.test.ts`, `src/pwa.guard.test.ts` i `src/sentry.guard.test.ts` wymuszają gwarancje konfiguracji (brak wycieku debugowania, limity szybkości, eksporty v2, brak martwych zmiennych env, konfiguracja PWA, opakowanie funkcji przez Sentry).
@@ -454,7 +456,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - ✅ Token dostępu ujawniony w URL-u powrotnym P24 → wysyłany teraz przez nagłówek `X-Order-Token` (przestarzały fallback zapytania `?token=` jest nadal akceptowany dla starych klientów).
 
 ### Otwarte / szczątkowe ryzyka (zob. §21)
-- Brak alertów o dostępności (błędy aplikacji są raportowane do Sentry, ale nie ma monitoringu uptime).
+- Alerty o dostępności zależą od skonfigurowania przez operatora zewnętrznego monitora na `/health`; endpoint jest wdrożony, ale monitor nie jest provisionowany z repozytorium.
 - Weryfikacja używa klucza publishable, ale te funkcje następnie odpytują z service role — bezpieczeństwo zależy od jawnego zakresu, który obecnie jest obecny.
 - Przestarzały fallback zapytania `?token=` w `order-status` pozostaje dla starych klientów i powinien zostać usunięty, gdy stare bundle znikną.
 - Zdjęcia reklamacji nie są jeszcze zbierane/walidowane (pole istnieje, ale nie jest przesyłane).
@@ -463,7 +465,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 
 ## 20. Testy i bramki jakości
 
-- **166 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1577 testy). Testy współlokowane działają jako dokumentacja zachowania.
+- **167 plików testów** w `src/`, `netlify/__tests__/` oraz testach na poziomie stron (łącznie 1587 testów). Testy współlokowane działają jako dokumentacja zachowania.
 - Polecenia: `npx vitest run <file>` (wybiórczo), `npx vitest run` (pełne), `pnpm test`, `pnpm lint`, `npx tsc -b`.
 - Testy-strażnicy są ważne: przerywają suitę, gdy regresują niezmienniki bezpieczeństwa/cache'owania/wersjonowania (w tym strażnik przypięcia `search_path`).
 - Zastrzeżenie: wiele testów admina/backendu mockuje `fetch` i hooki Refine, więc luki integracyjne backendu (np. rzeczywiste stronicowanie PostgREST oraz RPC `admin_customer_list`/`admin_revenue_by_month`) nie są pokryte end-to-end.
@@ -485,14 +487,14 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - `admin_customer_list`/`admin_revenue_by_month` przeniosły ciężką agregację admina do SQL; pozostałe odczyty `fetch-all` są ograniczone przez chunk/`maxPages`.
 
 **Operacyjne**
-- Monitoring błędów jest podłączony (Sentry, zob. §5/§18), ale brak alertów o dostępności/uptime. (Zalecenie: endpoint `/health` + zewnętrzny monitor dostępności.)
+- Monitoring błędów jest podłączony (Sentry, zob. §5/§18) i dostępny jest nieuwierzytelniony endpoint uptime `/health`; zewnętrzny monitor dostępności musi jeszcze zapewnić operator (zob. §22).
 - Powierzchnie debugowania trafiają do bundle'a produkcyjnego (celowo, bramkowane parametrem) — zdecyduj, czy je zachować.
 - Audyt zależności (`pnpm audit`) i `pnpm build` są teraz w zadaniu CI `lint`; krok audytu ma `continue-on-error` do czasu uporania się z advisory.
 - Zweryfikuj `P24_STATUS_URL` / `SITE_URL` i osiągalność webhooka po każdej zmianie domeny.
 - Zsynchronizuj `.env` / env Netlify / README, jeśli zmienne są wycofywane. Tylko-CI `CONTENT_ALLOW_EMPTY=true` pozwala buildowi CI wbudować puste treści bez poświadczeń Supabase; jest ignorowane, gdy Netlify ustawia `CONTEXT=production`, więc nie może osłabić builda wdrożeniowego.
 
 **Sugerowany priorytet, jeśli utwardzanie będzie kontynuowane**
-1. Dodaj alerty dostępności/uptime (monitoring błędów Sentry jest już podłączony).
+1. Zapewnij zewnętrzne alerty dostępności przeciw `/health` (endpoint jest wdrożony; monitoring błędów Sentry jest już podłączony).
 2. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
 3. Rozważ ochronę przed botami (np. honeypot/Turnstile) dla `track-referral` i `submit-complaint` poza limitem po IP.
 4. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
@@ -517,6 +519,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 | Wdrożenie nowego builda | Merge/push do `main` → Netlify buduje; klienci aktualizują się automatycznie przez `/version.json` + SW |
 | Diagnoza zablokowanego klienta | Otwórz `?build`, aby porównać wersje; `?diag` dla dziennika; jeśli stary bundle sprzed poprawki, wyczyść pamięć/ponownie zainstaluj PWA |
 | Sprawdzenie tożsamości builda wdrożenia | Plakietka `?build` lub `/version.json` |
+| Konfiguracja monitoringu uptime | Skieruj darmowy zewnętrzny monitor (UptimeRobot, Better Stack, cron-job.org) na `https://<domain>/health`; oczekuj `200 {"status":"ok"}`, alarmuj przy nie-2xx (503 = Supabase nieosiągalny) |
 
 ---
 
@@ -538,7 +541,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.
 - [ ] Przejrzyj otwarte pozycje z §21 i zdecyduj o własności/priorytecie.
 - [ ] Zweryfikuj, że Sentry otrzymuje zdarzenia testowe z przeglądarki i z co najmniej jednej funkcji Netlify, oraz że monitoring jest wyłączony bez DSN.
-- [ ] Skonfiguruj zewnętrzne alerty dostępności (Sentry nie obejmuje uptime na darmowym planie).
+- [ ] Skieruj zewnętrzny monitor uptime na `https://<domain>/health` i potwierdź, że zwraca `200 {"status":"ok"}` (Sentry nie obejmuje uptime na darmowym planie).
 
 ---
 
