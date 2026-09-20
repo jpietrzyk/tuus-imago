@@ -117,12 +117,13 @@ Przekaż/posiadaj te konta. Każde jest pojedynczym punktem awarii; nowy właśc
 | **Cloudinary** | Przechowywanie obrazów + transformacje + AI | Konto, cloud name, klucz/sekret API, upload preset, nazwany szablon AI | `VITE_CLOUDINARY_AI_TEMPLATE` opcjonalne |
 | **Przelewy24** | Płatności | Konto merchant, ID merchant/POS, CRC, klucz API | Bazowy URL API produkcyjnego: `https://secure.przelewy24.pl/api/v1` |
 | **Sentry** | Monitoring błędów (przeglądarka + funkcje) | Własność organizacji/projektu, DSN-y, token auth (jeśli dodane source mapy) | Opcjonalny; wyłączony, gdy DSN nieustawiony |
+| **UptimeRobot** | Zewnętrzny monitoring uptime/dostępności | Konto, monitory, kontakty alertów | Darmowy plan: monitor Keyword `"status":"ok"` na `/health` + monitor HTTP(s) na `/`; niezależny od Netlify i Sentry |
 | **Domena + DNS** | Publiczny URL | Rejestrator/DNS | Wymagane dla `SITE_URL`, URL-i zwrotu/statusu P24, domeny Netlify |
 | **Google / Facebook** | Logowanie OAuth (przez Supabase) | Poświadczenia aplikacji OAuth skonfigurowane w Supabase Auth | Opcjonalne; można wyłączyć |
 | **Dostarczanie e-maili** | E-maile auth Supabase (potwierdzenie, magic link, reset) | SMTP, jeśli własny; inaczej domyślny Supabase | Ustawienie Supabase Auth |
 | **InPost** | ⚠️ **Brak integracji** | — | „InPost Kurier" to jedynie zasiana etykieta/metoda dostawy; brak połączenia API |
 
-Obecnie **nie ma podłączonego zewnętrznego CRM ani analityki**. Monitoring błędów realizuje Sentry (zob. §18), a dostępność udostępnia nieuwierzytelniony endpoint `/health` (zob. §9/§21). (HubSpot został usunięty w migracji `202604090001_remove_hubspot_fields.sql`.)
+Obecnie **nie ma podłączonego zewnętrznego CRM ani analityki**. Monitoring błędów realizuje Sentry (zob. §18), a uptime UptimeRobot (zob. §5/§19); dostępność udostępnia nieuwierzytelniony endpoint `/health` (zob. §9). (HubSpot został usunięty w migracji `202604090001_remove_hubspot_fields.sql`.)
 
 ---
 
@@ -441,6 +442,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - Limity szybkości oparte o bazę (`check_rate_limit`) na `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral` i `submit-complaint`, obok natywnych reguł Netlify dla `create-order`/`cloudinary-signature`.
 - `admin-api` waliduje każdą kolumnę `select`/filtra/sortowania/`groupBy`/`sum` podaną przez wywołującego względem allowlisty per zasób i ogranicza `pageSize` do 1–1000.
 - Sentry działa z `sendDefaultPii: false`, a ciasteczka, nagłówki autoryzacji i wrażliwe parametry zapytania są usuwane z zdarzeń i breadcrumbów przed wysłaniem; host ingest Sentry jest jedynym nowym wpisem w CSP `connect-src`.
+- Zewnętrzny monitoring uptime: UptimeRobot odpytuje `https://<domain>/health` (Keyword `"status":"ok"`) oraz `https://<domain>/`, alarmując, gdy którykolwiek jest niedostępny; sonda jest nieuwierzytelniona, ale nie ujawnia PII ani surowych błędów.
 
 ### Wcześniej zgłoszone, obecnie naprawione
 - ✅ Eskalacja uprawnień `profiles.is_admin` → naprawiona przez `202609180001_harden_profiles_is_admin.sql`.
@@ -454,9 +456,9 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - ✅ `search_path` nieprzypięty w trzech funkcjach triggerów → przypięty przez `202609190004`, wymuszany testem-strażnikiem.
 - ✅ Eksport CSV klientów (`400`) i ucinanie agregatów/eksportów do 1000 wierszy → zasób tylko do eksportu + stronicowane odczyty / RPC SQL.
 - ✅ Token dostępu ujawniony w URL-u powrotnym P24 → wysyłany teraz przez nagłówek `X-Order-Token` (przestarzały fallback zapytania `?token=` jest nadal akceptowany dla starych klientów).
+- ✅ Brak alertów o dostępności → zewnętrzne monitory UptimeRobot na `/health` (Keyword) i `/`, oparte o sondę `/health`.
 
 ### Otwarte / szczątkowe ryzyka (zob. §21)
-- Alerty o dostępności zależą od skonfigurowania przez operatora zewnętrznego monitora na `/health`; endpoint jest wdrożony, ale monitor nie jest provisionowany z repozytorium.
 - Weryfikacja używa klucza publishable, ale te funkcje następnie odpytują z service role — bezpieczeństwo zależy od jawnego zakresu, który obecnie jest obecny.
 - Przestarzały fallback zapytania `?token=` w `order-status` pozostaje dla starych klientów i powinien zostać usunięty, gdy stare bundle znikną.
 - Zdjęcia reklamacji nie są jeszcze zbierane/walidowane (pole istnieje, ale nie jest przesyłane).
@@ -487,18 +489,17 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - `admin_customer_list`/`admin_revenue_by_month` przeniosły ciężką agregację admina do SQL; pozostałe odczyty `fetch-all` są ograniczone przez chunk/`maxPages`.
 
 **Operacyjne**
-- Monitoring błędów jest podłączony (Sentry, zob. §5/§18) i dostępny jest nieuwierzytelniony endpoint uptime `/health`; zewnętrzny monitor dostępności musi jeszcze zapewnić operator (zob. §22).
+- Monitoring błędów (Sentry) i monitoringu uptime (UptimeRobot na `/health` i `/`) są podłączone; konto UptimeRobot trzeba przekazać razem z pozostałymi usługami zewnętrznymi (zob. §5/§23).
 - Powierzchnie debugowania trafiają do bundle'a produkcyjnego (celowo, bramkowane parametrem) — zdecyduj, czy je zachować.
 - Audyt zależności (`pnpm audit`) i `pnpm build` są teraz w zadaniu CI `lint`; krok audytu ma `continue-on-error` do czasu uporania się z advisory.
 - Zweryfikuj `P24_STATUS_URL` / `SITE_URL` i osiągalność webhooka po każdej zmianie domeny.
 - Zsynchronizuj `.env` / env Netlify / README, jeśli zmienne są wycofywane. Tylko-CI `CONTENT_ALLOW_EMPTY=true` pozwala buildowi CI wbudować puste treści bez poświadczeń Supabase; jest ignorowane, gdy Netlify ustawia `CONTEXT=production`, więc nie może osłabić builda wdrożeniowego.
 
 **Sugerowany priorytet, jeśli utwardzanie będzie kontynuowane**
-1. Zapewnij zewnętrzne alerty dostępności przeciw `/health` (endpoint jest wdrożony; monitoring błędów Sentry jest już podłączony).
-2. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
-3. Rozważ ochronę przed botami (np. honeypot/Turnstile) dla `track-referral` i `submit-complaint` poza limitem po IP.
-4. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
-5. Zmień audyt zależności w blokującą bramkę CI, gdy bieżące advisory zostaną wyczyszczone.
+1. Dodaj załączniki zdjęciowe do reklamacji (użyj podpisanego uploadu Cloudinary) i powiadomienia e-mail.
+2. Rozważ ochronę przed botami (np. honeypot/Turnstile) dla `track-referral` i `submit-complaint` poza limitem po IP.
+3. Zredukuj duże pliki-hotspoty w kolejnych refaktorach.
+4. Zmień audyt zależności w blokującą bramkę CI, gdy bieżące advisory zostaną wyczyszczone.
 
 ---
 
@@ -519,7 +520,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 | Wdrożenie nowego builda | Merge/push do `main` → Netlify buduje; klienci aktualizują się automatycznie przez `/version.json` + SW |
 | Diagnoza zablokowanego klienta | Otwórz `?build`, aby porównać wersje; `?diag` dla dziennika; jeśli stary bundle sprzed poprawki, wyczyść pamięć/ponownie zainstaluj PWA |
 | Sprawdzenie tożsamości builda wdrożenia | Plakietka `?build` lub `/version.json` |
-| Konfiguracja monitoringu uptime | UptimeRobot (darmowy): monitor Keyword na `https://<domain>/health` ze słowem `"status":"ok"` (interwał 5 min) oraz monitor HTTP(s) na `https://<domain>/`; alarmuj przy nie-2xx lub braku słowa. Kieruj monitory wyłącznie na produkcję. |
+| Monitoring uptime | Skonfigurowany w zewnętrznym koncie UptimeRobot: Keyword `"status":"ok"` na `https://<domain>/health` + HTTP(s) na `https://<domain>/` (zob. §5/§19); interwały/alerty zmieniasz tam |
 
 ---
 
@@ -541,7 +542,7 @@ Celowo dostarczane, bramkowane parametrem zapytania lub zmienną środowiskową:
 - [ ] Uruchom `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` na czystym klonie, aby potwierdzić środowisko nowego właściciela.
 - [ ] Przejrzyj otwarte pozycje z §21 i zdecyduj o własności/priorytecie.
 - [ ] Zweryfikuj, że Sentry otrzymuje zdarzenia testowe z przeglądarki i z co najmniej jednej funkcji Netlify, oraz że monitoring jest wyłączony bez DSN.
-- [ ] Skonfiguruj zewnętrzny monitor uptime (np. UptimeRobot: monitor Keyword `"status":"ok"` na `https://<domain>/health` oraz monitor HTTP(s) na `https://<domain>/`) i potwierdź `200 {"status":"ok"}` (Sentry nie obejmuje uptime na darmowym planie).
+- [ ] Przekaż/posiadaj konto **UptimeRobot** (monitor Keyword `"status":"ok"` na `https://<domain>/health` + monitor HTTP(s) na `https://<domain>/`) i potwierdź, że alerty docierają do nowego właściciela.
 
 ---
 

@@ -117,12 +117,13 @@ Transfer/own these accounts. Each is a single point of failure; the new owner mu
 | **Cloudinary** | Image storage + transformations + AI | Account, cloud name, API key/secret, upload preset, named AI template | `VITE_CLOUDINARY_AI_TEMPLATE` optional |
 | **Przelewy24** | Payments | Merchant account, merchant/POS IDs, CRC, API key | Production API base `https://secure.przelewy24.pl/api/v1` |
 | **Sentry** | Error monitoring (browser + functions) | Org/project ownership, DSNs, auth token if source maps are added | Optional; inert when the DSN is unset |
+| **UptimeRobot** | External uptime/availability monitoring | Account, monitors, alert contacts | Free tier: keyword monitor `"status":"ok"` on `/health` + HTTP(s) monitor on `/`; independent of Netlify and Sentry |
 | **Domain + DNS** | Public URL | Registrar/DNS | Required for `SITE_URL`, P24 return/status URLs, Netlify domain |
 | **Google / Facebook** | OAuth login (via Supabase) | OAuth app credentials configured inside Supabase Auth | Optional; can be disabled |
 | **Email delivery** | Supabase auth emails (confirmation, magic link, reset) | SMTP if custom; else Supabase default | Supabase Auth setting |
 | **InPost** | ⚠️ **Not an integration** | — | "InPost Kurier" is only a seeded shipping-method label/price; no API connection |
 
-There is **no external CRM or analytics** currently wired. Error monitoring runs through Sentry (see §18) and availability is exposed by the unauthenticated `/health` endpoint (see §9/§21). (HubSpot was removed in migration `202604090001_remove_hubspot_fields.sql`.)
+There is **no external CRM or analytics** currently wired. Error monitoring runs through Sentry (see §18) and uptime through UptimeRobot (see §5/§19); availability is exposed by the unauthenticated `/health` endpoint (see §9). (HubSpot was removed in migration `202604090001_remove_hubspot_fields.sql`.)
 
 ---
 
@@ -441,6 +442,7 @@ Deliberately shipped, gated by query param or env:
 - DB-backed rate limiting (`check_rate_limit`) on `validate-coupon`, `create-przelewy24-session`, `order-status`, `track-referral`, and `submit-complaint`, in addition to the native Netlify rules on `create-order`/`cloudinary-signature`.
 - `admin-api` validates every caller-supplied select/filter/sort/group/sum column against a per-resource allowlist and clamps `pageSize` to 1–1000.
 - Sentry runs with `sendDefaultPii: false`; cookies, auth headers and credential-bearing query params are stripped from events and breadcrumbs before sending, and the Sentry ingest host is the only addition to the CSP `connect-src`.
+- External uptime monitoring: UptimeRobot polls `https://<domain>/health` (keyword `"status":"ok"`) and `https://<domain>/`, alerting when either is down; the probe is unauthenticated but reveals no PII or raw errors.
 
 ### Previously reported, now remediated
 - ✅ `profiles.is_admin` privilege escalation → fixed by `202609180001_harden_profiles_is_admin.sql`.
@@ -454,9 +456,9 @@ Deliberately shipped, gated by query param or env:
 - ✅ `search_path` not pinned on three trigger functions → pinned by `202609190004`, enforced by a guard test.
 - ✅ Customers CSV export `400` and 1000-row truncation in admin aggregates/exports → export-only resource + paginated reads / SQL RPCs.
 - ✅ Access token exposed in the P24 return URL → now sent via the `X-Order-Token` header (deprecated `?token=` query fallback still accepted for stale clients).
+- ✅ No uptime/availability alerting → external UptimeRobot monitors on `/health` (keyword) and `/`, backed by the `/health` probe.
 
 ### Open / residual risks (see §21)
-- Uptime alerting depends on the operator wiring an external monitor to `/health`; the endpoint is implemented, but no monitor is provisioned from the repo.
 - Verification uses the publishable key, but those functions then query with the service role — safety depends on explicit scoping, which is present today.
 - The deprecated `?token=` query fallback on `order-status` remains for stale clients and should be removed once old bundles are gone.
 - Complaint photos are not collected/validated yet (field is present but not transmitted).
@@ -488,18 +490,17 @@ Deliberately shipped, gated by query param or env:
 - `admin_customer_list`/`admin_revenue_by_month` moved heavy admin aggregation to SQL; the remaining `fetch-all` reads are bounded by chunk/`maxPages`.
 
 **Operational**
-- Error monitoring is wired (Sentry, see §5/§18) and the unauthenticated `/health` uptime endpoint is available; the external availability monitor still has to be provisioned by the operator (see §22).
+- Error monitoring (Sentry) and uptime monitoring (UptimeRobot on `/health` and `/`) are both wired; the UptimeRobot account must be transferred with the other external services (see §5/§23).
 - Debug surfaces ship in the production bundle (intentional, param-gated) — decide whether to keep.
 - Dependency auditing (`pnpm audit`) and `pnpm build` are now in the `lint` CI job; the audit step is `continue-on-error` until advisories are triaged.
 - Verify `P24_STATUS_URL` / `SITE_URL` and webhook reachability after any domain change.
 - Reconcile `.env` / Netlify env / README if variables are retired. CI-only `CONTENT_ALLOW_EMPTY=true` lets the CI build bake empty content without Supabase credentials; it is ignored when Netlify sets `CONTEXT=production`, so it cannot weaken a deploy build.
 
 **Suggested priority if hardening continues**
-1. Provision external uptime alerting against `/health` (the endpoint is implemented; Sentry error monitoring is already wired).
-2. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
-3. Consider bot protection (e.g. honeypot/Turnstile) on `track-referral` and `submit-complaint` beyond IP throttling.
-4. Reduce the large hotspot files in follow-up refactors.
-5. Turn the dependency audit into a blocking CI gate once current advisories are cleared.
+1. Add complaint photo attachments (reuse the Cloudinary signed upload) and e-mail notifications.
+2. Consider bot protection (e.g. honeypot/Turnstile) on `track-referral` and `submit-complaint` beyond IP throttling.
+3. Reduce the large hotspot files in follow-up refactors.
+4. Turn the dependency audit into a blocking CI gate once current advisories are cleared.
 
 ---
 
@@ -520,7 +521,7 @@ Deliberately shipped, gated by query param or env:
 | Roll out a new build | Merge/push to `main` → Netlify builds; clients auto-update via `/version.json` + SW |
 | Diagnose a stuck client | Open `?build` to compare versions; `?diag` for the journal; if an old pre-fix bundle, clear storage/reinstall the PWA |
 | Check deploy build identity | `?build` badge or `/version.json` |
-| Set up uptime monitoring | UptimeRobot (free): a Keyword monitor on `https://<domain>/health` with keyword `"status":"ok"` (5-min interval) plus an HTTP(s) monitor on `https://<domain>/`; alert on non-2xx or a missing keyword. Point monitors at production only. |
+| Uptime monitoring | Configured in the external UptimeRobot account: keyword `"status":"ok"` on `https://<domain>/health` + HTTP(s) on `https://<domain>/` (see §5/§19); change intervals/alerts there |
 
 ---
 
@@ -542,7 +543,7 @@ Deliberately shipped, gated by query param or env:
 - [ ] Run `npx vitest run`, `npx tsc -b`, `pnpm lint`, `pnpm build` on a clean clone to confirm the new owner's environment.
 - [ ] Review the open items in §21 and decide ownership/priority.
 - [ ] Verify Sentry receives a test event from the browser and from at least one Netlify function, and that monitoring is inert without the DSN.
-- [ ] Set up an external uptime monitor (e.g. UptimeRobot: Keyword monitor `"status":"ok"` on `https://<domain>/health` plus an HTTP(s) monitor on `https://<domain>/`) and confirm `200 {"status":"ok"}` (Sentry does not cover uptime on the free plan).
+- [ ] Transfer/own the **UptimeRobot** account (keyword `"status":"ok"` monitor on `https://<domain>/health` + HTTP(s) monitor on `https://<domain>/`) and confirm alerts reach the new owner.
 
 ---
 
