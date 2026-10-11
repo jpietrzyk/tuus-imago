@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:netlify": "netlify dev",
+    "dev:netlify": "rm -f dist/_headers && netlify dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest",

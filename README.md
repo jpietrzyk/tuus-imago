@@ -42,7 +42,7 @@ pnpm build            # TypeScript check + production build
 pnpm preview          # Preview production build locally
 ```
 
-Use `pnpm dev:netlify` when you need Netlify Functions (Cloudinary signed uploads, Przelewy24, etc.).
+Use `pnpm dev:netlify` when you need Netlify Functions (Cloudinary signed uploads, Przelewy24, etc.). It removes the built `dist/_headers` first, because `netlify dev` otherwise serves that production CSP and blocks Vite's inline React-refresh preamble (blank page with a `script-src` violation).
 
 ### Testing
 
